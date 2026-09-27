@@ -108,6 +108,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/UsageAnalytics_4d1fd2d.o \
   $(JUCE_OBJDIR)/UpdateChecker_8f4806ee.o \
   $(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o \
+  $(JUCE_OBJDIR)/GuiUserPrompter_9790b659.o \
   $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o \
   $(JUCE_OBJDIR)/Preferences_96bfe954.o \
   $(JUCE_OBJDIR)/AnalysisProvider_7450833c.o \
@@ -136,6 +137,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudioTrackViewState_3eefa983.o \
   $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o \
   $(JUCE_OBJDIR)/ResourceGroup_483fb77d.o \
+  $(JUCE_OBJDIR)/WaveFormColours_7ea85836.o \
   $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o \
   $(JUCE_OBJDIR)/LinkEngine_c7ee2fcd.o \
   $(JUCE_OBJDIR)/AudioBusInterface_816dcfe9.o \
@@ -166,7 +168,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AudiumEngine_147f6ae1.o \
   $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o \
   $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o \
-  $(JUCE_OBJDIR)/ColourIds_54ae2f37.o \
   $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o \
   $(JUCE_OBJDIR)/audium_ListBox_b1d2231e.o \
   $(JUCE_OBJDIR)/SnapToGridHandler_51ca2978.o \
@@ -417,6 +418,11 @@ $(JUCE_OBJDIR)/ProjectMonitor_dc1d1849.o: ../../Source/Application/ProjectMonito
 	@echo "Compiling ProjectMonitor.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/GuiUserPrompter_9790b659.o: ../../Source/Application/GuiUserPrompter.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling GuiUserPrompter.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/EngineAccess_b7e0d334.o: ../../Source/Util/EngineAccess.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling EngineAccess.cpp"
@@ -555,6 +561,11 @@ $(JUCE_OBJDIR)/AudioRegionAdapter_714661e3.o: ../../Source/Engine/Group/AudioReg
 $(JUCE_OBJDIR)/ResourceGroup_483fb77d.o: ../../Source/Engine/Group/ResourceGroup.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ResourceGroup.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/WaveFormColours_7ea85836.o: ../../Source/Engine/Group/WaveFormColours.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling WaveFormColours.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/LinkAudioDevice_ad84cc6b.o: ../../Source/Engine/Link/LinkAudioDevice.cpp
@@ -705,11 +716,6 @@ $(JUCE_OBJDIR)/AudiumLookAndFeel_1d32727.o: ../../Source/Interface/LookAndFeel/A
 $(JUCE_OBJDIR)/TrackColourLookAndFeel_7098fc17.o: ../../Source/Interface/LookAndFeel/TrackColourLookAndFeel.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling TrackColourLookAndFeel.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ColourIds_54ae2f37.o: ../../Source/Interface/ColourIds.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ColourIds.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/audium_AudioThumbnail_f5797f4f.o: ../../Source/Interface/Widgets/audium_AudioThumbnail.cpp

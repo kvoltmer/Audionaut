@@ -1111,6 +1111,9 @@
     <ClCompile Include="..\..\Source\Application\ProjectMonitor.cpp">
       <Filter>Audionaut\Source\Application</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Application\GuiUserPrompter.cpp">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
       <Filter>Audionaut\Source\Util\native</Filter>
     </ClCompile>
@@ -1204,6 +1207,9 @@
     <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Group\WaveFormColours.cpp">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp">
       <Filter>Audionaut\Source\Engine\Link</Filter>
     </ClCompile>
@@ -1293,9 +1299,6 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\Interface\ColourIds.cpp">
-      <Filter>Audionaut\Source\Interface</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp">
       <Filter>Audionaut\Source\Interface\Widgets</Filter>
@@ -4755,6 +4758,9 @@
     <ClInclude Include="..\..\Source\Application\ProjectMonitor.h">
       <Filter>Audionaut\Source\Application</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Application\GuiUserPrompter.h">
+      <Filter>Audionaut\Source\Application</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h">
       <Filter>Audionaut\Source\Util</Filter>
     </ClInclude>
@@ -4863,6 +4869,9 @@
     <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h">
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Core\UserPrompter.h">
+      <Filter>Audionaut\Source\Engine\Core</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Core\DspLoadMeter.h">
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
@@ -4909,6 +4918,9 @@
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h">
+      <Filter>Audionaut\Source\Engine\Group</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Group\WaveFormColours.h">
       <Filter>Audionaut\Source\Engine\Group</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h">

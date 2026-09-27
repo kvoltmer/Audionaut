@@ -13,7 +13,7 @@
 #include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Playback/AudioBusInterface.h"
-#include "Interface/ColourIds.h"
+#include "Engine/Group/WaveFormColours.h"
 
 namespace audium {
 

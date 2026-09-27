@@ -112,6 +112,10 @@
               file="Source/Application/ProjectMonitor.cpp"/>
         <FILE id="PrjMn2" name="ProjectMonitor.h" compile="0" resource="0"
               file="Source/Application/ProjectMonitor.h"/>
+        <FILE id="GuiPr1" name="GuiUserPrompter.cpp" compile="1" resource="0"
+              file="Source/Application/GuiUserPrompter.cpp"/>
+        <FILE id="GuiPr2" name="GuiUserPrompter.h" compile="0" resource="0"
+              file="Source/Application/GuiUserPrompter.h"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <GROUP id="{E06E4F23-6CE8-7605-2078-9846BE4FC6DD}" name="native">
@@ -220,6 +224,7 @@
           <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
           <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
           <FILE id="HmCore" name="HeadlessMode.h" compile="0" resource="0" file="Source/Engine/Core/HeadlessMode.h"/>
+          <FILE id="UsrPr1" name="UserPrompter.h" compile="0" resource="0" file="Source/Engine/Core/UserPrompter.h"/>
           <FILE id="DspLdM" name="DspLoadMeter.h" compile="0" resource="0" file="Source/Engine/Core/DspLoadMeter.h"/>
         </GROUP>
         <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
@@ -267,6 +272,10 @@
           <FILE id="L1oVjp" name="ResourceGroup.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/ResourceGroup.cpp"/>
           <FILE id="bqmXaq" name="ResourceGroup.h" compile="0" resource="0" file="Source/Engine/Group/ResourceGroup.h"/>
+          <FILE id="WfCol1" name="WaveFormColours.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/WaveFormColours.cpp"/>
+          <FILE id="WfCol2" name="WaveFormColours.h" compile="0" resource="0"
+                file="Source/Engine/Group/WaveFormColours.h"/>
         </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
@@ -468,7 +477,6 @@
           <FILE id="j5Dgzu" name="SettingsDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SettingsDialog.h"/>
         </GROUP>
-        <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
           <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"

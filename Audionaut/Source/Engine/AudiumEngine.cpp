@@ -4,11 +4,9 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudiumEngine.h"
-#include "Util/Preferences.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
-#include "Application/AudiumApplication.h"
 
 namespace audium {
 
@@ -17,7 +15,7 @@ AudiumEngine::~AudiumEngine()
     projectSerializer->cleanup();
 }
 
-void AudiumEngine::initialise()
+void AudiumEngine::initialise(const juce::XmlElement* savedAudioDeviceState)
 {
     jassert(RuntimePermissions::isGranted (RuntimePermissions::recordAudio));
 
@@ -25,36 +23,22 @@ void AudiumEngine::initialise()
     auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
     String result;
 
-#if !defined(AUDIONAUT_HEADLESS)
-    if (AudiumApplication::getPreferences().valueExists(PreferenceKeys::audioDeviceSettings)) {
-        juce::XmlDocument xml (AudiumApplication::getPreferences().getValue(PreferenceKeys::audioDeviceSettings));
-        if (auto saveState = xml.getDocumentElement()) {
-            result = audioDeviceManager->initialise(numInputChannelsNeeded,
-                                                    numOutputChannelsNeeded,
-                                                    saveState.get(),
-                                                    true);
-        }
+    if (savedAudioDeviceState != nullptr) {
+        result = audioDeviceManager->initialise(numInputChannelsNeeded,
+                                                numOutputChannelsNeeded,
+                                                savedAudioDeviceState,
+                                                true);
     }
     else {
         result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
                                                                    numOutputChannelsNeeded);
     }
-#else
-    result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
-                                                               numOutputChannelsNeeded);
-#endif
     std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }
 
 void AudiumEngine::uninitialise()
 {
-#if !defined(AUDIONAUT_HEADLESS)
-    if (auto stateXml = audioDeviceManager->createStateXml()) {
-        AudiumApplication::getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
-    }
-#endif
-
     undoManager->clearUndoHistory();
     audioDeviceManager->removeAudioCallback(linkAudioDevice.get());
 

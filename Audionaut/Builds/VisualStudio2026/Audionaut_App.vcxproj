@@ -211,6 +211,7 @@
     <ClCompile Include="..\..\Source\Application\UsageAnalytics.cpp"/>
     <ClCompile Include="..\..\Source\Application\UpdateChecker.cpp"/>
     <ClCompile Include="..\..\Source\Application\ProjectMonitor.cpp"/>
+    <ClCompile Include="..\..\Source\Application\GuiUserPrompter.cpp"/>
     <ClCompile Include="..\..\Source\Util\native\PreferencesLinux.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
@@ -248,6 +249,7 @@
     <ClCompile Include="..\..\Source\Engine\Group\AudioTrackViewState.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\AudioRegionAdapter.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Group\ResourceGroup.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Group\WaveFormColours.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkAudioDevice.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Link\LinkEngine.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusInterface.cpp"/>
@@ -280,7 +282,6 @@
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\TrackColourLookAndFeel.cpp"/>
-    <ClCompile Include="..\..\Source\Interface\ColourIds.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_AudioThumbnail.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\SnapToGridHandler.cpp"/>
@@ -3419,6 +3420,7 @@
     <ClInclude Include="..\..\Source\Application\UpdateChecker.h"/>
     <ClInclude Include="..\..\Source\Application\UsageAnalytics.h"/>
     <ClInclude Include="..\..\Source\Application\ProjectMonitor.h"/>
+    <ClInclude Include="..\..\Source\Application\GuiUserPrompter.h"/>
     <ClInclude Include="..\..\Source\Util\EngineAccess.h"/>
     <ClInclude Include="..\..\Source\Util\Preferences.h"/>
     <ClInclude Include="..\..\Source\Util\VersionCompare.h"/>
@@ -3455,6 +3457,7 @@
     <ClInclude Include="..\..\Source\Engine\Core\DspClip.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\DspClipData.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\HeadlessMode.h"/>
+    <ClInclude Include="..\..\Source\Engine\Core\UserPrompter.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\DspLoadMeter.h"/>
     <ClInclude Include="..\..\Source\Engine\Streamable.h"/>
     <ClInclude Include="..\..\Source\Engine\TimeContext.h"/>
@@ -3471,6 +3474,7 @@
     <ClInclude Include="..\..\Source\Engine\Group\AudioTrackViewState.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\AudioRegionAdapter.h"/>
     <ClInclude Include="..\..\Source\Engine\Group\ResourceGroup.h"/>
+    <ClInclude Include="..\..\Source\Engine\Group\WaveFormColours.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkAudioDevice.h"/>
     <ClInclude Include="..\..\Source\Engine\Link\LinkEngine.hpp"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusInterface.h"/>

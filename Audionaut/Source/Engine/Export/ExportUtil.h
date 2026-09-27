@@ -16,24 +16,22 @@ class ExportUtil {
     
 public:
     
-    /** Asks for a target file and runs the export once the chooser closes.
-        Asynchronous: this returns as soon as the chooser is up, before
-        anything is written; the outcome is not reported back to the caller,
-        a failure is shown to the user instead. The chooser must outlive the
-        dialog (the callers keep it as a member). */
-    static void exportAudio(std::shared_ptr<juce::FileChooser> chooser,
+    /** Asks the user for a target file (through the engine's UserPrompter)
+        and runs the export once they have chosen. Asynchronous: this returns
+        as soon as the question is asked, before anything is written; the
+        outcome is not reported back to the caller, a failure is shown to
+        the user instead.
+        @param suggestedFileName  the file name to offer, or empty for none */
+    static void exportAudio(const juce::String& suggestedFileName,
                             std::shared_ptr<audium::AudiumEngine> audiumEngine,
                             std::shared_ptr<audium::ExportAudioConfig> config,
                             std::shared_ptr<audium::AudioExportThread> exportThread)
     {
-        jassert(chooser);
-        auto flags = FileBrowserComponent::saveMode
-                   | FileBrowserComponent::canSelectFiles
-                   | FileBrowserComponent::warnAboutOverwriting;
+        auto prompter = audiumEngine->getUserPrompter();
 
-        chooser->launchAsync (flags, [audiumEngine, config, exportThread] (const FileChooser& fc) {
-            const auto file = fc.getResult();
-            
+        prompter->chooseFileToSave ("Export as WAV file. Choose a filename...", suggestedFileName, "*.wav",
+                                    [prompter, audiumEngine, config, exportThread] (const File& file) {
+
             if (file != File{}) {
                 
                 if (!file.hasWriteAccess()) {
@@ -42,9 +40,8 @@ public:
                     errorString += "\n\n";
                     errorString += "As a 'Sandboxed App' you are only allowed to save files in the Music folder.";
         #endif
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                          "Error",
-                                                          "Failed to save " + file.getFullPathName() +"\n\n" + String(errorString));
+                    prompter->showMessage("Error",
+                                          "Failed to save " + file.getFullPathName() +"\n\n" + String(errorString));
                     return;
                 }
                 
@@ -59,13 +56,8 @@ public:
                 exportThread->runThread();
 
                 if (! exportThread->wasSuccessful() && ! config->userCanceled)
-                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                                "Error",
-                                                                "Failed to export " + file.getFullPathName() + "\n\n" + config->error);
-
-#if !defined(AUDIONAUT_HEADLESS)
-                AudiumApplication::getApp().initialSaveDirectory = file.getParentDirectory();
-#endif
+                    prompter->showMessage("Error",
+                                          "Failed to export " + file.getFullPathName() + "\n\n" + config->error);
             }
         });
     }
