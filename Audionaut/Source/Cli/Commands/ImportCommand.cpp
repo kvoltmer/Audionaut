@@ -18,7 +18,11 @@ namespace cli {
 int runImport (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
-    auto positionSeconds = takeOptionValue (working, "--position", "0").getDoubleValue();
+    double positionSeconds = 0.0;
+    std::string optionError;
+    if (! parseNumericOption ("--position", takeOptionValue (working, "--position", "0"), 0.0, false,
+                              positionSeconds, optionError))
+        return context.fail (exitUsage, "usage", optionError);
 
     auto projectFile = resolveProjectFile (working);
     if (projectFile == juce::File())

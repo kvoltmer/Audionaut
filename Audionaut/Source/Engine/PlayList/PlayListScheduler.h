@@ -157,11 +157,15 @@ public:
         
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bouncePlayListItem(juce::AudioFormatWriter* writer,
+    /** Renders the config's playlist item into the writer.
+        @return False when a write to the file failed. */
+    bool bouncePlayListItem(juce::AudioFormatWriter* writer,
                             std::shared_ptr<ExportAudioConfig> config,
                             std::function<void ()> callback);
-    
-    void bounceProject(juce::AudioFormatWriter* writer,
+
+    /** Renders the project (from the config's position) into the writer.
+        @return False when a write to the file failed. */
+    bool bounceProject(juce::AudioFormatWriter* writer,
                       std::shared_ptr<ExportAudioConfig> config,
                       std::function<void ()> callback);
     

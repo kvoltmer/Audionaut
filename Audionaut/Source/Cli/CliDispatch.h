@@ -51,5 +51,13 @@ const std::vector<CliCommandSpec>& getCliCommands();
  */
 int performCliCommand (const juce::ArgumentList& args, CliContext& context);
 
+/**
+ * Reports a command line that performCliCommand declined as an
+ * `unknown_command` usage error - in --json mode as the standard error
+ * envelope, so a caller parsing stdout (the MCP wrapper, an agent) gets a
+ * readable answer instead of help text. Returns exitUsage.
+ */
+int failUnknownCommand (const juce::ArgumentList& args, CliContext& context);
+
 } // namespace cli
 } // namespace audium

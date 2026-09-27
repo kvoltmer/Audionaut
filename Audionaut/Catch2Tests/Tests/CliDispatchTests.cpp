@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <catch2/catch_test_macros.hpp>
+#include <nlohmann/json.hpp>
 
 #include "Cli/CliDispatch.h"
 
@@ -28,6 +29,23 @@ SCENARIO ("cli dispatch fall-through and matching", "[cli]")
             // a file path, as passed when double-clicking / `Audionaut foo.audium`
             REQUIRE (cli::performCliCommand (makeArgs ("/tmp/somewhere/foo.audium"), context)
                      == cli::cliCommandNotPerformed);
+        }
+    }
+
+    GIVEN ("an unknown verb reported in --json mode") {
+        nlohmann::json envelope;
+        context.envelopeSink = [&envelope] (const nlohmann::json& e) { envelope = e; };
+
+        THEN ("the standard error envelope names the verb and the known commands") {
+            REQUIRE (cli::failUnknownCommand (makeArgs ("frobnicate foo.audium"), context) == cli::exitUsage);
+            REQUIRE (envelope["ok"] == false);
+            REQUIRE (envelope["error"]["code"] == "unknown_command");
+            const auto message = envelope["error"]["message"].get<std::string>();
+            REQUIRE (message.find ("frobnicate") != std::string::npos);
+            REQUIRE (message.find ("move-clip") != std::string::npos);
+
+            REQUIRE (cli::failUnknownCommand (makeArgs (""), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["code"] == "unknown_command");
         }
     }
 
