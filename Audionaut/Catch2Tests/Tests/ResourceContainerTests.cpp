@@ -3,14 +3,13 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
 SCENARIO("resource container scenario", "[engine][resource][container]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine     = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     
     auto testFilesDirectory = std::string("../../../TestFiles/");
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
@@ -46,10 +45,6 @@ SCENARIO("resource container scenario", "[engine][resource][container]")
         
 
     }
-    
-    engine = nullptr;
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 

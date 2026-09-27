@@ -5,6 +5,7 @@
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "TestEngine.h"
 
 #if !JUCE_WINDOWS
  #include <unistd.h>
@@ -25,9 +26,7 @@ static const auto autosaveTestFilesDirectory = String(CURRENT_SOURCE_DIR) + Stri
 
 SCENARIO("autosave writes a snapshot without touching the project file", "[engine][autosave]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-test.audium/" + ProjectFileStore::projectFileName);
@@ -96,17 +95,11 @@ SCENARIO("autosave writes a snapshot without touching the project file", "[engin
 
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[engine][autosave][orphan]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
     engine->getProjectSerializer()->createNewProject();
 
@@ -165,17 +158,11 @@ SCENARIO("orphaned temp autosaves are found, live sessions are left alone", "[en
     }
 
     orphan.deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("a never-saved project with audio restores from its temp package", "[engine][autosave][orphan][restore]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     const auto audioFile = File(autosaveTestFilesDirectory + "silence-fade.aiff");
@@ -222,17 +209,11 @@ SCENARIO("a never-saved project with audio restores from its temp package", "[en
         if (orphanDir.exists() && orphanDir == ProjectFileStore::tempDirectory)
             store->deleteAutosave();
     }
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("a crash-recovery snapshot restores as a dirty, undoable session", "[engine][autosave][restore][undo]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     auto outProject = File(autosaveTestFilesDirectory + "Sessions/autosave-restore-test.audium/" + ProjectFileStore::projectFileName);
@@ -264,8 +245,4 @@ SCENARIO("a crash-recovery snapshot restores as a dirty, undoable session", "[en
 
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

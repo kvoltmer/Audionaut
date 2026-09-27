@@ -6,6 +6,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -19,9 +20,7 @@ static const auto seamTestFilesDirectory = String(CURRENT_SOURCE_DIR) + String("
 SCENARIO("a project state computed elsewhere applies as one undoable step",
          "[engine][hosted][undo]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
     auto container = engine->getAudioTrackContainer();
 
@@ -71,19 +70,12 @@ SCENARIO("a project state computed elsewhere applies as one undoable step",
 
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("a second engine leaves the session's temp directory alone",
          "[engine][hosted][temp]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     engine->getProjectSerializer()->createNewProject();
 
     const auto sessionTemp = ProjectFileStore::tempDirectory;
@@ -115,8 +107,4 @@ SCENARIO("a second engine leaves the session's temp directory alone",
             REQUIRE_FALSE(sessionTemp.isDirectory());
         }
     }
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

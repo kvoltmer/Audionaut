@@ -9,6 +9,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/AudioSources/VoiceSource.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -16,9 +17,7 @@ static const auto voiceTestFilesDirectory = String(CURRENT_SOURCE_DIR) + String(
 
 SCENARIO("voice sources reach the audio thread only through committed snapshots", "[engine][voice][snapshot]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto tracks = engine->getAudioTrackContainer();
     auto scheduler = engine->getPlayListScheduler();
 
@@ -94,8 +93,4 @@ SCENARIO("voice sources reach the audio thread only through committed snapshots"
             }
         }
     }
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
