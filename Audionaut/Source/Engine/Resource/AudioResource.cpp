@@ -295,10 +295,7 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
         lengthInSeconds = getFileLength(audium::seconds);
 //        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
     }
-    if (! channelMapping->readFromJson(input, rebuild)) {
-        return false;
-    }
-    return true;
+    return channelMapping->readFromJson(input, rebuild);
 }
 
 } // namespace audium
