@@ -18,8 +18,9 @@ public:
     
     /** Asks for a target file and runs the export once the chooser closes.
         Asynchronous: this returns as soon as the chooser is up, before
-        anything is written; the outcome is not reported back. The chooser
-        must outlive the dialog (the callers keep it as a member). */
+        anything is written; the outcome is not reported back to the caller,
+        a failure is shown to the user instead. The chooser must outlive the
+        dialog (the callers keep it as a member). */
     static void exportAudio(std::shared_ptr<juce::FileChooser> chooser,
                             std::shared_ptr<audium::AudiumEngine> audiumEngine,
                             std::shared_ptr<audium::ExportAudioConfig> config,
@@ -52,9 +53,15 @@ public:
                 config->fileName = file;
                 
                 
-                // runs the export with its progress window; false when the
-                // user cancels, which leaves nothing to do here
+                // runs the export with its progress window; a cancel leaves
+                // nothing to do here, anything else that kept the file from
+                // being written is reported
                 exportThread->runThread();
+
+                if (! exportThread->wasSuccessful() && ! config->userCanceled)
+                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                                "Error",
+                                                                "Failed to export " + file.getFullPathName() + "\n\n" + config->error);
 
 #if !defined(AUDIONAUT_HEADLESS)
                 AudiumApplication::getApp().initialSaveDirectory = file.getParentDirectory();

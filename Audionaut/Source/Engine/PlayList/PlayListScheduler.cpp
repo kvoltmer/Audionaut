@@ -579,7 +579,7 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
     return 0.0;
 }
 
-void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
                                            std::shared_ptr<ExportAudioConfig> config,
                                            std::function<void ()> callback)
 {
@@ -626,13 +626,14 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     }
 
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
 
     // leading silence for the pre-file part of a head extension
     buffer.clear();
     auto silenceRemaining = leadingSilenceSamples;
     while (silenceRemaining > 0 && !config->userCanceled) {
         auto numSilence = static_cast<int>(juce::jmin(silenceRemaining, static_cast<int64>(config->blockSize)));
-        writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
+        written &= writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
         samplesWritten += numSilence;
         silenceRemaining -= numSilence;
     }
@@ -647,7 +648,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
             }
         }
     
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -677,16 +678,17 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
                 }
             }
             
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
         jassert(samplesWritten == totalSamples);
     }
-    
+
+    return written;
 }
 
-void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
                                      std::shared_ptr<ExportAudioConfig> config,
                                      std::function<void ()> callback)
 {
@@ -721,6 +723,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     juce::dsp::AudioBlock<float> inBlock (inBuffer);
     
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
     for (auto i = 0; i < iterations; ++i) {
         const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
@@ -731,7 +734,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         process(context, true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -753,7 +756,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
             juce::dsp::ProcessContextReplacing<float> context (outBlock);
             
             process(context, true, positionBeats, info.numSamples);
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
@@ -764,6 +767,8 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
 
     setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
+
+    return written;
 }
 
 std::vector<std::shared_ptr<PlayListItem>> PlayListScheduler::getPlayListItems(bool excludeSelectedItems) const
