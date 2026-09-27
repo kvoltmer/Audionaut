@@ -23,7 +23,7 @@ ClipTransportSource::~ClipTransportSource()
 }
 
 void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSource,
-                                      int readAheadSize, juce::TimeSliceThread* readAheadThread,
+                                      int newReadAheadSize, juce::TimeSliceThread* newReadAheadThread,
                                       double sourceSampleRateToCorrectFor, int newMaxNumChannels)
 {
     isPrepared = false;
@@ -45,9 +45,17 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
     std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
     std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
     std::unique_ptr<StretchAudioSource> oldStretchSource (stretchSource);
+    // the buffer's destructor releases it, which unregisters it from the
+    // read-ahead thread before the cursor behind it can go
+    std::unique_ptr<juce::BufferingAudioSource> oldStandbyBuffering (standbyBuffering);
     standbyResampler = nullptr;
+    standbyBuffering = nullptr;
     standbySource = nullptr;
+    standbyInput = nullptr;
+    standbyKey = -1;
     maxNumChannels = newMaxNumChannels;
+    readAheadSize = newSource != nullptr ? newReadAheadSize : 0;
+    readAheadThread = newSource != nullptr ? newReadAheadThread : nullptr;
     std::unique_ptr<juce::BufferingAudioSource> oldBufferingSource (bufferingSource);
     juce::AudioSource* oldMasterSource = masterSource;
 
@@ -83,19 +91,20 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
             // yet; reading it anyway consumes silence in place of the clip's
             // start. So the node asks first (in its own, device-rate domain)
             // and defers the prime while the buffer catches up. Offline the
-            // probe waits, live it gives the reader a moment at most.
+            // probe waits, live it gives the reader a moment at most. The
+            // probe reads the member: a lane swap makes another buffer the
+            // live one.
             if (newBufferingSource != nullptr)
             {
-                auto* buffering = newBufferingSource;
                 const auto sourceRate = sourceSampleRateToCorrectFor;
                 const auto readAhead = readAheadSize;
 
                 newStretchSource->setInputReadiness (
-                    [this, buffering, sourceRate] (int numDeviceSamples)
+                    [this, sourceRate] (int numDeviceSamples)
                     {
                         const auto sourceSamples = static_cast<int> (std::ceil (numDeviceSamples * sourceRate / sampleRate)) + 64;
                         juce::AudioSourceChannelInfo probe (nullptr, 0, sourceSamples);
-                        return buffering->waitForNextAudioBlockReady (probe, RenderTiming::inputReadinessTimeoutMs());
+                        return bufferingSource->waitForNextAudioBlockReady (probe, RenderTiming::inputReadinessTimeoutMs());
                     },
                     [this, sourceRate, readAhead]
                     {
@@ -135,8 +144,12 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
 void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newStandbySource)
 {
     std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
+    std::unique_ptr<juce::BufferingAudioSource> oldStandbyBuffering (standbyBuffering);
     standbyResampler = nullptr;
+    standbyBuffering = nullptr;
     standbySource = nullptr;
+    standbyInput = nullptr;
+    standbyKey = -1;
 
     if (stretchSource != nullptr)
         stretchSource->setStandbyInput (nullptr);
@@ -144,13 +157,31 @@ void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newSt
     if (oldStandbyResampler != nullptr)
         oldStandbyResampler->releaseResources();
 
-    // a buffered chain reads ahead on another thread; a second cursor on
-    // it would need its own read-ahead, so those keep the in-block prime
-    if (newStandbySource == nullptr || stretchSource == nullptr || bufferingSource != nullptr)
+    if (newStandbySource == nullptr || stretchSource == nullptr)
         return;
 
     newStandbySource->setNextReadPosition (0);
+    standbyInput = newStandbySource;
     standbySource = newStandbySource;
+
+    if (bufferingSource != nullptr)
+    {
+        // a buffered chain reads ahead on the background thread, and a
+        // position jump empties that buffer: the lane gets a read-ahead of
+        // its own, which primeStandby seeks to the upcoming position so
+        // the fill runs over the blocks before the jump. No second
+        // stretcher here - the stretch node keeps its in-block prime, which
+        // then finds its input ready instead of deferring
+        standbySource = standbyBuffering
+            = new juce::BufferingAudioSource (standbyInput, *readAheadThread, false, readAheadSize, maxNumChannels);
+        standbyResampler = new juce::ResamplingAudioSource (standbySource, false, maxNumChannels);
+
+        if (isPrepared)
+            standbyResampler->prepareToPlay (blockSize, sampleRate);
+
+        return;
+    }
+
     standbyResampler = new juce::ResamplingAudioSource (standbySource, false, maxNumChannels);
 
     // prepares the lane too when the chain already is
@@ -173,6 +204,21 @@ void ClipTransportSource::primeStandby (double newPositionSeconds, double ratio,
 
     // the same rounding setPosition applies, so the keys meet at the wrap
     const auto key = toSourceSamples ((juce::int64) std::llround (newPositionSeconds * sampleRate));
+
+    if (standbyBuffering != nullptr)
+    {
+        // a buffered lane: seeking it starts the read-ahead fill on the
+        // background thread, and there is nothing to slice - the blocks
+        // until the jump are the fill's time
+        if (standbyKey != key)
+        {
+            standbyKey = key;
+            standbySource->setNextReadPosition (key);
+            standbyResampler->setResamplingRatio (currentResamplingRatio());
+            standbyResampler->flushBuffers();
+        }
+        return;
+    }
 
     if (! stretchSource->isStandbyPrimingFor (key))
     {
@@ -257,6 +303,25 @@ void ClipTransportSource::setNextReadPosition (juce::int64 newPosition)
             return;
         }
 
+        // a buffered lane seeked to exactly this jump ahead of time takes
+        // over: its read-ahead holds the material, so no buffer runs empty
+        // in this block and nothing waits for the reader. The stretch node
+        // still primes in Stretch mode - from the ready lane
+        if (standbyBuffering != nullptr && standbyKey == newPosition)
+        {
+            std::swap (positionableSource, standbySource);
+            std::swap (bufferingSource, standbyBuffering);
+            std::swap (resamplerSource, standbyResampler);
+            std::swap (source, standbyInput);
+            standbyKey = -1;
+            ++bufferedStandbyAdoptions;
+
+            stretchSource->setInput (resamplerSource);
+            updateSpeedChain();
+            stretchSource->flushBuffers();
+            return;
+        }
+
         positionableSource->setNextReadPosition (newPosition);
 
         if (resamplerSource != nullptr)
@@ -301,6 +366,10 @@ void ClipTransportSource::prepareToPlay (int samplesPerBlockExpected, double new
     if (masterSource != nullptr)
         masterSource->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
+    // the buffered standby lane hangs off no node of the chain
+    if (standbyBuffering != nullptr)
+        standbyResampler->prepareToPlay (samplesPerBlockExpected, sampleRate);
+
     updateSpeedChain();
 
     juce::dsp::ProcessSpec spec;
@@ -317,6 +386,9 @@ void ClipTransportSource::releaseMasterResources()
 
     if (masterSource != nullptr)
         masterSource->releaseResources();
+
+    if (standbyBuffering != nullptr)
+        standbyResampler->releaseResources();
 }
 
 void ClipTransportSource::releaseResources()
@@ -382,15 +454,25 @@ void ClipTransportSource::setStretchMode (StretchMode newMode) noexcept
         updateSpeedChain();
 }
 
+double ClipTransportSource::currentResamplingRatio() const noexcept
+{
+    // In Stretch mode the resampler only corrects the file's sample rate;
+    // the stretch node realises the speed and keeps the pitch.
+    const bool stretching = stretchMode.load() == StretchMode::Stretch;
+
+    if (sourceSampleRate > 0 && sampleRate > 0)
+        return sourceSampleRate * (stretching ? 1.0 : speedRatio.load()) / sampleRate;
+
+    return 1.0;
+}
+
 void ClipTransportSource::updateSpeedChain() noexcept
 {
     const auto speed = speedRatio.load();
     const bool stretching = stretchMode.load() == StretchMode::Stretch;
 
-    // In Stretch mode the resampler only corrects the file's sample rate;
-    // the stretch node realises the speed and keeps the pitch.
     if (resamplerSource != nullptr && sourceSampleRate > 0 && sampleRate > 0)
-        resamplerSource->setResamplingRatio (sourceSampleRate * (stretching ? 1.0 : speed) / sampleRate);
+        resamplerSource->setResamplingRatio (currentResamplingRatio());
 
     if (stretchSource != nullptr)
     {
