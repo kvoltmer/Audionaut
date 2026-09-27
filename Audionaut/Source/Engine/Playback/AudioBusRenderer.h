@@ -81,7 +81,7 @@ public:
                 if (audioChannelData[k].record) {
                     recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(effectiveInput).findMinAndMax().getEnd());
 
-                    if (auto recorder = recording->getAudioRecorder(k)) {
+                    if (auto* recorder = recording->getAudioThreadRecorder(k)) {
                         auto input = inputBlock.getSingleChannelBlock(effectiveInput);
                         auto output = audioBusBlock.getSingleChannelBlock(k);
                         ProcessContextNonReplacing<SampleType> recContext(input, output);
