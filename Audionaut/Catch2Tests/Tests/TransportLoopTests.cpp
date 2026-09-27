@@ -92,6 +92,117 @@ SCENARIO("transport loop scenario", "[engine][transport][loop]")
     juce::MessageManager::deleteInstance();
 }
 
+namespace
+{
+    // Counts the loop notifications the tempo provider broadcasts, in order.
+    struct LoopMessageCounter : public juce::ActionListener
+    {
+        void actionListenerCallback (const juce::String& message) override
+        {
+            if (message == audium::transportLoopEntered)
+                ++entered;
+            else if (message == audium::transportLoopAction)
+                ++wrapped;
+
+            order.add (message);
+        }
+
+        int entered = 0;
+        int wrapped = 0;
+        juce::StringArray order;
+    };
+}
+
+// processLoop() runs on the audio thread; the action messages it used to
+// broadcast directly (a lock plus an allocation per listener) now leave
+// through an AsyncUpdater. This guards the contract the listeners rely on:
+// one message per event, entry before wraps, even when several wraps pile
+// up before the message thread gets to run.
+SCENARIO("loop wrap notifications leave the audio thread", "[engine][transport][loop][realtime]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a TransportLoop with a listener on its tempo provider")
+    {
+        auto tempoProvider = std::make_shared<TempoProvider>(nullptr);
+        auto transportLoop = std::make_unique<audium::TransportLoop>(nullptr,
+                                                                     tempoProvider);
+        LoopMessageCounter counter;
+        tempoProvider->addActionListener(&counter);
+
+        transportLoop->setLoopActive(true);
+        transportLoop->prepareToPlay(512, 44100.0);
+        // loop between 0 and 1
+        transportLoop->setLoopPositionRange(nullptr, {0.0, 1.0}, audium::seconds);
+
+        WHEN("the loop wraps three times before the message thread runs")
+        {
+            auto transportPos = 0.0;
+            auto delta = 0.1; // seconds
+            auto samples = static_cast<int>(44100.0 * delta);
+            auto wraps = 0;
+
+            for (auto i = 0; i < 31; i++) {
+                auto result = transportLoop->processLoop(transportPos, samples, audium::clocks);
+                if (result.loopEvent)
+                    wraps++;
+
+                transportPos += tempoProvider->secondsToClocks(delta);
+            }
+            REQUIRE(wraps == 3);
+
+            THEN("nothing has been delivered synchronously")
+            {
+                REQUIRE(counter.entered == 0);
+                REQUIRE(counter.wrapped == 0);
+            }
+
+            THEN("the message thread delivers every event once, the entry first")
+            {
+                MessageManager::getInstance()->runDispatchLoopUntil(50);
+
+                REQUIRE(counter.entered == 1);
+                REQUIRE(counter.wrapped == 3);
+                REQUIRE(counter.order.size() == 4);
+                REQUIRE(counter.order[0] == String(audium::transportLoopEntered));
+            }
+        }
+
+        WHEN("the loop is left and re-entered across message thread runs")
+        {
+            // enter, wrap, ...
+            auto transportPos = 0.0;
+            auto samples = 4410;
+            for (auto i = 0; i < 11; i++) {
+                transportLoop->processLoop(transportPos, samples, audium::clocks);
+                transportPos += tempoProvider->secondsToClocks(0.1);
+            }
+            MessageManager::getInstance()->runDispatchLoopUntil(50);
+            REQUIRE(counter.entered == 1);
+            REQUIRE(counter.wrapped == 1);
+
+            // ... jump outside the loop, then back in: one more entry, no wrap
+            transportLoop->reset();
+            transportLoop->processLoop(tempoProvider->secondsToClocks(5.0), samples, audium::clocks);
+            transportLoop->processLoop(tempoProvider->secondsToClocks(0.5), samples, audium::clocks);
+            MessageManager::getInstance()->runDispatchLoopUntil(50);
+
+            THEN("each entry is reported once")
+            {
+                REQUIRE(counter.entered == 2);
+                REQUIRE(counter.wrapped == 1);
+            }
+        }
+
+        tempoProvider->removeActionListener(&counter);
+        transportLoop = nullptr;
+    }
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
 static void examineBouncedAudioFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
 {
     AudioFormatManager formatManager;
