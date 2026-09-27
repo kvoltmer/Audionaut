@@ -9,6 +9,7 @@
 
 #include <atomic>
 
+#include "Engine/Core/LockFreeContainer.h"
 #include "Engine/PlayList/LoopData.h"
 #include "Engine/TimeContext.h"
 
@@ -37,6 +38,7 @@ public:
          undoManager(undoManager_),
          tempoProvider(tempoProvider_)
      {
+         publishLoopData();
      }
 
     /**
@@ -83,7 +85,18 @@ public:
      */
     void setLoopActive(bool bActive);
 
-    
+    /**
+     * @brief Gets the loop data as the message thread holds it (persistence).
+     */
+    LoopData getLoopData() const noexcept { return loopData; }
+
+    /**
+     * @brief Replaces the loop data as a whole (project load, undo) and
+     *        publishes it to the audio thread.
+     */
+    void setLoopData(const LoopData& newData);
+
+
     struct LoopResult {
         bool loopEvent          = false;
         double positionResult   = 0.0;
@@ -124,9 +137,16 @@ public:
     
     double getCurrentPosition(audium::TimeContextType context) const noexcept;
 
-    LoopData loopData; ///< Data structure for storing loop-related information.
-    
-    
+    /**
+     * @brief The loop range the last processLoop() applied (audio thread).
+     *
+     * The scheduler reads it in the same block, so it never differs from
+     * the range that block's loop result was computed with; a test uses it
+     * to check that a range change arrives whole.
+     */
+    juce::Range<double> getProcessedLoopPositionRange(audium::TimeContextType context) const;
+
+
     std::function<void()> onLoopEnteredFunction;
     
     std::function<void()> onLoopActionFunction;
@@ -136,6 +156,26 @@ public:
 private:
     std::shared_ptr<juce::UndoManager> undoManager; ///< Undo manager for loop-related operations.
     std::shared_ptr<TempoProvider> tempoProvider; ///< Tempo provider for tempo-based calculations.
+
+    /// The message thread's loop data: what the setters change and the
+    /// getters report. The audio thread never reads it directly - a range
+    /// or the active flag changing between two of its reads in one block
+    /// (loop selection, a range drag, project load, undo) would wrap or
+    /// seek at a place nobody chose. Every change goes out whole through
+    /// the triple buffer instead, and processLoop() pulls the latest
+    /// snapshot once per block into processedLoopData, which is all the
+    /// audio thread uses for that block.
+    LoopData loopData;
+    LockFreeContainer<LoopData> publishedLoopData { 1 };
+    LoopData processedLoopData; ///< Audio thread only.
+
+    /// Message thread: hands the current loopData to the audio thread.
+    void publishLoopData();
+
+    /// Audio thread: takes over the latest published loop data, if any.
+    void pullLoopData();
+
+    juce::Range<double> loopRangeOf(const LoopData& data, audium::TimeContextType context) const;
 
     double externalSampleRate = 44100.0; ///< The external sample rate for playback.
     int loopCount = 0; ///< Counter for the number of loop iterations.

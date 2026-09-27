@@ -299,9 +299,11 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     }
 
     // the loop wrap, if the wrap block will schedule this clip (it is
-    // audible in the wrap block's first block) and nothing comes sooner
+    // audible in the wrap block's first block) and nothing comes sooner.
+    // The range this block's loop result was computed with, not the one
+    // the message thread may be changing right now.
     if (insideLoop && samplesUntilStart < 0) {
-        const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
+        const auto loopStart = transportLoop->getProcessedLoopPositionRange(audium::seconds).getStart();
         if (audible.intersects({loopStart, loopStart + secondsThisBuffer})) {
             samplesUntilStart = loopResult.numSamplesUntilLoopEnd;
             restartAt = loopStart;
