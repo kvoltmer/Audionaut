@@ -585,7 +585,11 @@ bool PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
 {
     jassert(config->playListItem != nullptr);
     jassert((int)config->sampleRate == (int)externalSampleRate);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
     std::cout << "bounce channels: " << config->numChannels << std::endl;
     
@@ -693,7 +697,11 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
                                      std::function<void ()> callback)
 {
     jassert(config->playListItem == nullptr);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);

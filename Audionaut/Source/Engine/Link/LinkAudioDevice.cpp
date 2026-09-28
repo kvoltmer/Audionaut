@@ -31,6 +31,11 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
                                                         int numSamples,
                                                         [[maybe_unused]] const juce::AudioIODeviceCallbackContext& context_)
 {
+    // Fade tails, gain ramps and the stretch/resampling filters decay towards
+    // zero; flush denormals for the whole block so they cannot slow the
+    // callback down (one guard per callback, not per voice).
+    juce::ScopedNoDenormals noDenormals;
+
     dspLoadMeter.begin();
     
     // clear output
