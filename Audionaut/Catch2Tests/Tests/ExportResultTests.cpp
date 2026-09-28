@@ -7,6 +7,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 using namespace audium;
 using namespace juce;
@@ -16,9 +17,6 @@ using namespace juce;
 // the result.
 SCENARIO("export result honesty", "[engine][export]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-
     auto inputFile = generateDcOffsetAudioFile(1.0);
 
     auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-export-tests");
@@ -30,7 +28,7 @@ SCENARIO("export result honesty", "[engine][export]")
     config->sampleRate = 44100.0;
     config->numChannels = 1;
 
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     engine->getProjectFileStore()->open(inputFile, nullptr);
     engine->getPlayListScheduler()->commitPlayListData();
     config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
@@ -119,12 +117,7 @@ SCENARIO("export result honesty", "[engine][export]")
         }
     }
 
-    engine = nullptr;
-
     workDir.deleteRecursively();
     if (inputFile.existsAsFile())
         inputFile.deleteFile();
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }

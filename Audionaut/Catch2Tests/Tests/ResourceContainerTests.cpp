@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Engine/Factory/AudiumFactory.h"
+#include "TestEngine.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Resource/AudioResource.h"
@@ -19,9 +19,7 @@ static const auto resourceTestFile = File(String(CURRENT_SOURCE_DIR) + String("/
 
 SCENARIO("the resource container tracks which track owns each audio resource", "[engine][resource][container]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto resources = engine->getAudioResourceContainer();
     auto tracks = engine->getAudioTrackContainer();
 
@@ -163,16 +161,11 @@ SCENARIO("the resource container tracks which track owns each audio resource", "
 
     tracks = nullptr;
     resources = nullptr;
-    engine = nullptr;
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 SCENARIO("the resource container keeps resources apart by resource group", "[engine][resource][container]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto resources = engine->getAudioResourceContainer();
 
     const auto inFile = resourceTestFile;
@@ -220,7 +213,4 @@ SCENARIO("the resource container keeps resources apart by resource group", "[eng
     }
 
     resources = nullptr;
-    engine = nullptr;
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }

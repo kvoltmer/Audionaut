@@ -6,17 +6,15 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
 SCENARIO("move channels scenario", "[engine][channels]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-
     GIVEN("Load session file")
     {
-        auto engine     = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
     auto store = engine->getProjectFileStore();
         auto sourceSession = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/move-channels.audium"));
         REQUIRE(sourceSession.exists());
@@ -93,12 +91,8 @@ SCENARIO("move channels scenario", "[engine][channels]")
             }
         }
     
-        engine = nullptr;
         fileUnderTest.deleteRecursively();
     }
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 
