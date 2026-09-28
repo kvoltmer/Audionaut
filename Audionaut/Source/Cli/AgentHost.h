@@ -79,15 +79,26 @@ private:
 
     void stop();
 
+    /** @brief Why a verb cannot run right now: an error code for the client
+        and a message for whoever asked. An empty message means it can. */
+    struct Refusal
+    {
+        std::string code;
+        std::string message;
+    };
+
     /**
-     * @brief Why this verb cannot run right now, or empty when it can.
+     * @brief Why this verb cannot run right now, or an empty refusal when it
+     *        can.
      *
      * Message thread. Recording is refused outright - applying a state stops
-     * the take. Export is refused while the transport plays, because the
+     * the take. Everything is refused while the app renders an export or a
+     * stem separation, whose worker thread walks the graph a verb would
+     * rebuild. Export is refused while the transport plays, because the
      * offline-render flag it sets is process-wide and would stretch the live
      * engine's read-ahead timeout underneath the user.
      */
-    std::string refusalFor (const juce::String& verb) const;
+    Refusal refusalFor (const juce::String& verb) const;
 
     std::atomic<bool> busy { false };
 

@@ -302,3 +302,111 @@ SCENARIO("a hosted verb changes the open document, not the project file",
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+// The app's export and stem separation render on a worker thread behind a
+// modal progress window whose loop still serves agents. A verb applied then
+// would rebuild the graph the render is walking, so it waits its turn.
+SCENARIO("a hosted verb waits for the app's render to finish",
+         "[cli][agent][routing][render]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    auto workDir = makeRoutingWorkDirectory();
+    auto package = workDir.getChildFile ("rendering.audium");
+    auto projectJson = package.getChildFile (ProjectFileStore::projectFileName);
+
+    CliContext setup;
+    setup.quiet = true;
+
+    REQUIRE (runCreate (argsFor ("create " + package.getFullPathName()), setup) == exitOk);
+    const auto sourceAudio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/120-funk-1-sec.wav";
+    REQUIRE (runImport (argsFor ("import " + package.getFullPathName() + " " + sourceAudio), setup) == exitOk);
+
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (projectJson, nullptr));
+    auto scheduler = engine->getPlayListScheduler();
+
+    CliContext context;
+    context.quiet = true;
+    context.json = true;
+
+    json envelope;
+    context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
+
+    const auto clipGain = argsFor ("clip-gain " + package.getFullPathName() + " --at 1 --gain 0.5");
+    const auto savedAt = projectJson.getLastModificationTime();
+
+    GIVEN("the app hosting it while an export renders") {
+        agent::AgentHost host (engine, inlineExecutor());
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        // what the app holds from before the export's worker starts until it
+        // has finished
+        auto render = std::make_unique<PlayListScheduler::ScopedOfflineRender> (*scheduler);
+
+        WHEN("an agent sets a clip gain") {
+            auto outcome = agent::routeCommand (clipGain, "clip-gain", agent::isHostableVerb ("clip-gain"), context);
+
+            THEN("it is refused, and neither the document nor the file changed") {
+                REQUIRE (outcome.handled); // refused, NOT sent to the file
+                REQUIRE (outcome.exitCode == exitFailure);
+                REQUIRE_FALSE (envelope.value ("ok", true));
+                REQUIRE (envelope["error"]["code"] == "render_in_progress");
+                REQUIRE_FALSE (engine->getUndoManager()->canUndo());
+                REQUIRE (projectJson.getLastModificationTime() == savedAt);
+
+                AND_THEN("the same verb goes through once the render is over") {
+                    render.reset();
+                    envelope = json();
+
+                    auto retry = agent::routeCommand (clipGain, "clip-gain", agent::isHostableVerb ("clip-gain"), context);
+                    REQUIRE (retry.handled);
+                    REQUIRE (retry.exitCode == exitOk);
+                    REQUIRE (envelope.value ("ok", false));
+                    REQUIRE (engine->getUndoManager()->canUndo());
+                    REQUIRE (projectJson.getLastModificationTime() == savedAt);
+                }
+            }
+        }
+
+        render.reset();
+        host.setProject (juce::File());
+    }
+
+    GIVEN("the app hosting it, with an export started while the verb was in flight") {
+        // The host looks on its first trip to the message thread and applies
+        // on its second; the thread is free in between, so the user can start
+        // an export there.
+        std::unique_ptr<PlayListScheduler::ScopedOfflineRender> render;
+        int trips = 0;
+        agent::AgentHost host (engine, [&] (std::function<void()> task) {
+            if (++trips == 2)
+                render = std::make_unique<PlayListScheduler::ScopedOfflineRender> (*scheduler);
+            task();
+        });
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        WHEN("an agent sets a clip gain") {
+            auto outcome = agent::routeCommand (clipGain, "clip-gain", agent::isHostableVerb ("clip-gain"), context);
+
+            THEN("the second look refuses it, and nothing was applied") {
+                REQUIRE (trips == 2);
+                REQUIRE (outcome.handled);
+                REQUIRE (outcome.exitCode == exitFailure);
+                REQUIRE (envelope["error"]["code"] == "render_in_progress");
+                REQUIRE_FALSE (engine->getUndoManager()->canUndo());
+            }
+        }
+
+        render.reset();
+        host.setProject (juce::File());
+    }
+
+    engine = nullptr;
+    workDir.deleteRecursively();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}

@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 namespace audium {
 
@@ -53,6 +54,13 @@ public:
                 config->fileName = file;
                 
                 
+                // Flagged from here, on the message thread, not only from the
+                // worker: the progress window's modal loop keeps dispatching
+                // the project monitor and agent requests, and a reload that
+                // landed before the worker got going would rebuild the graph
+                // it is about to walk.
+                const audium::PlayListScheduler::ScopedOfflineRender offlineRender (*audiumEngine->getPlayListScheduler());
+
                 // runs the export with its progress window; a cancel leaves
                 // nothing to do here, anything else that kept the file from
                 // being written is reported

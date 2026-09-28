@@ -1029,6 +1029,12 @@ SCENARIO ("cli rejects out-of-range numeric options", "[cli][validation]")
                                "--position");
             requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position=abc"), context),
                                "--position");
+            requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position 1e"), context),
+                               "--position");
+            requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position --1"), context),
+                               "--position");
+            requireUsageError (cli::runImport (makeArgs ("import " + projectArg + file + " --position +."), context),
+                               "--position");
         }
 
         WHEN ("export gets a negative --start or a non-positive --length") {
