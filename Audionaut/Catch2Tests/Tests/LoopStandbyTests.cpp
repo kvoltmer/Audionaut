@@ -24,6 +24,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
 #include "TestUtils.h"
 
@@ -783,6 +784,61 @@ SCENARIO ("a looped clip behind a read-ahead buffer wraps through a pre-filled l
                 }
             }
         }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a buffered voice that outlives its engine keeps the read-ahead thread", "[engine][loop][standby][buffered][lifetime]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    // A voice retired while a Voice still renders it - a bounce ends in a
+    // fade-out stop that no further callback drains - is released only when
+    // the VoiceSourceContainer goes, and the AudioResourceContainer co-owns
+    // that container: the voice can be the last object of an engine to go.
+    // Its read-ahead buffers unregister from the read-ahead thread on the
+    // way out, so the thread must still be there. Unregistering from a
+    // destroyed TimeSliceThread faults on Windows (a deleted critical
+    // section) and is silent luck elsewhere, hence the voice co-owns the
+    // thread. A held voice stands in for the retired one here.
+    auto testFile = createSlowSawFlacFile();
+    REQUIRE (testFile.existsAsFile());
+
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+    auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+    REQUIRE (item != nullptr);
+
+    auto resources = item->getRegion()->getAudioResources();
+    REQUIRE_FALSE (resources.empty());
+    auto voices = engine->getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+    REQUIRE (voices.size() == 1);
+    auto voice = voices.front();
+    REQUIRE (voice->hasBufferedStandby());     // reads through a read-ahead buffer
+
+    std::weak_ptr<juce::TimeSliceThread> readAheadThread = engine->getAudioResourceContainer()->getReadAheadThread();
+    REQUIRE_FALSE (readAheadThread.expired());
+
+    // the engine goes while the voice is still held
+    voices.clear();
+    resources.clear();
+    item = nullptr;
+    engine = nullptr;
+
+    THEN ("the thread lives, and runs, for as long as the voice does")
+    {
+        {
+            auto thread = readAheadThread.lock();
+            REQUIRE (thread != nullptr);
+            REQUIRE (thread->isThreadRunning());
+        }
+
+        voice = nullptr;
+        REQUIRE (readAheadThread.expired());
     }
 
     testFile.deleteFile();

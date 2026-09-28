@@ -23,16 +23,14 @@ clipTransportSource(std::make_shared<ClipTransportSource>())
 
     // memory-mapped readers need neither buffering nor a read-ahead thread
     auto readAheadBufferSize = 48000;
-    auto readAheadThread = audioResource.getContainer().getReadAheadThread();
     if (dynamic_cast<const MemoryMappedAudioFormatReader*>(reader) != nullptr)
-    {
         readAheadBufferSize = 0;
-        readAheadThread = nullptr;
-    }
+    else
+        readAheadThread = audioResource.getContainer().getReadAheadThread();
 
     clipTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
-                                     readAheadThread,
+                                     readAheadThread.get(),
                                      reader->sampleRate,
                                      static_cast<int>(reader->numChannels));
 

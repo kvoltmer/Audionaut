@@ -191,6 +191,7 @@ private:
 
     AudioResource& audioResource; ///< Reference to the associated audio resource.
     std::shared_ptr<juce::AudioFormatReader> audioFormatReader; ///< Co-owns the resource's reader: a retired voice's read-ahead may still be reading it on the background thread after the resource is gone.
+    std::shared_ptr<juce::TimeSliceThread> readAheadThread; ///< Co-owns that thread too (buffered readers only): the read-ahead buffers unregister from it when the transport below goes, and a retired voice can outlive the resource container that started it.
     std::atomic<int> scheduledStartSample   = 0; ///< The sample position for a scheduled position change.
     std::atomic<double> scheduledPosition   = 0.0; ///< The scheduled playback position in seconds.
     std::atomic<bool> reScheduled           = false; /// Helper to indicate if position is re-scheduled (loop)
