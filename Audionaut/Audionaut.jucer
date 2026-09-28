@@ -179,6 +179,10 @@
                 file="Source/Engine/AudioSources/StretchAudioSource.h"/>
           <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.h"/>
+          <FILE id="CrsSr1" name="ClipResamplingSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/ClipResamplingSource.cpp"/>
+          <FILE id="CrsSr2" name="ClipResamplingSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipResamplingSource.h"/>
           <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/ClipFadeSpec.cpp"/>
           <FILE id="Cfs9Qb" name="ClipFadeSpec.h" compile="0" resource="0" file="Source/Engine/AudioSources/ClipFadeSpec.h"/>
