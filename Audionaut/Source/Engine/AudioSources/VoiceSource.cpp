@@ -15,6 +15,7 @@ namespace audium {
 VoiceSource::VoiceSource(AudioResource& audioResource_,
                                              std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
 audioResource(audioResource_),
+audioFormatReader(audioResource_.audioFormatReader),
 audioFormatReaderSource(std::move(audioFormatReaderSource_)),
 clipTransportSource(std::make_shared<ClipTransportSource>())
 {
@@ -35,14 +36,13 @@ clipTransportSource(std::make_shared<ClipTransportSource>())
                                      reader->sampleRate,
                                      static_cast<int>(reader->numChannels));
 
-    // a memory-mapped reader is stateless per read, so a second cursor on
-    // it costs nothing: the transport's standby lane primes loop wraps
-    // of stretched clips ahead of time
-    if (readAheadBufferSize == 0)
-    {
-        standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
-        clipTransportSource->setStandbySource(standbyReaderSource.get());
-    }
+    // a second cursor on the reader for the transport's standby lane, which
+    // takes a known jump - the loop wrap, a clip start - ahead of time: on a
+    // memory-mapped reader (stateless per read, so the cursor costs nothing)
+    // it primes the stretcher; on a buffered reader it fills a second
+    // read-ahead. Both cursors read on the read-ahead thread only
+    standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
+    clipTransportSource->setStandbySource(standbyReaderSource.get());
 
     channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(clipTransportSource.get(), false);
 }
@@ -52,12 +52,21 @@ void VoiceSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
     channelRemapping->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
+void VoiceSource::waitForReadAhead (const juce::AudioSourceChannelInfo& info)
+{
+    // A buffered chain plays silence for whatever its read-ahead does not
+    // hold yet. Known jumps arrive through a lane filled ahead of time and
+    // pass here at once; an unplanned one (a user seek, an edit restart)
+    // gets the reader a moment - live the same bounded moment for every
+    // buffered voice, offline as long as it takes, see RenderTiming.
+    if (auto* buffering = clipTransportSource->getBufferingSource())
+        if (! buffering->waitForNextAudioBlockReady(info, RenderTiming::inputReadinessTimeoutMs()))
+            DBG("VoiceSource: buffering source not ready");
+}
+
 void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (clipTransportSource->getBufferingSource() != nullptr &&
-        clipTransportSource->getBufferingSource()->waitForNextAudioBlockReady(info, RenderTiming::inputReadinessTimeoutMs()) == false) {
-        DBG("VoiceSource: buffering source not ready");
-    }
+    waitForReadAhead(info);
 
     const auto startSample = scheduledStartSample.load();
 
@@ -102,8 +111,9 @@ void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
 
         clipTransportSource->setPosition(scheduledPosition.load());
 
-        // process 2nd part
+        // process 2nd part - from the read-ahead the jump landed in
         AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
+        waitForReadAhead(infoPart2);
         channelRemapping->getNextAudioBlock(infoPart2);
 
         auto offset = 0;

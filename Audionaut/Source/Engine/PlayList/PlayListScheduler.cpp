@@ -264,10 +264,14 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     // block. Both are known ahead, so over the last quarter second before
     // the nearer one the voice primes a standby lane for the exact restart
     // position, one slice per block, and the block itself only swaps lanes.
+    // A voice reading through a read-ahead buffer (no memory-mapped
+    // reader: FLAC, MP3) has the same problem in either mode - the jump
+    // empties its buffer and the block waits for the reader - and gets its
+    // lane pre-seeked the same way.
     if (! standbyPrimingEnabled.load() || loopResult.loopEvent)
         return;
 
-    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch)
+    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
         return;
 
     const auto audible = dspClip.getAudibleRange(audium::seconds);
@@ -423,9 +427,6 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (const auto& clipData : track->getDspClipVector()) {
-            if (clipData.clipStretchMode != StretchMode::Stretch)
-                continue;
-
             const audium::DspClip dspClip(*tempoProvider, clipData);
             if (dspClip.getRegionData(audium::seconds).isEmpty()
                 || ! dspClip.getAudibleRange(audium::seconds).intersects(firstBlock))
@@ -433,6 +434,11 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
             auto* voiceSource = voiceSourceContainer->getOwnedVoiceSourceAtIndex(clipData.voiceSourceIndex);
             if (voiceSource == nullptr)
+                continue;
+
+            // stretched voices, and buffered ones in either mode (see
+            // primeStandbyForUpcomingStart)
+            if (clipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
                 continue;
 
             const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
