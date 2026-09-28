@@ -7,11 +7,8 @@
 
 #include <JuceHeader.h>
 
-// Make sure to define this before <cmath> is included for Windows
-#define _USE_MATH_DEFINES
-#include <ableton/Link.hpp>
-#include <ableton/link/HostTimeFilter.hpp>
 #include "LinkEngine.hpp"
+#include <ableton/link/HostTimeFilter.hpp>
 #include "Engine/Core/DspLoadMeter.h"
 
 namespace audium {
