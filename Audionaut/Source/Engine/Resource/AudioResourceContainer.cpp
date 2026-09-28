@@ -115,38 +115,38 @@ bool AudioResourceContainer::isAudioFileCurrentlyLoaded(const juce::File audioFi
     return false;
 }
 
-bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirectory,
-                                                  const juce::File destinationDirectory)
+bool AudioResourceContainer::copyAudioFiles(const juce::File sourceDirectory,
+                                            const juce::File destinationDirectory,
+                                            juce::Array<juce::File>& copiedFiles)
 {
     juce::String debugString;
     if (sourceDirectory != destinationDirectory) {
-            
+
         if (!destinationDirectory.exists()) {
             if (!destinationDirectory.createDirectory())
                 return false;
         }
         for (auto& found : sourceDirectory.findChildFiles (File::findFiles, false, "*")) {
-            
+
             if (!isAudioFileCurrentlyLoaded(found)) {
                 std::cout << "SKIP : " << found.getFileName() << std::endl;
                 continue;
             }
-            
+
             auto destinationFile = File(destinationDirectory.getFullPathName() + File::getSeparatorString() + found.getFileName());
             if (!destinationFile.existsAsFile()) {
-                
-                if (found.isAChildOf(File::getSpecialLocation(File::tempDirectory))) {
-                    if (!found.moveFileTo(destinationFile))
-                        return false;
-                    debugString += "moved to: " + destinationFile.getFileName() + "\n";
+
+                // always copy, never move: the source stays intact until the
+                // caller has committed the save, and a failure part-way can
+                // be rolled back by deleting `copiedFiles`
+                if (!found.copyFileTo(destinationFile)) {
+                    destinationFile.deleteFile(); // a partial copy
+                    return false;
                 }
-                else {
-                    if (!found.copyFileTo(destinationFile))
-                        return false;
-                    debugString += "copied to: " + destinationFile.getFileName() + "\n";
-                }
+                copiedFiles.add(destinationFile);
+                debugString += "copied to: " + destinationFile.getFileName() + "\n";
             }
-        }        
+        }
     }
 #if _DEBUG
     if (debugString.isNotEmpty() && ! HeadlessMode::isHeadless()) {
@@ -154,7 +154,7 @@ bool AudioResourceContainer::copyOrMoveAudioFiles(const juce::File sourceDirecto
         auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
         messageString += debugString;
         NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                              "copyOrMoveAudioFiles",
+                                              "copyAudioFiles",
                                               messageString);
     }
 #endif

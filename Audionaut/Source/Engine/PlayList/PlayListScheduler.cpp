@@ -264,10 +264,14 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     // block. Both are known ahead, so over the last quarter second before
     // the nearer one the voice primes a standby lane for the exact restart
     // position, one slice per block, and the block itself only swaps lanes.
+    // A voice reading through a read-ahead buffer (no memory-mapped
+    // reader: FLAC, MP3) has the same problem in either mode - the jump
+    // empties its buffer and the block waits for the reader - and gets its
+    // lane pre-seeked the same way.
     if (! standbyPrimingEnabled.load() || loopResult.loopEvent)
         return;
 
-    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch)
+    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
         return;
 
     const auto audible = dspClip.getAudibleRange(audium::seconds);
@@ -423,9 +427,6 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (const auto& clipData : track->getDspClipVector()) {
-            if (clipData.clipStretchMode != StretchMode::Stretch)
-                continue;
-
             const audium::DspClip dspClip(*tempoProvider, clipData);
             if (dspClip.getRegionData(audium::seconds).isEmpty()
                 || ! dspClip.getAudibleRange(audium::seconds).intersects(firstBlock))
@@ -433,6 +434,11 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
             auto* voiceSource = voiceSourceContainer->getOwnedVoiceSourceAtIndex(clipData.voiceSourceIndex);
             if (voiceSource == nullptr)
+                continue;
+
+            // stretched voices, and buffered ones in either mode (see
+            // primeStandbyForUpcomingStart)
+            if (clipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
                 continue;
 
             const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
@@ -579,13 +585,17 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
     return 0.0;
 }
 
-void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
                                            std::shared_ptr<ExportAudioConfig> config,
                                            std::function<void ()> callback)
 {
     jassert(config->playListItem != nullptr);
     jassert((int)config->sampleRate == (int)externalSampleRate);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
     std::cout << "bounce channels: " << config->numChannels << std::endl;
     
@@ -626,13 +636,14 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     }
 
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
 
     // leading silence for the pre-file part of a head extension
     buffer.clear();
     auto silenceRemaining = leadingSilenceSamples;
     while (silenceRemaining > 0 && !config->userCanceled) {
         auto numSilence = static_cast<int>(juce::jmin(silenceRemaining, static_cast<int64>(config->blockSize)));
-        writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
+        written &= writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
         samplesWritten += numSilence;
         silenceRemaining -= numSilence;
     }
@@ -647,7 +658,7 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
             }
         }
     
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -677,21 +688,26 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
                 }
             }
             
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
         jassert(samplesWritten == totalSamples);
     }
-    
+
+    return written;
 }
 
-void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
                                      std::shared_ptr<ExportAudioConfig> config,
                                      std::function<void ()> callback)
 {
     jassert(config->playListItem == nullptr);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
@@ -721,6 +737,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     juce::dsp::AudioBlock<float> inBlock (inBuffer);
     
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
     for (auto i = 0; i < iterations; ++i) {
         const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
@@ -731,7 +748,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         process(context, true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -753,7 +770,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
             juce::dsp::ProcessContextReplacing<float> context (outBlock);
             
             process(context, true, positionBeats, info.numSamples);
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
@@ -764,6 +781,8 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
 
     setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
+
+    return written;
 }
 
 std::vector<std::shared_ptr<PlayListItem>> PlayListScheduler::getPlayListItems(bool excludeSelectedItems) const

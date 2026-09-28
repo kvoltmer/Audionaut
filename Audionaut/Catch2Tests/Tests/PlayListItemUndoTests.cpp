@@ -17,6 +17,7 @@
 #include "Engine/Undo/UndoablePlayListItemAction.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 // A clip drag (move, trim, stretch) records a clip-only undo step. The old
 // container snapshot replayed the whole project on every drop, and each
@@ -30,10 +31,8 @@ SCENARIO("clip drags undo without rebuilding the clips", "[engine][undo][playlis
     GIVEN("a project with one clip on one track")
     {
         // the change message the undo step posts to the scheduler needs a
-        // message manager to queue it (each pass deletes it at the end)
-        MessageManager::getInstance();
-
-        auto engine = AudiumFactory::createAudiumEngine();
+        // message manager to queue it; the fixture brings one up per pass
+        TestEngine engine;
         const auto audioFile = createSlowSawTwoSecondsAudioFile();
         REQUIRE(audioFile.existsAsFile());
         REQUIRE(engine->getProjectFileStore()->open(audioFile, nullptr));
@@ -247,10 +246,5 @@ SCENARIO("clip drags undo without rebuilding the clips", "[engine][undo][playlis
                 REQUIRE(undoManager->canUndo() == undoableBefore);
             }
         }
-
-        engine = nullptr;
     }
-
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

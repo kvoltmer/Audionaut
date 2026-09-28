@@ -5,6 +5,10 @@
 
 #include "Cli/Commands/Commands.h"
 
+#include <cerrno>
+#include <cmath>
+#include <cstdlib>
+
 #include "Engine/AudiumEngine.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -67,6 +71,41 @@ bool parseMusicalDuration (const juce::String& value,
 
     if (outClocks <= 0.0) {
         error = "duration must be positive";
+        return false;
+    }
+
+    return true;
+}
+
+bool parseNumericOption (const juce::String& option,
+                         const juce::String& value,
+                         double minimum,
+                         bool exclusive,
+                         double& outValue,
+                         std::string& error)
+{
+    // getDoubleValue() reads "abc" (or a bare "--start" with no value) as 0,
+    // which would pass for a legitimate zero
+    const auto text = value.trim();
+    if (text.isEmpty()) {
+        error = option.toStdString() + " must be a number";
+        return false;
+    }
+
+    errno = 0;
+    char* parseEnd = nullptr;
+    outValue = std::strtod (text.toRawUTF8(), &parseEnd);
+
+    if (parseEnd == text.toRawUTF8() || *parseEnd != '\0' || errno == ERANGE) {
+        error = option.toStdString() + " must be a number";
+        return false;
+    }
+
+    if (! std::isfinite (outValue) || (exclusive ? outValue <= minimum : outValue < minimum)) {
+        error = option.toStdString()
+                + (minimum == 0.0 ? (exclusive ? " must be positive" : " must not be negative")
+                                  : (exclusive ? " must be greater than " : " must be at least ")
+                                        + juce::String (minimum).toStdString());
         return false;
     }
 

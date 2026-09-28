@@ -55,7 +55,17 @@ bool ProjectSerializer::readFromJson (json& input, bool rebuild)
 {
     auto jsonAudium = input["audium"];
 
-    cleanup(); // clear everything
+    // The teardown is as destructive as the rebuild below: bypass the audio
+    // callback before the current graph goes, not only before the new one
+    // is built (released after the rebuild, or on a throw).
+    linkAudioDevice->setBypass(true);
+    try {
+        cleanup(); // clear everything
+    }
+    catch (...) {
+        linkAudioDevice->setBypass(false);
+        throw;
+    }
 
     const auto tempo = jsonAudium["tempo"].template get<double>();
     if (jsonAudium.contains("file_version"))
@@ -136,8 +146,12 @@ bool ProjectSerializer::applyProjectJson (json& input, bool preserveUiState)
 
     // The UI/scheduler broadcasts normally happen in
     // AudioTrackContainer::readFromStream; applying JSON directly must
-    // publish them here.
-    audioTrackContainer->sendActionMessage(rebuildAll);
+    // publish them here. Only a read that replaced tracks or channels needs
+    // the UI rebuilt: a refresh keeps the arrangement's clip views and their
+    // waveform thumbnails alive, so an agent edit no longer redraws every
+    // clip from scratch.
+    audioTrackContainer->sendActionMessage(audioTrackContainer->didLastReadRebuildStructure() ? rebuildAll
+                                                                                              : updateAll);
     audioTrackContainer->sendChangeMessage();
 
     return true;

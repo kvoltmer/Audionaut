@@ -6,6 +6,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -13,9 +14,7 @@ auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
 
 SCENARIO("create new session, load audio file and save", "[engine][load][save]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine     = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
         
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
@@ -45,18 +44,12 @@ SCENARIO("create new session, load audio file and save", "[engine][load][save]")
     
     // cleanup ... comment out in case you need to isolate an issue
     outProjectFile.getParentDirectory().deleteRecursively();
-    
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 
 SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
     
     
@@ -81,17 +74,11 @@ SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-    
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("view state is persisted with the project", "[engine][load][save][ui_state]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + ProjectFileStore::projectFileName);
@@ -126,17 +113,11 @@ SCENARIO("view state is persisted with the project", "[engine][load][save][ui_st
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("load project and save", "[engine][load][save][new]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
     
     
@@ -160,17 +141,11 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][load][save][clip][volume]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     auto sourceSession = File(testFilesDirectory + "Sessions/move-channels.audium");
@@ -214,9 +189,5 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
     fileUnderTest.deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 

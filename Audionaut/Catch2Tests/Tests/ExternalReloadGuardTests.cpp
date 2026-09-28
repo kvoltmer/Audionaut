@@ -4,6 +4,7 @@
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -19,9 +20,7 @@ static void stampRelativeTo(const File& file, const File& reference, int seconds
 SCENARIO("an external write is only held back when it would discard unsaved edits",
          "[engine][autosave][reload]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
 
     auto outProject = File(guardTestFilesDirectory + "Sessions/reload-guard-test.audium/"
@@ -61,8 +60,4 @@ SCENARIO("an external write is only held back when it would discard unsaved edit
 
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

@@ -105,9 +105,15 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         context.preferences = &getPreferences(); // consent-gated CLI analytics
 
         const auto exitCode = cli::performCliCommand (args, context);
-        if (exitCode != cli::cliCommandNotPerformed)
+        // --json is only ever passed by a CLI caller expecting one envelope
+        // on stdout; an unknown verb there must not start the GUI instead.
+        const auto result = (exitCode == cli::cliCommandNotPerformed && context.json)
+                                ? cli::failUnknownCommand (args, context)
+                                : exitCode;
+
+        if (result != cli::cliCommandNotPerformed)
         {
-            setApplicationReturnValue (exitCode);
+            setApplicationReturnValue (result);
             quit();
             return; // no window, splash, engine or analytics were created
         }
@@ -385,7 +391,14 @@ void AudiumApplication::startAgentHost()
     agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
 
     agentHost->onProjectMutated = [this] {
-        updateUI();
+        // A plain refresh, not rebuildUI(): the forced rebuild tore down the
+        // whole middle panel after every agent edit, so each clip view was
+        // recreated and reloaded its waveform thumbnail - the arrangement
+        // visibly redrew from scratch per edit. Edits that change the track
+        // list still rebuild, because the engine broadcasts rebuildAll for
+        // those on its own.
+        if (auto comp = getMainComponent())
+            comp->updateUI();
         refreshWindowTitle(); // now carries the agent marker
     };
 
@@ -1045,16 +1058,15 @@ void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToO
     }
 }
 
-const File createProjectDirectory(const File &inFile)
+// foo -> foo.audium/Project.json; the package directory itself is created by
+// the save, which also removes it again should the save fail
+const File projectFileForPackage(const File &inFile)
 {
     auto projectDir =   inFile.getParentDirectory().getFullPathName() +
                         File::getSeparatorString() +
                         inFile.getFileNameWithoutExtension() +
                         audium::ProjectFileStore::projectFileExtension;
-    
-    if (!File(projectDir).exists()) {
-        File(projectDir).createDirectory();
-    }
+
     return File(projectDir + File::getSeparatorString() + audium::ProjectFileStore::projectFileName);
 }
 
@@ -1101,7 +1113,7 @@ bool AudiumApplication::saveProjectAs()
             if (file.existsAsFile())
                 return saveProjectToFile(file);
             else
-                return saveProjectToFile(createProjectDirectory(file));
+                return saveProjectToFile(projectFileForPackage(file));
         }
         return false;
     });

@@ -15,6 +15,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 // Mixer parameters (gain, pan, mute, solo, monitor) record a channel-only
 // undo step. The old container snapshot replayed the whole track on every
@@ -27,7 +28,7 @@ SCENARIO("channel mixer parameters undo without rebuilding the track", "[engine]
 {
     GIVEN("a project with one clip on one track")
     {
-        auto engine = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
         const auto audioFile = createSlowSawTwoSecondsAudioFile();
         REQUIRE(audioFile.existsAsFile());
         REQUIRE(engine->getProjectFileStore()->open(audioFile, nullptr));
@@ -136,10 +137,5 @@ SCENARIO("channel mixer parameters undo without rebuilding the track", "[engine]
                 REQUIRE(undoManager->canUndo() == undoableBefore);
             }
         }
-
-        engine = nullptr;
     }
-
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

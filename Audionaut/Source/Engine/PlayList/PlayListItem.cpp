@@ -54,9 +54,12 @@ void PlayListItem::createTransportSources()
 
 void PlayListItem::deinit()
 {
-    for (auto voiceSource : voiceSources) {
-        audioRegion->getAudioTrack()->getVoiceSourceContainer()->removeVoiceSource(voiceSource);
+    if (audioRegion != nullptr) {
+        for (auto voiceSource : voiceSources) {
+            audioRegion->getAudioTrack()->getVoiceSourceContainer()->removeVoiceSource(voiceSource);
+        }
     }
+    jassert(audioRegion != nullptr || voiceSources.empty());
     voiceSources.clear();
 }
 
@@ -219,54 +222,65 @@ bool PlayListItem::readFromJson (json& input, bool rebuild)
         resourceGroupId = input["resource_group_id"].template get<int>();
     }
     
+    // release the voice sources while the region they were registered with
+    // is still known: undo replays JSON into reused item objects, and the
+    // region lookup below may yield a different one - or none at all
+    deinit();
+
     if (owner.getAudioTrack().resourceGroupContainer->objectExistsAtIndex(resourceGroupId)) {
         
         auto resourceGroup = owner.getAudioTrack().resourceGroupContainer->getObjects()[resourceGroupId];
-        auto regionId = input["region_id"].template get<int>();
+        auto regionId = input.contains("region_id") ? input["region_id"].template get<int>() : -1;
         audioRegion = resourceGroup->getAudioRegionContainer()->getRegion(regionId);
-        if (audioRegion != nullptr) {
-            
-            init();
-            
-            // reset first: undo replays JSON into reused item objects, and
-            // an absent key must mean "no speed set", not "keep the old one"
-            speedRatio = 1.0;
-            if (input.contains("speed_ratio"))
-                speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio,
-                                          input.at("speed_ratio").get<double>());
-
-            stretchMode = StretchMode::RePitch;
-            if (input.contains("stretch_mode"))
-                stretchMode = input.at("stretch_mode").get<int>() == 1
-                                  ? StretchMode::Stretch : StretchMode::RePitch;
-
-            tempoLocked = false;
-            if (input.contains("tempo_locked"))
-                tempoLocked = input.at("tempo_locked").get<bool>();
-
-            clipTempo = 0.0;
-            if (input.contains("clip_tempo"))
-                clipTempo = ClipSpeed::clampClipTempo(input.at("clip_tempo").get<double>());
-
-            if (input.contains("position_clocks"))
-                absolutePositionClocks = input.at("position_clocks").get<double>();
-            
-            if (input.contains("selected"))
-                setSelected(input.at("selected").get<bool>());
-            
-            if (input.contains("track_id")) {
-                auto track_id = input.at("track_id").get<int>();
-                if (track_id != getRegion()->getAudioTrack()->getId()) {
-                    std::cout << "warning: track_id: " << track_id << " != " <<
-                    getRegion()->getAudioTrack()->getId() << std::endl;
-                }
-            }
-            
-            dynamics.readFromJson(input);
+        if (audioRegion == nullptr) {
+            // dangling region reference (hand-edited file or an older bug):
+            // report failure so the container drops this item
+            DBG("PlayListItem: region_id " << regionId << " not found in resource group " << resourceGroupId);
+            return false;
         }
+        
+        init();
+        
+        // reset first: undo replays JSON into reused item objects, and
+        // an absent key must mean "no speed set", not "keep the old one"
+        speedRatio = 1.0;
+        if (input.contains("speed_ratio"))
+            speedRatio = juce::jlimit(minSpeedRatio, maxSpeedRatio,
+                                      input.at("speed_ratio").get<double>());
+
+        stretchMode = StretchMode::RePitch;
+        if (input.contains("stretch_mode"))
+            stretchMode = input.at("stretch_mode").get<int>() == 1
+                              ? StretchMode::Stretch : StretchMode::RePitch;
+
+        tempoLocked = false;
+        if (input.contains("tempo_locked"))
+            tempoLocked = input.at("tempo_locked").get<bool>();
+
+        clipTempo = 0.0;
+        if (input.contains("clip_tempo"))
+            clipTempo = ClipSpeed::clampClipTempo(input.at("clip_tempo").get<double>());
+
+        if (input.contains("position_clocks"))
+            absolutePositionClocks = input.at("position_clocks").get<double>();
+        
+        if (input.contains("selected"))
+            setSelected(input.at("selected").get<bool>());
+        
+        if (input.contains("track_id")) {
+            auto track_id = input.at("track_id").get<int>();
+            if (track_id != getRegion()->getAudioTrack()->getId()) {
+                std::cout << "warning: track_id: " << track_id << " != " <<
+                getRegion()->getAudioTrack()->getId() << std::endl;
+            }
+        }
+        
+        dynamics.readFromJson(input);
         return true;
     }
     
+    DBG("PlayListItem: resource group " << resourceGroupId << " not found");
+    audioRegion = nullptr;
     return false;
 }
 

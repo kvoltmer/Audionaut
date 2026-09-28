@@ -144,6 +144,11 @@ public:
      *        the analysis sidecar as needed. Clears undo history and any
      *        crash-recovery snapshots (including the previous package's after
      *        a Save As).
+     *
+     * A save is all-or-nothing: on failure the callback gets the reason,
+     * false is returned, the session still points at its previous package
+     * (whose audio is never moved, only copied), and whatever was created in
+     * the target package is removed again.
      */
     bool save(const juce::File& file, std::function<void(std::string)> callback);
 
