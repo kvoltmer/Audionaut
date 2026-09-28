@@ -179,6 +179,10 @@
                 file="Source/Engine/AudioSources/StretchAudioSource.h"/>
           <FILE id="tyX7Fa" name="ClipTransportSource.h" compile="0" resource="0"
                 file="Source/Engine/AudioSources/ClipTransportSource.h"/>
+          <FILE id="CrsSr1" name="ClipResamplingSource.cpp" compile="1" resource="0"
+                file="Source/Engine/AudioSources/ClipResamplingSource.cpp"/>
+          <FILE id="CrsSr2" name="ClipResamplingSource.h" compile="0" resource="0"
+                file="Source/Engine/AudioSources/ClipResamplingSource.h"/>
           <FILE id="Cfs9Qa" name="ClipFadeSpec.cpp" compile="1" resource="0"
                 file="Source/Engine/AudioSources/ClipFadeSpec.cpp"/>
           <FILE id="Cfs9Qb" name="ClipFadeSpec.h" compile="0" resource="0" file="Source/Engine/AudioSources/ClipFadeSpec.h"/>
@@ -755,7 +759,7 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
+    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;_WIN32_WINNT=0x0A00&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
             smallIcon="qhU3Rr" bigIcon="gdiYPG" externalLibraries="essentia.lib&#10;fftw3f.lib&#10;samplerate.lib&#10;yaml.lib&#10;avformat.lib&#10;avcodec.lib&#10;avutil.lib&#10;swresample.lib&#10;ws2_32.lib&#10;secur32.lib&#10;crypt32.lib&#10;ncrypt.lib&#10;bcrypt.lib&#10;mfplat.lib&#10;mfuuid.lib&#10;strmiids.lib">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include"

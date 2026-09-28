@@ -171,6 +171,7 @@
 		E5BC37445419CCDC9A21E3AB /* include_juce_audio_devices.mm */ = {isa = PBXBuildFile; fileRef = 5344BD32D0ED9D07F10C2309; };
 		E5BE69FA0C3547470215E2AF /* TransportLoop.cpp */ = {isa = PBXBuildFile; fileRef = 1C5AA2629EC03E71756CAB35; };
 		E87150D55EDDC15D2008AAED /* ExportCommand.cpp */ = {isa = PBXBuildFile; fileRef = B1108AE2F7A7065B86A042BC; };
+		E872BA91B1125203F73347C1 /* ClipResamplingSource.cpp */ = {isa = PBXBuildFile; fileRef = 35225423BD16EBF5A5693C1F; };
 		E87B67A6D7DDC0765008F70B /* include_juce_graphics.mm */ = {isa = PBXBuildFile; fileRef = 7E08ED9600CBA2E3D9B1D88F; };
 		E920083CC268F888B5B80BF2 /* DraggerControl.cpp */ = {isa = PBXBuildFile; fileRef = 72EF955B126DC0797C0BA924; };
 		E9EB3C5D6E72B5E2028AADF8 /* App */ = {isa = PBXBuildFile; fileRef = 65EE5B24CA6AA1915694E01E; };
@@ -268,6 +269,7 @@
 		341676772FE8252699B984A6 /* RubberBandStretchBackend.cpp */ /* RubberBandStretchBackend.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RubberBandStretchBackend.cpp; path = ../../Source/Engine/AudioSources/Stretch/RubberBandStretchBackend.cpp; sourceTree = SOURCE_ROOT; };
 		3435281A3A1EF0D564ABD16C /* ChannelSubGroupListBoxModel.h */ /* ChannelSubGroupListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelSubGroupListBoxModel.h; path = ../../Source/Interface/Models/ChannelSubGroupListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		34AD58A889015F0789037B7B /* include_juce_gui_basics_3.cpp */ /* include_juce_gui_basics_3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_3.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_3.cpp; sourceTree = SOURCE_ROOT; };
+		35225423BD16EBF5A5693C1F /* ClipResamplingSource.cpp */ /* ClipResamplingSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ClipResamplingSource.cpp; path = ../../Source/Engine/AudioSources/ClipResamplingSource.cpp; sourceTree = SOURCE_ROOT; };
 		352338A322365BD5C3C74D37 /* Preferences.cpp */ /* Preferences.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Preferences.cpp; path = ../../Source/Util/Preferences.cpp; sourceTree = SOURCE_ROOT; };
 		374BC297892329AB1C3A5AA6 /* SegmentationView.cpp */ /* SegmentationView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SegmentationView.cpp; path = ../../Source/Interface/Views/SegmentationView.cpp; sourceTree = SOURCE_ROOT; };
 		38136CC55DAFE5D7F0515AF6 /* UndoableChannelAction.h */ /* UndoableChannelAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableChannelAction.h; path = ../../Source/Engine/Undo/UndoableChannelAction.h; sourceTree = SOURCE_ROOT; };
@@ -601,6 +603,7 @@
 		FE5833F96929157F7AFABDCB /* model_inference.cpp */ /* model_inference.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = model_inference.cpp; path = ../../../Submodules/demucs.cpp/src/model_inference.cpp; sourceTree = SOURCE_ROOT; };
 		FEDF9819DC6E93011CDA3EDF /* ProjectMonitor.cpp */ /* ProjectMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectMonitor.cpp; path = ../../Source/Application/ProjectMonitor.cpp; sourceTree = SOURCE_ROOT; };
 		FF8A35828E245DC65B5D294B /* include_juce_gui_extra.mm */ /* include_juce_gui_extra.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_extra.mm; path = ../../JuceLibraryCode/include_juce_gui_extra.mm; sourceTree = SOURCE_ROOT; };
+		FFB581764EF3197CACFAEFF1 /* ClipResamplingSource.h */ /* ClipResamplingSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipResamplingSource.h; path = ../../Source/Engine/AudioSources/ClipResamplingSource.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1076,6 +1079,8 @@
 				860B6BBD83A3F4E00CE653BA,
 				122D5C19345AA10A7AAAF81F,
 				EC2E4985F29BFF7B4F3F5486,
+				35225423BD16EBF5A5693C1F,
+				FFB581764EF3197CACFAEFF1,
 				8534F57B49669B5BDA634A63,
 				250E6D9AF4CAD51E2AA78BD8,
 			);
@@ -1636,6 +1641,7 @@
 				6DBD2483C1884BBCCB5A7DF9,
 				20531CE9B45123B33913B293,
 				611E51BE65CA33F8C7AC572A,
+				E872BA91B1125203F73347C1,
 				AC12B745E66A082394669AF4,
 				3FAC49EEE4C8BEC37A19455C,
 				BAB1AD43D1FB4CD46AA328EF,

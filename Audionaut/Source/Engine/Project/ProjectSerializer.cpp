@@ -55,7 +55,17 @@ bool ProjectSerializer::readFromJson (json& input, bool rebuild)
 {
     auto jsonAudium = input["audium"];
 
-    cleanup(); // clear everything
+    // The teardown is as destructive as the rebuild below: bypass the audio
+    // callback before the current graph goes, not only before the new one
+    // is built (released after the rebuild, or on a throw).
+    linkAudioDevice->setBypass(true);
+    try {
+        cleanup(); // clear everything
+    }
+    catch (...) {
+        linkAudioDevice->setBypass(false);
+        throw;
+    }
 
     const auto tempo = jsonAudium["tempo"].template get<double>();
     if (jsonAudium.contains("file_version"))

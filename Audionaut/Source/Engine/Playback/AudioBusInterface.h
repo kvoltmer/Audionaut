@@ -69,6 +69,11 @@ public:
     void setNumAudioBusChannels(int numChannels);
 
     /**
+    * @brief The bus channel count the last block rendered with.
+    */
+    int getNumAudioBusChannels() const noexcept;
+
+    /**
     * @brief Sets the channel data for a specific channel.
     */
     void setChannelData(const int channelNumber, const AudioChannelData data);

@@ -62,7 +62,15 @@ public:
     AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
                    std::vector<AnalysisType> defaultAnalysisTypes);
 
-    /** @brief Stops the background thread, waiting for any in-flight analysis. */
+    /**
+     * @brief Stops the background thread.
+     *
+     * Pending jobs are dropped and an analysis in flight is abandoned at its
+     * next stage (see AnalysisProvider::analyzeFile's abort flag), so this
+     * returns after at most one Essentia stage rather than after the whole
+     * file - quitting must not hang on a long recording's analysis. Nothing
+     * of the abandoned analysis is cached.
+     */
     ~AnalysisWorker() override;
 
     /**
@@ -185,6 +193,10 @@ private:
 
     // True only while useTimeSlice() is running an analysis; read by the UI.
     std::atomic<bool> busy { false };
+
+    // Set by the destructor; the running analysis polls it between its stages
+    // and gives up once it is set.
+    std::atomic<bool> abortRequested { false };
 
     // Name of the file currently being analysed (empty when idle); guarded by mutex.
     juce::String currentFileName;
