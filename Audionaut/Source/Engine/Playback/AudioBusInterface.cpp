@@ -53,27 +53,18 @@ const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber
 void AudioBusInterface::setRecordEnabled(const int channelNumber,
                                          bool bEnabled)
 {
-    auto recorder = bEnabled ? std::make_shared<AudioRecorder>() : nullptr;
-    
+    // The recorder is created (arm) or stopped and retired (disarm) right
+    // here on the message thread, so record() can use it at once; the audio
+    // thread is only handed the pointer to feed - or null - and its command
+    // acknowledges the hand-over that lets Recording free retired ones.
+    auto recorder = audioBusRenderer->getRecording()->setRecordEnabled(channelNumber, bEnabled);
+
     // async!!!
     auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
-        ptr->setRecordEnabled(channelNumber, bEnabled);
-        ptr->getRecording()->setRecordEnabled(channelNumber, bEnabled, recorder);
+    lockFreeCommander->fifo.push([ptr, channelNumber, recorder] {
+        ptr->setRecordEnabled(channelNumber, recorder != nullptr);
+        ptr->getRecording()->publishRecorder(channelNumber, recorder);
     });
-    
-    // in case we record on the fly we have to wait until the recorder exists.
-    // see: synchronous call AudioBusInterface::record
-    // using a sleepCounter so we don't hang forever :D
-    if (bEnabled) {
-        auto sleepCounter = 0;
-        while (sleepCounter < 10 &&
-               audioBusRenderer->getRecording()->getAudioRecorder(channelNumber) == nullptr) {
-            juce::Thread::sleep (5);
-            sleepCounter++;
-        }
-    }
-
 }
 
 void AudioBusInterface::record(bool start, const int channelNumber, const double positionClocks)
