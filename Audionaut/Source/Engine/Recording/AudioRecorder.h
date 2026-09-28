@@ -16,13 +16,18 @@ class AudioRecorder : private juce::TimeSliceClient
 public:
     AudioRecorder ()
     {
+        ++numInstances;
         backgroundThread.startThread();
     }
     
     ~AudioRecorder()
     {
         stop();
+        --numInstances;
     }
+
+    /** Recorders alive: lets tests check that none is built or torn down inside a processed block. */
+    static int getNumInstances() noexcept { return numInstances.load(); }
     
     bool createThreadedWriter(const double sampleRate, const juce::File recordedFile);
     
@@ -115,7 +120,9 @@ private:
     std::atomic<juce::AudioFormatWriter::ThreadedWriter*> activeWriter = nullptr;
         
     std::shared_ptr<audium::AudioThumbnail> recordingThumbnail = nullptr;
-    
+
+    static inline std::atomic<int> numInstances { 0 };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioRecorder)
 
 };

@@ -129,8 +129,10 @@ public:
     template <typename ProcessContext>
     void process (const ProcessContext& context, bool isPlaying, double beats, int numSamples) noexcept
     {
-        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-        
+        // the published count, never the track/channel vectors: the message
+        // thread grows and shrinks those underneath this callback
+        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getPublishedNumAudioTrackChannels());
+
         if (isPlaying &&
             beats >= 0.0) {
             
@@ -157,11 +159,15 @@ public:
         
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bouncePlayListItem(juce::AudioFormatWriter* writer,
+    /** Renders the config's playlist item into the writer.
+        @return False when a write to the file failed. */
+    bool bouncePlayListItem(juce::AudioFormatWriter* writer,
                             std::shared_ptr<ExportAudioConfig> config,
                             std::function<void ()> callback);
-    
-    void bounceProject(juce::AudioFormatWriter* writer,
+
+    /** Renders the project (from the config's position) into the writer.
+        @return False when a write to the file failed. */
+    bool bounceProject(juce::AudioFormatWriter* writer,
                       std::shared_ptr<ExportAudioConfig> config,
                       std::function<void ()> callback);
     
@@ -201,6 +207,33 @@ public:
 
     /// How far ahead of a start the standby prime begins, in seconds.
     static constexpr double standbyPrimeHorizonSeconds = 0.25;
+
+    /// Whether an offline render (export, stem separation) is walking the
+    /// play list and voice sources right now. The app runs those on a worker
+    /// thread behind a modal progress window whose loop keeps dispatching
+    /// timers and agent requests, so whatever would rebuild the graph - an
+    /// external reload, a hosted agent edit - checks this first and waits
+    /// for the render to end.
+    bool isOfflineRendering() const noexcept { return offlineRenders.load() > 0; }
+
+    /// Marks an offline render for its lifetime. Nests: the app takes one on
+    /// the message thread before it starts the worker, so no reload can slip
+    /// in between, and AudioExporter takes one around every bounce.
+    class ScopedOfflineRender
+    {
+    public:
+        explicit ScopedOfflineRender (PlayListScheduler& scheduler_) noexcept : scheduler (scheduler_)
+        {
+            ++scheduler.offlineRenders;
+        }
+
+        ~ScopedOfflineRender() noexcept { --scheduler.offlineRenders; }
+
+    private:
+        PlayListScheduler& scheduler;
+
+        JUCE_DECLARE_NON_COPYABLE (ScopedOfflineRender)
+    };
     
     std::function<void()> onRecordingStartedFunction;
     
@@ -250,6 +283,8 @@ private:
     std::atomic<bool> forcePosition = false;
     
     std::atomic<double> totalLengthClocks = 0.0;
+
+    std::atomic<int> offlineRenders { 0 };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

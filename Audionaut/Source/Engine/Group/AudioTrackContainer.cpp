@@ -52,6 +52,7 @@ void AudioTrackContainer::cleanup()
         track->cleanup();
     }
     audioTracks.clear();
+    publishNumAudioTrackChannels();
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
@@ -108,6 +109,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     if (it != audioTracks.end()) {
         track->cleanup();
         audioTracks.erase(it);
+        publishNumAudioTrackChannels();
         return true;
     }
     
@@ -298,6 +300,11 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
         channels += track->getNumAudioTrackChannels();
     }
     return channels;
+}
+
+void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
+{
+    publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
 }
 
 bool AudioTrackContainer::anyChannelSolo() const

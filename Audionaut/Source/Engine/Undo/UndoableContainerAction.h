@@ -71,14 +71,19 @@ struct UndoableContainerAction final : public juce::UndoableAction
     {
         try {
             juce::MemoryInputStream inputStream(newMemoryBlock, false);
-            container.readFromStream(inputStream, rebuild);
+            if (container.readFromStream(inputStream, rebuild))
+                return true;
+
+            // a rejected state may have been read partway - don't report
+            // success to the UndoManager for a half-restored container
+            std::cout << "UndoableContainerAction::perform -> state rejected" << std::endl;
+            jassertfalse;
         }
         catch (std::exception &e) {
             std::cout << "UndoableContainerAction::perform -> " << e.what() << std::endl;
-            rollBackTo(oldMemoryBlock);
-            return false;
         }
-        return true;
+        rollBackTo(oldMemoryBlock);
+        return false;
     }
 
     /**
@@ -93,14 +98,17 @@ struct UndoableContainerAction final : public juce::UndoableAction
                 container.audioBusInterface->record(false);
 
             juce::MemoryInputStream inputStream(oldMemoryBlock, false);
-            container.readFromStream(inputStream, rebuild);
+            if (container.readFromStream(inputStream, rebuild))
+                return true;
+
+            std::cout << "UndoableContainerAction::undo -> state rejected" << std::endl;
+            jassertfalse;
         }
         catch (std::exception &e) {
             std::cout << "UndoableContainerAction::undo -> " << e.what() << std::endl;
-            rollBackTo(newMemoryBlock);
-            return false;
         }
-        return true;
+        rollBackTo(newMemoryBlock);
+        return false;
     }
 
     /**
@@ -111,7 +119,8 @@ struct UndoableContainerAction final : public juce::UndoableAction
     {
         try {
             juce::MemoryInputStream inputStream(state, false);
-            container.readFromStream(inputStream, rebuild);
+            if (! container.readFromStream(inputStream, rebuild))
+                std::cout << "UndoableContainerAction: rollback rejected" << std::endl;
         }
         catch (std::exception &e) {
             std::cout << "UndoableContainerAction: rollback failed -> " << e.what() << std::endl;

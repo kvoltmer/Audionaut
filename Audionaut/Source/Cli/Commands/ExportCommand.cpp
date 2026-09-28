@@ -36,6 +36,15 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage",
                              "--start/--length do not apply to a --region export (the region is its own range)");
 
+    double startSeconds = 0.0, lengthSeconds = 0.0;
+    std::string optionError;
+    if (startValue.isNotEmpty()
+        && ! parseNumericOption ("--start", startValue, 0.0, false, startSeconds, optionError))
+        return context.fail (exitUsage, "usage", optionError);
+    if (lengthValue.isNotEmpty()
+        && ! parseNumericOption ("--length", lengthValue, 0.0, true, lengthSeconds, optionError))
+        return context.fail (exitUsage, "usage", optionError);
+
     auto projectFile = resolveProjectFile (working);
     if (projectFile == juce::File())
         return context.fail (exitUsage, "usage", "export requires an existing <project.audium>");
@@ -86,9 +95,9 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     if (bitDepthValue.isNotEmpty())
         config->bitDepth = bitDepthValue.getIntValue();
     if (startValue.isNotEmpty())
-        config->positionSeconds = startValue.getDoubleValue();
+        config->positionSeconds = startSeconds;
     if (lengthValue.isNotEmpty())
-        config->lengthSeconds = lengthValue.getDoubleValue();
+        config->lengthSeconds = lengthSeconds;
 
     config->multiMono = multiMono;
     if (channelsValue.isNotEmpty())
@@ -101,7 +110,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
 
     auto lastLoggedProgress = 0.0;
     AudioExporter exporter (*session.get(), config);
-    exporter.bounce ([&] (double progress) {
+    auto written = exporter.bounce ([&] (double progress) {
         if (progress - lastLoggedProgress >= 0.1) {
             lastLoggedProgress = progress;
             context.log ("export: " + juce::String (juce::roundToInt (progress * 100)) + "%");
@@ -109,22 +118,29 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return true;
     });
 
-    // multi-mono splits into -01.wav, -02.wav, ... and deletes the base file
-    auto firstMonoFile = outputFile.getSiblingFile (outputFile.getFileNameWithoutExtension() + "-01.wav");
-    auto produced = config->multiMono ? firstMonoFile : outputFile;
-    if (! produced.existsAsFile()) {
+    if (! written) {
+        using Failure = ExportAudioConfig::Failure;
+        auto error = config->error.toStdString();
+
+        if (config->failure == Failure::unsupportedFormat)
+            return context.fail (exitUsage, "usage", error);
+
         // Running inside the app means running inside its sandbox, which can
         // only write to the Music folder and to places the user picked. A
-        // path outside those fails here with nothing else to show for it.
-        if (session.isHosted())
+        // path outside those cannot even be opened.
+        if (config->failure == Failure::cannotOpenOutput && session.isHosted())
             return context.fail (exitFailure, "sandbox_denied",
                                  "Audionaut is running the export and could not write to \""
-                                     + produced.getFullPathName().toStdString()
+                                     + outputFile.getFullPathName().toStdString()
                                      + "\". Choose a location inside your Music folder, or quit "
                                        "Audionaut to export with the command line instead.");
 
-        return context.fail (exitFailure, "export_failed", "export produced no output file");
+        return context.fail (exitFailure, "export_failed", error);
     }
+
+    // multi-mono splits into -01.wav, -02.wav, ... and deletes the base file
+    auto firstMonoFile = outputFile.getSiblingFile (outputFile.getFileNameWithoutExtension() + "-01.wav");
+    auto produced = config->multiMono ? firstMonoFile : outputFile;
 
     context.log ("exported " + produced.getFullPathName());
     nlohmann::json result = { { "outputFile", produced.getFullPathName().toStdString() },

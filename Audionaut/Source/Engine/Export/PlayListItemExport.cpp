@@ -66,12 +66,12 @@ bool PlayListItemExport::exportItem()
         
         
         // start the thread
-        if (exportThread->runThread()) {
-            // thread finished normally..
+        if (exportThread->runThread() && exportThread->wasSuccessful()) {
+            // thread finished normally and the file was written..
             return true;
         }
         else {
-            // user pressed the cancel button..
+            // user pressed the cancel button, or nothing was written..
             return false;
         }
     }

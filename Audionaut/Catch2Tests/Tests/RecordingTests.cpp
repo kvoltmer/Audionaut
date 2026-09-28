@@ -168,6 +168,130 @@ SCENARIO("record-enable is queried per channel, channel 0 included", "[engine][r
     MessageManager::deleteInstance();
 }
 
+// Arming used to hand a freshly made AudioRecorder to the audio thread, which
+// inserted it into a std::map inside the callback, and disarming erased it
+// there - running the writer flush and the disk thread's join in the audio
+// callback while the message thread read the same map. Recorders are now
+// built and retired on the message thread; the audio thread is only handed
+// a pointer and acknowledges dropping it before the object is freed.
+SCENARIO("recorders are never built or torn down inside a processed block", "[engine][recording]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a mono track fed with blocks by hand")
+    {
+        auto engine = AudiumFactory::createAudiumEngine();
+        engine->getProjectSerializer()->createNewProject(1);
+        auto scheduler = engine->getPlayListScheduler();
+        auto bus = scheduler->getAudioBusInterface();
+        auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
+        REQUIRE(track != nullptr);
+        REQUIRE(AudioRecorder::getNumInstances() == 0);
+
+        // like a running device: channel commands are drained by process()
+        // only, not pumped inline by the headless engine
+        bus->setPumpsCommandsSynchronously(false);
+
+        const auto blockSize = 512;
+        const auto sampleRate = 44100.0;
+        scheduler->prepareToPlay(blockSize, sampleRate);
+        scheduler->setAbsoluteStartPosition(0.0, audium::seconds);
+
+        AudioBuffer<float> inBuffer(1, blockSize);
+        AudioBuffer<float> outBuffer(1, blockSize);
+        juce::dsp::AudioBlock<float> inBlock (inBuffer);
+        juce::dsp::AudioBlock<float> outBlock (outBuffer);
+        juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
+        for (auto s = 0; s < blockSize; ++s)
+            inBuffer.setSample(0, s, 0.5f);
+
+        auto positionBeats = 0.0;
+        const auto beatsPerBlock = TempoProvider::clocksToBeats(
+            scheduler->getTempoProvider()->secondsToClocks(static_cast<double>(blockSize) / sampleRate));
+
+        // one block through the engine the way the device callback does it,
+        // asserting that no recorder appears or disappears while it runs
+        auto processBlock = [&] {
+            const auto before = AudioRecorder::getNumInstances();
+            outBlock.clear();
+            scheduler->process(context, true, positionBeats, blockSize);
+            REQUIRE(AudioRecorder::getNumInstances() == before);
+            positionBeats += beatsPerBlock;
+            juce::Thread::sleep (1); // let the disk thread keep up
+        };
+
+        WHEN("the channel is armed, recorded and disarmed three times over")
+        {
+            std::vector<juce::File> takes;
+            std::vector<int> takeLengths;
+
+            for (auto cycle = 0; cycle < 3; ++cycle) {
+                // arming builds the recorder here, synchronously; the one
+                // retired last time has been freed by now - it went as soon
+                // as the audio thread had acknowledged dropping it
+                track->setRecordEnabled(0, true);
+                REQUIRE(AudioRecorder::getNumInstances() == 1);
+                REQUIRE(track->isRecordEnabled(0));
+                processBlock(); // drains the arm command
+
+                const auto blocks = 20 + 10 * cycle;
+                scheduler->setRecordingArmed(true);
+                scheduler->startRecording();
+                scheduler->startPlaying();
+                REQUIRE(track->isRecording(0));
+                for (auto b = 0; b < blocks; ++b)
+                    processBlock();
+
+                scheduler->stopPlaying(); // stops the take: flush happens here, on this thread
+                REQUIRE_FALSE(track->isRecording(0));
+                takes.push_back(bus->getRecordedAudioFile(0));
+                takeLengths.push_back(blocks * blockSize);
+
+                // disarming retires the recorder but keeps it alive until the
+                // audio thread has run the command that drops it
+                track->setRecordEnabled(0, false);
+                REQUIRE_FALSE(track->isRecordEnabled(0));
+                REQUIRE(AudioRecorder::getNumInstances() == 1);
+                processBlock(); // drains the disarm command - still no teardown in here
+                REQUIRE(AudioRecorder::getNumInstances() == 1);
+            }
+
+            THEN("every take holds exactly the blocks fed while it ran")
+            {
+                REQUIRE(takes.size() == 3);
+                for (size_t i = 0; i < takes.size(); ++i) {
+                    REQUIRE(takes[i].existsAsFile());
+                    auto recorded = audioFileToAudioBuffer(takes[i]);
+                    REQUIRE(recorded.getNumSamples() == takeLengths[i]);
+                    REQUIRE(recorded.getSample(0, 0) == Catch::Approx(0.5f).margin(0.0001f));
+                    REQUIRE(recorded.getSample(0, takeLengths[i] - 1) == Catch::Approx(0.5f).margin(0.0001f));
+                }
+            }
+
+            THEN("the last retired recorder goes with the engine, never in a block")
+            {
+                processBlock();
+                REQUIRE(AudioRecorder::getNumInstances() == 1);
+                track = nullptr;
+                bus = nullptr;
+                scheduler = nullptr;
+                engine = nullptr;
+                REQUIRE(AudioRecorder::getNumInstances() == 0);
+            }
+        }
+
+        // nothing may outlive the engine
+        track = nullptr;
+        bus = nullptr;
+        scheduler = nullptr;
+        engine = nullptr;
+    }
+
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
 // A clip that is still recording has a resource without a URL. Its path
 // getter reports a placeholder that is not an absolute path, and passing
 // that to juce::File asserts - which the UI's analysis refresh did on every

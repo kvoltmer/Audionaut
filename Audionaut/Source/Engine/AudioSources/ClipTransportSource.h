@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 #include "ClipDynamicsProcessor.h"
+#include "ClipResamplingSource.h"
 #include "StretchAudioSource.h"
 #include "Engine/PlayList/StretchMode.h"
 
@@ -112,6 +113,11 @@ public:
     int getBufferedStandbyAdoptions() const noexcept              { return bufferedStandbyAdoptions; }
 
     const StretchAudioSource* getStretchSource() const noexcept    { return stretchSource; }
+
+    /** The live lane's resampler and the standby lane's (nullptr without
+        a source at another rate / without a standby); for tests. */
+    const ClipResamplingSource* getResamplerSource() const noexcept  { return resamplerSource; }
+    const ClipResamplingSource* getStandbyResampler() const noexcept { return standbyResampler; }
 
     /** Returns the position that the next data block will be read from.
         This is a time in seconds.
@@ -220,7 +226,7 @@ private:
     juce::PositionableAudioSource* standbyInput = nullptr;      // the caller's cursor
     juce::PositionableAudioSource* standbySource = nullptr;     // the lane's head: that cursor, or its buffer
     juce::BufferingAudioSource* standbyBuffering = nullptr;
-    juce::ResamplingAudioSource* standbyResampler = nullptr;
+    ClipResamplingSource* standbyResampler = nullptr;
     juce::int64 standbyKey = -1;                                // source position a buffered lane is seeked to, < 0 none
     int bufferedStandbyAdoptions = 0;
     juce::TimeSliceThread* readAheadThread = nullptr;
@@ -234,8 +240,11 @@ private:
     void updateSpeedChain() noexcept;
     /// The resampling ratio the live resampler runs at in the current mode.
     double currentResamplingRatio() const noexcept;
+    /// Gives both lanes' resamplers the ratio they start at and the largest
+    /// one they may reach, so their prepareToPlay can size for it.
+    void boundResamplers() noexcept;
 
-    juce::ResamplingAudioSource* resamplerSource = nullptr;
+    ClipResamplingSource* resamplerSource = nullptr;
     StretchAudioSource* stretchSource = nullptr;
     juce::BufferingAudioSource* bufferingSource = nullptr;
     juce::PositionableAudioSource* positionableSource = nullptr;

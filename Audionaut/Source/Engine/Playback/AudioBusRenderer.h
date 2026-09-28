@@ -47,7 +47,10 @@ public:
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
     void setNumAudioBusChannels(int numChannels);
-        
+
+    /** The bus channel count the last block rendered with. */
+    int getNumAudioBusChannels() const noexcept { return audioBus.getNumChannels(); }
+
     template <typename ProcessContext>
     void process (const ProcessContext& context) noexcept
     {
@@ -81,7 +84,7 @@ public:
                 if (audioChannelData[k].record) {
                     recordingLevel[k] = std::abs(inputBlock.getSingleChannelBlock(effectiveInput).findMinAndMax().getEnd());
 
-                    if (auto recorder = recording->getAudioRecorder(k)) {
+                    if (auto* recorder = recording->getAudioThreadRecorder(k)) {
                         auto input = inputBlock.getSingleChannelBlock(effectiveInput);
                         auto output = audioBusBlock.getSingleChannelBlock(k);
                         ProcessContextNonReplacing<SampleType> recContext(input, output);

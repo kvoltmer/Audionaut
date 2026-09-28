@@ -6,6 +6,7 @@
 #include <cmath>
 #include "ClipTransportSource.h"
 #include "Engine/AudioSources/RenderTiming.h"
+#include "Engine/PlayList/ClipSpeed.h"
 
 namespace audium
 {
@@ -36,14 +37,14 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         setSource (nullptr, 0, nullptr); // deselect and reselect to avoid releasing resources wrongly
     }
 
-    juce::ResamplingAudioSource* newResamplerSource = nullptr;
+    ClipResamplingSource* newResamplerSource = nullptr;
     StretchAudioSource* newStretchSource = nullptr;
     juce::BufferingAudioSource* newBufferingSource = nullptr;
     juce::PositionableAudioSource* newPositionableSource = nullptr;
     juce::AudioSource* newMasterSource = nullptr;
 
-    std::unique_ptr<juce::ResamplingAudioSource> oldResamplerSource (resamplerSource);
-    std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
+    std::unique_ptr<ClipResamplingSource> oldResamplerSource (resamplerSource);
+    std::unique_ptr<ClipResamplingSource> oldStandbyResampler (standbyResampler);
     std::unique_ptr<StretchAudioSource> oldStretchSource (stretchSource);
     // the buffer's destructor releases it, which unregisters it from the
     // read-ahead thread before the cursor behind it can go
@@ -79,7 +80,7 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
         if (sourceSampleRateToCorrectFor > 0)
         {
             newMasterSource = newResamplerSource
-                = new juce::ResamplingAudioSource (newPositionableSource, false, maxNumChannels);
+                = new ClipResamplingSource (newPositionableSource, false, maxNumChannels);
 
             // the pitch-preserving node lives in the chain permanently and
             // is bypassed in RePitch mode - see setStretchMode
@@ -143,7 +144,7 @@ void ClipTransportSource::setSource (juce::PositionableAudioSource* const newSou
 
 void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newStandbySource)
 {
-    std::unique_ptr<juce::ResamplingAudioSource> oldStandbyResampler (standbyResampler);
+    std::unique_ptr<ClipResamplingSource> oldStandbyResampler (standbyResampler);
     std::unique_ptr<juce::BufferingAudioSource> oldStandbyBuffering (standbyBuffering);
     standbyResampler = nullptr;
     standbyBuffering = nullptr;
@@ -174,7 +175,10 @@ void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newSt
         // then finds its input ready instead of deferring
         standbySource = standbyBuffering
             = new juce::BufferingAudioSource (standbyInput, *readAheadThread, false, readAheadSize, maxNumChannels);
-        standbyResampler = new juce::ResamplingAudioSource (standbySource, false, maxNumChannels);
+        standbyResampler = new ClipResamplingSource (standbySource, false, maxNumChannels);
+
+        // its bounds go in before it is prepared, like the live lane's
+        boundResamplers();
 
         if (isPrepared)
             standbyResampler->prepareToPlay (blockSize, sampleRate);
@@ -182,9 +186,11 @@ void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newSt
         return;
     }
 
-    standbyResampler = new juce::ResamplingAudioSource (standbySource, false, maxNumChannels);
+    standbyResampler = new ClipResamplingSource (standbySource, false, maxNumChannels);
 
-    // prepares the lane too when the chain already is
+    // prepares the lane too when the chain already is, so its bounds go
+    // in first
+    boundResamplers();
     stretchSource->setStandbyInput (standbyResampler);
 }
 
@@ -363,14 +369,19 @@ void ClipTransportSource::prepareToPlay (int samplesPerBlockExpected, double new
     sampleRate = newSampleRate;
     blockSize = samplesPerBlockExpected;
 
+    // The resamplers size their buffers in prepareToPlay, so they learn
+    // the ratio they start at and the largest one they may reach before
+    // the chain is prepared - applied afterwards (as the stock transport
+    // does) the first block would have to grow them on the audio thread.
+    boundResamplers();
+    updateSpeedChain();
+
     if (masterSource != nullptr)
         masterSource->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
     // the buffered standby lane hangs off no node of the chain
     if (standbyBuffering != nullptr)
         standbyResampler->prepareToPlay (samplesPerBlockExpected, sampleRate);
-
-    updateSpeedChain();
 
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
@@ -478,6 +489,32 @@ void ClipTransportSource::updateSpeedChain() noexcept
     {
         stretchSource->setEnabled (stretching);
         stretchSource->setSpeedRatio (speed);
+    }
+}
+
+void ClipTransportSource::boundResamplers() noexcept
+{
+    if (sourceSampleRate <= 0 || sampleRate <= 0)
+        return;
+
+    // Either lane can become the live one (the standby swap in
+    // setNextReadPosition), so both are sized for the fastest varispeed
+    // the clip can reach on top of the file's rate correction. At the
+    // extremes (192 kHz file at 44.1 kHz, speed 4) that is 17.4 input
+    // samples per output sample: a 2048 block then holds 36k samples per
+    // channel, 128 blocks 2.2k - a fraction of what the stretcher keeps.
+    const auto rateCorrection = sourceSampleRate / sampleRate;
+    const auto maximumRatio = rateCorrection * ClipSpeed::maxSpeedRatio;
+
+    if (resamplerSource != nullptr)
+        resamplerSource->setMaximumResamplingRatio (maximumRatio);
+
+    if (standbyResampler != nullptr)
+    {
+        standbyResampler->setMaximumResamplingRatio (maximumRatio);
+        // an unbuffered lane only ever corrects the rate (it primes Stretch
+        // mode, see primeStandby); a buffered one plays on in either mode
+        standbyResampler->setResamplingRatio (standbyBuffering != nullptr ? currentResamplingRatio() : rateCorrection);
     }
 }
 
