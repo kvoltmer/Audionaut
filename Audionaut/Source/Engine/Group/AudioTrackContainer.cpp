@@ -213,7 +213,9 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     // fallback to rebuild:
     if (!rebuild && jsonTracks.size() != audioTracks.size())
         rebuild = true;
-    
+
+    lastReadRebuiltStructure = rebuild;
+
     if (rebuild) {
         cleanup();
         jassert(audioTracks.size() == 0);
@@ -240,7 +242,12 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         
         if ( !audioTrack->readFromJson(jsonElement, rebuild))
             return false;
-        
+
+        // a track that had to replace its channels changes the structure
+        // the UI is keyed on just as a replaced track does
+        if (audioTrack->didLastReadRebuildChannels())
+            lastReadRebuiltStructure = true;
+
         count++;
     }
     

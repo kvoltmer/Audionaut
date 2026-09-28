@@ -146,8 +146,12 @@ bool ProjectSerializer::applyProjectJson (json& input, bool preserveUiState)
 
     // The UI/scheduler broadcasts normally happen in
     // AudioTrackContainer::readFromStream; applying JSON directly must
-    // publish them here.
-    audioTrackContainer->sendActionMessage(rebuildAll);
+    // publish them here. Only a read that replaced tracks or channels needs
+    // the UI rebuilt: a refresh keeps the arrangement's clip views and their
+    // waveform thumbnails alive, so an agent edit no longer redraws every
+    // clip from scratch.
+    audioTrackContainer->sendActionMessage(audioTrackContainer->didLastReadRebuildStructure() ? rebuildAll
+                                                                                              : updateAll);
     audioTrackContainer->sendChangeMessage();
 
     return true;

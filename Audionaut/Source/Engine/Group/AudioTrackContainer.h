@@ -159,6 +159,16 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
+     * @brief Whether the last readFromJson() replaced tracks or channels
+     * instead of reading them in place.
+     *
+     * The UI keys its track and channel components on those objects, so a
+     * read that replaced them needs a rebuild (rebuildAll); a read that kept
+     * them only needs a refresh (updateAll).
+     */
+    bool didLastReadRebuildStructure() const { return lastReadRebuiltStructure; }
+
+    /**
      * @brief Gets the currently selected audio track.
      * @return A shared pointer to the selected `AudioTrack`.
      */
@@ -267,6 +277,7 @@ private:
     std::size_t selectedGroup = 0; ///< Index of the currently selected group.
     float masterGain = 1.f; ///< Master gain value.
     std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
+    bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 
     AudioRegionAdapter audioRegionAdapter; ///< Audio region adapter for managing regions.
 

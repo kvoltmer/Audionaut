@@ -181,6 +181,8 @@ bool AudioTrack::writeToStream (juce::OutputStream& outputStream)
 bool AudioTrack::readFromJson (json& input, bool rebuild)
 {
     //std::cout << input.dump(4) << std::endl;
+    lastReadRebuiltChannels = false;
+
     json output;
     writeToJson(output);
     if (input == output)
@@ -188,8 +190,8 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         //std::cout << "skip AudioTrack::readFromJson" << std::endl;
         return true;
     }
-    
-    
+
+
     if (rebuild)
         cleanup();
     
@@ -209,6 +211,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         rebuildChannels = true;
         audioChannelContainer->cleanup();
     }
+    lastReadRebuiltChannels = rebuildChannels;
     auto c = 0;
     for (auto& jsonElement : jsonChannels) {
         std::shared_ptr<AudioChannel> channel = nullptr;

@@ -391,7 +391,14 @@ void AudiumApplication::startAgentHost()
     agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
 
     agentHost->onProjectMutated = [this] {
-        updateUI();
+        // A plain refresh, not rebuildUI(): the forced rebuild tore down the
+        // whole middle panel after every agent edit, so each clip view was
+        // recreated and reloaded its waveform thumbnail - the arrangement
+        // visibly redrew from scratch per edit. Edits that change the track
+        // list still rebuild, because the engine broadcasts rebuildAll for
+        // those on its own.
+        if (auto comp = getMainComponent())
+            comp->updateUI();
         refreshWindowTitle(); // now carries the agent marker
     };
 
