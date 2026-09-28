@@ -66,6 +66,7 @@ void AudioTrack::cleanup()
 {
     resourceGroupContainer->cleanup();
     audioChannelContainer->cleanup();
+    owner.publishNumAudioTrackChannels();
     playListContainer->playListItems.cleanup();
     getAudioResourceContainer().removeAudioResourcesForTrack(this);
 }
@@ -294,6 +295,7 @@ std::shared_ptr<AudioChannel> AudioTrack::addChannel()
                                                       selectionManager,
                                                       getAudioTrackContainer().audioBusInterface);
         audioChannelContainer->push_back(channel);
+        owner.publishNumAudioTrackChannels();
         return channel;
     }
     std::cout << "error: max audio channels reached: " << getAudioTrackContainer().getNumAudioTrackChannels() << std::endl;
@@ -589,6 +591,7 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
         
         if (audioChannelContainer->deleteObject(channel)) {
             result = true;
+            owner.publishNumAudioTrackChannels();
 
             // mapping changes for resources
             for (auto resource : getAudioResources()) {

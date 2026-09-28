@@ -47,7 +47,10 @@ public:
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     
     void setNumAudioBusChannels(int numChannels);
-        
+
+    /** The bus channel count the last block rendered with. */
+    int getNumAudioBusChannels() const noexcept { return audioBus.getNumChannels(); }
+
     template <typename ProcessContext>
     void process (const ProcessContext& context) noexcept
     {

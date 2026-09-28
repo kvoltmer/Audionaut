@@ -21,6 +21,11 @@ void AudioBusInterface::setNumAudioBusChannels(int numChannels)
     audioBusRenderer->setNumAudioBusChannels(numChannels);
 }
 
+int AudioBusInterface::getNumAudioBusChannels() const noexcept
+{
+    return audioBusRenderer->getNumAudioBusChannels();
+}
+
 void AudioBusInterface::setChannelData(const int channelNumber, const AudioChannelData data)
 {
     if (audioBusRenderer->getChannelData(channelNumber).record != data.record) {
