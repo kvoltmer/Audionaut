@@ -9,40 +9,7 @@
 #define _USE_MATH_DEFINES
 
 #include <JuceHeader.h>
-#include <cstdint>
-
-#if JUCE_WINDOWS
-namespace audium::detail
-{
-constexpr std::uint64_t linkWindowsSwap64(const std::uint64_t value) noexcept
-{
-    return ((value & 0x00000000000000FFull) << 56)
-         | ((value & 0x000000000000FF00ull) << 40)
-         | ((value & 0x0000000000FF0000ull) << 24)
-         | ((value & 0x00000000FF000000ull) << 8)
-         | ((value & 0x000000FF00000000ull) >> 8)
-         | ((value & 0x0000FF0000000000ull) >> 24)
-         | ((value & 0x00FF000000000000ull) >> 40)
-         | ((value & 0xFF00000000000000ull) >> 56);
-}
-}
-
-#ifndef htonll
- #if JUCE_LITTLE_ENDIAN
-  #define htonll(x) audium::detail::linkWindowsSwap64(x)
- #else
-  #define htonll(x) (x)
- #endif
-#endif
-
-#ifndef ntohll
- #if JUCE_LITTLE_ENDIAN
-  #define ntohll(x) audium::detail::linkWindowsSwap64(x)
- #else
-  #define ntohll(x) (x)
- #endif
-#endif
-#endif
+#include "LinkWindowsCompat.h"
 
 #if JUCE_MAC
     #define LINK_PLATFORM_MACOSX 1

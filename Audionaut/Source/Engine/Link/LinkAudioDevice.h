@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "LinkEngine.hpp"
+#include "LinkWindowsCompat.h"
 #include <ableton/link/HostTimeFilter.hpp>
 #include "Engine/Core/DspLoadMeter.h"
 
