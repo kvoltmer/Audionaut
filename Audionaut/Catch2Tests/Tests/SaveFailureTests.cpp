@@ -62,8 +62,11 @@ SCENARIO("a failed Save As leaves neither a partial package nor a damaged source
         REQUIRE(allAudioLivesIn(*engine, original));
 
         WHEN("saving as into a package whose Project.json can't be written (it is a directory)") {
-            // the audio copy succeeds, the atomic JSON write is what fails
+            // the audio copy succeeds, the atomic JSON write is what fails. The
+            // directory must not be empty: on Linux the atomic write's
+            // File::deleteFile() rmdir()s an empty one and the rename succeeds
             REQUIRE(targetProject.createDirectory());
+            REQUIRE(targetProject.getChildFile("occupied").create());
 
             std::string error;
             const auto saved = store->save(targetProject, [&error] (std::string message) { error = message; });
