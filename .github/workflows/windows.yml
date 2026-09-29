@@ -93,9 +93,9 @@ jobs:
 
     # Agents reach the app through Tools/audionaut-mcp, which runs the
     # installed Audionaut.exe with --json and reads the reply from a pipe.
-    # 1.6.2 re-attached a GUI-subsystem exe's stdout to the parent console
-    # even when the caller had given it a pipe, so the reply never arrived.
-    # This drives the built app exactly the way the MCP server does.
+    # The GUI-subsystem exe re-attaches to its parent's console for terminal
+    # use; that must not take the reply off a pipe the caller set up. This
+    # drives the built app exactly the way the MCP server does.
     - name: Set up Node
       uses: actions/setup-node@v4
       with:
@@ -111,9 +111,10 @@ jobs:
 
     # The step above runs Node without a console, as CI does, so the app's
     # AttachConsole fails and its reply stays on the pipe either way. In a
-    # terminal (Claude Code in Windows Terminal) Node has a console, the app
-    # attaches to it, and 1.6.2 then sent the reply there. conhost --headless
-    # gives Node a console of its own to reproduce that.
+    # terminal (Claude Code in Windows Terminal) Node has a console for the
+    # app to attach to; the app then must still answer on the pipe. This runs
+    # the check under conhost --headless to give Node a console. (It passed
+    # against 1.6.2's code too, so it may not match a real terminal exactly.)
     - name: App answers on the pipe when its caller has a console
       shell: pwsh
       run: |
