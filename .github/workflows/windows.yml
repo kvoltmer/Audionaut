@@ -91,6 +91,52 @@ jobs:
         -p:PreferredToolArchitecture=x64
         -v:minimal
 
+    # Agents reach the app through Tools/audionaut-mcp, which runs the
+    # installed Audionaut.exe with --json and reads the reply from a pipe.
+    # The GUI-subsystem exe re-attaches to its parent's console for terminal
+    # use; that must not take the reply off a pipe the caller set up. This
+    # drives the built app exactly the way the MCP server does.
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: MCP server against the app
+      working-directory: Tools/audionaut-mcp
+      env:
+        AUDIONAUT_CLI: ${{ github.workspace }}\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe
+      run: |
+        npm ci
+        npm test
+
+    # The step above runs Node without a console, as CI does, so the app's
+    # AttachConsole fails and its reply stays on the pipe either way. In a
+    # terminal (Claude Code in Windows Terminal) Node has a console for the
+    # app to attach to; the app then must still answer on the pipe. This runs
+    # the check under conhost --headless to give Node a console. (It passed
+    # against 1.6.2's code too, so it may not match a real terminal exactly.)
+    - name: App answers on the pipe when its caller has a console
+      shell: pwsh
+      run: |
+        $app = "$env:GITHUB_WORKSPACE\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe"
+        $result = Join-Path $env:RUNNER_TEMP "pipe-check.txt"
+        $check = Join-Path $env:RUNNER_TEMP "pipe-check.cjs"
+        Set-Content $check @'
+        const { spawnSync } = require("child_process");
+        const fs = require("fs");
+        const [app, result] = process.argv.slice(2);
+        const run = spawnSync(app, ["--json"], { encoding: "utf8", windowsHide: true });
+        let verdict;
+        try { JSON.parse(run.stdout); verdict = "PASS"; }
+        catch { verdict = "FAIL: stdout was " + JSON.stringify(run.stdout) + ", exit " + run.status; }
+        fs.writeFileSync(result, verdict);
+        '@
+        Start-Process conhost.exe -ArgumentList "--headless", "node", "`"$check`"", "`"$app`"", "`"$result`"" -Wait
+        $verdict = Get-Content $result -ErrorAction SilentlyContinue
+        if (-not $verdict) { $verdict = "FAIL: the check did not run" }
+        Write-Output $verdict
+        if (-not $verdict.StartsWith("PASS")) { exit 1 }
+
     - name: Configure tests
       # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config and
       # ignores it (CMake warns that the variable went unused). The
