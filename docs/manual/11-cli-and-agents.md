@@ -5,7 +5,10 @@ Everything the timeline can do is also available headlessly. Two front doors:
 - **`audionaut-cli`** — a console binary (built with the test CMake project;
   see the repository [README](../../README.md) for building it).
 - **The app itself** — running the Audionaut binary with a verb executes it
-  headlessly and quits, even while a GUI instance is open.
+  headlessly and quits, even while a GUI instance is open. The binary is
+  `/Applications/Audionaut.app/Contents/MacOS/Audionaut` on macOS,
+  `Audionaut.exe` in `Program Files\Audionaut` on Windows, and `audionaut`
+  (from the .deb) or the AppImage on Linux. This is what AI agents use.
 
 ## Working on a project that is open in the app
 
@@ -42,10 +45,13 @@ Two files inside a package belong to the app and should be left alone:
 `Autosave.json`, its crash-recovery snapshot, and `Host.json`, the marker
 saying which process is holding the project.
 
-One limit worth knowing: a command running inside the app runs inside its
-sandbox, which can write to your Music folder and to places you have picked in
-a file dialog, but not anywhere else. An export elsewhere is refused with
-`sandbox_denied`; quit the app to export there with the command line instead.
+One limit worth knowing on macOS: the app is sandboxed, and so is every
+command it runs — whether it runs it for an open project or on its own. It can
+reach your Music folder, but not anywhere else, so keep projects, the audio you
+import and your export targets inside `~/Music` (for example in
+`~/Music/Audionaut`). The MCP server below checks this before it starts a
+command and says so with `sandbox_denied`. The developer build of
+`audionaut-cli` has no such limit. Windows and Linux have none either.
 
 ## Verbs
 
@@ -97,10 +103,55 @@ audionaut-cli export     song.audium -o mix.wav --sample-rate 48000
 
 ## AI agents (MCP)
 
-`Tools/audionaut-mcp` is an MCP server exposing every verb as a tool, so AI
-assistants (Claude, and any other MCP-capable agent) can inspect and edit
-projects conversationally. Registration instructions are in
-[`Tools/audionaut-mcp/README.md`](../../Tools/audionaut-mcp/README.md).
+`audionaut-mcp` is an MCP server that exposes every verb as a tool, so Claude
+and any other MCP-capable agent can inspect and edit projects
+conversationally. It runs the verbs through your installed Audionaut app, so
+all you need besides the app is [Node.js](https://nodejs.org) 18 or later.
+
+**Claude Code:**
+
+```
+claude mcp add audionaut -- npx -y audionaut-mcp
+```
+
+**Claude Desktop** — add this to `claude_desktop_config.json` (Settings ▸
+Developer ▸ Edit Config) and restart Claude:
+
+```json
+{
+  "mcpServers": {
+    "audionaut": {
+      "command": "npx",
+      "args": ["-y", "audionaut-mcp"]
+    }
+  }
+}
+```
+
+On Windows, if Claude Desktop cannot start `npx`, use `"command": "cmd"` with
+`"args": ["/c", "npx", "-y", "audionaut-mcp"]`.
+
+Then just ask, for example *"split the clip in ~/Music/Audionaut/Demo
+Project.audium every 16 bars and put every second part on a new track"*. Keep
+the project open in Audionaut to watch the edits arrive; each one is a single
+undo step, as described above.
+
+On macOS, keep the project and its audio in your Music folder (see the sandbox
+note above). To see which Audionaut the server found and whether it answers:
+
+```
+npx -y audionaut-mcp --check
+```
+
+Agents on Windows need Audionaut 1.6.3 or later; on macOS 1.6.2 works too.
+`separate` needs the Demucs model, which you download once in the app — see
+[Stem separation](13-stem-separation.md).
+
+When an agent runs into something the tools cannot do, or into a bug, it can
+send a feature request or bug report to the maintainer as a GitHub issue — it
+tells you when it does. More in the server's
+[README](../../Tools/audionaut-mcp/README.md), including how to use a
+developer build of `audionaut-cli` instead of the app.
 
 ## Privacy
 

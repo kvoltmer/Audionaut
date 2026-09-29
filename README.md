@@ -13,6 +13,16 @@ Audionaut is a free, open-source desktop application for effortless audio editin
 [![Linux build](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml/badge.svg)](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ff69b4)](https://github.com/sponsors/kvoltmer)
 
+### Use with Claude
+
+Audionaut speaks [MCP](https://modelcontextprotocol.io), so Claude and other agents can edit your sessions. With the app and [Node.js](https://nodejs.org) 18+ installed:
+
+```
+claude mcp add audionaut -- npx -y audionaut-mcp
+```
+
+Keep the project open in Audionaut and each edit arrives as one undo step. On macOS, keep projects in your Music folder. Claude Desktop setup and details: [manual, chapter 11](docs/manual/11-cli-and-agents.md#ai-agents-mcp).
+
 ### Checkout
 
 Make sure to clone with submodules:
