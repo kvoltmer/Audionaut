@@ -15,7 +15,7 @@
 import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { homedir, tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -57,7 +57,7 @@ function check(name, condition, detail = "") {
   check("only a macOS .app bundle counts as sandboxed", mac.path === image && !mac.sandboxed);
 
   check("~ expands to the user's home", userPath("~/Music/a.audium", { home: "/h" }) === join("/h", "Music", "a.audium"));
-  check("relative paths resolve against cwd", userPath("a.audium", { cwd: "/w" }) === join("/w", "a.audium"));
+  check("relative paths resolve against cwd", userPath("a.audium", { cwd: "/w" }) === resolve("/w", "a.audium"));
 
   mkdirSync(join(scratch, "Music"));
   check("paths in ~/Music pass, even ones not created yet",
