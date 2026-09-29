@@ -1,9 +1,64 @@
 # audionaut-mcp
 
 An [MCP](https://modelcontextprotocol.io) server that lets AI agents (Claude
-Code, Claude Desktop, and any other MCP client) work with Audionaut projects.
-It is a thin wrapper: every tool shells out to `audionaut-cli` with `--json`
-and relays the result — no engine logic lives here.
+Code, Claude Desktop, and any other MCP client) edit
+[Audionaut](https://audionaut.app) projects: cut, move, fade, analyse,
+auto-edit and export. It is a thin wrapper: every tool runs one Audionaut
+command with `--json` and relays the result — no engine logic lives here.
+
+## Quick start
+
+You need [Audionaut](https://audionaut.app/download) 1.6.3 or later (on macOS
+1.6.2 works too) and [Node.js](https://nodejs.org) 18 or later.
+
+Claude Code:
+
+```
+claude mcp add audionaut -- npx -y audionaut-mcp
+```
+
+Claude Desktop (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "audionaut": {
+      "command": "npx",
+      "args": ["-y", "audionaut-mcp"]
+    }
+  }
+}
+```
+
+On Windows, if Claude Desktop cannot start `npx`, use
+`"command": "cmd", "args": ["/c", "npx", "-y", "audionaut-mcp"]`.
+
+Then ask for something like *"split the clip in ~/Music/Audionaut/Demo
+Project.audium every 16 bars"*. Keep the project open in Audionaut to watch
+the edits arrive; each one is a single undo step.
+
+**On macOS, keep projects in your Music folder.** Audionaut is sandboxed
+there (App Store and website download alike) and can only reach `~/Music`:
+projects, audio to import and export targets all have to be inside it, for
+example in `~/Music/Audionaut`. The server refuses other paths up front with
+`sandbox_denied` and a hint. Windows and Linux have no such limit.
+
+To see which Audionaut the server found and whether it answers:
+
+```
+npx -y audionaut-mcp --check
+```
+
+The server looks for, in order: `AUDIONAUT_CLI`; a developer build of
+`audionaut-cli` (see the end of this page); `audionaut-cli` on `PATH`; the
+installed app — `/Applications` or `~/Applications` (or wherever Spotlight
+finds it) on macOS, `Program Files\Audionaut` on Windows, `audionaut` from
+the `.deb` or an `Audionaut*.AppImage` in `~/Applications` or `~/.local/bin`
+on Linux. Anywhere else, point `AUDIONAUT_CLI` at the binary, e.g. your
+AppImage.
+
+`separate_stems` needs the Demucs model, which you download once in the app
+(Settings ▸ Separation). The model weights are licensed for research use.
 
 ## Projects that are open in Audionaut
 
@@ -18,8 +73,6 @@ they always have. If an app is holding one but cannot be reached, the command
 fails (`host_unavailable`) rather than falling back to the file, which would
 be missing whatever is unsaved.
 
-Two caveats. A command running inside the app runs inside its sandbox, so an
-export outside the user's Music folder is refused with `sandbox_denied`. And
 `Autosave.json` and `Host.json` inside a package belong to the app — never
 read or edit them.
 
@@ -89,7 +142,20 @@ Transports, tried in order:
 (test harnesses, air-gapped setups); the smoke test points the relay URL at
 a local stand-in.
 
-## Setup
+## Environment variables
+
+| Variable | Effect |
+|---|---|
+| `AUDIONAUT_CLI` | Binary that runs the commands: an Audionaut app or `audionaut-cli` |
+| `AUDIONAUT_SKIP_PATH_CHECK` | `1` skips the `~/Music` pre-check for the sandboxed macOS app |
+| `AUDIONAUT_DISABLE_ANALYTICS` | `1` never sends usage analytics, whatever the app's consent setting |
+| `AUDIONAUT_FEATURE_REQUEST_URL` | Issue relay for `request_feature`/`report_bug`; empty skips it |
+| `AUDIONAUT_DISABLE_FEATURE_REQUESTS` | `1` never files issues; replies carry a prefilled link instead |
+
+## Developing: building the CLI from source
+
+From a clone of the repo, the server prefers a CMake build of the
+standalone `audionaut-cli`, which is not sandboxed:
 
 1. Build the CLI (from the repo root):
 
@@ -104,28 +170,19 @@ a local stand-in.
    cd Tools/audionaut-mcp && npm install
    ```
 
-3. Register with your MCP client. Claude Code:
+3. Register the checkout instead of the npm package. Claude Code:
 
    ```
    claude mcp add audionaut -- node /path/to/Audionaut/Tools/audionaut-mcp/index.js
    ```
 
-   Claude Desktop (`claude_desktop_config.json`):
+   Claude Desktop: the JSON above with `"command": "node"` and
+   `"args": ["/path/to/Audionaut/Tools/audionaut-mcp/index.js"]`.
 
-   ```json
-   {
-     "mcpServers": {
-       "audionaut": {
-         "command": "node",
-         "args": ["/path/to/Audionaut/Tools/audionaut-mcp/index.js"]
-       }
-     }
-   }
-   ```
-
-The server finds `audionaut-cli` in the repo's `build/` directory
-automatically; point `AUDIONAUT_CLI` at the binary to override (e.g. an
-installed copy), or put `audionaut-cli` on `PATH`.
+`npm test` drives the server through a real MCP client against whichever
+binary it finds (`AUDIONAUT_CLI` picks one). With the sandboxed macOS app it
+works in a scratch folder under `~/Music`; `AUDIONAUT_TEST_DIR` overrides
+the location.
 
 Paths in tool arguments are best given absolute — relative paths resolve
 against the server process's working directory, which depends on the MCP

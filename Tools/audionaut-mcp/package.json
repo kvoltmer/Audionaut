@@ -1,16 +1,47 @@
 {
   "name": "audionaut-mcp",
-  "version": "0.1.0",
-  "description": "MCP server exposing Audionaut's headless CLI (audionaut-cli) as agent tools",
+  "version": "0.2.0",
+  "mcpName": "io.github.kvoltmer/audionaut",
+  "description": "MCP server for the Audionaut multitrack audio editor - lets Claude and other agents edit .audium projects",
   "type": "module",
   "bin": {
     "audionaut-mcp": "index.js"
   },
   "main": "index.js",
+  "files": [
+    "index.js",
+    "locate.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "test": "node test.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kvoltmer/Audionaut.git",
+    "directory": "Tools/audionaut-mcp"
+  },
+  "homepage": "https://audionaut.app/manual/11-cli-and-agents/",
+  "bugs": {
+    "url": "https://github.com/kvoltmer/Audionaut/issues"
+  },
   "license": "GPL-3.0-or-later",
+  "author": "Klaus Voltmer",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "modelcontextprotocol",
+    "claude",
+    "audio",
+    "audio-editor",
+    "multitrack",
+    "daw",
+    "agent"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.4.3"
