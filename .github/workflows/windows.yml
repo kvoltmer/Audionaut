@@ -91,6 +91,24 @@ jobs:
         -p:PreferredToolArchitecture=x64
         -v:minimal
 
+    # Agents reach the app through Tools/audionaut-mcp, which runs the
+    # installed Audionaut.exe with --json and reads the reply from a pipe.
+    # 1.6.2 re-attached a GUI-subsystem exe's stdout to the parent console
+    # even when the caller had given it a pipe, so the reply never arrived.
+    # This drives the built app exactly the way the MCP server does.
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: MCP server against the app
+      working-directory: Tools/audionaut-mcp
+      env:
+        AUDIONAUT_CLI: ${{ github.workspace }}\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe
+      run: |
+        npm ci
+        npm test
+
     - name: Configure tests
       # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config and
       # ignores it (CMake warns that the variable went unused). The
