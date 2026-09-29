@@ -143,7 +143,8 @@ note above). To see which Audionaut the server found and whether it answers:
 npx -y audionaut-mcp --check
 ```
 
-Agents on Windows need Audionaut 1.6.3 or later; on macOS 1.6.2 works too.
+Audionaut 1.6.3 or later is recommended; 1.6.2 works on macOS and Linux, and
+may not answer agents on Windows.
 `separate` needs the Demucs model, which you download once in the app — see
 [Stem separation](13-stem-separation.md).
 

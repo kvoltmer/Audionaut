@@ -55,7 +55,7 @@ async function check() {
   } else {
     console.log(
       process.platform === "win32" && !stdout
-        ? "No reply came back. Audionaut 1.6.2 and older cannot answer agents on Windows; update to 1.6.3 or later."
+        ? "No reply came back. On Windows this can happen with Audionaut 1.6.2 and older; update to 1.6.3 or later."
         : `Unexpected reply: ${String(stdout).slice(0, 500)}`
     );
     return 1;
@@ -108,7 +108,7 @@ async function runCli(args, pathIndexes = []) {
 
   if (!stdout && process.platform === "win32")
     return errorResult(
-      "Audionaut ran but returned nothing. Versions 1.6.2 and older cannot answer agents on Windows; " +
+      "Audionaut ran but returned nothing. On Windows this can happen with Audionaut 1.6.2 and older; " +
         "update Audionaut to 1.6.3 or later."
     );
 

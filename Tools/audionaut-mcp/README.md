@@ -8,8 +8,9 @@ command with `--json` and relays the result — no engine logic lives here.
 
 ## Quick start
 
-You need [Audionaut](https://audionaut.app/download) 1.6.3 or later (on macOS
-1.6.2 works too) and [Node.js](https://nodejs.org) 18 or later.
+You need [Audionaut](https://audionaut.app/download) — 1.6.3 or later is
+recommended; 1.6.2 works on macOS and Linux — and [Node.js](https://nodejs.org)
+18 or later.
 
 Claude Code:
 
