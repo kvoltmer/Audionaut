@@ -109,6 +109,33 @@ jobs:
         npm ci
         npm test
 
+    # The step above runs Node without a console, as CI does, so the app's
+    # AttachConsole fails and its reply stays on the pipe either way. In a
+    # terminal (Claude Code in Windows Terminal) Node has a console, the app
+    # attaches to it, and 1.6.2 then sent the reply there. conhost --headless
+    # gives Node a console of its own to reproduce that.
+    - name: App answers on the pipe when its caller has a console
+      shell: pwsh
+      run: |
+        $app = "$env:GITHUB_WORKSPACE\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe"
+        $result = Join-Path $env:RUNNER_TEMP "pipe-check.txt"
+        $check = Join-Path $env:RUNNER_TEMP "pipe-check.cjs"
+        Set-Content $check @'
+        const { spawnSync } = require("child_process");
+        const fs = require("fs");
+        const [app, result] = process.argv.slice(2);
+        const run = spawnSync(app, ["--json"], { encoding: "utf8", windowsHide: true });
+        let verdict;
+        try { JSON.parse(run.stdout); verdict = "PASS"; }
+        catch { verdict = "FAIL: stdout was " + JSON.stringify(run.stdout) + ", exit " + run.status; }
+        fs.writeFileSync(result, verdict);
+        '@
+        Start-Process conhost.exe -ArgumentList "--headless", "node", "`"$check`"", "`"$app`"", "`"$result`"" -Wait
+        $verdict = Get-Content $result -ErrorAction SilentlyContinue
+        if (-not $verdict) { $verdict = "FAIL: the check did not run" }
+        Write-Output $verdict
+        if (-not $verdict.StartsWith("PASS")) { exit 1 }
+
     - name: Configure tests
       # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config and
       # ignores it (CMake warns that the variable went unused). The
