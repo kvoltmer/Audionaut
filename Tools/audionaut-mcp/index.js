@@ -615,15 +615,20 @@ server.registerTool(
   {
     title: "Set clip fades",
     description:
-      "Sets the addressed clip's fade lengths, ramp offsets (0 clears; offsets may be negative to reach " +
-      "outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped against each " +
-      "other within the clip. The address must match exactly one clip.",
+      "Sets the addressed clip's fade ramps and curve exponents (0.1-4, 0.5 = equal power). All four fade " +
+      "values are in `unit` (default bars) and 0 clears one. Each ramp has two edges measured inward from " +
+      "the clip edge: the fade-in runs from fade_in_start to fade_in after the clip start, the fade-out " +
+      "from fade_out to fade_out_end before the clip end, so a ramp lasts fade_in - fade_in_start (or " +
+      "fade_out - fade_out_end). A negative offset puts that edge outside the clip, playing source audio " +
+      "beyond it - e.g. fade_out 0.25 with fade_out_end -0.25 (seconds) is a 0.5 s ramp centred on the " +
+      "clip end, the outgoing half of a crossfade. Values are clamped against each other within the clip. " +
+      "The address must match exactly one clip.",
     inputSchema: {
       project: projectParam,
-      fade_in: z.number().min(0).optional().describe("Fade-in length"),
-      fade_out: z.number().min(0).optional().describe("Fade-out length"),
-      fade_in_start: z.number().optional().describe("Fade-in ramp start offset from the clip start"),
-      fade_out_end: z.number().optional().describe("Fade-out ramp end offset from the clip end"),
+      fade_in: z.number().min(0).optional().describe("Where the fade-in ramp reaches full level, measured from the clip start; the ramp length only when fade_in_start is 0"),
+      fade_out: z.number().min(0).optional().describe("Where the fade-out ramp begins, measured back from the clip end; the ramp length only when fade_out_end is 0"),
+      fade_in_start: z.number().optional().describe("Where the fade-in ramp begins, measured from the clip start; negative = before the clip start"),
+      fade_out_end: z.number().optional().describe("Where the fade-out ramp reaches silence, measured back from the clip end; negative = past the clip end"),
       fade_in_curve: z.number().optional().describe("Fade-in curve exponent (0.1-4, 0.5 = equal power)"),
       fade_out_curve: z.number().optional().describe("Fade-out curve exponent (0.1-4, 0.5 = equal power)"),
       at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),

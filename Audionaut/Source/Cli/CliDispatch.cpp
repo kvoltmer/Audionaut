@@ -231,9 +231,13 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "                          [--fade-in-curve C] [--fade-out-curve C]\n"
           "                          [--track N] [--unit ...] [--json]",
           "Sets a clip's fade lengths, offsets and curves.",
-          "Sets fade lengths and ramp offsets (in the given unit; 0 clears, offsets may be negative to "
-          "reach outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped "
-          "against each other within the clip.",
+          "Sets the fade ramps (in the given unit; 0 clears) and curve exponents (0.1-4, 0.5 = equal "
+          "power). Each value is a ramp edge measured inward from the clip edge: the fade-in runs from "
+          "--fade-in-start to --fade-in after the clip start, the fade-out from --fade-out to "
+          "--fade-out-end before the clip end, so a ramp lasts --fade-in minus --fade-in-start (or "
+          "--fade-out minus --fade-out-end). A negative offset puts that edge outside the clip, playing "
+          "source audio beyond it: --fade-out 0.25 --fade-out-end -0.25 --unit seconds is a 0.5 s ramp "
+          "centred on the clip end. Values are clamped against each other within the clip.",
           runClipFades },
 
         { "clip-speed",
