@@ -4,27 +4,92 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 // Smoke test: drives the MCP server through the SDK's stdio client and runs
-// the full agent flow against a scratch directory. Requires a built
-// audionaut-cli (see README). Run with `npm test`.
+// the full agent flow against a scratch directory. Needs something that runs
+// the CLI verbs - a built audionaut-cli or an installed Audionaut app (see
+// README; AUDIONAUT_CLI picks one explicitly). Run with `npm test`.
+//
+// The sandboxed macOS app can only reach ~/Music, so the scratch directory
+// goes there for it (AUDIONAUT_TEST_DIR overrides) and the fixtures are
+// copied in rather than read from the repo.
 
-import { mkdtempSync, rmSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
+import { outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
-const testFiles = join(repoRoot, "Audionaut", "Catch2Tests", "TestFiles");
+const repoTestFiles = join(repoRoot, "Audionaut", "Catch2Tests", "TestFiles");
 
 let failures = 0;
 function check(name, condition, detail = "") {
   console.log(`${condition ? "ok  " : "FAIL"} ${name}${condition ? "" : `  ${detail}`}`);
   if (!condition) failures++;
 }
+
+// --- locate.js: discovery and path handling, no binary needed -------------
+{
+  const scratch = mkdtempSync(join(tmpdir(), "audionaut-locate-"));
+  const noRepo = join(scratch, "no-repo");
+
+  const missing = await resolveCli({ env: { AUDIONAUT_CLI: join(scratch, "nope") }, repoRoot: noRepo });
+  check("AUDIONAUT_CLI pointing nowhere is reported", missing.path === null && /no executable/.test(missing.error));
+
+  const none = await resolveCli({ env: { PATH: "" }, platform: "linux", home: scratch, repoRoot: noRepo });
+  check("nothing installed resolves to no binary", none.path === null && none.searched.length > 0);
+
+  mkdirSync(join(scratch, "Applications"));
+  const image = join(scratch, "Applications", "Audionaut-1.6.3-x86_64.AppImage");
+  writeFileSync(image, "#!/bin/sh\n");
+  chmodSync(image, 0o755);
+  const appImage = await resolveCli({ env: { PATH: "" }, platform: "linux", home: scratch, repoRoot: noRepo });
+  check("AppImage in ~/Applications is found", appImage.path === image && !appImage.sandboxed);
+
+  const mac = await resolveCli({
+    env: { AUDIONAUT_CLI: image }, platform: "darwin", repoRoot: noRepo, spotlight: async () => [],
+  });
+  check("only a macOS .app bundle counts as sandboxed", mac.path === image && !mac.sandboxed);
+
+  check("~ expands to the user's home", userPath("~/Music/a.audium", { home: "/h" }) === join("/h", "Music", "a.audium"));
+  check("relative paths resolve against cwd", userPath("a.audium", { cwd: "/w" }) === join("/w", "a.audium"));
+
+  mkdirSync(join(scratch, "Music"));
+  check("paths in ~/Music pass, even ones not created yet",
+        outsideMusicFolder([join(scratch, "Music", "new", "mix.wav")], { home: scratch }) === null);
+  check("paths outside ~/Music are named",
+        outsideMusicFolder([join(scratch, "Music", "a"), join(scratch, "b.wav")], { home: scratch }) === join(scratch, "b.wav"));
+
+  check("a plain envelope parses", parseEnvelope('{"ok":true,"result":1}')?.result === 1);
+  check("a log line ahead of the envelope is skipped (Linux 1.6.2)",
+        parseEnvelope('settings: /home/u/.config/x.settings\n{\n  "ok": true\n}\n')?.ok === true);
+  check("output without an envelope is rejected", parseEnvelope("segfault") === null && parseEnvelope("") === null);
+
+  rmSync(scratch, { recursive: true, force: true });
+}
+
+const cli = await resolveCli();
+if (!cli.path) {
+  console.log("FAIL no Audionaut binary found - build audionaut-cli, install the app, or set AUDIONAUT_CLI");
+  process.exit(1);
+}
+console.log(`     using ${cli.path} (${cli.source})`);
+
+const workDir = process.env.AUDIONAUT_TEST_DIR
+  ? mkdtempSync(join(process.env.AUDIONAUT_TEST_DIR, "audionaut-mcp-test-"))
+  : cli.sandboxed
+    ? (mkdirSync(join(homedir(), "Music"), { recursive: true }),
+       mkdtempSync(join(homedir(), "Music", "audionaut-mcp-test-")))
+    : mkdtempSync(join(tmpdir(), "audionaut-mcp-test-"));
+
+const testFiles = join(workDir, "fixtures");
+for (const fixture of [join("Sessions", "simple-sine.audium"), "120-funk-1-sec.wav", "sine-0dB.wav"])
+  cpSync(join(repoTestFiles, fixture), join(testFiles, fixture), { recursive: true });
 
 // Stand-in for the issue relay: records what request_feature / report_bug
 // post and rejects titles containing "reject" so the error path is covered.
@@ -54,8 +119,6 @@ const transport = new StdioClientTransport({
 const client = new Client({ name: "audionaut-mcp-test", version: "0.0.1" });
 await client.connect(transport);
 
-const workDir = mkdtempSync(join(tmpdir(), "audionaut-mcp-test-"));
-
 try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
@@ -81,6 +144,15 @@ try {
     arguments: { project: join(workDir, "missing.audium") },
   });
   check("missing project is a tool error", missing.isError === true, missing.content?.[0]?.text);
+
+  if (cli.sandboxed) {
+    const outside = await client.callTool({
+      name: "get_project_info",
+      arguments: { project: join(tmpdir(), "outside.audium") },
+    });
+    check("project outside ~/Music is refused up front", outside.isError === true &&
+          outside.content?.[0]?.text.startsWith("sandbox_denied"), outside.content?.[0]?.text);
+  }
 
   const project = join(workDir, "flow.audium");
   const created = await client.callTool({ name: "create_project", arguments: { project, channels: 1 } });
