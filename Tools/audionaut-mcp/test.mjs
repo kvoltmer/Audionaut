@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-import { outsideMusicFolder, resolveCli, userPath } from "./locate.js";
+import { outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
@@ -64,6 +64,11 @@ function check(name, condition, detail = "") {
         outsideMusicFolder([join(scratch, "Music", "new", "mix.wav")], { home: scratch }) === null);
   check("paths outside ~/Music are named",
         outsideMusicFolder([join(scratch, "Music", "a"), join(scratch, "b.wav")], { home: scratch }) === join(scratch, "b.wav"));
+
+  check("a plain envelope parses", parseEnvelope('{"ok":true,"result":1}')?.result === 1);
+  check("a log line ahead of the envelope is skipped (Linux 1.6.2)",
+        parseEnvelope('settings: /home/u/.config/x.settings\n{\n  "ok": true\n}\n')?.ok === true);
+  check("output without an envelope is rejected", parseEnvelope("segfault") === null && parseEnvelope("") === null);
 
   rmSync(scratch, { recursive: true, force: true });
 }

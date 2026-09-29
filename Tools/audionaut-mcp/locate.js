@@ -189,3 +189,21 @@ export function outsideMusicFolder(paths, { home = homedir() } = {}) {
   }
   return null;
 }
+
+// The reply is one JSON envelope on stdout. Audionaut 1.6.2 on Linux prints
+// a "settings: <path>" line ahead of it, so fall back to the envelope that
+// starts on a later line rather than failing every call.
+export function parseEnvelope(stdout) {
+  const text = String(stdout ?? "");
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.search(/^\{/m);
+    if (start <= 0) return null;
+    try {
+      return JSON.parse(text.slice(start));
+    } catch {
+      return null;
+    }
+  }
+}

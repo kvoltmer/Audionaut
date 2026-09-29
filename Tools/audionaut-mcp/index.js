@@ -18,7 +18,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { notFoundMessage, outsideMusicFolder, resolveCli, userPath } from "./locate.js";
+import { notFoundMessage, outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
 
 const execFileAsync = promisify(execFile);
 const { version } = createRequire(import.meta.url)("./package.json");
@@ -49,11 +49,10 @@ async function check() {
     stdout = error.stdout ?? "";
     if (!stdout) console.log(`Running it failed: ${error.message}`);
   }
-  try {
-    JSON.parse(stdout);
+  if (parseEnvelope(stdout)) {
     console.log("OK: Audionaut answered. Register this server with your MCP client (see README).");
     return 0;
-  } catch {
+  } else {
     console.log(
       process.platform === "win32" && !stdout
         ? "No reply came back. Audionaut 1.6.2 and older cannot answer agents on Windows; update to 1.6.3 or later."
@@ -113,12 +112,8 @@ async function runCli(args, pathIndexes = []) {
         "update Audionaut to 1.6.3 or later."
     );
 
-  let envelope;
-  try {
-    envelope = JSON.parse(stdout);
-  } catch {
-    return errorResult(`Audionaut returned unparseable output: ${String(stdout).slice(0, 2000)}`);
-  }
+  const envelope = parseEnvelope(stdout);
+  if (!envelope) return errorResult(`Audionaut returned unparseable output: ${String(stdout).slice(0, 2000)}`);
 
   if (envelope.ok)
     return { content: [{ type: "text", text: JSON.stringify(envelope.result, null, 2) }] };
