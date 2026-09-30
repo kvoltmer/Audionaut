@@ -30,9 +30,12 @@ public:
     
     /**
      * @brief Creates a new instance of the `AudiumEngine`.
+     * @param userPrompter The host's channel to the user (see UserPrompter);
+     *        nullptr for a session without one, which gets the headless
+     *        prompter that logs and declines.
      * @return A shared pointer to the created `AudiumEngine` instance.
      */
-    static std::shared_ptr<AudiumEngine> createAudiumEngine();
+    static std::shared_ptr<AudiumEngine> createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter = nullptr);
     
 private:
     

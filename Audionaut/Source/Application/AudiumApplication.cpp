@@ -16,6 +16,7 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
+#include "Application/GuiUserPrompter.h"
 #include "Cli/AgentHost.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
@@ -166,11 +167,16 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // otherwise handleAsyncUpdate asks for consent and logs the launch then
 
 
-    // create audium engine
-    audiumEngine = audium::AudiumFactory::createAudiumEngine();
+    // create audium engine; its questions and messages go through the
+    // native dialogs
+    audiumEngine = audium::AudiumFactory::createAudiumEngine(std::make_shared<audium::GuiUserPrompter>());
     fileStore = audiumEngine->getProjectFileStore();
     serializer = audiumEngine->getProjectSerializer();
-    audiumEngine->initialise();
+
+    std::unique_ptr<XmlElement> savedAudioDeviceState;
+    if (getPreferences().valueExists(PreferenceKeys::audioDeviceSettings))
+        savedAudioDeviceState = juce::XmlDocument (getPreferences().getValue(PreferenceKeys::audioDeviceSettings)).getDocumentElement();
+    audiumEngine->initialise(savedAudioDeviceState.get());
     applyAnalysisPreferences();
 
 
@@ -500,6 +506,9 @@ void AudiumApplication::shutdown()
 
     if (audiumEngine != nullptr)
     {
+        if (auto stateXml = audiumEngine->getAudioDeviceManager()->createStateXml())
+            getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
+
         audiumEngine->uninitialise();
         audiumEngine.reset();
     }
