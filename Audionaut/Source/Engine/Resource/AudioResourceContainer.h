@@ -199,7 +199,8 @@ public:
     // audio files in the project's audio directory that json doesn't reference
     std::vector<juce::File> findObsoleteAudioFiles(const json &json);
 
-    /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
+    /** Asks the user and moves the given files to the trash. Without a user
+        (headless prompter) the question is declined and the files stay. */
     void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
     
     // delete obsolete files which are not currently loaded
@@ -303,10 +304,6 @@ public:
 private:
     /// False for a scratch container sharing another session's temp directory.
     bool ownsTemporaryDirectory = true;
-
-    /** Asks the user and moves the given files to the trash. Without a user
-        (headless prompter) the question is declined and the files stay. */
-    void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
 
     /// Cancels pending background analysis of the file unless another loaded
     /// resource still references it.
