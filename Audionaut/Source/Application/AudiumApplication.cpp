@@ -853,7 +853,9 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::revertProject:
         result.setInfo ("Revert to Saved", "Discards all changes and reopens the last saved version",
                         CommandCategories::general, 0);
-        result.setActive (fileStore->getCurrentProjectFile().existsAsFile() &&
+        // also queried by initCommandManager(), before the engine exists
+        result.setActive (fileStore != nullptr && audiumEngine != nullptr &&
+                          fileStore->getCurrentProjectFile().existsAsFile() &&
                           audiumEngine->getUndoManager()->canUndo());
         break;
     case CommandIDs::showAboutWindow:
