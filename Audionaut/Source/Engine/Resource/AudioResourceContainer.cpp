@@ -371,8 +371,9 @@ void AudioResourceContainer::cleanup()
         analysisWorker->cancelAll();
 }
 
-void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
+std::vector<juce::File> AudioResourceContainer::findObsoleteAudioFiles(const json &json)
 {
+    std::vector<juce::File> redundantFiles;
     std::vector<std::string> jsonPaths;
     
     if (!json.empty()) {
@@ -390,9 +391,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                 }
             }
         }
-        
-        
-        std::vector<juce::File> redundantFiles;
+
         auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
         for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
             
@@ -401,9 +400,9 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                 redundantFiles.push_back(found);
             }
         }
-        
-        trashRedundantFiles(redundantFiles);
     }
+
+    return redundantFiles;
 }
 
 void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDirectory)
