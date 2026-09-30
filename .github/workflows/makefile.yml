@@ -30,3 +30,20 @@ jobs:
 
     - name: Compile
       run: make -C Audionaut/Builds/LinuxMakefile/ -j$(nproc)
+
+    # Agents reach the app through Tools/audionaut-mcp, which runs the
+    # installed binary with --json. The runner has no display, so this also
+    # proves the CLI verbs need no X server.
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: MCP server against the app
+      working-directory: Tools/audionaut-mcp
+      env:
+        AUDIONAUT_CLI: ${{ github.workspace }}/Audionaut/Builds/LinuxMakefile/build/audionaut
+      run: |
+        test -z "$DISPLAY" && echo "no DISPLAY set"
+        npm ci
+        npm test

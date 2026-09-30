@@ -51,6 +51,7 @@ void AudioTrackContainer::cleanup()
         track->cleanup();
     }
     audioTracks.clear();
+    publishNumAudioTrackChannels();
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
@@ -107,6 +108,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     if (it != audioTracks.end()) {
         track->cleanup();
         audioTracks.erase(it);
+        publishNumAudioTrackChannels();
         return true;
     }
     
@@ -191,7 +193,7 @@ bool AudioTrackContainer::writeToJson (json& output)
     }
     output["master_gain"] = getMasterGain();
     
-    output["loop_data"] = transportLoop->loopData;
+    output["loop_data"] = transportLoop->getLoopData();
     
     return true;
 }
@@ -210,7 +212,9 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     // fallback to rebuild:
     if (!rebuild && jsonTracks.size() != audioTracks.size())
         rebuild = true;
-    
+
+    lastReadRebuiltStructure = rebuild;
+
     if (rebuild) {
         cleanup();
         jassert(audioTracks.size() == 0);
@@ -237,12 +241,17 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         
         if ( !audioTrack->readFromJson(jsonElement, rebuild))
             return false;
-        
+
+        // a track that had to replace its channels changes the structure
+        // the UI is keyed on just as a replaced track does
+        if (audioTrack->didLastReadRebuildChannels())
+            lastReadRebuiltStructure = true;
+
         count++;
     }
     
     if (input.contains("loop_data")) {
-        transportLoop->loopData = input["loop_data"];
+        transportLoop->setLoopData(input["loop_data"].get<LoopData>());
     }
     
     return true;
@@ -297,6 +306,11 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
         channels += track->getNumAudioTrackChannels();
     }
     return channels;
+}
+
+void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
+{
+    publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
 }
 
 bool AudioTrackContainer::anyChannelSolo() const

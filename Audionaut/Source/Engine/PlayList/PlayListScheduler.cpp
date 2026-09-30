@@ -264,10 +264,14 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     // block. Both are known ahead, so over the last quarter second before
     // the nearer one the voice primes a standby lane for the exact restart
     // position, one slice per block, and the block itself only swaps lanes.
+    // A voice reading through a read-ahead buffer (no memory-mapped
+    // reader: FLAC, MP3) has the same problem in either mode - the jump
+    // empties its buffer and the block waits for the reader - and gets its
+    // lane pre-seeked the same way.
     if (! standbyPrimingEnabled.load() || loopResult.loopEvent)
         return;
 
-    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch)
+    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
         return;
 
     const auto audible = dspClip.getAudibleRange(audium::seconds);
@@ -299,9 +303,11 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     }
 
     // the loop wrap, if the wrap block will schedule this clip (it is
-    // audible in the wrap block's first block) and nothing comes sooner
+    // audible in the wrap block's first block) and nothing comes sooner.
+    // The range this block's loop result was computed with, not the one
+    // the message thread may be changing right now.
     if (insideLoop && samplesUntilStart < 0) {
-        const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
+        const auto loopStart = transportLoop->getProcessedLoopPositionRange(audium::seconds).getStart();
         if (audible.intersects({loopStart, loopStart + secondsThisBuffer})) {
             samplesUntilStart = loopResult.numSamplesUntilLoopEnd;
             restartAt = loopStart;
@@ -423,9 +429,6 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
     for (auto track : audioTrackContainer->getAudioTracks()) {
         for (const auto& clipData : track->getDspClipVector()) {
-            if (clipData.clipStretchMode != StretchMode::Stretch)
-                continue;
-
             const audium::DspClip dspClip(*tempoProvider, clipData);
             if (dspClip.getRegionData(audium::seconds).isEmpty()
                 || ! dspClip.getAudibleRange(audium::seconds).intersects(firstBlock))
@@ -433,6 +436,11 @@ void PlayListScheduler::primeStandbyAtPlayStart()
 
             auto* voiceSource = voiceSourceContainer->getOwnedVoiceSourceAtIndex(clipData.voiceSourceIndex);
             if (voiceSource == nullptr)
+                continue;
+
+            // stretched voices, and buffered ones in either mode (see
+            // primeStandbyForUpcomingStart)
+            if (clipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
                 continue;
 
             const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
@@ -585,7 +593,11 @@ bool PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
 {
     jassert(config->playListItem != nullptr);
     jassert((int)config->sampleRate == (int)externalSampleRate);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
     std::cout << "bounce channels: " << config->numChannels << std::endl;
     
@@ -693,7 +705,11 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
                                      std::function<void ()> callback)
 {
     jassert(config->playListItem == nullptr);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);

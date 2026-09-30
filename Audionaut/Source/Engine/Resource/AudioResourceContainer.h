@@ -58,7 +58,7 @@ public:
     {
         jassert(userPrompter != nullptr);
         formatManager->registerBasicFormats();
-        thread.startThread();
+        thread->startThread();
     }
     
 
@@ -284,9 +284,15 @@ public:
     
     /**
      * @brief Retrieves the read-ahead thread.
-     * @return A pointer to the `TimeSliceThread`.
+     *
+     * Shared: a voice source keeps a reference for as long as its read-ahead
+     * buffers are registered with the thread. Voices retired while still
+     * rendering are released after this container's members (it co-owns the
+     * VoiceSourceContainer), so the thread must outlive them rather than the
+     * other way round - unregistering from a destroyed thread faults.
+     * @return The `TimeSliceThread`.
      */
-    juce::TimeSliceThread *getReadAheadThread() { return &thread; }
+    std::shared_ptr<juce::TimeSliceThread> getReadAheadThread() const { return thread; }
     
     
     void onRecordingFinished();
@@ -327,8 +333,8 @@ private:
     /// The host's channel to the user: asks before files go to the trash.
     std::shared_ptr<UserPrompter> userPrompter;
 
-    /// Thread for read-ahead operations.
-    juce::TimeSliceThread thread { "read ahead thread" };
+    /// Thread for read-ahead operations, co-owned by the voice sources reading through it.
+    std::shared_ptr<juce::TimeSliceThread> thread = std::make_shared<juce::TimeSliceThread> ("read ahead thread");
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)

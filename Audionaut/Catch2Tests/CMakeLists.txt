@@ -295,6 +295,14 @@ function(audionaut_configure_common target)
         target_compile_options(${target} PRIVATE /MP)
     endif()
 
+    if(MSVC)
+        # Ableton Link's bundled asio is often the first header in a translation
+        # unit to touch the Windows target version, and without a project-wide
+        # value it assumes Windows 7 (0x0601) - whose winsock2.h declares no
+        # htonll/ntohll, which Link's serialisation needs.
+        target_compile_definitions(${target} PUBLIC _WIN32_WINNT=0x0A00)
+    endif()
+
     # These definitions are visible both to our code and the JUCE module code,
     # so pick unique names that are unlikely to collide.
     target_compile_definitions(${target}

@@ -159,6 +159,16 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
+     * @brief Whether the last readFromJson() replaced tracks or channels
+     * instead of reading them in place.
+     *
+     * The UI keys its track and channel components on those objects, so a
+     * read that replaced them needs a rebuild (rebuildAll); a read that kept
+     * them only needs a refresh (updateAll).
+     */
+    bool didLastReadRebuildStructure() const { return lastReadRebuiltStructure; }
+
+    /**
      * @brief Gets the currently selected audio track.
      * @return A shared pointer to the selected `AudioTrack`.
      */
@@ -195,6 +205,30 @@ public:
      * @return The number of audio track channels.
      */
     int getNumAudioTrackChannels() const;
+
+    /**
+     * @brief The channel count as published to the audio thread.
+     *
+     * getNumAudioTrackChannels() walks the track and channel vectors, which
+     * the message thread grows and shrinks (add/remove track or channel,
+     * undo replay, project reload) - the audio callback must never iterate
+     * them. It reads this atomic instead, which every channel-count change
+     * republishes (see publishNumAudioTrackChannels). Any thread, lock-free.
+     */
+    int getPublishedNumAudioTrackChannels() const noexcept
+    {
+        return publishedNumAudioTrackChannels.load(std::memory_order_acquire);
+    }
+
+    /**
+     * @brief Republishes getNumAudioTrackChannels() for the audio thread.
+     *
+     * Message thread. Called by every path that changes a track's channel
+     * count (AudioTrack::addChannel/deleteChannel/cleanup, track removal,
+     * cleanup); a missed call only leaves the bus one block stale, never
+     * outside [0, MAX_AUDIO_CHANNELS].
+     */
+    void publishNumAudioTrackChannels() noexcept;
 
     /**
      * @brief Checks if any channel in the container is soloed.
@@ -242,6 +276,8 @@ private:
 
     std::size_t selectedGroup = 0; ///< Index of the currently selected group.
     float masterGain = 1.f; ///< Master gain value.
+    std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
+    bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 
     AudioRegionAdapter audioRegionAdapter; ///< Audio region adapter for managing regions.
 

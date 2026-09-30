@@ -8,17 +8,15 @@
 #include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
 SCENARIO("region split/create scenario", "[engine][region]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-
     GIVEN("Load session file")
     {
-        auto engine     = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
     auto store = engine->getProjectFileStore();
         auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-5-seconds.audium"));
         REQUIRE(fileUnderTest.existsAsFile());
@@ -83,12 +81,7 @@ SCENARIO("region split/create scenario", "[engine][region]")
         }
         
 //        store->save(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds-out.audium"));
-
-        engine = nullptr;
     }
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 

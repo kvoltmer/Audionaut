@@ -55,8 +55,19 @@ void AnalysisWorker::setDefaultAnalysisTypes(const std::vector<AnalysisType>& ty
 
 AnalysisWorker::~AnalysisWorker()
 {
-    // Detach before stopping so removeTimeSliceClient() waits for any analysis
-    // currently in useTimeSlice() to finish, then tear the thread down.
+    // Abandon the work rather than finish it: the queue is dropped and the
+    // analysis running right now (if any) is told to give up at its next
+    // stage, so the wait below is bounded by a single Essentia stage instead
+    // of the rest of the file. The Essentia calls themselves cannot be
+    // interrupted, so the thread is never killed - a thread killed inside
+    // Essentia or the allocator would leave locks held that the exiting main
+    // thread then blocks on, which is worse than the wait.
+    abortRequested = true;
+    cancelAll();
+    thread.signalThreadShouldExit();
+
+    // Detach before stopping so removeTimeSliceClient() waits for a
+    // useTimeSlice() still in progress to return, then tear the thread down.
     thread.removeTimeSliceClient(this);
     thread.stopThread(-1);
 }
@@ -134,8 +145,8 @@ int AnalysisWorker::useTimeSlice()
         busy = true;
     }
 
-    if (analysisProvider != nullptr)
-        analysisProvider->analyzeFile(job.file, job.type);
+    if (analysisProvider != nullptr && ! abortRequested.load())
+        analysisProvider->analyzeFile(job.file, job.type, &abortRequested);
 
     {
         std::lock_guard<std::mutex> lock(mutex);

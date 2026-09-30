@@ -121,6 +121,9 @@ public:
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
+    /** Whether the last readFromJson() replaced the channels instead of
+        reading them in place - see AudioTrackContainer::didLastReadRebuildStructure(). */
+    bool didLastReadRebuildChannels() const { return lastReadRebuiltChannels; }
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
     void mergeChannelFromJson(json& input);
     
@@ -224,7 +227,8 @@ private:
     std::string name; ///< Name of the audio track.
     AudioTrackViewState viewState { *this }; ///< View/display state of the audio track.
     std::unique_ptr<UndoableChannelAction> undoableChannelAction; ///< Pending channel-parameter undo step.
-    
+    bool lastReadRebuiltChannels = false; ///< Set by readFromJson(): the channels were replaced.
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
     
 };

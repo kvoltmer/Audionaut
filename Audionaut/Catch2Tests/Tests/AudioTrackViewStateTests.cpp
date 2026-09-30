@@ -13,6 +13,7 @@
 #include "Engine/Undo/UndoableContainerAction.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 // The view state writes its "minimized" flag only when set and used to leave
 // the flag alone when the key was absent. An undo snapshot of a track that was
@@ -25,7 +26,7 @@ SCENARIO("track view state restores defaults for keys absent from the JSON", "[e
 {
     GIVEN("a project with one track")
     {
-        auto engine = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
         const auto audioFile = createSlowSawTwoSecondsAudioFile();
         REQUIRE(audioFile.existsAsFile());
         REQUIRE(engine->getProjectFileStore()->open(audioFile, nullptr));
@@ -81,10 +82,5 @@ SCENARIO("track view state restores defaults for keys absent from the JSON", "[e
                 REQUIRE(viewState.getMinimized());
             }
         }
-
-        engine = nullptr;
     }
-
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

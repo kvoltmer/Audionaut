@@ -91,6 +91,12 @@ public:
         as usual. Real-time safe. */
     bool adoptStandby (juce::int64 positionKey) noexcept;
 
+    /** Re-points the live lane's input, leaving the stretcher as it is: the
+        owner swapped its upstream chain for one it positioned ahead of a
+        jump (ClipTransportSource's buffered standby lane) and flushes this
+        node afterwards. Audio thread, like the block that follows. */
+    void setInput (juce::AudioSource* newInput) noexcept   { input = newInput; }
+
     /// Full primes rendered inside a block, and jumps served by a standby.
     int getPrimeCount() const noexcept               { return primeCount; }
     int getStandbyAdoptions() const noexcept         { return standbyAdoptions; }

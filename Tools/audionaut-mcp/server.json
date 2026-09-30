@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kvoltmer/audionaut",
+  "title": "Audionaut",
+  "description": "Edit Audionaut multitrack audio projects: cut, arrange, fade, analyse, auto-edit, export",
+  "websiteUrl": "https://audionaut.app/manual/11-cli-and-agents/",
+  "repository": {
+    "url": "https://github.com/kvoltmer/Audionaut",
+    "source": "github",
+    "subfolder": "Tools/audionaut-mcp"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "audionaut-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "AUDIONAUT_CLI",
+          "description": "Path to the Audionaut app binary or audionaut-cli, if it is not found automatically",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
