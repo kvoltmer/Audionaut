@@ -67,6 +67,7 @@ public:
     
     
     void createNewProject();
+    void revertProject();
     
     void askUserToOpenFile();
     void openFile(juce::File file);

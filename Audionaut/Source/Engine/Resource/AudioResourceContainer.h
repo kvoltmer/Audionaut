@@ -196,8 +196,11 @@ public:
      */
     void cleanup();
     
-    // delete obsolete files based on json
-    void deleteObsoleteAudioFiles(const json &json);
+    // audio files in the project's audio directory that json doesn't reference
+    std::vector<juce::File> findObsoleteAudioFiles(const json &json);
+
+    /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
+    void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
     
     // delete obsolete files which are not currently loaded
     void deleteObsoleteAudioFiles(const juce::File projectDirectory);
