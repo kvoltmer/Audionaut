@@ -24,6 +24,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
 #include "TestUtils.h"
 
@@ -140,6 +141,40 @@ juce::AudioBuffer<float> readAudioFile (const juce::File& file)
     juce::AudioBuffer<float> buffer (static_cast<int> (reader->numChannels), static_cast<int> (reader->lengthInSamples));
     reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, true);
     return buffer;
+}
+
+/// The slow saw of createSlowSawAudioFile (a second of silence, a second
+/// of saw, a second of silence) as a 24-bit FLAC: JUCE has no memory-mapped
+/// reader for FLAC, so a clip of it plays through a read-ahead buffer.
+juce::File createSlowSawFlacFile()
+{
+    const auto targetFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/slow-saw.flac");
+    juce::TemporaryFile tempFile (targetFile);
+
+    std::unique_ptr<juce::OutputStream> stream (tempFile.getFile().createOutputStream());
+    REQUIRE (stream != nullptr);
+
+    juce::FlacAudioFormat flac;
+    auto writer = flac.createWriterFor (stream, juce::AudioFormatWriter::Options{}
+                                                    .withSampleRate (44100.0)
+                                                    .withNumChannels (1)
+                                                    .withBitsPerSample (24));
+    REQUIRE (writer != nullptr);
+
+    constexpr int second = 44100;
+    juce::AudioBuffer<float> buffer (1, second);
+
+    buffer.clear();
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+    for (int s = 0; s < second; ++s)
+        buffer.setSample (0, s, genSaw (s, second));
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+    buffer.clear();
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+
+    writer.reset();
+    REQUIRE (tempFile.overwriteTargetFileWithTemporary());
+    return targetFile;
 }
 
 } // namespace
@@ -617,6 +652,193 @@ SCENARIO ("a clip that changes while it plays restarts through the standby lane"
                 }
             }
         }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a looped clip behind a read-ahead buffer wraps through a pre-filled lane", "[engine][loop][standby][buffered]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    // A file without a memory-mapped reader (FLAC, MP3) plays through a
+    // BufferingAudioSource that the read-ahead thread refills after every
+    // position jump. The loop wrap used to jump it inside the wrap block:
+    // the rest of that block came out of the emptied buffer as silence,
+    // and the block after it waited on the audio thread for the refill,
+    // up to two milliseconds per buffered clip. The transport now keeps a
+    // second buffer lane that the scheduler seeks to the loop start ahead
+    // of the wrap, so the wrap block only swaps lanes.
+    auto testFile = createSlowSawFlacFile();
+    REQUIRE (testFile.existsAsFile());
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/loop-buffered-out.wav");
+
+    struct Result { juce::AudioBuffer<float> audio; int adoptions = 0; int loops = 0; bool buffered = false; int primes = 0; int underruns = 0; };
+    const auto bounce = [&] (bool standbyEnabled, int blockSize, StretchMode mode = StretchMode::RePitch) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (mode);
+        if (mode == StretchMode::Stretch)
+            item->setSpeedRatio (1.31);
+        engine->getPlayListScheduler()->commitPlayListData();
+        engine->getPlayListScheduler()->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto loop = engine->getPlayListScheduler()->getTransportLoop();
+        loop->setLoopActive (true);
+        loop->setLoopPositionRange (nullptr, {1.0, 2.0}, audium::seconds);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 5.5;
+        AudioExporter (*engine, config).bounce();
+
+        Result result;
+        result.audio = readAudioFile (bounceFile);
+        result.loops = loop->getLoopCount();
+
+        auto resources = item->getRegion()->getAudioResources();
+        REQUIRE_FALSE (resources.empty());
+        auto voices = engine->getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+        REQUIRE_FALSE (voices.empty());
+        const auto& transport = voices.front()->getClipTransportSource();
+        result.buffered = transport.getBufferingSource() != nullptr;
+        result.adoptions = transport.getBufferedStandbyAdoptions();
+        result.primes = transport.getStretchSource()->getPrimeCount();
+        result.underruns = transport.getStretchSource()->getUnderruns();
+
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    // timeline second `pass` holds the whole saw, from its first sample
+    const auto requireSawPass = [] (const juce::AudioBuffer<float>& audio, int pass) {
+        constexpr int second = 44100;
+        auto worst = 0.0f;
+        auto worstAt = -1;
+        for (int s = 0; s < second; ++s)
+        {
+            const auto error = std::abs (audio.getSample (0, pass * second + s) - genSaw (s, second));
+            if (error > worst)
+            {
+                worst = error;
+                worstAt = s;
+            }
+        }
+        CAPTURE (pass, worstAt, worst);
+        REQUIRE (worst < 1.0e-5f);     // 24-bit quantisation
+    };
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            const auto withStandby = bounce (true, blockSize);
+            const auto without = bounce (false, blockSize);
+
+            THEN ("play start and every wrap swapped in a lane seeked ahead of time")
+            {
+                REQUIRE (withStandby.buffered);
+                REQUIRE (withStandby.loops >= 3);
+                REQUIRE (withStandby.adoptions == 1 + withStandby.loops);
+                REQUIRE (without.adoptions == 0);
+            }
+
+            THEN ("every pass after a wrap is continuous - offline, the in-block seek waits for the reader")
+            {
+                for (int pass = 1; pass < 5; ++pass)
+                {
+                    requireSawPass (withStandby.audio, pass);
+                    requireSawPass (without.audio, pass);
+                }
+            }
+
+            WHEN ("the clip is stretched")
+            {
+                // no second stretcher behind a buffer: the stretch node
+                // primes in the block, from the lane the wrap swapped in
+                const auto stretched = bounce (true, blockSize, StretchMode::Stretch);
+
+                THEN ("every wrap swapped lanes and the stretcher primed from the ready lane")
+                {
+                    REQUIRE (stretched.buffered);
+                    REQUIRE (stretched.loops >= 3);
+                    REQUIRE (stretched.adoptions == 1 + stretched.loops);
+                    REQUIRE (stretched.primes == 1 + stretched.loops);
+                    REQUIRE (stretched.underruns == 0);
+
+                    for (int pass = 2; pass < 5; ++pass)
+                    {
+                        const auto from = pass * 44100 + blockSize;
+                        const auto rms = stretched.audio.getRMSLevel (0, from, 44100 - 2 * blockSize);
+                        CAPTURE (pass, rms);
+                        REQUIRE (rms > 0.05f);
+                    }
+                }
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a buffered voice that outlives its engine keeps the read-ahead thread", "[engine][loop][standby][buffered][lifetime]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    // A voice retired while a Voice still renders it - a bounce ends in a
+    // fade-out stop that no further callback drains - is released only when
+    // the VoiceSourceContainer goes, and the AudioResourceContainer co-owns
+    // that container: the voice can be the last object of an engine to go.
+    // Its read-ahead buffers unregister from the read-ahead thread on the
+    // way out, so the thread must still be there. Unregistering from a
+    // destroyed TimeSliceThread faults on Windows (a deleted critical
+    // section) and is silent luck elsewhere, hence the voice co-owns the
+    // thread. A held voice stands in for the retired one here.
+    auto testFile = createSlowSawFlacFile();
+    REQUIRE (testFile.existsAsFile());
+
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+    auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+    REQUIRE (item != nullptr);
+
+    auto resources = item->getRegion()->getAudioResources();
+    REQUIRE_FALSE (resources.empty());
+    auto voices = engine->getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+    REQUIRE (voices.size() == 1);
+    auto voice = voices.front();
+    REQUIRE (voice->hasBufferedStandby());     // reads through a read-ahead buffer
+
+    std::weak_ptr<juce::TimeSliceThread> readAheadThread = engine->getAudioResourceContainer()->getReadAheadThread();
+    REQUIRE_FALSE (readAheadThread.expired());
+
+    // the engine goes while the voice is still held
+    voices.clear();
+    resources.clear();
+    item = nullptr;
+    engine = nullptr;
+
+    THEN ("the thread lives, and runs, for as long as the voice does")
+    {
+        {
+            auto thread = readAheadThread.lock();
+            REQUIRE (thread != nullptr);
+            REQUIRE (thread->isThreadRunning());
+        }
+
+        voice = nullptr;
+        REQUIRE (readAheadThread.expired());
     }
 
     testFile.deleteFile();

@@ -65,9 +65,6 @@ private:
     std::atomic<bool> byPass { false };
     std::atomic<bool> inCallback { false };   // the render path is running
     DspLoadMeter dspLoadMeter;
-
-    juce::AudioBuffer<const float> inBuf;
-	juce::AudioBuffer<float> outBuf;
     
 };
 

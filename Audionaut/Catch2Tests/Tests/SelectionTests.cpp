@@ -9,6 +9,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Region/AudioRegionContainer.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -16,9 +17,7 @@ static const auto selectionTestFilesDirectory = String(CURRENT_SOURCE_DIR) + Str
 
 SCENARIO("pasting clipboard JSON with stale ids is skipped instead of crashing", "[engine][selection][paste]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto tracks = engine->getAudioTrackContainer();
     auto selection = tracks->getSelectionManager();
 
@@ -57,7 +56,7 @@ SCENARIO("pasting clipboard JSON with stale ids is skipped instead of crashing",
             nlohmann::json data;
             data["lola"]["play_list_items"] = nlohmann::json::array({ clipJson });
             const auto before = totalClips();
-            selection->pasteFromJson(data, engine, false);
+            selection->pasteFromJson(data, engine.ptr(), false);
 
             THEN("one clip is added") {
                 REQUIRE(totalClips() == before + 1);
@@ -72,7 +71,7 @@ SCENARIO("pasting clipboard JSON with stale ids is skipped instead of crashing",
             const auto before = totalClips();
 
             THEN("the paste is skipped without touching the arrangement") {
-                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine, false));
+                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine.ptr(), false));
                 REQUIRE(totalClips() == before);
             }
         }
@@ -82,7 +81,7 @@ SCENARIO("pasting clipboard JSON with stale ids is skipped instead of crashing",
             data["lola"]["play_list_items"] = nlohmann::json::array();
 
             THEN("nothing happens") {
-                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine, false));
+                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine.ptr(), false));
             }
         }
 
@@ -96,13 +95,9 @@ SCENARIO("pasting clipboard JSON with stale ids is skipped instead of crashing",
             const auto before = totalRegions();
 
             THEN("the region is skipped without touching the project") {
-                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine, false));
+                REQUIRE_NOTHROW(selection->pasteFromJson(data, engine.ptr(), false));
                 REQUIRE(totalRegions() == before);
             }
         }
     }
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

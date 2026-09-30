@@ -4,14 +4,13 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
-// MCP server wrapping audionaut-cli. Every tool shells out to the CLI with
-// --json and relays the {ok, result|error} envelope - no engine logic lives
-// here. See README.md for registration instructions.
+// MCP server for Audionaut. Every tool runs one CLI verb - through the
+// installed app, or a developer build of audionaut-cli - with --json and
+// relays the {ok, result|error} envelope; no engine logic lives here. See
+// README.md for registration instructions.
 
 import { execFile } from "node:child_process";
-import { access, constants } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { platform, release } from "node:os";
 import { promisify } from "node:util";
 
@@ -19,82 +18,107 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
+import { notFoundMessage, outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
+
 const execFileAsync = promisify(execFile);
-const accessAsync = promisify(access);
+const { version } = createRequire(import.meta.url)("./package.json");
 
 // ---------------------------------------------------------------------------
-// CLI location: $AUDIONAUT_CLI, else the repo's CMake build output (this
-// package lives at <repo>/Tools/audionaut-mcp), else audionaut-cli on PATH.
-// Single-config generators (Makefile/Ninja) emit AudionautCli_artefacts/
-// directly; multi-config ones (Xcode, Visual Studio) add a configuration
-// subdirectory, and Windows adds .exe.
+// The binary that runs the CLI verbs: $AUDIONAUT_CLI, a repo build of
+// audionaut-cli, audionaut-cli on PATH, else the installed Audionaut app,
+// which runs the same verbs itself. See locate.js.
 // ---------------------------------------------------------------------------
-async function resolveCliPath() {
-  if (process.env.AUDIONAUT_CLI) return process.env.AUDIONAUT_CLI;
+const cli = await resolveCli();
 
-  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const artefacts = join(repoRoot, "build", "AudionautCli_artefacts");
-  const binary = process.platform === "win32" ? "AudionautCli.exe" : "AudionautCli";
+if (process.argv.includes("--check")) process.exit(await check());
 
-  for (const candidate of [
-    join(artefacts, binary),
-    join(artefacts, "Release", binary),
-    join(artefacts, "Debug", binary),
-  ]) {
-    try {
-      await accessAsync(candidate, constants.X_OK);
-      return candidate;
-    } catch {
-      // try the next layout
-    }
+// `npx audionaut-mcp --check`: says which binary was found and whether it
+// answers with a JSON envelope. With no verb the app replies unknown_command
+// without opening a window, which proves the round trip.
+async function check() {
+  console.log(`audionaut-mcp ${version}`);
+  if (!cli.path) {
+    console.log(notFoundMessage(cli));
+    return 1;
   }
-
-  return "audionaut-cli"; // hope it's on PATH; spawn errors are surfaced per call
+  console.log(`Audionaut: ${cli.path} (${cli.source}${cli.sandboxed ? ", sandboxed: projects must be in ~/Music" : ""})`);
+  let stdout = "";
+  try {
+    ({ stdout } = await execFileAsync(cli.path, ["--json"], { timeout: 30000, windowsHide: true }));
+  } catch (error) {
+    stdout = error.stdout ?? "";
+    if (!stdout) console.log(`Running it failed: ${error.message}`);
+  }
+  if (parseEnvelope(stdout)) {
+    console.log("OK: Audionaut answered. Register this server with your MCP client (see README).");
+    return 0;
+  } else {
+    console.log(
+      process.platform === "win32" && !stdout
+        ? "No reply came back. On Windows this can happen with Audionaut 1.6.2 and older; update to 1.6.3 or later."
+        : `Unexpected reply: ${String(stdout).slice(0, 500)}`
+    );
+    return 1;
+  }
 }
 
-const cliPath = await resolveCliPath();
+const errorResult = (text) => ({ content: [{ type: "text", text }], isError: true });
 
 // Runs one CLI command and converts its --json envelope into an MCP tool
 // result. CLI failures come back as isError results (the agent can read the
 // code/message and adjust), never as thrown protocol errors.
-async function runCli(args) {
+//
+// args[1] is always the verb's project (or analyze's target); pathIndexes
+// names any further path arguments (import's files, export's output). Paths
+// are made absolute here, and for the sandboxed macOS app checked against
+// ~/Music first - the app would only fail with an unhelpful error.
+async function runCli(args, pathIndexes = []) {
+  if (!cli.path) return errorResult(notFoundMessage(cli));
+
+  args = [...args];
+  const paths = [1, ...pathIndexes];
+  for (const index of paths) args[index] = userPath(args[index]);
+
+  if (cli.sandboxed && !process.env.AUDIONAUT_SKIP_PATH_CHECK) {
+    const outside = outsideMusicFolder(paths.map((index) => args[index]));
+    if (outside)
+      return errorResult(
+        `sandbox_denied: "${outside}" is outside the Music folder. Audionaut on macOS is sandboxed and can ` +
+          "only reach ~/Music: copy or move the project and its audio into ~/Music (for example " +
+          "~/Music/Audionaut) and export there."
+      );
+  }
+
   let stdout;
   try {
-    ({ stdout } = await execFileAsync(cliPath, [...args, "--json", "--quiet"], {
+    ({ stdout } = await execFileAsync(cli.path, [...args, "--json", "--quiet"], {
       timeout: 10 * 60 * 1000, // export/analyze of long projects can be slow
       maxBuffer: 32 * 1024 * 1024, // --raw project dumps can be large
+      windowsHide: true,
     }));
   } catch (error) {
     // Non-zero exit still writes the envelope to stdout; prefer it over the
     // raw error so the agent sees the CLI's own code/message.
     stdout = error.stdout;
-    if (!stdout) {
-      const message =
-        error.code === "ENOENT"
-          ? `audionaut-cli not found at "${cliPath}". Build it (cmake -B build -S Audionaut/Catch2Tests && ` +
-            `cmake --build build --target AudionautCli) or set AUDIONAUT_CLI to the binary.`
-          : `audionaut-cli failed: ${error.message}`;
-      return { content: [{ type: "text", text: message }], isError: true };
-    }
+    if (!stdout)
+      return errorResult(
+        error.code === "ENOENT" ? notFoundMessage({ ...cli, searched: [cli.path] }) : `Audionaut failed: ${error.message}`
+      );
   }
 
-  let envelope;
-  try {
-    envelope = JSON.parse(stdout);
-  } catch {
-    return {
-      content: [{ type: "text", text: `audionaut-cli returned unparseable output: ${String(stdout).slice(0, 2000)}` }],
-      isError: true,
-    };
-  }
+  if (!stdout && process.platform === "win32")
+    return errorResult(
+      "Audionaut ran but returned nothing. On Windows this can happen with Audionaut 1.6.2 and older; " +
+        "update Audionaut to 1.6.3 or later."
+    );
+
+  const envelope = parseEnvelope(stdout);
+  if (!envelope) return errorResult(`Audionaut returned unparseable output: ${String(stdout).slice(0, 2000)}`);
 
   if (envelope.ok)
     return { content: [{ type: "text", text: JSON.stringify(envelope.result, null, 2) }] };
 
-  return {
-    content: [{ type: "text", text: `${envelope.error?.code}: ${envelope.error?.message}` }],
-    isError: true,
-  };
+  return errorResult(`${envelope.error?.code}: ${envelope.error?.message}`);
 }
 
 // Shared parameter fragments
@@ -107,7 +131,7 @@ const projectParam = z
   .describe("Path to the .audium project package (absolute paths recommended)");
 
 const server = new McpServer(
-  { name: "audionaut", version: "0.1.0" },
+  { name: "audionaut", version },
   {
     instructions:
       "Tools for inspecting and editing Audionaut (.audium) multitrack projects. " +
@@ -118,7 +142,11 @@ const server = new McpServer(
       "If a task needs something these tools cannot do - a missing verb, option " +
       "or limit - tell the user and use request_feature to send the gap to the maintainer. If a tool " +
       "misbehaves - a crash, a wrong result, a project left in a bad state - tell the user and use " +
-      "report_bug so the maintainer hears about it.",
+      "report_bug so the maintainer hears about it." +
+      (cli.sandboxed
+        ? " Audionaut on this Mac is sandboxed: projects, audio to import and exports must be inside " +
+          "~/Music (for example ~/Music/Audionaut). Pass absolute paths."
+        : ""),
   }
 );
 
@@ -171,7 +199,7 @@ server.registerTool(
       project,
       ...files,
       ...(position_seconds !== undefined ? ["--position", String(position_seconds)] : []),
-    ])
+    ], files.map((_, i) => 2 + i))
 );
 
 server.registerTool(
@@ -209,7 +237,7 @@ server.registerTool(
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
-    ])
+    ], [3])
 );
 
 server.registerTool(
@@ -587,15 +615,20 @@ server.registerTool(
   {
     title: "Set clip fades",
     description:
-      "Sets the addressed clip's fade lengths, ramp offsets (0 clears; offsets may be negative to reach " +
-      "outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped against each " +
-      "other within the clip. The address must match exactly one clip.",
+      "Sets the addressed clip's fade ramps and curve exponents (0.1-4, 0.5 = equal power). All four fade " +
+      "values are in `unit` (default bars) and 0 clears one. Each ramp has two edges measured inward from " +
+      "the clip edge: the fade-in runs from fade_in_start to fade_in after the clip start, the fade-out " +
+      "from fade_out to fade_out_end before the clip end, so a ramp lasts fade_in - fade_in_start (or " +
+      "fade_out - fade_out_end). A negative offset puts that edge outside the clip, playing source audio " +
+      "beyond it - e.g. fade_out 0.25 with fade_out_end -0.25 (seconds) is a 0.5 s ramp centred on the " +
+      "clip end, the outgoing half of a crossfade. Values are clamped against each other within the clip. " +
+      "The address must match exactly one clip.",
     inputSchema: {
       project: projectParam,
-      fade_in: z.number().min(0).optional().describe("Fade-in length"),
-      fade_out: z.number().min(0).optional().describe("Fade-out length"),
-      fade_in_start: z.number().optional().describe("Fade-in ramp start offset from the clip start"),
-      fade_out_end: z.number().optional().describe("Fade-out ramp end offset from the clip end"),
+      fade_in: z.number().min(0).optional().describe("Where the fade-in ramp reaches full level, measured from the clip start; the ramp length only when fade_in_start is 0"),
+      fade_out: z.number().min(0).optional().describe("Where the fade-out ramp begins, measured back from the clip end; the ramp length only when fade_out_end is 0"),
+      fade_in_start: z.number().optional().describe("Where the fade-in ramp begins, measured from the clip start; negative = before the clip start"),
+      fade_out_end: z.number().optional().describe("Where the fade-out ramp reaches silence, measured back from the clip end; negative = past the clip end"),
       fade_in_curve: z.number().optional().describe("Fade-in curve exponent (0.1-4, 0.5 = equal power)"),
       fade_out_curve: z.number().optional().describe("Fade-out curve exponent (0.1-4, 0.5 = equal power)"),
       at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),
@@ -677,7 +710,7 @@ const issueRelayUrl =
   process.env.AUDIONAUT_FEATURE_REQUEST_URL ?? "https://audionaut-feature-requests.feature-request-relay.workers.dev";
 const issueFilingDisabled = Boolean(process.env.AUDIONAUT_DISABLE_FEATURE_REQUESTS);
 const discussionsUrl = `https://github.com/${githubRepo}/discussions/63`;
-const clientTag = `audionaut-mcp 0.1.0 (${platform()} ${release()})`;
+const clientTag = `audionaut-mcp ${version} (${platform()} ${release()})`;
 
 const issueKinds = {
   feature: { labels: ["enhancement", "agent-request"], failureCode: "feature_request_failed" },
@@ -857,4 +890,4 @@ server.registerTool(
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error(`audionaut-mcp ready (cli: ${cliPath})`);
+console.error(`audionaut-mcp ${version} ready (${cli.path ? `${cli.path}, ${cli.source}` : "Audionaut not found"})`);

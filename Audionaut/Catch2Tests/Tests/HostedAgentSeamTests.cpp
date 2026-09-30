@@ -6,6 +6,7 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -19,9 +20,7 @@ static const auto seamTestFilesDirectory = String(CURRENT_SOURCE_DIR) + String("
 SCENARIO("a project state computed elsewhere applies as one undoable step",
          "[engine][hosted][undo]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto store = engine->getProjectFileStore();
     auto container = engine->getAudioTrackContainer();
 
@@ -71,6 +70,82 @@ SCENARIO("a project state computed elsewhere applies as one undoable step",
 
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
+}
+
+/**
+ * The UI keys its track and channel components on the engine's objects. A
+ * state that kept them only needs a refresh (updateAll), one that replaced
+ * them needs a rebuild (rebuildAll) - the serializer picks the broadcast from
+ * the container's report, so an agent edit that only touches clips no longer
+ * rebuilds the whole arrangement.
+ */
+SCENARIO("applying a state reports whether the track structure was rebuilt",
+         "[engine][hosted][structure]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
+    auto container = engine->getAudioTrackContainer();
+
+    auto audioFile = File(seamTestFilesDirectory + "120-funk-1-sec.wav");
+    REQUIRE(audioFile.existsAsFile());
+
+    auto outProject = File(seamTestFilesDirectory + "Sessions/hosted-structure-test.audium/"
+                           + ProjectFileStore::projectFileName);
+
+    GIVEN("a saved project with a clip track") {
+        engine->getProjectSerializer()->createNewProject();
+        REQUIRE(container->addAudioFiles({ audioFile.getFullPathName() }, 0.0, nullptr, false));
+        REQUIRE(store->save(outProject, nullptr));
+        const auto numTracks = container->getNumItems();
+
+        json before;
+        engine->getProjectSerializer()->writeToJson(before);
+        auto& tracksJson = before["audium"]["audio_tracks"];
+        REQUIRE(tracksJson.size() == static_cast<size_t>(numTracks));
+
+        WHEN("a state with the same tracks and channels is applied") {
+            auto afterState = before;
+            afterState["audium"]["master_gain"] = 0.5;
+            REQUIRE(store->applyStateAsUndoableReload(afterState, true, true,
+                                                      "Agent: gain", nullptr));
+
+            THEN("the tracks were read in place") {
+                REQUIRE(container->getNumItems() == numTracks);
+                REQUIRE_FALSE(container->didLastReadRebuildStructure());
+            }
+        }
+
+        WHEN("a state with one track fewer is applied") {
+            auto afterState = before;
+            afterState["audium"]["audio_tracks"].erase(tracksJson.size() - 1);
+            REQUIRE(store->applyStateAsUndoableReload(afterState, true, true,
+                                                      "Agent: remove-track", nullptr));
+
+            THEN("the tracks were replaced") {
+                REQUIRE(container->getNumItems() == numTracks - 1);
+                REQUIRE(container->didLastReadRebuildStructure());
+            }
+        }
+
+        WHEN("a state with one channel more on a track is applied") {
+            auto afterState = before;
+            auto& channels = afterState["audium"]["audio_tracks"][tracksJson.size() - 1]["channels"];
+            REQUIRE(channels.size() > 0);
+            channels.push_back(channels.back());
+            REQUIRE(store->applyStateAsUndoableReload(afterState, true, true,
+                                                      "Agent: add-channel", nullptr));
+
+            THEN("the structure counts as replaced although no track was") {
+                REQUIRE(container->getNumItems() == numTracks);
+                REQUIRE(container->didLastReadRebuildStructure());
+            }
+        }
+    }
+
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
 
     engine = nullptr;
     DeletedAtShutdown::deleteAll();
@@ -80,10 +155,7 @@ SCENARIO("a project state computed elsewhere applies as one undoable step",
 SCENARIO("a second engine leaves the session's temp directory alone",
          "[engine][hosted][temp]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     engine->getProjectSerializer()->createNewProject();
 
     const auto sessionTemp = ProjectFileStore::tempDirectory;
@@ -115,8 +187,4 @@ SCENARIO("a second engine leaves the session's temp directory alone",
             REQUIRE_FALSE(sessionTemp.isDirectory());
         }
     }
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }

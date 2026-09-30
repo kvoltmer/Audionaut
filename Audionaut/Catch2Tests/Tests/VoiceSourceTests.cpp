@@ -11,23 +11,20 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 using namespace audium;
 using namespace juce;
 
 SCENARIO("tranport source scenario", "[engine][dsp][transport]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    
-    
     auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-v2.audium"));
     REQUIRE(fileUnderTest.exists());
     
 
     GIVEN("Load session file (audio file starts: at second 1 with 1 second duration)")
     {
-        auto engine     = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
     auto store = engine->getProjectFileStore();
         
         
@@ -116,12 +113,7 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
             if (bounceConfig->fileName.existsAsFile())
                 bounceConfig->fileName.deleteFile();
         }
-        
-        engine = nullptr;
     }
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 static void examineFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
@@ -165,16 +157,13 @@ static void examineFile(std::shared_ptr<audium::ExportAudioConfig> bounceConfig)
 
 SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    
     auto testFile = createSlowSawTwoSecondsAudioFile();
     jassert(testFile.existsAsFile());
     std::cout << "Testfile: " << testFile.getFullPathName() << std::endl;
     
     GIVEN("engine loading the audio file")
     {
-        auto engine = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
     auto store = engine->getProjectFileStore();
         auto ok = store->open(testFile, nullptr);
         REQUIRE(ok);
@@ -205,14 +194,9 @@ SCENARIO("tranport source duration scenario", "[engine][dsp][transport][duration
 
         if (bounceConfig->fileName.existsAsFile())
             bounceConfig->fileName.deleteFile();
-        
-        engine = nullptr;
     }
 
     if (testFile.existsAsFile())
         testFile.deleteFile();
-    
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 

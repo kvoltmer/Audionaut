@@ -33,13 +33,22 @@ std::vector<float> SBicSegmenter::analyze(const juce::File& audioFile)
 }
 
 std::vector<float> SBicSegmenter::analyze(const juce::File& audioFile,
-                                          const Parameters& params)
+                                          const Parameters& params,
+                                          const std::atomic<bool>* shouldAbort)
 {
 #if ! ESSENTIA_ENABLED
-    juce::ignoreUnused (audioFile, params);
+    juce::ignoreUnused (audioFile, params, shouldAbort);
     return {};
 #else
     if (! audioFile.existsAsFile())
+        return {};
+
+    const auto aborted = [shouldAbort]
+    {
+        return shouldAbort != nullptr && shouldAbort->load(std::memory_order_relaxed);
+    };
+
+    if (aborted())
         return {};
 
     using namespace essentia;
@@ -97,6 +106,16 @@ std::vector<float> SBicSegmenter::analyze(const juce::File& audioFile,
 
     audio->compute();
 
+    // Each Essentia compute() below is uninterruptible, so the abort flag is
+    // polled between them: after the decode, once per frame and before the
+    // BIC pass. An abandoned analysis returns empty, which the caller treats
+    // like a failure (nothing is cached, so it is retried next time).
+    if (aborted())
+    {
+        essentia::shutdown();
+        return {};
+    }
+
     Pool pool;
     while (true)
     {
@@ -111,6 +130,12 @@ std::vector<float> SBicSegmenter::analyze(const juce::File& audioFile,
         mfcc->compute();
 
         pool.add("lowlevel.mfcc", mfccCoeffs);
+
+        if (aborted())
+        {
+            essentia::shutdown();
+            return {};
+        }
     }
 
     std::vector<std::vector<Real>> features;
@@ -135,6 +160,12 @@ std::vector<float> SBicSegmenter::analyze(const juce::File& audioFile,
     for (auto frameIdx = 0; frameIdx < (int) features.size(); ++frameIdx)
         for (auto mfccIdx = 0; mfccIdx < (int) features[0].size(); ++mfccIdx)
             featuresArray[mfccIdx][frameIdx] = features[(size_t) frameIdx][(size_t) mfccIdx];
+
+    if (aborted())
+    {
+        essentia::shutdown();
+        return {};
+    }
 
     std::vector<Real> segments;
     sbic->input("features").set(featuresArray);

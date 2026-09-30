@@ -62,19 +62,41 @@ audium::Preferences& AudiumApplication::getPreferences()
     return *prefs;
 }
 
+#if JUCE_WINDOWS
+// True when the stream already leads somewhere - a pipe or file the caller
+// set up (an MCP server, a shell redirect) - rather than nowhere.
+static bool isConnectedStdHandle (DWORD which)
+{
+    const auto handle = GetStdHandle (which);
+    return handle != nullptr && handle != INVALID_HANDLE_VALUE && GetFileType (handle) != FILE_TYPE_UNKNOWN;
+}
+#endif
+
 // The app is a GUI-subsystem executable on Windows, so stdout/stderr are
 // disconnected when run from a terminal - the CLI output would silently
-// vanish without re-attaching to the parent console. Known caveat: the shell
-// prompt returns immediately (shells don't wait on GUI processes), so output
-// interleaves with it; audionaut-cli is the clean console-subsystem option.
+// vanish without re-attaching to the parent console. Only disconnected
+// streams are pointed at the console: a caller that spawned the app with
+// pipes (the MCP server via Node's execFile) must get the --json envelope on
+// its pipe, and redirecting there too would send it to the console instead.
+// Known caveat: the shell prompt returns immediately (shells don't wait on
+// GUI processes), so output interleaves with it; audionaut-cli is the clean
+// console-subsystem option.
 static void attachToParentConsoleForCli()
 {
 #if JUCE_WINDOWS
+    const auto outConnected = isConnectedStdHandle (STD_OUTPUT_HANDLE);
+    const auto errConnected = isConnectedStdHandle (STD_ERROR_HANDLE);
+
+    if (outConnected && errConnected)
+        return;
+
     if (AttachConsole (ATTACH_PARENT_PROCESS))
     {
         FILE* unused = nullptr;
-        freopen_s (&unused, "CONOUT$", "w", stdout);
-        freopen_s (&unused, "CONOUT$", "w", stderr);
+        if (! outConnected)
+            freopen_s (&unused, "CONOUT$", "w", stdout);
+        if (! errConnected)
+            freopen_s (&unused, "CONOUT$", "w", stderr);
         std::ios::sync_with_stdio();
     }
 #endif
@@ -391,7 +413,14 @@ void AudiumApplication::startAgentHost()
     agentHost = std::make_unique<cli::agent::AgentHost> (audiumEngine);
 
     agentHost->onProjectMutated = [this] {
-        updateUI();
+        // A plain refresh, not rebuildUI(): the forced rebuild tore down the
+        // whole middle panel after every agent edit, so each clip view was
+        // recreated and reloaded its waveform thumbnail - the arrangement
+        // visibly redrew from scratch per edit. Edits that change the track
+        // list still rebuild, because the engine broadcasts rebuildAll for
+        // those on its own.
+        if (auto comp = getMainComponent())
+            comp->updateUI();
         refreshWindowTitle(); // now carries the agent marker
     };
 

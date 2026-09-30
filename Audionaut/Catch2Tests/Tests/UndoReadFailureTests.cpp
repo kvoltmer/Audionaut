@@ -14,6 +14,7 @@
 #include "Engine/Undo/UndoableEdit.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 // A container undo step whose stored state can't be re-applied must report
 // the failure: the UndoManager then drops the step instead of recording a
@@ -25,7 +26,7 @@ SCENARIO("an undoable edit whose state can't be re-applied reports failure", "[e
 {
     GIVEN("a project with one clip on one track")
     {
-        auto engine = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
         const auto audioFile = createSlowSawTwoSecondsAudioFile();
         REQUIRE(audioFile.existsAsFile());
         REQUIRE(engine->getProjectFileStore()->open(audioFile, nullptr));
@@ -65,9 +66,5 @@ SCENARIO("an undoable edit whose state can't be re-applied reports failure", "[e
 
         track = nullptr;
         container = nullptr;
-        engine = nullptr;
     }
-
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
