@@ -17,8 +17,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/PlayList/TransportLoop.h"
-
-#include "Interface/ColourIds.h"
+#include "Engine/Group/WaveFormColours.h"
 
 namespace audium {
 

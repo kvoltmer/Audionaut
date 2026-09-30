@@ -18,6 +18,7 @@ namespace audium {
 class VoiceSourceContainer;
 class AudiumEngine;
 class AnalysisWorker;
+class UserPrompter;
 
 /**
  * @class AudioResourceContainer
@@ -38,20 +39,24 @@ public:
      * @param tempoProvider_ A shared pointer to the `TempoProvider`.
      * @param voiceSourceContainer_ A shared pointer to the `VoiceSourceContainer`.
      * @param analysisWorker_ A shared pointer to the background `AnalysisWorker`.
+     * @param userPrompter_ The host's channel to the user (see UserPrompter).
      */
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                            std::shared_ptr<juce::AudioFormatManager> formatManager_,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
                            std::shared_ptr<TempoProvider> tempoProvider_,
                            std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
-                           std::shared_ptr<AnalysisWorker> analysisWorker_) :
+                           std::shared_ptr<AnalysisWorker> analysisWorker_,
+                           std::shared_ptr<UserPrompter> userPrompter_) :
         audioDeviceManager(audioDeviceManager_),
         formatManager(formatManager_),
         audioThumbnailCache(audioThumbnailCache_),
         tempoProvider(tempoProvider_),
         voiceSourceContainer(voiceSourceContainer_),
-        analysisWorker(analysisWorker_)
+        analysisWorker(analysisWorker_),
+        userPrompter(userPrompter_)
     {
+        jassert(userPrompter != nullptr);
         formatManager->registerBasicFormats();
         thread->startThread();
     }
@@ -296,7 +301,8 @@ private:
     /// False for a scratch container sharing another session's temp directory.
     bool ownsTemporaryDirectory = true;
 
-    /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
+    /** Asks the user and moves the given files to the trash. Without a user
+        (headless prompter) the question is declined and the files stay. */
     void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
 
     /// Cancels pending background analysis of the file unless another loaded
@@ -323,6 +329,9 @@ private:
 
     /// Background worker that analyses newly added audio resources off-thread.
     std::shared_ptr<AnalysisWorker> analysisWorker;
+
+    /// The host's channel to the user: asks before files go to the trash.
+    std::shared_ptr<UserPrompter> userPrompter;
 
     /// Thread for read-ahead operations, co-owned by the voice sources reading through it.
     std::shared_ptr<juce::TimeSliceThread> thread = std::make_shared<juce::TimeSliceThread> ("read ahead thread");
