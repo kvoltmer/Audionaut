@@ -252,6 +252,156 @@ SCENARIO("FLAC export", "[engine][export][flac]")
         inputFile.deleteFile();
 }
 
+// AIFF is lossless like WAV; Ogg Vorbis is lossy and takes a quality
+// instead of a bit depth. Both share the refusals of the other formats.
+SCENARIO("AIFF and Ogg Vorbis export", "[engine][export][aiff][ogg]")
+{
+    auto inputFile = createRampAudioFile(1.0);
+
+    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-aiff-ogg-export-tests");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto makeConfig = [&](const String& fileName, ExportFormat format) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->format = format;
+        config->sampleRate = 44100.0;
+        config->numChannels = 1;
+        config->bitDepth = 24;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        return config;
+    };
+
+    auto formatNameOf = [](const File& file) {
+        AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+        std::unique_ptr<AudioFormatReader> reader (formatManager.createReaderFor(file));
+        return reader != nullptr ? reader->getFormatName() : String();
+    };
+
+    // the largest deviation from the source ramp over the given span
+    auto maxDeviation = [&](const File& file, int from, int to) {
+        auto bounced = audioFileToAudioBuffer(file);
+        auto source = audioFileToAudioBuffer(inputFile);
+        auto deviation = 0.0f;
+        for (auto s = from; s < juce::jmin(to, bounced.getNumSamples(), source.getNumSamples()); s++)
+            deviation = std::max(deviation, std::abs(bounced.getSample(0, s) - source.getSample(0, s)));
+        return deviation;
+    };
+
+    GIVEN("a 24-bit AIFF bounce of a ramp")
+    {
+        auto aiff = makeConfig("bounce.aiff", ExportFormat::aiff);
+        REQUIRE(AudioExporter(*engine, aiff).bounce());
+
+        THEN("it is an AIFF file holding the ramp to within 24-bit quantisation")
+        {
+            REQUIRE(formatNameOf(aiff->fileName) == "AIFF file");
+            REQUIRE(audioFileToAudioBuffer(aiff->fileName).getNumSamples() == 44100);
+            REQUIRE(maxDeviation(aiff->fileName, 0, 44100) <= 2.0f / 8388608.0f);
+        }
+    }
+
+    GIVEN("an AIFF export at 32 bits")
+    {
+        auto config = makeConfig("deep.aiff", ExportFormat::aiff);
+        config->bitDepth = 32;
+
+        THEN("it is refused and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("an AIFF file"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("an Ogg Vorbis bounce at the default quality")
+    {
+        auto ogg = makeConfig("bounce.ogg", ExportFormat::ogg);
+        ogg->bitDepth = 12; // ignored: a lossy format has no bit depth
+        REQUIRE(AudioExporter(*engine, ogg).bounce());
+
+        THEN("it is an Ogg Vorbis file of the full length, close to the ramp")
+        {
+            REQUIRE(formatNameOf(ogg->fileName) == "Ogg-Vorbis file");
+            REQUIRE(audioFileToAudioBuffer(ogg->fileName).getNumSamples() == 44100);
+
+            // lossy, but a slow ramp survives well away from the file's edges
+            auto deviation = maxDeviation(ogg->fileName, 4410, 44100 - 4410);
+            INFO("largest deviation: " << deviation);
+            REQUIRE(deviation < 0.02f);
+        }
+    }
+
+    GIVEN("Ogg Vorbis bounces at the lowest and the highest quality")
+    {
+        auto low = makeConfig("low.ogg", ExportFormat::ogg);
+        low->quality = 0;
+        auto high = makeConfig("high.ogg", ExportFormat::ogg);
+        high->quality = 10;
+        REQUIRE(AudioExporter(*engine, low).bounce());
+        REQUIRE(AudioExporter(*engine, high).bounce());
+
+        THEN("the higher quality takes more bytes")
+        {
+            REQUIRE(low->fileName.getSize() < high->fileName.getSize());
+        }
+    }
+
+    GIVEN("an Ogg Vorbis quality beyond the scale")
+    {
+        auto config = makeConfig("loud.ogg", ExportFormat::ogg);
+        config->quality = 11;
+
+        THEN("it is refused, names the range, and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("0 to 10"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("an Ogg Vorbis export of more channels than Vorbis lays out")
+    {
+        auto config = makeConfig("wide.ogg", ExportFormat::ogg);
+        config->numChannels = 9;
+
+        THEN("it is refused and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("an Ogg Vorbis file cannot hold 9"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("a multi-mono Ogg Vorbis export")
+    {
+        auto config = makeConfig("stems.ogg", ExportFormat::ogg);
+        config->multiMono = true;
+        REQUIRE(AudioExporter(*engine, config).bounce());
+
+        THEN("only the Ogg mono files are left - no base file, no intermediate")
+        {
+            auto mono = AudioExporter::monoFileFor(config->fileName, 1, ExportFormat::ogg);
+            REQUIRE(mono.getFileName() == "stems-01.ogg");
+            REQUIRE(formatNameOf(mono) == "Ogg-Vorbis file");
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 1);
+        }
+    }
+
+    workDir.deleteRecursively();
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+}
+
 // Exporting twice in one session must give the same file twice: the first
 // bounce must not leave state behind (a voice still fading out, a stale
 // read-ahead) that bleeds into the start of the next one.

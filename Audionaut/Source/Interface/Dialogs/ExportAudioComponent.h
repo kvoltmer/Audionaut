@@ -17,7 +17,7 @@ public:
     ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
-        setSize(300, 130);
+        setSize(400, 130);
     }
 
     ~ExportAudioComponent() override
@@ -32,7 +32,7 @@ public:
     void resized() override
     {
                 
-        juce::Rectangle<int> r(proportionOfWidth(0.5f), 20, proportionOfWidth(0.4f), 3000);
+        juce::Rectangle<int> r(proportionOfWidth(0.42f), 20, proportionOfWidth(0.5f), 3000);
         
         const int h = 23;
         const int space = h / 4;
@@ -52,10 +52,13 @@ public:
             r.removeFromTop (space);
         }
         
-        if (bitDepthDropDown != nullptr) {
-            bitDepthDropDown->setBounds (r.removeFromTop (h));
-            r.removeFromTop (space);
-        }
+        // bit depth (lossless) and quality (lossy) share the last row; only
+        // the one the format takes is visible
+        auto lastRow = r.removeFromTop (h);
+        if (bitDepthDropDown != nullptr)
+            bitDepthDropDown->setBounds (lastRow);
+        if (qualityDropDown != nullptr)
+            qualityDropDown->setBounds (lastRow);
     }
     
     void update()
@@ -65,7 +68,7 @@ public:
             updateSampleRateComboBox(currentDevice);
         }
         updateOutputChanComboBox();
-        updateBitDepthComboBox();
+        updateFormatDependentRows();
         
         resized();
     }
@@ -80,14 +83,20 @@ public:
             formatLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             formatLabel->attachToComponent (formatDropDown.get(), true);
 
-            formatDropDown->addItem ("WAV", formatId (audium::ExportFormat::wav));
-            formatDropDown->addItem ("FLAC (lossless)", formatId (audium::ExportFormat::flac));
+            for (auto format : audium::allExportFormats()) {
+                auto name = audium::formatName (format);
+                if (format == audium::ExportFormat::flac)
+                    name << " (lossless)";
+                if (audium::isLossy (format))
+                    name << " (lossy)";
+                formatDropDown->addItem (name, formatId (format));
+            }
 
             // default is WAV; later openings keep the last choice
             formatDropDown->setSelectedId (formatId (audium::ExportFormat::wav), dontSendNotification);
 
-            // the bit depths on offer depend on the format
-            formatDropDown->onChange = [this] { updateBitDepthComboBox(); };
+            // bit depth or quality, and which depths, depend on the format
+            formatDropDown->onChange = [this] { updateFormatDependentRows(); };
         }
     }
     
@@ -147,6 +156,53 @@ public:
 
     }
     
+    /** Shows the bit depths a lossless format takes, or the quality steps
+        of a lossy one, in the last row. */
+    void updateFormatDependentRows()
+    {
+        const auto lossy = audium::isLossy (getFormat());
+        if (lossy)
+            updateQualityComboBox();
+        else
+            updateBitDepthComboBox();
+
+        // the attached labels follow their combo box's visibility
+        if (bitDepthDropDown != nullptr)
+            bitDepthDropDown->setVisible (! lossy);
+        if (qualityDropDown != nullptr)
+            qualityDropDown->setVisible (lossy);
+
+        // the quality row is created on first use, after the last layout
+        resized();
+    }
+
+    void updateQualityComboBox()
+    {
+        if (qualityDropDown == nullptr) {
+            qualityDropDown = std::make_unique<ComboBox>();
+            addChildComponent (qualityDropDown.get());
+
+            qualityLabel = std::make_unique<juce::Label> (String{}, TRANS ("Quality:"));
+            qualityLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+            qualityLabel->attachToComponent (qualityDropDown.get(), true);
+        }
+
+        // keep the current choice when the steps stay the same
+        auto selected = qualityDropDown->getSelectedId();
+        qualityDropDown->clear (dontSendNotification);
+
+        // ids are the quality index + 1 (an id of 0 means nothing selected)
+        const auto steps = audium::qualityOptions (getFormat());
+        for (auto i = 0; i < steps.size(); i++)
+            qualityDropDown->addItem (steps[i], i + 1);
+
+        // not isPositiveAndNotGreaterThan: that counts 0 - nothing selected
+        // yet - as valid, and the combo would stay empty
+        if (selected < 1 || selected > steps.size())
+            selected = audium::defaultQuality (getFormat()) + 1;
+        qualityDropDown->setSelectedId (selected, dontSendNotification);
+    }
+
     void updateBitDepthComboBox ()
     {
         if (bitDepthDropDown == nullptr) {
@@ -178,9 +234,19 @@ public:
     
     audium::ExportFormat getFormat() const
     {
-        if (formatDropDown != nullptr && formatDropDown->getSelectedId() == formatId (audium::ExportFormat::flac))
-            return audium::ExportFormat::flac;
+        if (formatDropDown != nullptr)
+            for (auto format : audium::allExportFormats())
+                if (formatDropDown->getSelectedId() == formatId (format))
+                    return format;
         return audium::ExportFormat::wav;
+    }
+
+    /** The quality index for a lossy format (see audium::qualityOptions). */
+    int getQuality() const
+    {
+        if (qualityDropDown == nullptr || qualityDropDown->getSelectedId() == 0)
+            return audium::defaultQuality (getFormat());
+        return qualityDropDown->getSelectedId() - 1;
     }
     
     juce::Value& getSampleRate() const { return sampleRateDropDown->getSelectedIdAsValue(); }
@@ -220,8 +286,8 @@ private:
     };
 
     
-    std::unique_ptr<juce::Label> formatLabel, sampleRateLabel, outputChanLabel, bitDepthLabel;
-    std::unique_ptr<ComboBox> formatDropDown, sampleRateDropDown, outputChanDropDown, bitDepthDropDown;
+    std::unique_ptr<juce::Label> formatLabel, sampleRateLabel, outputChanLabel, bitDepthLabel, qualityLabel;
+    std::unique_ptr<ComboBox> formatDropDown, sampleRateDropDown, outputChanDropDown, bitDepthDropDown, qualityDropDown;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExportAudioComponent)
 };

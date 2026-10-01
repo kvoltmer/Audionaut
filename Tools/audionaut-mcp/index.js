@@ -208,14 +208,17 @@ server.registerTool(
     title: "Export audio",
     description:
       "Renders the project offline to an audio file (no audio device needed). The output's extension " +
-      "picks the format: .wav (8/16/24/32 bit) or .flac (lossless and compressed, 16/24 bit, at most 8 " +
-      "channels per file). Pass region to bounce a single region instead - always dry, without any " +
-      "clip's gains or fades.",
+      "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
+      "channels per file), .aiff (8/16/24 bit) or .ogg (Ogg Vorbis, lossy, at most 8 channels; set " +
+      "quality instead of bit_depth). Pass region to bounce a single region instead - always dry, " +
+      "without any clip's gains or fades.",
     inputSchema: {
       project: projectParam,
-      output: z.string().describe("Output path ending in .wav or .flac - the format follows the extension"),
+      output: z.string().describe("Output path ending in .wav, .flac, .aiff or .ogg - the format follows the extension"),
       sample_rate: z.number().int().positive().optional().describe("Sample rate in Hz (default 44100)"),
-      bit_depth: z.number().int().positive().optional().describe("Bit depth (default 24)"),
+      bit_depth: z.number().int().positive().optional().describe("Bit depth (default 24; not for .ogg)"),
+      quality: z.number().int().min(0).max(10).optional()
+        .describe("Ogg Vorbis quality 0-10 (default 6, about 192 kbps); only for .ogg"),
       channels: z.number().int().min(1).optional().describe("Output channel count (default 2)"),
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
@@ -224,8 +227,8 @@ server.registerTool(
       track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
-  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds,
-           region, track }) =>
+  async ({ project, output, sample_rate, bit_depth, quality, channels, multi_mono, start_seconds,
+           length_seconds, region, track }) =>
     runCli([
       "export",
       project,
@@ -233,6 +236,7 @@ server.registerTool(
       output,
       ...(sample_rate ? ["--sample-rate", String(sample_rate)] : []),
       ...(bit_depth ? ["--bit-depth", String(bit_depth)] : []),
+      ...(quality !== undefined ? ["--quality", String(quality)] : []),
       ...(channels ? ["--channels", String(channels)] : []),
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),

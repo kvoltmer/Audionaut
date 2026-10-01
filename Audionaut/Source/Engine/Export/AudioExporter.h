@@ -97,21 +97,27 @@ private:
     {
         using Failure = ExportAudioConfig::Failure;
 
-        const auto targetName = formatName(config->format);
+        if (isLossy(config->format)) {
+            const auto steps = qualityOptions(config->format).size();
+            if (config->quality < -1 || config->quality >= steps)
+                return fail(Failure::unsupportedFormat,
+                            "unsupported quality " + juce::String(config->quality)
+                                + " (" + aFileOf(config->format) + " takes 0 to " + juce::String(steps - 1) + ")");
+        }
 
         const auto depths = supportedBitDepths(config->format);
-        if (! depths.contains(config->bitDepth)) {
+        if (! isLossy(config->format) && ! depths.contains(config->bitDepth)) {
             juce::String depthList;
             for (auto i = 0; i < depths.size(); i++)
                 depthList << (i == 0 ? "" : i == depths.size() - 1 ? " or " : ", ") << depths[i];
             return fail(Failure::unsupportedFormat,
                         "unsupported bit depth " + juce::String(config->bitDepth)
-                            + " (a " + targetName + " file takes " + depthList + " bits)");
+                            + " (" + aFileOf(config->format) + " takes " + depthList + " bits)");
         }
 
         if (! config->multiMono && config->numChannels > maxChannels(config->format))
             return fail(Failure::unsupportedFormat,
-                        "a " + targetName + " file cannot hold " + juce::String(config->numChannels)
+                        aFileOf(config->format) + " cannot hold " + juce::String(config->numChannels)
                             + " channels (at most " + juce::String(maxChannels(config->format))
                             + "); export multi-mono or as WAV instead");
 
@@ -124,14 +130,12 @@ private:
             return fail(Failure::cannotOpenOutput,
                         "could not open " + config->fileName.getFullPathName() + " for writing");
 
-        auto opt = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
-                                                      .withNumChannels (config->numChannels)
-                                                      .withBitsPerSample (config->bitDepth);
-        auto writer = renderFormat->createWriterFor (outStream, opt);
+        auto writer = renderFormat->createWriterFor (outStream, writerOptions(renderAs, config->numChannels));
         if (writer == nullptr)
             return fail(Failure::unsupportedFormat,
-                        "a " + formatName(renderAs) + " file cannot hold "
-                            + juce::String(config->numChannels) + " channels");
+                        "could not create " + aFileOf(renderAs) + " with "
+                            + juce::String(config->numChannels) + " channels at "
+                            + juce::String(config->sampleRate) + " Hz");
 
         auto written = config->playListItem != nullptr
                      ? audiumEngine.getPlayListScheduler()->bouncePlayListItem(writer.get(), config, updateProgress)
@@ -199,10 +203,7 @@ private:
                 break;
             }
 
-            auto monoOpt = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
-                                                              .withNumChannels (1)
-                                                              .withBitsPerSample (config->bitDepth);
-            auto monoWriter = monoFormat->createWriterFor (out, monoOpt);
+            auto monoWriter = monoFormat->createWriterFor (out, writerOptions(config->format, 1));
             if (monoWriter == nullptr) {
                 ok = fail(Failure::unsupportedFormat, "could not create a mono " + formatName(config->format)
                                                           + " writer for " + monoFile.getFullPathName());
@@ -229,6 +230,25 @@ private:
         }
 
         return true;
+    }
+
+    /** How to write a file of the given format: the export's bit depth for
+        a lossless format, its quality for a lossy one. The WAV intermediate
+        of a lossy multi-mono export is written as 32-bit float, so the
+        encoder gets the full resolution of the render. */
+    juce::AudioFormatWriter::Options writerOptions(ExportFormat format, int numChannels) const
+    {
+        auto options = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
+                                                         .withNumChannels (numChannels);
+        if (isLossy(format))
+            return options.withBitsPerSample (32)
+                          .withQualityOptionIndex (config->quality >= 0 ? config->quality : defaultQuality(format));
+
+        if (isLossy(config->format))
+            return options.withBitsPerSample (32)
+                          .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+
+        return options.withBitsPerSample (config->bitDepth);
     }
 
     bool fail(ExportAudioConfig::Failure failure, const juce::String &error)

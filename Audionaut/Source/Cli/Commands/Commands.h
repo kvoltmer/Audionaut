@@ -38,7 +38,7 @@ int runCreate (const juce::ArgumentList& args, CliContext& context);
 /** `import <project> <audio...> [--position SECONDS]` - add audio files. */
 int runImport (const juce::ArgumentList& args, CliContext& context);
 
-/** `export <project> -o <out.wav|out.flac> [format/range options]` - offline bounce. */
+/** `export <project> -o <out.wav|.flac|.aiff|.ogg> [format/range options]` - offline bounce. */
 int runExport (const juce::ArgumentList& args, CliContext& context);
 
 /** `analyze <project> [--types a,b]` - run Essentia analyses, persist cache. */
