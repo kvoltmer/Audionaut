@@ -45,7 +45,8 @@ cut and arrange for you.
 ## 5. Export
 
 *File → Export Audio…* (**Cmd+Alt+B**) renders the arrangement offline to a
-WAV file — choose sample rate, bit depth and channel count in the dialog.
+WAV, FLAC, AIFF or Ogg Vorbis file — choose the format, sample rate, channel
+count and bit depth (or, for Ogg Vorbis, quality) in the dialog.
 Details in [Exporting audio](09-export.md).
 
 ## Saving

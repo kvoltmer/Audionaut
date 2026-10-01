@@ -26,6 +26,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     auto outputValue = takeOptionValue (working, "--output|-o");
     auto sampleRateValue = takeOptionValue (working, "--sample-rate");
     auto bitDepthValue = takeOptionValue (working, "--bit-depth");
+    auto qualityValue = takeOptionValue (working, "--quality");
     auto startValue = takeOptionValue (working, "--start");
     auto lengthValue = takeOptionValue (working, "--length");
     auto channelsValue = takeOptionValue (working, "--channels");
@@ -51,13 +52,34 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "export requires an existing <project.audium>");
 
     if (outputValue.isEmpty())
-        return context.fail (exitUsage, "usage", "export requires -o <out.wav|out.flac>");
+        return context.fail (exitUsage, "usage", "export requires -o <out.wav|out.flac|out.aiff|out.ogg>");
 
     // the format follows the extension
     auto outputFile = workingDirectory().getChildFile (outputValue);
     auto format = exportFormatForFile (outputFile);
     if (! format)
-        return context.fail (exitUsage, "usage", "the output file must end with .wav or .flac");
+        return context.fail (exitUsage, "usage",
+                             "the output file must end with " + exportExtensionList().toStdString());
+
+    // a lossy format has a quality, a lossless one a bit depth
+    const auto steps = qualityOptions (*format).size();
+    if (isLossy (*format) && bitDepthValue.isNotEmpty())
+        return context.fail (exitUsage, "usage",
+                             "--bit-depth does not apply to " + formatName (*format).toStdString()
+                                 + "; set its --quality (0 to " + std::to_string (steps - 1) + ") instead");
+    if (! isLossy (*format) && qualityValue.isNotEmpty())
+        return context.fail (exitUsage, "usage",
+                             "--quality applies to a lossy format (.ogg); "
+                                 + formatName (*format).toStdString() + " takes --bit-depth");
+
+    auto quality = -1;
+    if (qualityValue.isNotEmpty()) {
+        if (! qualityValue.containsOnly ("0123456789")
+            || ! juce::isPositiveAndBelow (qualityValue.getIntValue(), steps))
+            return context.fail (exitUsage, "usage",
+                                 "--quality must be a whole number from 0 to " + std::to_string (steps - 1));
+        quality = qualityValue.getIntValue();
+    }
 
     ScopedCoutToStderr guard (context.json);
     int openFailure = exitFailure;
@@ -70,6 +92,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     auto config = std::make_shared<ExportAudioConfig>();
     config->fileName = outputFile;
     config->format = *format;
+    config->quality = quality;
 
     if (regionName.isNotEmpty()) {
         auto matches = findRegionsByName (*session->getAudioTrackContainer(), regionName, trackId);
@@ -144,16 +167,19 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "export_failed", error);
     }
 
-    // multi-mono writes -01.wav, -02.wav, ... (or .flac) instead of the base file
+    // multi-mono writes -01.wav, -02.wav, ... (in the export's format) instead of the base file
     auto produced = config->multiMono ? AudioExporter::monoFileFor (outputFile, 1, *format) : outputFile;
 
     context.log ("exported " + produced.getFullPathName());
     nlohmann::json result = { { "outputFile", produced.getFullPathName().toStdString() },
                               { "format", fileExtension (*format).substring (1).toStdString() },
                               { "sampleRate", config->sampleRate },
-                              { "bitDepth", config->bitDepth },
                               { "numChannels", config->numChannels },
                               { "multiMono", config->multiMono } };
+    if (isLossy (*format))
+        result["quality"] = quality >= 0 ? quality : defaultQuality (*format);
+    else
+        result["bitDepth"] = config->bitDepth;
     if (regionName.isNotEmpty())
         result["region"] = regionName.toStdString();
     return context.ok (result);

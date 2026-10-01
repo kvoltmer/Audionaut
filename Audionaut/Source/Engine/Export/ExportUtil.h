@@ -37,10 +37,10 @@ public:
         auto prompter = audiumEngine->getUserPrompter();
 
         auto title = formatFromChosenFile
-                   ? juce::String ("Export as WAV or FLAC file. Choose a filename...")
+                   ? juce::String ("Export as WAV, FLAC, AIFF or Ogg Vorbis file. Choose a filename...")
                    : "Export as " + formatName (config->format) + " file. Choose a filename...";
         auto wildcard = formatFromChosenFile
-                      ? juce::String ("*.wav;*.flac")
+                      ? exportWildcard()
                       : "*" + fileExtension (config->format);
 
         prompter->chooseFileToSave (title, suggestedFileName, wildcard,
@@ -54,7 +54,7 @@ public:
                     config->format = exportFormatForFile (file).value_or (ExportFormat::wav);
                     config->bitDepth = closestSupportedBitDepth (config->format, config->bitDepth);
                 }
-                if (! file.hasFileExtension (fileExtension (config->format)))
+                if (exportFormatForFile (file) != config->format)
                     file = file.withFileExtension (fileExtension (config->format));
                 
                 if (!file.hasWriteAccess()) {

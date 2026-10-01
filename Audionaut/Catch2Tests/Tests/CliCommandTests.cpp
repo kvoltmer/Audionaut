@@ -734,6 +734,71 @@ SCENARIO ("cli export picks the format from the output extension", "[cli][export
             }
         }
 
+        WHEN ("the project is exported to .aiff and to .ogg") {
+            auto aiff = workDir.getChildFile ("mix.aiff");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + aiff.getFullPathName() + " --channels 1 --bit-depth 16"),
+                                     context)
+                     == cli::exitOk);
+            auto aiffResult = envelope["result"];
+
+            auto ogg = workDir.getChildFile ("mix.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+            auto oggResult = envelope["result"];
+
+            THEN ("each is written in its format; the Ogg reports its quality instead of a bit depth") {
+                REQUIRE (aiffResult["format"] == "aiff");
+                REQUIRE (aiffResult["bitDepth"] == 16);
+                REQUIRE (readerFor (aiff)->getFormatName() == "AIFF file");
+
+                REQUIRE (oggResult["format"] == "ogg");
+                REQUIRE (oggResult["quality"] == 6);
+                REQUIRE_FALSE (oggResult.contains ("bitDepth"));
+                REQUIRE (readerFor (ogg)->getFormatName() == "Ogg-Vorbis file");
+            }
+        }
+
+        WHEN ("an Ogg export is given a quality") {
+            auto ogg = workDir.getChildFile ("small.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1 --quality 2"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result reports it") {
+                REQUIRE (envelope["result"]["quality"] == 2);
+                REQUIRE (ogg.existsAsFile());
+            }
+        }
+
+        WHEN ("quality and bit depth are given to the wrong kind of format") {
+            auto depthForOgg = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                         + workDir.getChildFile ("a.ogg").getFullPathName()
+                                                         + " --bit-depth 24"),
+                                               context);
+            auto depthMessage = envelope["error"]["message"].get<std::string>();
+            auto qualityForWav = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                           + workDir.getChildFile ("b.wav").getFullPathName()
+                                                           + " --quality 5"),
+                                                 context);
+            auto qualityOffScale = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                             + workDir.getChildFile ("c.ogg").getFullPathName()
+                                                             + " --quality 11"),
+                                                   context);
+
+            THEN ("each is a usage error and nothing is written") {
+                REQUIRE (depthForOgg == cli::exitUsage);
+                REQUIRE (depthMessage.find ("--quality") != std::string::npos);
+                REQUIRE (qualityForWav == cli::exitUsage);
+                REQUIRE (qualityOffScale == cli::exitUsage);
+                for (auto name : { "a.ogg", "b.wav", "c.ogg" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
         WHEN ("the output has an extension no export writes") {
             auto output = workDir.getChildFile ("mix.mp3");
             auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
