@@ -26,7 +26,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     auto outputValue = takeOptionValue (working, "--output|-o");
     auto sampleRateValue = takeOptionValue (working, "--sample-rate");
     auto bitDepthValue = takeOptionValue (working, "--bit-depth");
-    auto qualityValue = takeOptionValue (working, "--quality");
+    auto bitRateValue = takeOptionValue (working, "--bitrate");
     auto startValue = takeOptionValue (working, "--start");
     auto lengthValue = takeOptionValue (working, "--length");
     auto channelsValue = takeOptionValue (working, "--channels");
@@ -52,7 +52,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "export requires an existing <project.audium>");
 
     if (outputValue.isEmpty())
-        return context.fail (exitUsage, "usage", "export requires -o <out.wav|out.flac|out.aiff|out.ogg>");
+        return context.fail (exitUsage, "usage", "export requires -o <out.wav|out.flac|out.aiff|out.ogg|out.mp3>");
 
     // the format follows the extension
     auto outputFile = workingDirectory().getChildFile (outputValue);
@@ -61,24 +61,32 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage",
                              "the output file must end with " + exportExtensionList().toStdString());
 
-    // a lossy format has a quality, a lossless one a bit depth
-    const auto steps = qualityOptions (*format).size();
+    // a lossy format has a bit rate, a lossless one a bit depth
+    auto rateList = [&] {
+        juce::StringArray rates;
+        for (auto kbps : bitRates (*format))
+            rates.add (juce::String (kbps));
+        return rates.joinIntoString (", ").toStdString();
+    };
     if (isLossy (*format) && bitDepthValue.isNotEmpty())
         return context.fail (exitUsage, "usage",
                              "--bit-depth does not apply to " + formatName (*format).toStdString()
-                                 + "; set its --quality (0 to " + std::to_string (steps - 1) + ") instead");
-    if (! isLossy (*format) && qualityValue.isNotEmpty())
+                                 + "; set its --bitrate (" + rateList() + " kbps) instead");
+    if (! isLossy (*format) && bitRateValue.isNotEmpty())
         return context.fail (exitUsage, "usage",
-                             "--quality applies to a lossy format (.ogg); "
+                             "--bitrate applies to a lossy format (.ogg, .mp3); "
                                  + formatName (*format).toStdString() + " takes --bit-depth");
 
     auto quality = -1;
-    if (qualityValue.isNotEmpty()) {
-        if (! qualityValue.containsOnly ("0123456789")
-            || ! juce::isPositiveAndBelow (qualityValue.getIntValue(), steps))
+    if (bitRateValue.isNotEmpty()) {
+        auto index = bitRateValue.containsOnly ("0123456789")
+                   ? qualityIndexForBitRate (*format, bitRateValue.getIntValue())
+                   : std::nullopt;
+        if (! index)
             return context.fail (exitUsage, "usage",
-                                 "--quality must be a whole number from 0 to " + std::to_string (steps - 1));
-        quality = qualityValue.getIntValue();
+                                 formatName (*format).toStdString() + " takes --bitrate "
+                                     + rateList() + " (kbps)");
+        quality = *index;
     }
 
     ScopedCoutToStderr guard (context.json);
@@ -177,7 +185,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
                               { "numChannels", config->numChannels },
                               { "multiMono", config->multiMono } };
     if (isLossy (*format))
-        result["quality"] = quality >= 0 ? quality : defaultQuality (*format);
+        result["bitrateKbps"] = bitRates (*format)[quality >= 0 ? quality : defaultQuality (*format)];
     else
         result["bitDepth"] = config->bitDepth;
     if (regionName.isNotEmpty())

@@ -37,7 +37,7 @@ public:
         auto prompter = audiumEngine->getUserPrompter();
 
         auto title = formatFromChosenFile
-                   ? juce::String ("Export as WAV, FLAC, AIFF or Ogg Vorbis file. Choose a filename...")
+                   ? juce::String ("Export as WAV, FLAC, AIFF, Ogg Vorbis or MP3 file. Choose a filename...")
                    : "Export as " + formatName (config->format) + " file. Choose a filename...";
         auto wildcard = formatFromChosenFile
                       ? exportWildcard()

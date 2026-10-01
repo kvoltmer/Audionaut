@@ -69,7 +69,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.6.3;JUCE_APP_VERSION_HEX=0x10603;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -84,7 +84,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.6.3;JUCE_APP_VERSION_HEX=0x10603;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -118,7 +118,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.6.3;JUCE_APP_VERSION_HEX=0x10603;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -133,7 +133,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/essentia/src;../../../Submodules/essentia/build-msvc/generated;$(AUDIONAUT_VCPKG_PREFIX)/include;../../../../vcpkg/installed/x64-windows-static-md/include;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/asio/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;AUTO_EDIT_ENABLED=0;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;YAML_DECLARE_STATIC;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.6.3;JUCE_APP_VERSION_HEX=0x10603;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -187,6 +187,63 @@
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\VbrTag.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\bitstream.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\encoder.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\fft.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\gain_analysis.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\id3tag.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\lame.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\newmdct.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\presets.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\psymodel.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\quantize.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\quantize_pvt.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\reservoir.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\set_get.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\tables.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\takehiro.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\util.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\vbrquantize.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\version.c">
+      <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\AnalyzeCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\AutoEditCommand.cpp"/>
@@ -238,6 +295,7 @@
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipResamplingSource.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudioSources\ClipFadeSpec.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Export\Mp3AudioFormat.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp"/>
@@ -3405,6 +3463,7 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_gui_extra.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\ThirdParty\lame\audionaut\lame_config.h"/>
     <ClInclude Include="..\..\Source\Cli\Commands\Commands.h"/>
     <ClInclude Include="..\..\Source\Cli\CliContext.h"/>
     <ClInclude Include="..\..\Source\Cli\CliDispatch.h"/>
@@ -3447,6 +3506,7 @@
     <ClInclude Include="..\..\Source\Engine\Export\PlayListItemExport.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\ExportFormat.h"/>
+    <ClInclude Include="..\..\Source\Engine\Export\Mp3AudioFormat.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h"/>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExporter.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\Selectable.h"/>
@@ -5266,6 +5326,7 @@
     <ClInclude Include="..\..\JuceLibraryCode\JuceHeader.h"/>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\ThirdParty\lame\PROVENANCE.md"/>
     <None Include="..\..\Catch2Tests\CMakeLists.txt"/>
     <None Include="..\..\Catch2Tests\README.md"/>
     <None Include="..\..\Resources\audionaut_logo_512x512.png"/>

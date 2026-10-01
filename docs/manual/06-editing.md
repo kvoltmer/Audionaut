@@ -86,8 +86,8 @@ See [Stem separation](13-stem-separation.md).
 
 ## Per-clip context menu
 
-Right-click a clip for **Export…** — bounce just that clip to a WAV, FLAC, AIFF or
-Ogg Vorbis file (see [Exporting audio](09-export.md)).
+Right-click a clip for **Export…** — bounce just that clip to a WAV, FLAC, AIFF, Ogg
+Vorbis or MP3 file (see [Exporting audio](09-export.md)).
 
 ## Snap and zoom
 

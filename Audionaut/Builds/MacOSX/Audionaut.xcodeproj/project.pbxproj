@@ -20,10 +20,12 @@
 		0EB1D0773569032DACF76088 /* DemucsRunner.cpp */ = {isa = PBXBuildFile; fileRef = 60E75ADCA7F8E0B2D851CB80; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
 		0ED909B948FDDBF4CB7E2510 /* AudiumMenuModel.cpp */ = {isa = PBXBuildFile; fileRef = 6281C6C7B678AEFB2F47C339; };
 		11305B4F1829E4A489532937 /* AudioChannel.cpp */ = {isa = PBXBuildFile; fileRef = C182B2E0DF718AE811E78D8B; };
+		11394A94E1812DF661B33EF0 /* gain_analysis.c */ = {isa = PBXBuildFile; fileRef = 9FF3BE4881AE918BC557437B; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		13B17F800D80C78A62ACDF51 /* Recording.cpp */ = {isa = PBXBuildFile; fileRef = 2FE373B95CF4904654564FC3; };
 		15A61A31B2C74F24C57FEA83 /* include_juce_graphics_libjpg_3.c */ = {isa = PBXBuildFile; fileRef = A82702A4E2EDEAAA0144AAE2; };
 		167269CB4D148F8798D9FE23 /* RegionTableListBox.cpp */ = {isa = PBXBuildFile; fileRef = 00B0848F45E53B0B0D3D8AFB; };
 		180447DE5C9821AF7DB381D9 /* PlayListComponent.cpp */ = {isa = PBXBuildFile; fileRef = BE87328F6D75995A9B23C9EF; };
+		18AA4B984CE1768A0CC7FF54 /* Mp3AudioFormat.cpp */ = {isa = PBXBuildFile; fileRef = F7E929BBF8CDF62B46C42BF3; };
 		18CEFF3C2CDABDA21B876C50 /* AgentHost.cpp */ = {isa = PBXBuildFile; fileRef = 8ADA9C9B46F94435B177335A; };
 		1E4356BB3F52839344880951 /* AgentClient.cpp */ = {isa = PBXBuildFile; fileRef = 254AE35A97051B1EF5C010F9; };
 		20531CE9B45123B33913B293 /* ClipTransportSource.cpp */ = {isa = PBXBuildFile; fileRef = 8FC68A13891E2E3079553B60; };
@@ -36,6 +38,7 @@
 		2AD445920749B21BFCA206B3 /* AnalyzeCommand.cpp */ = {isa = PBXBuildFile; fileRef = 135268B529334D375F4CAB88; };
 		2ADE5191AED619A3F7F5520A /* RecentFilesMenuTemplate.nib */ = {isa = PBXBuildFile; fileRef = 57548F766A379B66DB3C67F7; };
 		2B1C1AB625A978E70C78EC97 /* AudioRegionAdapter.cpp */ = {isa = PBXBuildFile; fileRef = 0850DA0A9D93EDCFB3AEF06D; };
+		2D07CDBB7A7A8C4A2A55C811 /* id3tag.c */ = {isa = PBXBuildFile; fileRef = B6F72E595DC65014BB3B7A02; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		2D37EFC4D85A84A613B6649A /* include_juce_core_CompilationTime.cpp */ = {isa = PBXBuildFile; fileRef = 821CF5D6A020EED77628FAF2; };
 		311E79951666AFFF15643523 /* include_juce_gui_extra.mm */ = {isa = PBXBuildFile; fileRef = FF8A35828E245DC65B5D294B; };
 		31EDF08BE19ABB2E0500B040 /* Accelerate.framework */ = {isa = PBXBuildFile; fileRef = 5021A59AD0929868402BFD6B; };
@@ -50,6 +53,7 @@
 		39A1D7921C872EE2F40D54CF /* LoopDraggerControl.cpp */ = {isa = PBXBuildFile; fileRef = BFC5D98F33C8AA4531A7D7D6; };
 		3C99EFEBD34B010EE47D4DA4 /* SegmentationView.cpp */ = {isa = PBXBuildFile; fileRef = 374BC297892329AB1C3A5AA6; };
 		3CC8732FBE5A8FEFD49D5D4B /* RegionTableListBoxModel.cpp */ = {isa = PBXBuildFile; fileRef = 9292A8E7A85A45C8828834D3; };
+		3D3EF5478FED6886EDDF7C18 /* lame.c */ = {isa = PBXBuildFile; fileRef = 0EDC7EE985A9D501A4236BB7; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		3F508BC8760D04A3C9F18E39 /* ProjectSerializer.cpp */ = {isa = PBXBuildFile; fileRef = ED84B062207DEE4EFA81ABBA; };
 		3FAC49EEE4C8BEC37A19455C /* PlayListItemExport.cpp */ = {isa = PBXBuildFile; fileRef = 5A4C35EB8D4AF8B2375EB101; };
 		40472BD14185E19C4CDB1191 /* Commands.cpp */ = {isa = PBXBuildFile; fileRef = B86824F98F359C90600BD2BE; };
@@ -65,9 +69,11 @@
 		4AEB71E53A29D683D72A9F41 /* audium_ListBox.cpp */ = {isa = PBXBuildFile; fileRef = A96B870D734284F177524816; };
 		4CA291EE967A9CDB338E14FD /* include_juce_dsp.mm */ = {isa = PBXBuildFile; fileRef = E138ACDCC3A702D0B7A742EF; };
 		4EEE1298E75C197FAC59A0B6 /* LoadMeter.cpp */ = {isa = PBXBuildFile; fileRef = 30722D1A7A30DD9F1336E1B2; };
+		4F7A3042C7547CB1F726FC08 /* fft.c */ = {isa = PBXBuildFile; fileRef = 93ACFDA81F6BDCE787FBB118; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		5561FC8DFB33933C387E245F /* Metal.framework */ = {isa = PBXBuildFile; fileRef = 1F44340B66A109B0DEE52DF7; settings = { ATTRIBUTES = (Weak, ); }; };
 		57AE200C047712C4AFA1276D /* model_apply.cpp */ = {isa = PBXBuildFile; fileRef = E32D5782C167DACDE9EAA9FC; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
 		59451AFC7649C47F021C7C1C /* ClipCommands.cpp */ = {isa = PBXBuildFile; fileRef = 559E815404EDED1578B82412; };
+		5ADDDAD10E029169C08722C0 /* set_get.c */ = {isa = PBXBuildFile; fileRef = F2324B1F9289826492208812; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		5BE25BAC5739BF355E7AF329 /* RubberBandSingle.cpp */ = {isa = PBXBuildFile; fileRef = 2B8CB668F25D8A80AD4A0AAD; settings = { COMPILER_FLAGS = "-O3 -w"; }; };
 		5C62C0C8EE35E00AC1B8E3AC /* RightPanelComponent.cpp */ = {isa = PBXBuildFile; fileRef = BCC2B6A9AAC816A403A24E63; };
 		5D5ACD630FA6238F1429787B /* RecordingActionHandler.cpp */ = {isa = PBXBuildFile; fileRef = 0C2871C7A8AF0B9971AFED86; };
@@ -113,6 +119,7 @@
 		90604054E06103D6AFE63F65 /* AudioRegion.cpp */ = {isa = PBXBuildFile; fileRef = 98761E06E3AA2ACF7AD31005; };
 		94856FC278508DBFE75FBA58 /* AudiumApplication.cpp */ = {isa = PBXBuildFile; fileRef = 462481D51BD3607FCD44651D; };
 		964ADA73CFDAD5678AEE6970 /* AutoEditPreviewView.cpp */ = {isa = PBXBuildFile; fileRef = 95B1AAE6E9F4E3B758B1B6E3; };
+		998F78ED2E3F72DB6FA3F714 /* presets.c */ = {isa = PBXBuildFile; fileRef = 2C9C30EF26B933F5249C37D8; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		99F8B7CF1F50B336192CD3FA /* include_juce_analytics.cpp */ = {isa = PBXBuildFile; fileRef = 7F26B1EEC3E92CB4A2D3D156; };
 		9A9B81A4A700709772B98AC1 /* include_juce_graphics_lunasvg.c */ = {isa = PBXBuildFile; fileRef = 3D8052104DA5980B64723032; };
 		9AA5ACB43D75D718D1D16B1E /* RegionSelector.cpp */ = {isa = PBXBuildFile; fileRef = BC912F2C45ABACEAA30761C1; };
@@ -123,6 +130,8 @@
 		9F4FCDEC3DD6EE17883A88E3 /* include_juce_graphics_Sheenbidi.c */ = {isa = PBXBuildFile; fileRef = 97685BF53A801E7DFE09A038; };
 		A2837D64C4FA9B9ECB672C2F /* DemucsModelStore.cpp */ = {isa = PBXBuildFile; fileRef = D2B7FA8F26B102DD025AD1F4; };
 		A477ED94DE7EC0CC9209AAF7 /* AudioResourceContainer.cpp */ = {isa = PBXBuildFile; fileRef = A1A369F220657933EB193914; };
+		A4DAC5160E8C4446F60FEBA0 /* reservoir.c */ = {isa = PBXBuildFile; fileRef = FB0750162E2E1E9CD9F14FDC; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
+		A4F70598CDA8957A83B5590E /* quantize_pvt.c */ = {isa = PBXBuildFile; fileRef = 175A9BF7D18C68220BDB66E6; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		A5E8A74EC32CFCD24B326023 /* Cocoa.framework */ = {isa = PBXBuildFile; fileRef = 6373A60BC5F852259A3F5976; };
 		A6FBC87A45142F657A2D086F /* ArrangementModel.cpp */ = {isa = PBXBuildFile; fileRef = 77F5EEA514A977EB5821D4E6; };
 		A84383E1E03B4FB486F7627C /* AudioRecorder.cpp */ = {isa = PBXBuildFile; fileRef = 663B080BB58B01830F242528; };
@@ -132,6 +141,7 @@
 		B10E7DA1893778F39C362F4A /* ProjectSummary.cpp */ = {isa = PBXBuildFile; fileRef = BB6CB1DC10B4B00E57A46C62; };
 		B2C25E9AC54A2219EC9DFA92 /* DemucsBackend.cpp */ = {isa = PBXBuildFile; fileRef = 90B6DDAD54D7624CFD8CA7B0; };
 		B40FC5709483C5774F253F76 /* RegionLabel.cpp */ = {isa = PBXBuildFile; fileRef = 65A6EAD1842D8FFA4768DC84; };
+		B58C4D387C667333442A638A /* takehiro.c */ = {isa = PBXBuildFile; fileRef = 76EE544792B2BF0317559C35; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		B5AEF4B1E77F0E7EBE98AFEC /* ClipFadeOverlay.cpp */ = {isa = PBXBuildFile; fileRef = B7EED01155E14419780EADD8; };
 		B79288CC2F08759E884BEC91 /* DraggingHandle.cpp */ = {isa = PBXBuildFile; fileRef = 1F0C9C9EB51C196202A6C76A; };
 		B82F615BCEB7115B9F3C276C /* RubberBandStretchBackend.cpp */ = {isa = PBXBuildFile; fileRef = 341676772FE8252699B984A6; };
@@ -142,10 +152,12 @@
 		BCD23E58F392EAB28998CB5F /* AutoEditParameter.cpp */ = {isa = PBXBuildFile; fileRef = C8C056367A15B958E740743D; };
 		BD8E5A82683D3F94DCB12A6C /* ChannelsComponent.cpp */ = {isa = PBXBuildFile; fileRef = A1772A9E5D22DA6FA0F26F8C; };
 		BDB04D599194CEC90685AC2F /* WaveFormViewBase.cpp */ = {isa = PBXBuildFile; fileRef = CB19A935EF026FE60A0F874E; };
+		BF552022AF25621A30B6A078 /* VbrTag.c */ = {isa = PBXBuildFile; fileRef = 36E86A31194CA991476CD79D; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		C33B303FA1ABE09ABB8391DA /* include_juce_cryptography.mm */ = {isa = PBXBuildFile; fileRef = 1236925F912643D0B4DF9380; };
 		C3A6C83EECC1602DE80BC99B /* include_juce_gui_basics_4.cpp */ = {isa = PBXBuildFile; fileRef = 070CD0EA5C3A961ABD8F3560; };
 		C575E8965634F5A9854889EE /* PlayListContainerComponent.cpp */ = {isa = PBXBuildFile; fileRef = EDD9561EE704339EB0B3F25B; };
 		C684CD11440249AA1622F81C /* include_juce_core_zlib.c */ = {isa = PBXBuildFile; fileRef = 59F1471CF62375D58F2A93B4; };
+		C74180BA1C3525F94C1FECC8 /* psymodel.c */ = {isa = PBXBuildFile; fileRef = B95F11D522470C758B8EE205; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		C7E01543145F382740DBCE2E /* ChannelMapping.cpp */ = {isa = PBXBuildFile; fileRef = 6D8AC9B6CB6D3128D93BC4FA; };
 		C8949253863B11F346377536 /* HeaderComponent.cpp */ = {isa = PBXBuildFile; fileRef = 4468CC1C68E6B9520FDF6E20; };
 		C9E2DB3A108F9F128058D386 /* ClipTempo.cpp */ = {isa = PBXBuildFile; fileRef = 9A95AD04136053D591D78D7D; };
@@ -162,7 +174,9 @@
 		D50EA7BFEDBE0DB7D353D9A1 /* include_juce_audio_basics.mm */ = {isa = PBXBuildFile; fileRef = 326D33688206104FED891964; };
 		D5A901E951E34E7BDA5274D8 /* dsp.cpp */ = {isa = PBXBuildFile; fileRef = 7047F9B37958EEEF23EAFB84; settings = { COMPILER_FLAGS = "-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src"; }; };
 		D65A1B040E1337B8E89AFF55 /* include_juce_gui_basics_3.cpp */ = {isa = PBXBuildFile; fileRef = 34AD58A889015F0789037B7B; };
+		D661458A8CAEF76D520DF0D8 /* newmdct.c */ = {isa = PBXBuildFile; fileRef = DD9A7D21D7F18FADE92E754F; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		D6B0A5E077C552B72DB24C86 /* ClipOverlayBase.cpp */ = {isa = PBXBuildFile; fileRef = 520C98797347327596290F8B; };
+		D94B0B76C270E7774B84B263 /* vbrquantize.c */ = {isa = PBXBuildFile; fileRef = E8C286EDE1D10FB6D4565FBD; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		DD7FA514741BD80EB9EA9F19 /* AudiumMainWindow.cpp */ = {isa = PBXBuildFile; fileRef = 99CF1EA9B471BEDBBEEAACCB; };
 		DE74A99F7CCDDC9027821DC1 /* include_juce_graphics_libjpg_1.c */ = {isa = PBXBuildFile; fileRef = A16EA1E9486F87A185FDBE81; };
 		E1CC413F57F2848AD4F0AA9F /* CommandSession.cpp */ = {isa = PBXBuildFile; fileRef = AA344C16725B0493D3791AE5; };
@@ -170,6 +184,8 @@
 		E3F0BD25C994EF087531145C /* UsageAnalytics.cpp */ = {isa = PBXBuildFile; fileRef = 5673A98DDDF091ED0E05D495; };
 		E5BC37445419CCDC9A21E3AB /* include_juce_audio_devices.mm */ = {isa = PBXBuildFile; fileRef = 5344BD32D0ED9D07F10C2309; };
 		E5BE69FA0C3547470215E2AF /* TransportLoop.cpp */ = {isa = PBXBuildFile; fileRef = 1C5AA2629EC03E71756CAB35; };
+		E759A09557520965BE3BD244 /* encoder.c */ = {isa = PBXBuildFile; fileRef = EA596FEB5AE32FBDE715A33F; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
+		E7E1EE814D893D73E964AEF5 /* quantize.c */ = {isa = PBXBuildFile; fileRef = 273CF131B43FF335AAFB04AA; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		E87150D55EDDC15D2008AAED /* ExportCommand.cpp */ = {isa = PBXBuildFile; fileRef = B1108AE2F7A7065B86A042BC; };
 		E872BA91B1125203F73347C1 /* ClipResamplingSource.cpp */ = {isa = PBXBuildFile; fileRef = 35225423BD16EBF5A5693C1F; };
 		E87B67A6D7DDC0765008F70B /* include_juce_graphics.mm */ = {isa = PBXBuildFile; fileRef = 7E08ED9600CBA2E3D9B1D88F; };
@@ -179,8 +195,12 @@
 		ED417347D1385267959D814E /* AudiumLookAndFeel.cpp */ = {isa = PBXBuildFile; fileRef = C850B3C5C5A02130F40F4025; };
 		EDFDB1B674785EEE8FEE6166 /* WaveFormColours.cpp */ = {isa = PBXBuildFile; fileRef = CBFBE3E9A26362425F87685A; };
 		EF6CA8F2E270D924F52DEA74 /* UpdateChecker.cpp */ = {isa = PBXBuildFile; fileRef = E05D7227B006AF08828CBB34; };
+		F12FBAEBA69F4B9B2236CD9E /* util.c */ = {isa = PBXBuildFile; fileRef = 1D37D23E05764EFB2407341C; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
+		F239E2A9BDB2DFF836D841BA /* tables.c */ = {isa = PBXBuildFile; fileRef = 4251D0EB27E64A9223B5D324; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		F3221D3641F21574DC45AEED /* AppIcon.icns */ = {isa = PBXBuildFile; fileRef = CFCE6B97464E3CD93F49C09D; };
+		F45A75552860F792EB4641C0 /* version.c */ = {isa = PBXBuildFile; fileRef = FF84B011F672D5EAD2F51A38; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		F5D241FD039A48617EF1CA56 /* OnsetSegmenter.cpp */ = {isa = PBXBuildFile; fileRef = A735B19A59EA0CDBD20031CC; };
+		F666DB80D03A3FD23B9B79F8 /* bitstream.c */ = {isa = PBXBuildFile; fileRef = 727C75CD14A6A25B60F5F5F0; settings = { COMPILER_FLAGS = "-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame"; }; };
 		F6DB9E50FB9B911D1D30AA15 /* PlayListScheduler.cpp */ = {isa = PBXBuildFile; fileRef = 5FD6D72AF76F4D6569EBD29F; };
 		F71B0F6265EE35A0F68DD83C /* AudioTrackListBox.cpp */ = {isa = PBXBuildFile; fileRef = 7AEEBB541767E0CBA5B16C3F; };
 		F8A5824CE4CA1F351CA4B826 /* include_juce_core.mm */ = {isa = PBXBuildFile; fileRef = A224A208AE5292EA25E5E2C4; };
@@ -215,6 +235,7 @@
 		0E1BF41AFB1E13CF3119EAFB /* RegionCommands.cpp */ /* RegionCommands.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RegionCommands.cpp; path = ../../Source/Cli/Commands/RegionCommands.cpp; sourceTree = SOURCE_ROOT; };
 		0E351B81876F1819B0545519 /* TransportView.h */ /* TransportView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TransportView.h; path = ../../Source/Interface/Views/TransportView.h; sourceTree = SOURCE_ROOT; };
 		0E7F3BB946694FA9E3BB48B9 /* CliDispatch.h */ /* CliDispatch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CliDispatch.h; path = ../../Source/Cli/CliDispatch.h; sourceTree = SOURCE_ROOT; };
+		0EDC7EE985A9D501A4236BB7 /* lame.c */ /* lame.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = lame.c; path = ../../../ThirdParty/lame/libmp3lame/lame.c; sourceTree = SOURCE_ROOT; };
 		0F438419DAEA923F36640757 /* PlayListItemComponent.h */ /* PlayListItemComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListItemComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/PlayListItemComponent.h; sourceTree = SOURCE_ROOT; };
 		10F4F870D7EDD591FC8B4450 /* model_load.cpp */ /* model_load.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = model_load.cpp; path = ../../../Submodules/demucs.cpp/src/model_load.cpp; sourceTree = SOURCE_ROOT; };
 		11ABDB8E5A840910E3FD71B8 /* MainComponent.cpp */ /* MainComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MainComponent.cpp; path = ../../Source/Interface/Components/MainComponent.cpp; sourceTree = SOURCE_ROOT; };
@@ -225,9 +246,11 @@
 		13947CDC091AAE4C5F1D2A96 /* AutoEditParameter.h */ /* AutoEditParameter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditParameter.h; path = ../../Source/Engine/AutoEdit/AutoEditParameter.h; sourceTree = SOURCE_ROOT; };
 		15B08AD17A4543A6F9323602 /* EngineAccess.cpp */ /* EngineAccess.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = EngineAccess.cpp; path = ../../Source/Util/EngineAccess.cpp; sourceTree = SOURCE_ROOT; };
 		165654E9D1DC2FF03045843C /* AudiumEngine.h */ /* AudiumEngine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumEngine.h; path = ../../Source/Engine/AudiumEngine.h; sourceTree = SOURCE_ROOT; };
+		16A200F92618047B05322EA1 /* lame_config.h */ /* lame_config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lame_config.h; path = ../../../ThirdParty/lame/audionaut/lame_config.h; sourceTree = SOURCE_ROOT; };
 		16AA6E92464D4DF92E417ECA /* AgentProtocol.h */ /* AgentProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AgentProtocol.h; path = ../../Source/Cli/AgentProtocol.h; sourceTree = SOURCE_ROOT; };
 		16B66FB90C6D2B7EC813F8B4 /* FakeSeparationBackend.h */ /* FakeSeparationBackend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FakeSeparationBackend.h; path = ../../Source/Engine/Separation/FakeSeparationBackend.h; sourceTree = SOURCE_ROOT; };
 		1759C02F6B3B9F8E2D69CAD7 /* audium_AudioThumbnail.cpp */ /* audium_AudioThumbnail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioThumbnail.cpp; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.cpp; sourceTree = SOURCE_ROOT; };
+		175A9BF7D18C68220BDB66E6 /* quantize_pvt.c */ /* quantize_pvt.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = quantize_pvt.c; path = ../../../ThirdParty/lame/libmp3lame/quantize_pvt.c; sourceTree = SOURCE_ROOT; };
 		193E557D0B5F362A035F0D6D /* ResourceGroup.h */ /* ResourceGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ResourceGroup.h; path = ../../Source/Engine/Group/ResourceGroup.h; sourceTree = SOURCE_ROOT; };
 		1AE0078BCCC81F812D26BB9B /* OnsetSegmenter.h */ /* OnsetSegmenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OnsetSegmenter.h; path = ../../Source/Engine/Analysis/OnsetSegmenter.h; sourceTree = SOURCE_ROOT; };
 		1B61BC72323B5260458C9716 /* VoiceSource.cpp */ /* VoiceSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = VoiceSource.cpp; path = ../../Source/Engine/AudioSources/VoiceSource.cpp; sourceTree = SOURCE_ROOT; };
@@ -235,6 +258,7 @@
 		1C5AA2629EC03E71756CAB35 /* TransportLoop.cpp */ /* TransportLoop.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = TransportLoop.cpp; path = ../../Source/Engine/PlayList/TransportLoop.cpp; sourceTree = SOURCE_ROOT; };
 		1CC6D2F41DEFEC0E947D67C4 /* ZoomHandler.cpp */ /* ZoomHandler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ZoomHandler.cpp; path = ../../Source/Interface/Handlers/ZoomHandler.cpp; sourceTree = SOURCE_ROOT; };
 		1CD23B0E72ECDC9773819568 /* DemucsConfig.h */ /* DemucsConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DemucsConfig.h; path = ../../Source/Engine/Separation/DemucsConfig.h; sourceTree = SOURCE_ROOT; };
+		1D37D23E05764EFB2407341C /* util.c */ /* util.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../../../ThirdParty/lame/libmp3lame/util.c; sourceTree = SOURCE_ROOT; };
 		1E365652BF93AC09B0694028 /* Commands.h */ /* Commands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Commands.h; path = ../../Source/Cli/Commands/Commands.h; sourceTree = SOURCE_ROOT; };
 		1EFE69740FBE22B839195ABD /* AudioTrackBaseComponent.h */ /* AudioTrackBaseComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackBaseComponent.h; path = ../../Source/Interface/Components/MiddlePanel/AudioTrackBaseComponent.h; sourceTree = SOURCE_ROOT; };
 		1F0C9C9EB51C196202A6C76A /* DraggingHandle.cpp */ /* DraggingHandle.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DraggingHandle.cpp; path = ../../Source/Interface/Controls/DraggingHandle.cpp; sourceTree = SOURCE_ROOT; };
@@ -253,6 +277,7 @@
 		254AE35A97051B1EF5C010F9 /* AgentClient.cpp */ /* AgentClient.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AgentClient.cpp; path = ../../Source/Cli/AgentClient.cpp; sourceTree = SOURCE_ROOT; };
 		25859141FA1A9E4EE1B15D95 /* LoopDraggerControl.h */ /* LoopDraggerControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoopDraggerControl.h; path = ../../Source/Interface/Controls/LoopDraggerControl.h; sourceTree = SOURCE_ROOT; };
 		26ECDD24F90411AF15A14CA1 /* RenderTiming.h */ /* RenderTiming.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RenderTiming.h; path = ../../Source/Engine/AudioSources/RenderTiming.h; sourceTree = SOURCE_ROOT; };
+		273CF131B43FF335AAFB04AA /* quantize.c */ /* quantize.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = quantize.c; path = ../../../ThirdParty/lame/libmp3lame/quantize.c; sourceTree = SOURCE_ROOT; };
 		27AE3F0C97548C970F2795FD /* layers.cpp */ /* layers.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = layers.cpp; path = ../../../Submodules/demucs.cpp/src/layers.cpp; sourceTree = SOURCE_ROOT; };
 		28562E64FD65836517765DA9 /* SBicSegmenter.h */ /* SBicSegmenter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBicSegmenter.h; path = ../../Source/Engine/Analysis/SBicSegmenter.h; sourceTree = SOURCE_ROOT; };
 		2939FFF512D6CAC49E48AE7D /* PlayListTableListBoxModel.h */ /* PlayListTableListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxModel.h; path = ../../Source/Interface/Models/PlayListTableListBoxModel.h; sourceTree = SOURCE_ROOT; };
@@ -261,6 +286,7 @@
 		2B8CB668F25D8A80AD4A0AAD /* RubberBandSingle.cpp */ /* RubberBandSingle.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RubberBandSingle.cpp; path = ../../../Submodules/rubberband/single/RubberBandSingle.cpp; sourceTree = SOURCE_ROOT; };
 		2BFE9CE74A1E98A2E52D88A7 /* ClipFadeOverlay.h */ /* ClipFadeOverlay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipFadeOverlay.h; path = ../../Source/Interface/Views/ClipFadeOverlay.h; sourceTree = SOURCE_ROOT; };
 		2C5C1EAFF66023F86D50E2F0 /* UIContext.h */ /* UIContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UIContext.h; path = ../../Source/Interface/UIContext.h; sourceTree = SOURCE_ROOT; };
+		2C9C30EF26B933F5249C37D8 /* presets.c */ /* presets.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = presets.c; path = ../../../ThirdParty/lame/libmp3lame/presets.c; sourceTree = SOURCE_ROOT; };
 		2DBC2B906A322A93C6867BBE /* AudioTrack.h */ /* AudioTrack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrack.h; path = ../../Source/Engine/Group/AudioTrack.h; sourceTree = SOURCE_ROOT; };
 		2E146D46199124CB4DC74349 /* AudiumMenuModel.h */ /* AudiumMenuModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudiumMenuModel.h; path = ../../Source/Application/AudiumMenuModel.h; sourceTree = SOURCE_ROOT; };
 		2FE373B95CF4904654564FC3 /* Recording.cpp */ /* Recording.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Recording.cpp; path = ../../Source/Engine/Recording/Recording.cpp; sourceTree = SOURCE_ROOT; };
@@ -272,6 +298,7 @@
 		34AD58A889015F0789037B7B /* include_juce_gui_basics_3.cpp */ /* include_juce_gui_basics_3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_3.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_3.cpp; sourceTree = SOURCE_ROOT; };
 		35225423BD16EBF5A5693C1F /* ClipResamplingSource.cpp */ /* ClipResamplingSource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ClipResamplingSource.cpp; path = ../../Source/Engine/AudioSources/ClipResamplingSource.cpp; sourceTree = SOURCE_ROOT; };
 		352338A322365BD5C3C74D37 /* Preferences.cpp */ /* Preferences.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Preferences.cpp; path = ../../Source/Util/Preferences.cpp; sourceTree = SOURCE_ROOT; };
+		36E86A31194CA991476CD79D /* VbrTag.c */ /* VbrTag.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = VbrTag.c; path = ../../../ThirdParty/lame/libmp3lame/VbrTag.c; sourceTree = SOURCE_ROOT; };
 		374BC297892329AB1C3A5AA6 /* SegmentationView.cpp */ /* SegmentationView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SegmentationView.cpp; path = ../../Source/Interface/Views/SegmentationView.cpp; sourceTree = SOURCE_ROOT; };
 		38136CC55DAFE5D7F0515AF6 /* UndoableChannelAction.h */ /* UndoableChannelAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableChannelAction.h; path = ../../Source/Engine/Undo/UndoableChannelAction.h; sourceTree = SOURCE_ROOT; };
 		395E123A1C38915A68ED16EE /* HeadlessEngineSession.h */ /* HeadlessEngineSession.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeadlessEngineSession.h; path = ../../Source/Cli/HeadlessEngineSession.h; sourceTree = SOURCE_ROOT; };
@@ -290,6 +317,7 @@
 		40F533EE81D23394C58321C6 /* include_juce_gui_basics_2.cpp */ /* include_juce_gui_basics_2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_2.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_2.cpp; sourceTree = SOURCE_ROOT; };
 		41C5D3B1E81DCFA1BE08D14C /* LevelMeter.cpp */ /* LevelMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/Interface/Controls/LevelMeter.cpp; sourceTree = SOURCE_ROOT; };
 		423B4B3908C5233D1BBF3E25 /* DemucsBackend.h */ /* DemucsBackend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DemucsBackend.h; path = ../../Source/Engine/Separation/DemucsBackend.h; sourceTree = SOURCE_ROOT; };
+		4251D0EB27E64A9223B5D324 /* tables.c */ /* tables.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = tables.c; path = ../../../ThirdParty/lame/libmp3lame/tables.c; sourceTree = SOURCE_ROOT; };
 		42B5F856AB06EB5D3BEDFA0D /* juce_core */ /* juce_core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_core; path = ../../../Submodules/JUCE/modules/juce_core; sourceTree = SOURCE_ROOT; };
 		42CF08811F65DD0560500E19 /* ClipDynamicsProcessor.h */ /* ClipDynamicsProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipDynamicsProcessor.h; path = ../../Source/Engine/AudioSources/ClipDynamicsProcessor.h; sourceTree = SOURCE_ROOT; };
 		42F829C06FF3F8AD4CE6871B /* AudioClipView.cpp */ /* AudioClipView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioClipView.cpp; path = ../../Source/Interface/Views/AudioClipView.cpp; sourceTree = SOURCE_ROOT; };
@@ -334,6 +362,7 @@
 		5BCE3ADCCCB7E1FBD5769DE8 /* AudioTrackComponent.cpp */ /* AudioTrackComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.cpp; sourceTree = SOURCE_ROOT; };
 		5E33714A13AF57F476201A73 /* BinaryData.cpp */ /* BinaryData.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = BinaryData.cpp; path = ../../JuceLibraryCode/BinaryData.cpp; sourceTree = SOURCE_ROOT; };
 		5FD6D72AF76F4D6569EBD29F /* PlayListScheduler.cpp */ /* PlayListScheduler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListScheduler.cpp; path = ../../Source/Engine/PlayList/PlayListScheduler.cpp; sourceTree = SOURCE_ROOT; };
+		6064DD5271A1290F784419D3 /* Mp3AudioFormat.h */ /* Mp3AudioFormat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Mp3AudioFormat.h; path = ../../Source/Engine/Export/Mp3AudioFormat.h; sourceTree = SOURCE_ROOT; };
 		60E75ADCA7F8E0B2D851CB80 /* DemucsRunner.cpp */ /* DemucsRunner.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DemucsRunner.cpp; path = ../../Source/Engine/Separation/Demucs/DemucsRunner.cpp; sourceTree = SOURCE_ROOT; };
 		61ECAB9C671FF7C7D6A8D8CF /* README.md */ /* README.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; name = README.md; path = ../../Catch2Tests/README.md; sourceTree = SOURCE_ROOT; };
 		6236F154DF8AAC28C4F42CBA /* Foundation.framework */ /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -368,6 +397,7 @@
 		7047F9B37958EEEF23EAFB84 /* dsp.cpp */ /* dsp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = dsp.cpp; path = ../../../Submodules/demucs.cpp/src/dsp.cpp; sourceTree = SOURCE_ROOT; };
 		71508ADE3ED7A1FDC3FD454B /* AudioResource.cpp */ /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/Resource/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
 		72428891FA02A01D63988F82 /* juce_cryptography */ /* juce_cryptography */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_cryptography; path = ../../../Submodules/JUCE/modules/juce_cryptography; sourceTree = SOURCE_ROOT; };
+		727C75CD14A6A25B60F5F5F0 /* bitstream.c */ /* bitstream.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = bitstream.c; path = ../../../ThirdParty/lame/libmp3lame/bitstream.c; sourceTree = SOURCE_ROOT; };
 		72AB8BF3907E35C41450D90B /* include_juce_audio_formats_flac_1.c */ /* include_juce_audio_formats_flac_1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = include_juce_audio_formats_flac_1.c; path = ../../JuceLibraryCode/include_juce_audio_formats_flac_1.c; sourceTree = SOURCE_ROOT; };
 		72EF955B126DC0797C0BA924 /* DraggerControl.cpp */ /* DraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DraggerControl.cpp; path = ../../Source/Interface/Controls/DraggerControl.cpp; sourceTree = SOURCE_ROOT; };
 		7374848A55ED5FE1AFE36B05 /* DspClip.cpp */ /* DspClip.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DspClip.cpp; path = ../../Source/Engine/Core/DspClip.cpp; sourceTree = SOURCE_ROOT; };
@@ -376,6 +406,7 @@
 		75AE15142944F2F4928340F7 /* ChannelMapping.h */ /* ChannelMapping.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelMapping.h; path = ../../Source/Engine/Resource/ChannelMapping.h; sourceTree = SOURCE_ROOT; };
 		75F7D1EBD3C1F4A773C400AB /* Voice.h */ /* Voice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Voice.h; path = ../../Source/Engine/Playback/Voice.h; sourceTree = SOURCE_ROOT; };
 		76BEBF8CDC5D61CC7760994E /* EventMerger.cpp */ /* EventMerger.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = EventMerger.cpp; path = ../../Source/Engine/Analysis/EventMerger.cpp; sourceTree = SOURCE_ROOT; };
+		76EE544792B2BF0317559C35 /* takehiro.c */ /* takehiro.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = takehiro.c; path = ../../../ThirdParty/lame/libmp3lame/takehiro.c; sourceTree = SOURCE_ROOT; };
 		77F5EEA514A977EB5821D4E6 /* ArrangementModel.cpp */ /* ArrangementModel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ArrangementModel.cpp; path = ../../Source/Interface/Models/ArrangementModel.cpp; sourceTree = SOURCE_ROOT; };
 		78220737D71F4A95C1825E8A /* PlayListItem.cpp */ /* PlayListItem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListItem.cpp; path = ../../Source/Engine/PlayList/PlayListItem.cpp; sourceTree = SOURCE_ROOT; };
 		78351BCB2FB6EACF595B8143 /* AutoEditPreviewView.h */ /* AutoEditPreviewView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEditPreviewView.h; path = ../../Source/Interface/Views/AutoEditPreviewView.h; sourceTree = SOURCE_ROOT; };
@@ -423,6 +454,7 @@
 		9293D006E5B1641F94DC5E18 /* StemSeparator.cpp */ /* StemSeparator.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = StemSeparator.cpp; path = ../../Source/Engine/Separation/StemSeparator.cpp; sourceTree = SOURCE_ROOT; };
 		92FC13FAF1A4B8785F2CDD3B /* Inter-Italic.ttf */ /* Inter-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; name = "Inter-Italic.ttf"; path = "../../Resources/Fonts/Inter-Italic.ttf"; sourceTree = SOURCE_ROOT; };
 		93967D9818A6F5B95C07B32B /* include_juce_gui_basics.mm */ /* include_juce_gui_basics.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_basics.mm; path = ../../JuceLibraryCode/include_juce_gui_basics.mm; sourceTree = SOURCE_ROOT; };
+		93ACFDA81F6BDCE787FBB118 /* fft.c */ /* fft.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = fft.c; path = ../../../ThirdParty/lame/libmp3lame/fft.c; sourceTree = SOURCE_ROOT; };
 		93D9DE31BE206B6198377378 /* AnalysisCache.cpp */ /* AnalysisCache.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisCache.cpp; path = ../../Source/Engine/Analysis/AnalysisCache.cpp; sourceTree = SOURCE_ROOT; };
 		9562C0F08BF2E2C80A3659FD /* LoadMeter.h */ /* LoadMeter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoadMeter.h; path = ../../Source/Interface/Controls/LoadMeter.h; sourceTree = SOURCE_ROOT; };
 		959C9EE2E0644995C7EAD197 /* FooterComponent.h */ /* FooterComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FooterComponent.h; path = ../../Source/Interface/Components/RightPanel/FooterComponent.h; sourceTree = SOURCE_ROOT; };
@@ -443,6 +475,7 @@
 		9E73B749E8327F615AEA55E1 /* ChannelGroupHeaderComponent.h */ /* ChannelGroupHeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupHeaderComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		9EB1079AF95DA79E5F159630 /* Playback.cpp */ /* Playback.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Playback.cpp; path = ../../Source/Engine/Playback/Playback.cpp; sourceTree = SOURCE_ROOT; };
 		9EE160AC533646BB61CD4DD6 /* AudioExportThread.h */ /* AudioExportThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExportThread.h; path = ../../Source/Engine/Export/AudioExportThread.h; sourceTree = SOURCE_ROOT; };
+		9FF3BE4881AE918BC557437B /* gain_analysis.c */ /* gain_analysis.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = gain_analysis.c; path = ../../../ThirdParty/lame/libmp3lame/gain_analysis.c; sourceTree = SOURCE_ROOT; };
 		A0096CEC564551C34E10C825 /* UndoableReloadAction.h */ /* UndoableReloadAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableReloadAction.h; path = ../../Source/Engine/Undo/UndoableReloadAction.h; sourceTree = SOURCE_ROOT; };
 		A106C95595EC1075A3006383 /* LinkEngine.cpp */ /* LinkEngine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LinkEngine.cpp; path = ../../Source/Engine/Link/LinkEngine.cpp; sourceTree = SOURCE_ROOT; };
 		A1367AD7787D8F61E862A1E1 /* GridView.h */ /* GridView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GridView.h; path = ../../Source/Interface/Views/GridView.h; sourceTree = SOURCE_ROOT; };
@@ -480,6 +513,7 @@
 		B4F39B4C0CE67784DC3888B2 /* AudioChannel.h */ /* AudioChannel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioChannel.h; path = ../../Source/Engine/Channel/AudioChannel.h; sourceTree = SOURCE_ROOT; };
 		B4F404E01C5AA0BC3B80C095 /* SnapToGridHandler.h */ /* SnapToGridHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SnapToGridHandler.h; path = ../../Source/Interface/Handlers/SnapToGridHandler.h; sourceTree = SOURCE_ROOT; };
 		B4FFF81246179628DAEE1ECD /* Inter-Bold.ttf */ /* Inter-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file.ttf; name = "Inter-Bold.ttf"; path = "../../Resources/Fonts/Inter-Bold.ttf"; sourceTree = SOURCE_ROOT; };
+		B6F72E595DC65014BB3B7A02 /* id3tag.c */ /* id3tag.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = id3tag.c; path = ../../../ThirdParty/lame/libmp3lame/id3tag.c; sourceTree = SOURCE_ROOT; };
 		B72AFF09DD93D50A2D8EE5E0 /* LoopData.h */ /* LoopData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoopData.h; path = ../../Source/Engine/PlayList/LoopData.h; sourceTree = SOURCE_ROOT; };
 		B731CEB5A7FC82E4D97C8E61 /* juce_gui_basics */ /* juce_gui_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_gui_basics; path = ../../../Submodules/JUCE/modules/juce_gui_basics; sourceTree = SOURCE_ROOT; };
 		B7346F39611AE01C1EAFEC0C /* Info-App.plist */ /* Info-App.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-App.plist"; path = "Info-App.plist"; sourceTree = SOURCE_ROOT; };
@@ -488,6 +522,7 @@
 		B8B95DEF1C6536F44482A856 /* AudioTrack.cpp */ /* AudioTrack.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrack.cpp; path = ../../Source/Engine/Group/AudioTrack.cpp; sourceTree = SOURCE_ROOT; };
 		B91E88D89EAF16D1AAD4B24B /* VoiceSourceContainer.h */ /* VoiceSourceContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VoiceSourceContainer.h; path = ../../Source/Engine/AudioSources/VoiceSourceContainer.h; sourceTree = SOURCE_ROOT; };
 		B92AC1A1131ACB1EC5B0AFD0 /* FadeInOutView.h */ /* FadeInOutView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutView.h; path = ../../Source/Interface/Views/FadeInOutView.h; sourceTree = SOURCE_ROOT; };
+		B95F11D522470C758B8EE205 /* psymodel.c */ /* psymodel.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = psymodel.c; path = ../../../ThirdParty/lame/libmp3lame/psymodel.c; sourceTree = SOURCE_ROOT; };
 		B9749FEE49D4907E42B17C44 /* ExportFormat.h */ /* ExportFormat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportFormat.h; path = ../../Source/Engine/Export/ExportFormat.h; sourceTree = SOURCE_ROOT; };
 		BA5C39ABAF055C323410DE14 /* PlayListTableListBoxItem.h */ /* PlayListTableListBoxItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxItem.h; path = ../../Source/Interface/Models/PlayListTableListBoxItem.h; sourceTree = SOURCE_ROOT; };
 		BAA8A6836A43A0C76ECB6A52 /* include_juce_audio_processors_headless_lv2_libs.cpp */ /* include_juce_audio_processors_headless_lv2_libs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_audio_processors_headless_lv2_libs.cpp; path = ../../JuceLibraryCode/include_juce_audio_processors_headless_lv2_libs.cpp; sourceTree = SOURCE_ROOT; };
@@ -508,6 +543,7 @@
 		BFC5D98F33C8AA4531A7D7D6 /* LoopDraggerControl.cpp */ /* LoopDraggerControl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LoopDraggerControl.cpp; path = ../../Source/Interface/Controls/LoopDraggerControl.cpp; sourceTree = SOURCE_ROOT; };
 		C10F86E30937D0CBB1F0748A /* AutoEdit.h */ /* AutoEdit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoEdit.h; path = ../../Source/Engine/AutoEdit/AutoEdit.h; sourceTree = SOURCE_ROOT; };
 		C182B2E0DF718AE811E78D8B /* AudioChannel.cpp */ /* AudioChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioChannel.cpp; path = ../../Source/Engine/Channel/AudioChannel.cpp; sourceTree = SOURCE_ROOT; };
+		C45C01C32B486979620070CE /* PROVENANCE.md */ /* PROVENANCE.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; name = PROVENANCE.md; path = ../../../ThirdParty/lame/PROVENANCE.md; sourceTree = SOURCE_ROOT; };
 		C45FE6DBE93443F26B7AC698 /* AnalysisWorker.h */ /* AnalysisWorker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AnalysisWorker.h; path = ../../Source/Engine/Analysis/AnalysisWorker.h; sourceTree = SOURCE_ROOT; };
 		C535EC3B1DAC64329A524774 /* HeaderComponent.h */ /* HeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HeaderComponent.h; path = ../../Source/Interface/Components/HeaderPanel/HeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		C61C4E99316F545EEDDAC052 /* DragAndDropContainer.h */ /* DragAndDropContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DragAndDropContainer.h; path = ../../Source/Interface/DragAndDrop/DragAndDropContainer.h; sourceTree = SOURCE_ROOT; };
@@ -551,6 +587,7 @@
 		DC439E9FC4BB68035665FF04 /* ChannelGroupComponent.h */ /* ChannelGroupComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupComponent.h; sourceTree = SOURCE_ROOT; };
 		DD3D293D5BE7C2DD00072E80 /* SampleTimer.h */ /* SampleTimer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SampleTimer.h; path = ../../Source/Engine/PlayList/SampleTimer.h; sourceTree = SOURCE_ROOT; };
 		DD7CC22CCB3663A8F34EAE1B /* PlayListContainerComponent.h */ /* PlayListContainerComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainerComponent.h; path = ../../Source/Interface/Components/RightPanel/PlayListContainerComponent.h; sourceTree = SOURCE_ROOT; };
+		DD9A7D21D7F18FADE92E754F /* newmdct.c */ /* newmdct.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = newmdct.c; path = ../../../ThirdParty/lame/libmp3lame/newmdct.c; sourceTree = SOURCE_ROOT; };
 		DFB8526E3210ECF0528D6ED6 /* ClipTempo.h */ /* ClipTempo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipTempo.h; path = ../../Source/Engine/PlayList/ClipTempo.h; sourceTree = SOURCE_ROOT; };
 		E05D7227B006AF08828CBB34 /* UpdateChecker.cpp */ /* UpdateChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UpdateChecker.cpp; path = ../../Source/Application/UpdateChecker.cpp; sourceTree = SOURCE_ROOT; };
 		E0607A8EF3903B4D5EE8A51D /* AgentProtocol.cpp */ /* AgentProtocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AgentProtocol.cpp; path = ../../Source/Cli/AgentProtocol.cpp; sourceTree = SOURCE_ROOT; };
@@ -571,6 +608,8 @@
 		E7D40ECC830522FB5F052F11 /* audium_AudioThumbnail.h */ /* audium_AudioThumbnail.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = audium_AudioThumbnail.h; path = ../../Source/Interface/Widgets/audium_AudioThumbnail.h; sourceTree = SOURCE_ROOT; };
 		E7DCC773606E61410D6A0216 /* SelectionContext.h */ /* SelectionContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionContext.h; path = ../../Source/Engine/Selection/SelectionContext.h; sourceTree = SOURCE_ROOT; };
 		E7E2B0BB192B8377F4275BBE /* PositionableBase.cpp */ /* PositionableBase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PositionableBase.cpp; path = ../../Source/Engine/PlayList/PositionableBase.cpp; sourceTree = SOURCE_ROOT; };
+		E8C286EDE1D10FB6D4565FBD /* vbrquantize.c */ /* vbrquantize.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = vbrquantize.c; path = ../../../ThirdParty/lame/libmp3lame/vbrquantize.c; sourceTree = SOURCE_ROOT; };
+		EA596FEB5AE32FBDE715A33F /* encoder.c */ /* encoder.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = encoder.c; path = ../../../ThirdParty/lame/libmp3lame/encoder.c; sourceTree = SOURCE_ROOT; };
 		EB8F7B36505CA6064A36EDC1 /* juce_events */ /* juce_events */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_events; path = ../../../Submodules/JUCE/modules/juce_events; sourceTree = SOURCE_ROOT; };
 		EC2E4985F29BFF7B4F3F5486 /* ClipTransportSource.h */ /* ClipTransportSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipTransportSource.h; path = ../../Source/Engine/AudioSources/ClipTransportSource.h; sourceTree = SOURCE_ROOT; };
 		ECB46507DAEC7211AEAFD67D /* Preferences.h */ /* Preferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Preferences.h; path = ../../Source/Util/Preferences.h; sourceTree = SOURCE_ROOT; };
@@ -586,6 +625,7 @@
 		F03AE7AF1C33B6318C650D80 /* CreateCommand.cpp */ /* CreateCommand.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CreateCommand.cpp; path = ../../Source/Cli/Commands/CreateCommand.cpp; sourceTree = SOURCE_ROOT; };
 		F0C4F5AE7B7A830FDF5AEC81 /* PlayListContainer.cpp */ /* PlayListContainer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListContainer.cpp; path = ../../Source/Engine/PlayList/PlayListContainer.cpp; sourceTree = SOURCE_ROOT; };
 		F1A3CEA5CAB5A18EFEFD4458 /* RubberBandStretchBackend.h */ /* RubberBandStretchBackend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RubberBandStretchBackend.h; path = ../../Source/Engine/AudioSources/Stretch/RubberBandStretchBackend.h; sourceTree = SOURCE_ROOT; };
+		F2324B1F9289826492208812 /* set_get.c */ /* set_get.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = set_get.c; path = ../../../ThirdParty/lame/libmp3lame/set_get.c; sourceTree = SOURCE_ROOT; };
 		F4CCD042003BA1D9CE67C800 /* AudioTrackListBoxModel.h */ /* AudioTrackListBoxModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackListBoxModel.h; path = ../../Source/Interface/Models/AudioTrackListBoxModel.h; sourceTree = SOURCE_ROOT; };
 		F4DE426B74038D2458D7B572 /* AssembleDialog.h */ /* AssembleDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AssembleDialog.h; path = ../../Source/Interface/Dialogs/AssembleDialog.h; sourceTree = SOURCE_ROOT; };
 		F5383E510E28BEC953233776 /* juce_audio_processors_headless */ /* juce_audio_processors_headless */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_processors_headless; path = ../../../Submodules/JUCE/modules/juce_audio_processors_headless; sourceTree = SOURCE_ROOT; };
@@ -594,6 +634,7 @@
 		F62ECD7362B186DC805B431E /* NewRegionDialog.h */ /* NewRegionDialog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NewRegionDialog.h; path = ../../Source/Interface/Dialogs/NewRegionDialog.h; sourceTree = SOURCE_ROOT; };
 		F6D6B37E2AE6DA888404BB3F /* ProjectMonitor.h */ /* ProjectMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProjectMonitor.h; path = ../../Source/Application/ProjectMonitor.h; sourceTree = SOURCE_ROOT; };
 		F6E5A50D09EF933C9000BC02 /* FloatingToolWindow.h */ /* FloatingToolWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FloatingToolWindow.h; path = ../../Source/Interface/Dialogs/FloatingToolWindow.h; sourceTree = SOURCE_ROOT; };
+		F7E929BBF8CDF62B46C42BF3 /* Mp3AudioFormat.cpp */ /* Mp3AudioFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Mp3AudioFormat.cpp; path = ../../Source/Engine/Export/Mp3AudioFormat.cpp; sourceTree = SOURCE_ROOT; };
 		F83A1BE6180DBB12B016E6FF /* DraggingHandle.h */ /* DraggingHandle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DraggingHandle.h; path = ../../Source/Interface/Controls/DraggingHandle.h; sourceTree = SOURCE_ROOT; };
 		F8CFE8B71FB1DA1627A6C1E0 /* ExportAudioConfig.h */ /* ExportAudioConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportAudioConfig.h; path = ../../Source/Engine/Export/ExportAudioConfig.h; sourceTree = SOURCE_ROOT; };
 		F8E23A04EB8ABD66140B0153 /* BeatSegmenter.cpp */ /* BeatSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = BeatSegmenter.cpp; path = ../../Source/Engine/Analysis/BeatSegmenter.cpp; sourceTree = SOURCE_ROOT; };
@@ -604,10 +645,12 @@
 		F986B76C535362EA061CA277 /* AudioExporter.h */ /* AudioExporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExporter.h; path = ../../Source/Engine/Export/AudioExporter.h; sourceTree = SOURCE_ROOT; };
 		FA8649A2DA5195058DB8F983 /* AnalysisWorker.cpp */ /* AnalysisWorker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisWorker.cpp; path = ../../Source/Engine/Analysis/AnalysisWorker.cpp; sourceTree = SOURCE_ROOT; };
 		FA93BF48B115085D2B707FEE /* README.md */ /* README.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; name = README.md; path = ../../../README.md; sourceTree = SOURCE_ROOT; };
+		FB0750162E2E1E9CD9F14FDC /* reservoir.c */ /* reservoir.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = reservoir.c; path = ../../../ThirdParty/lame/libmp3lame/reservoir.c; sourceTree = SOURCE_ROOT; };
 		FB2CD60BFD48DCA05975881F /* CliDispatch.cpp */ /* CliDispatch.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CliDispatch.cpp; path = ../../Source/Cli/CliDispatch.cpp; sourceTree = SOURCE_ROOT; };
 		FCD67B95E8ED469C52987653 /* juce_audio_basics */ /* juce_audio_basics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_audio_basics; path = ../../../Submodules/JUCE/modules/juce_audio_basics; sourceTree = SOURCE_ROOT; };
 		FE5833F96929157F7AFABDCB /* model_inference.cpp */ /* model_inference.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = model_inference.cpp; path = ../../../Submodules/demucs.cpp/src/model_inference.cpp; sourceTree = SOURCE_ROOT; };
 		FEDF9819DC6E93011CDA3EDF /* ProjectMonitor.cpp */ /* ProjectMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectMonitor.cpp; path = ../../Source/Application/ProjectMonitor.cpp; sourceTree = SOURCE_ROOT; };
+		FF84B011F672D5EAD2F51A38 /* version.c */ /* version.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = version.c; path = ../../../ThirdParty/lame/libmp3lame/version.c; sourceTree = SOURCE_ROOT; };
 		FF8A35828E245DC65B5D294B /* include_juce_gui_extra.mm */ /* include_juce_gui_extra.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_gui_extra.mm; path = ../../JuceLibraryCode/include_juce_gui_extra.mm; sourceTree = SOURCE_ROOT; };
 		FFB581764EF3197CACFAEFF1 /* ClipResamplingSource.h */ /* ClipResamplingSource.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipResamplingSource.h; path = ../../Source/Engine/AudioSources/ClipResamplingSource.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -904,6 +947,34 @@
 				05B46617E562A6E50F8D63E8,
 			);
 			name = Handlers;
+			sourceTree = "<group>";
+		};
+		41EC09A90E9A9206EE5C7C60 /* lame */ = {
+			isa = PBXGroup;
+			children = (
+				36E86A31194CA991476CD79D,
+				727C75CD14A6A25B60F5F5F0,
+				EA596FEB5AE32FBDE715A33F,
+				93ACFDA81F6BDCE787FBB118,
+				9FF3BE4881AE918BC557437B,
+				B6F72E595DC65014BB3B7A02,
+				0EDC7EE985A9D501A4236BB7,
+				DD9A7D21D7F18FADE92E754F,
+				2C9C30EF26B933F5249C37D8,
+				B95F11D522470C758B8EE205,
+				273CF131B43FF335AAFB04AA,
+				175A9BF7D18C68220BDB66E6,
+				FB0750162E2E1E9CD9F14FDC,
+				F2324B1F9289826492208812,
+				4251D0EB27E64A9223B5D324,
+				76EE544792B2BF0317559C35,
+				1D37D23E05764EFB2407341C,
+				E8C286EDE1D10FB6D4565FBD,
+				FF84B011F672D5EAD2F51A38,
+				16A200F92618047B05322EA1,
+				C45C01C32B486979620070CE,
+			);
+			name = lame;
 			sourceTree = "<group>";
 		};
 		4DC90EA0F9C22E29CD44796F /* Resource */ = {
@@ -1314,6 +1385,8 @@
 				EE0E7865D0B154D77E3EF265,
 				F8CFE8B71FB1DA1627A6C1E0,
 				B9749FEE49D4907E42B17C44,
+				F7E929BBF8CDF62B46C42BF3,
+				6064DD5271A1290F784419D3,
 				51102FD0ADB1F5E991BEABC5,
 				9EE160AC533646BB61CD4DD6,
 				F986B76C535362EA061CA277,
@@ -1379,6 +1452,7 @@
 			isa = PBXGroup;
 			children = (
 				BF763C82AD303B220E7B86FF,
+				FA83B2F16CEBF8601053441C,
 				9116E9821A4F0CE3F2F35127,
 				0AC0EF15A59269A3756F25DA,
 				BF71B1500DC25ED78E2658A1,
@@ -1468,6 +1542,14 @@
 				B31E3680D6A49693251B06BE,
 			);
 			name = Interface;
+			sourceTree = "<group>";
+		};
+		FA83B2F16CEBF8601053441C /* ThirdParty */ = {
+			isa = PBXGroup;
+			children = (
+				41EC09A90E9A9206EE5C7C60,
+			);
+			name = ThirdParty;
 			sourceTree = "<group>";
 		};
 		FCB7E52916C7F60CEA2D39E3 /* Engine */ = {
@@ -1614,6 +1696,25 @@
 				07FD58C07240DFB156D3B6C7,
 				327CC41CC4492C242654A620,
 				5BE25BAC5739BF355E7AF329,
+				BF552022AF25621A30B6A078,
+				F666DB80D03A3FD23B9B79F8,
+				E759A09557520965BE3BD244,
+				4F7A3042C7547CB1F726FC08,
+				11394A94E1812DF661B33EF0,
+				2D07CDBB7A7A8C4A2A55C811,
+				3D3EF5478FED6886EDDF7C18,
+				D661458A8CAEF76D520DF0D8,
+				998F78ED2E3F72DB6FA3F714,
+				C74180BA1C3525F94C1FECC8,
+				E7E1EE814D893D73E964AEF5,
+				A4F70598CDA8957A83B5590E,
+				A4DAC5160E8C4446F60FEBA0,
+				5ADDDAD10E029169C08722C0,
+				F239E2A9BDB2DFF836D841BA,
+				B58C4D387C667333442A638A,
+				F12FBAEBA69F4B9B2236CD9E,
+				D94B0B76C270E7774B84B263,
+				F45A75552860F792EB4641C0,
 				40472BD14185E19C4CDB1191,
 				2AD445920749B21BFCA206B3,
 				0E051821A554D6A2B0B1CFB9,
@@ -1656,6 +1757,7 @@
 				E872BA91B1125203F73347C1,
 				AC12B745E66A082394669AF4,
 				3FAC49EEE4C8BEC37A19455C,
+				18AA4B984CE1768A0CC7FF54,
 				BAB1AD43D1FB4CD46AA328EF,
 				42A4845EDB822EE81D6CCCAC,
 				77D7642D8B9CFBF2276AA63E,
@@ -1844,16 +1946,17 @@
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
 					"$(SRCROOT)/../../../Submodules/rubberband/",
+					"$(SRCROOT)/../../../ThirdParty/lame/include",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
 				INFOPLIST_PREPROCESS = NO;
 				INSTALL_PATH = "/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/ $(SRCROOT)/../../../ThirdParty/lame/include";
 				OTHER_CFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
-				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
+				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.audionaut;
 				PRODUCT_NAME = "Audionaut";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2029,6 +2132,7 @@
 					"$(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include",
 					"$(SRCROOT)/../../../Submodules/farbot/include/",
 					"$(SRCROOT)/../../../Submodules/rubberband/",
+					"$(SRCROOT)/../../../ThirdParty/lame/include",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = Info-App.plist;
@@ -2036,10 +2140,10 @@
 				INSTALL_PATH = "/Applications";
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/";
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/../../JuceLibraryCode $(SRCROOT)/../../../Submodules/JUCE/modules $(SRCROOT)/../../Source $(SRCROOT)/../../../Submodules/essentia/src $(SRCROOT)/../../../Submodules/json/include/ $(SRCROOT)/../../../Submodules/link/include/ $(SRCROOT)/../../../Submodules/link/modules/asio-standalone/asio/include $(SRCROOT)/../../../Submodules/farbot/include/ $(SRCROOT)/../../../Submodules/rubberband/ $(SRCROOT)/../../../ThirdParty/lame/include";
 				OTHER_CFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
 				OTHER_CPLUSPLUSFLAGS = "$(inherited) -isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3";
-				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
+				OTHER_LDFLAGS = "$(inherited) $(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voltmer-systems.audionaut;
 				PRODUCT_NAME = "Audionaut";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -134,14 +134,15 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runImport },
 
         { "export",
-          "export <project.audium> -o <out.wav|out.flac|out.aiff|out.ogg> [--sample-rate N]\n"
-          "                          [--bit-depth N | --quality 0-10]\n"
+          "export <project.audium> -o <out.wav|.flac|.aiff|.ogg|.mp3> [--sample-rate N]\n"
+          "                          [--bit-depth N | --bitrate KBPS]\n"
           "                          [--channels N] [--multi-mono] [--start S] [--length S]\n"
           "                          [--region NAME [--track N]] [--json]",
-          "Renders the project (or one region) offline to a WAV, FLAC, AIFF or Ogg Vorbis file.",
+          "Renders the project (or one region) offline to a WAV, FLAC, AIFF, Ogg Vorbis or MP3 file.",
           "Renders the project offline (no audio device needed). The output's extension picks the format: "
-          ".wav (8/16/24/32 bit), .flac (lossless, 16/24 bit, up to 8 channels), .aiff (8/16/24 bit) or "
-          ".ogg (Ogg Vorbis, lossy: --quality 0-10, default 6 = about 192 kbps, up to 8 channels). "
+          ".wav (8/16/24/32 bit), .flac (lossless, 16/24 bit, up to 8 channels), .aiff (8/16/24 bit), "
+          ".ogg (Ogg Vorbis, lossy: --bitrate 64-500 kbps, up to 8 channels) or .mp3 (lossy: --bitrate "
+          "96/128/160/192/256/320 kbps, mono or stereo, up to 48 kHz); lossy formats default to 192 kbps. "
           "--multi-mono writes one mono file per channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
           runExport },
 

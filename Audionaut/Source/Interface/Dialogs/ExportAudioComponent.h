@@ -187,8 +187,9 @@ public:
             qualityLabel->attachToComponent (qualityDropDown.get(), true);
         }
 
-        // keep the current choice when the steps stay the same
-        auto selected = qualityDropDown->getSelectedId();
+        // keep the bit rate chosen so far where this format offers it too
+        // (the lossy formats list different rates, so not the index)
+        const auto previousKbps = qualityDropDown->getText().getIntValue();
         qualityDropDown->clear (dontSendNotification);
 
         // ids are the quality index + 1 (an id of 0 means nothing selected)
@@ -196,11 +197,9 @@ public:
         for (auto i = 0; i < steps.size(); i++)
             qualityDropDown->addItem (steps[i], i + 1);
 
-        // not isPositiveAndNotGreaterThan: that counts 0 - nothing selected
-        // yet - as valid, and the combo would stay empty
-        if (selected < 1 || selected > steps.size())
-            selected = audium::defaultQuality (getFormat()) + 1;
-        qualityDropDown->setSelectedId (selected, dontSendNotification);
+        auto index = audium::qualityIndexForBitRate (getFormat(), previousKbps)
+                         .value_or (audium::defaultQuality (getFormat()));
+        qualityDropDown->setSelectedId (index + 1, dontSendNotification);
     }
 
     void updateBitDepthComboBox ()

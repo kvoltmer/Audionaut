@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Project/ProjectFileStore.h"
@@ -342,7 +343,7 @@ SCENARIO("AIFF and Ogg Vorbis export", "[engine][export][aiff][ogg]")
         {
             REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
             REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
-            REQUIRE(config->error.contains("0 to 10"));
+            REQUIRE(config->error.contains("500 kbps"));
             REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
         }
     }
@@ -372,6 +373,138 @@ SCENARIO("AIFF and Ogg Vorbis export", "[engine][export][aiff][ogg]")
             auto mono = AudioExporter::monoFileFor(config->fileName, 1, ExportFormat::ogg);
             REQUIRE(mono.getFileName() == "stems-01.ogg");
             REQUIRE(formatNameOf(mono) == "Ogg-Vorbis file");
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 1);
+        }
+    }
+
+    workDir.deleteRecursively();
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+}
+
+// MP3 is written by LAME (ThirdParty/lame) and read back here with JUCE's
+// own MP3 decoder. Lossy and delayed by the encoder, so the checks are on
+// level and length rather than on single samples.
+SCENARIO("MP3 export", "[engine][export][mp3]")
+{
+    auto inputFile = createRampAudioFile(1.0);
+
+    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-mp3-export-tests");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto makeConfig = [&](const String& fileName) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->format = ExportFormat::mp3;
+        config->sampleRate = 44100.0;
+        config->numChannels = 1;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        return config;
+    };
+
+    // JUCE's own decoder, explicitly: on macOS registerBasicFormats() hands
+    // MP3 to CoreAudio first
+    auto readerFor = [](const File& file) {
+        MP3AudioFormat mp3;
+        return std::unique_ptr<AudioFormatReader> (mp3.createReaderFor(file.createInputStream().release(), true));
+    };
+
+    GIVEN("an MP3 bounce of a ramp at the default bit rate")
+    {
+        auto config = makeConfig("bounce.mp3");
+        REQUIRE(AudioExporter(*engine, config).bounce());
+
+        THEN("it decodes as MP3 of about the source's length and level, with LAME's info frame")
+        {
+            auto reader = readerFor(config->fileName);
+            REQUIRE(reader != nullptr);
+            REQUIRE(reader->getFormatName() == "MP3 file");
+            REQUIRE(reader->sampleRate == 44100.0);
+
+            // encoder delay and the last frame's padding make it a little longer
+            AudioBuffer<float> decoded(1, (int) reader->lengthInSamples);
+            reader->read(&decoded, 0, decoded.getNumSamples(), 0, true, false);
+            reader.reset();
+            INFO("decoded samples: " << decoded.getNumSamples());
+            REQUIRE(decoded.getNumSamples() >= 44100);
+            REQUIRE(decoded.getNumSamples() <= 44100 + 3 * 1152);
+
+            // a ramp from -1 to +1 has an RMS of 1/sqrt(3)
+            auto rms = decoded.getRMSLevel(0, 0, decoded.getNumSamples());
+            INFO("rms: " << rms);
+            REQUIRE(rms == Catch::Approx(0.577).margin(0.03));
+
+            // the LAME/Xing info frame, written over the first frame on close
+            MemoryBlock head;
+            REQUIRE(config->fileName.loadFileAsData(head));
+            // (raw bytes: the frame header starts with zero bytes)
+            const std::string headBytes (static_cast<const char*>(head.getData()), jmin((size_t) 1000, head.getSize()));
+            REQUIRE((headBytes.find("Info") != std::string::npos || headBytes.find("Xing") != std::string::npos));
+            REQUIRE(headBytes.find("LAME") != std::string::npos);
+        }
+    }
+
+    GIVEN("MP3 bounces at the lowest and the highest bit rate")
+    {
+        auto low = makeConfig("low.mp3");
+        low->quality = *qualityIndexForBitRate(ExportFormat::mp3, 96);
+        auto high = makeConfig("high.mp3");
+        high->quality = *qualityIndexForBitRate(ExportFormat::mp3, 320);
+        REQUIRE(AudioExporter(*engine, low).bounce());
+        REQUIRE(AudioExporter(*engine, high).bounce());
+
+        THEN("the files' sizes follow their constant bit rates")
+        {
+            // a second at 96 vs 320 kbps: about 12 kB vs 40 kB
+            REQUIRE(low->fileName.getSize() == Catch::Approx(12000).margin(3000));
+            REQUIRE(high->fileName.getSize() == Catch::Approx(40000).margin(6000));
+        }
+    }
+
+    GIVEN("an MP3 export from a 96 kHz render")
+    {
+        auto config = makeConfig("hires.mp3");
+        config->sampleRate = 96000.0;
+        REQUIRE(AudioExporter(*engine, config).bounce());
+
+        THEN("LAME resamples it to a rate MP3 has")
+        {
+            auto reader = readerFor(config->fileName);
+            REQUIRE(reader != nullptr);
+            REQUIRE(reader->sampleRate <= 48000.0);
+        }
+    }
+
+    GIVEN("an MP3 export of three channels")
+    {
+        auto config = makeConfig("wide.mp3");
+        config->numChannels = 3;
+
+        THEN("it is refused and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("an MP3 file cannot hold 3"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("a multi-mono MP3 export")
+    {
+        auto config = makeConfig("stems.mp3");
+        config->multiMono = true;
+        REQUIRE(AudioExporter(*engine, config).bounce());
+
+        THEN("only the MP3 mono files are left")
+        {
+            auto mono = AudioExporter::monoFileFor(config->fileName, 1, ExportFormat::mp3);
+            REQUIRE(mono.getFileName() == "stems-01.mp3");
+            REQUIRE(readerFor(mono) != nullptr);
             REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 1);
         }
     }
