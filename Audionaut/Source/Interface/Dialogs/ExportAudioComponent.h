@@ -196,7 +196,9 @@ public:
         for (auto i = 0; i < steps.size(); i++)
             qualityDropDown->addItem (steps[i], i + 1);
 
-        if (! juce::isPositiveAndNotGreaterThan (selected, steps.size()))
+        // not isPositiveAndNotGreaterThan: that counts 0 - nothing selected
+        // yet - as valid, and the combo would stay empty
+        if (selected < 1 || selected > steps.size())
             selected = audium::defaultQuality (getFormat()) + 1;
         qualityDropDown->setSelectedId (selected, dontSendNotification);
     }
