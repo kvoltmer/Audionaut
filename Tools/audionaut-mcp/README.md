@@ -84,7 +84,7 @@ read or edit them.
 | `get_project_info` | `info` | Tempo, tracks, clips, files (or the raw persistence JSON) |
 | `create_project` | `create` | New empty `.audium` package |
 | `import_audio` | `import` | Add audio files (creates a new track) |
-| `export_audio` | `export` | Offline render to WAV |
+| `export_audio` | `export` | Offline render to WAV or FLAC |
 | `analyze` | `analyze` | Essentia analysis, cached next to the project |
 | `auto_edit` | `auto-edit` | Segment a clip using cached analysis |
 | `assemble` | `assemble` | Build an arrangement from regions |

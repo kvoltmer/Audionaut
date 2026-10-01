@@ -4836,6 +4836,9 @@
     <ClInclude Include="..\..\Source\Engine\Export\ExportAudioConfig.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\ExportFormat.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>

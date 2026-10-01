@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/PlayList/PlayListItem.h"
+#include "Engine/Export/ExportFormat.h"
 
 namespace audium {
 
@@ -21,6 +22,7 @@ namespace audium {
 struct ExportAudioConfig {
 
     bool userCanceled = false;       ///< A helper boolean to cancel the export
+    ExportFormat format = ExportFormat::wav; ///< The file format to write.
     int bitDepth = 24;               ///< The bit depth of the exported audio (e.g., 16, 24, 32).
     double sampleRate = 44100;       ///< The sample rate of the exported audio in Hz.
     int blockSize = 1024;            ///< The block size used during the export process.
