@@ -8,15 +8,24 @@ and the mix of all tracks.
 
 *File → Export Audio…* (**Cmd+Alt+B**). The dialog offers:
 
-- **Format** — WAV or FLAC
+- **Format** — WAV, FLAC, AIFF or Ogg Vorbis
 - **Sample rate**
 - **Output channels**
-- **Bit depth**
+- **Bit depth** (WAV, FLAC, AIFF) or **Quality** (Ogg Vorbis)
 
-**WAV** takes 16, 24 or 32 bits. **FLAC** is lossless, so it holds exactly
-the same audio as a WAV of the same bit depth, in a noticeably smaller file.
-It takes 16 or 24 bits, and one FLAC file holds at most eight channels. For a
-wider multi-channel export, choose multi-mono (one file per channel) or WAV.
+| Format | Kind | Bit depth | Notes |
+|---|---|---|---|
+| **WAV** | lossless | 16, 24 or 32 | |
+| **FLAC** | lossless, compressed | 16 or 24 | noticeably smaller than WAV; at most 8 channels per file |
+| **AIFF** | lossless | 16 or 24 | |
+| **Ogg Vorbis** | lossy | — | Quality from 64 to 500 kbps (default 192 kbps); at most 8 channels per file |
+
+FLAC and AIFF hold exactly the same audio as a WAV of the same bit depth. Ogg
+Vorbis gives up a little detail for much smaller files, which suits sharing a
+mix more than archiving it. The kbps figures are approximate, since Vorbis
+varies its bit rate with the material. For a multi-channel export wider than
+eight channels in FLAC or Ogg Vorbis, choose multi-mono (one file per channel)
+or a different format.
 
 **Mono** and **stereo** exports render the mix as you hear it, including
 each channel's [output routing](04-main-window.md#audio-routing): channels
@@ -31,13 +40,15 @@ Right-click a clip and choose **Export…**. The clip is bounced by itself —
 with its own gains and fades applied, so it sounds exactly as it does in the
 arrangement.
 
-Name the file `.wav` or `.flac` to pick the format. A FLAC from a 32-bit
-float source is written at 24 bits.
+Name the file `.wav`, `.flac`, `.aiff` or `.ogg` to pick the format. A FLAC
+or AIFF from a 32-bit float source is written at 24 bits, and an Ogg Vorbis
+file uses the default quality.
 
 ## Exporting from the command line
 
 The `export` verb of `audionaut-cli` renders the same way. The format follows
-the output file's extension (`-o mix.wav` or `-o mix.flac`). It adds a few
+the output file's extension (`-o mix.wav`, `.flac`, `.aiff` or `.ogg`), and an
+Ogg Vorbis export takes `--quality 0`–`10` instead of `--bit-depth`. It adds a few
 scripted conveniences: a start/length window, one-mono-file-per-channel
 (`--multi-mono`), and bouncing a named region (always dry — a region is raw
 material; gains and fades belong to clips). See

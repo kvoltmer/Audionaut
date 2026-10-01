@@ -61,6 +61,7 @@ private:
             safeThis->config = std::make_shared<audium::ExportAudioConfig>();
             
             safeThis->config->format = exportAudioComponent->getFormat();
+            safeThis->config->quality = exportAudioComponent->getQuality();
             
             // get the sample rate
             safeThis->config->sampleRate = exportAudioComponent->getSampleRate().toString().getDoubleValue();
