@@ -104,7 +104,9 @@ public:
     
     void deleteKeyPressed (int lastRowSelected) override
     {
-        // TODO: implement
+        // the rows are the clip's channels; delete acts on the engine
+        // selection, like the clip's header and the other list boxes
+        audiumEngine->getAudioTrackContainer()->deleteSelectedObjects();
     }
     
     void backgroundClicked (const juce::MouseEvent&) override
