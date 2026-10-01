@@ -488,6 +488,7 @@
 		B8B95DEF1C6536F44482A856 /* AudioTrack.cpp */ /* AudioTrack.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrack.cpp; path = ../../Source/Engine/Group/AudioTrack.cpp; sourceTree = SOURCE_ROOT; };
 		B91E88D89EAF16D1AAD4B24B /* VoiceSourceContainer.h */ /* VoiceSourceContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VoiceSourceContainer.h; path = ../../Source/Engine/AudioSources/VoiceSourceContainer.h; sourceTree = SOURCE_ROOT; };
 		B92AC1A1131ACB1EC5B0AFD0 /* FadeInOutView.h */ /* FadeInOutView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FadeInOutView.h; path = ../../Source/Interface/Views/FadeInOutView.h; sourceTree = SOURCE_ROOT; };
+		B9749FEE49D4907E42B17C44 /* ExportFormat.h */ /* ExportFormat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ExportFormat.h; path = ../../Source/Engine/Export/ExportFormat.h; sourceTree = SOURCE_ROOT; };
 		BA5C39ABAF055C323410DE14 /* PlayListTableListBoxItem.h */ /* PlayListTableListBoxItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxItem.h; path = ../../Source/Interface/Models/PlayListTableListBoxItem.h; sourceTree = SOURCE_ROOT; };
 		BAA8A6836A43A0C76ECB6A52 /* include_juce_audio_processors_headless_lv2_libs.cpp */ /* include_juce_audio_processors_headless_lv2_libs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_audio_processors_headless_lv2_libs.cpp; path = ../../JuceLibraryCode/include_juce_audio_processors_headless_lv2_libs.cpp; sourceTree = SOURCE_ROOT; };
 		BADBB9D9AEAFBB0D593D7915 /* AudioBusInterface.h */ /* AudioBusInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusInterface.h; path = ../../Source/Engine/Playback/AudioBusInterface.h; sourceTree = SOURCE_ROOT; };
@@ -1312,6 +1313,7 @@
 				5A4C35EB8D4AF8B2375EB101,
 				EE0E7865D0B154D77E3EF265,
 				F8CFE8B71FB1DA1627A6C1E0,
+				B9749FEE49D4907E42B17C44,
 				51102FD0ADB1F5E991BEABC5,
 				9EE160AC533646BB61CD4DD6,
 				F986B76C535362EA061CA277,

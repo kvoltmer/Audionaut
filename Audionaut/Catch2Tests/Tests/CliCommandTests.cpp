@@ -634,6 +634,126 @@ SCENARIO ("cli import and export round trip", "[cli]")
     workDir.deleteRecursively();
 }
 
+SCENARIO ("cli export picks the format from the output extension", "[cli][export][flac]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("formats.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    auto readerFor = [] (const juce::File& file) {
+        juce::AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+        return std::unique_ptr<juce::AudioFormatReader> (formatManager.createReaderFor (file));
+    };
+
+    GIVEN ("a project with a 32-bit float file imported") {
+        // one second of a quiet constant, written as 32-bit float
+        auto source = workDir.getChildFile ("float-source.wav");
+        {
+            std::unique_ptr<juce::OutputStream> stream (source.createOutputStream());
+            REQUIRE (stream != nullptr);
+            juce::WavAudioFormat wav;
+            auto writer = wav.createWriterFor (stream, juce::AudioFormatWriter::Options{}
+                                                           .withSampleRate (44100.0)
+                                                           .withNumChannels (1)
+                                                           .withBitsPerSample (32)
+                                                           .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint));
+            REQUIRE (writer != nullptr);
+            juce::AudioBuffer<float> buffer (1, 44100);
+            for (auto s = 0; s < buffer.getNumSamples(); s++)
+                buffer.setSample (0, s, 0.25f);
+            REQUIRE (writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples()));
+        }
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " " + source.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        auto regionName = source.getFileNameWithoutExtension();
+
+        WHEN ("the project is exported to a .flac file") {
+            auto output = workDir.getChildFile ("mix.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("a FLAC file is written and the result says so") {
+                REQUIRE (envelope["result"]["format"] == "flac");
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->getFormatName() == "FLAC file");
+                REQUIRE (reader->lengthInSamples > 0);
+            }
+        }
+
+        WHEN ("the float region is exported to FLAC without a bit depth") {
+            auto output = workDir.getChildFile ("region.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --region " + regionName),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("it is written as deep as FLAC goes: 24 bits") {
+                REQUIRE (envelope["result"]["bitDepth"] == 24);
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->bitsPerSample == 24);
+            }
+        }
+
+        WHEN ("a 32-bit FLAC is asked for explicitly") {
+            auto output = workDir.getChildFile ("deep.flac");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName() + " --channels 1 --bit-depth 32"),
+                                            context);
+
+            THEN ("the verb refuses instead of quietly writing 24 bits") {
+                REQUIRE (exitCode == cli::exitUsage);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported multi-mono to FLAC") {
+            auto output = workDir.getChildFile ("stems.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --multi-mono"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result names the first FLAC mono file") {
+                auto first = workDir.getChildFile ("stems-01.flac");
+                REQUIRE (envelope["result"]["outputFile"] == first.getFullPathName().toStdString());
+                REQUIRE (first.existsAsFile());
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the output has an extension no export writes") {
+            auto output = workDir.getChildFile ("mix.mp3");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName()),
+                                            context);
+
+            THEN ("it is a usage error naming the formats") {
+                REQUIRE (exitCode == cli::exitUsage);
+                auto message = envelope["error"]["message"].get<std::string>();
+                REQUIRE (message.find (".flac") != std::string::npos);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+    }
+
+    context.envelopeSink = nullptr;
+    workDir.deleteRecursively();
+}
+
 SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][separation]")
 {
     auto workDir = makeWorkDirectory();

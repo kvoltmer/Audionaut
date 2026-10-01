@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 #include "Interface/Controls/DefaultLabel.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Export/ExportFormat.h"
 
 
 class ExportAudioComponent  : public juce::Component
@@ -16,7 +17,7 @@ public:
     ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
-        setSize(300, 100);
+        setSize(300, 130);
     }
 
     ~ExportAudioComponent() override
@@ -36,6 +37,11 @@ public:
         const int h = 23;
         const int space = h / 4;
         
+        if (formatDropDown != nullptr) {
+            formatDropDown->setBounds (r.removeFromTop (h));
+            r.removeFromTop (space);
+        }
+        
         if (sampleRateDropDown != nullptr) {
             sampleRateDropDown->setBounds (r.removeFromTop (h));
             r.removeFromTop (space);
@@ -54,6 +60,7 @@ public:
     
     void update()
     {
+        updateFormatComboBox();
         if (auto* currentDevice = audiumEngine->getAudioDeviceManager()->getCurrentAudioDevice()) {
             updateSampleRateComboBox(currentDevice);
         }
@@ -61,6 +68,27 @@ public:
         updateBitDepthComboBox();
         
         resized();
+    }
+    
+    void updateFormatComboBox()
+    {
+        if (formatDropDown == nullptr) {
+            formatDropDown = std::make_unique<ComboBox>();
+            addAndMakeVisible (formatDropDown.get());
+
+            formatLabel = std::make_unique<juce::Label> (String{}, TRANS ("Format:"));
+            formatLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+            formatLabel->attachToComponent (formatDropDown.get(), true);
+
+            formatDropDown->addItem ("WAV", formatId (audium::ExportFormat::wav));
+            formatDropDown->addItem ("FLAC (lossless)", formatId (audium::ExportFormat::flac));
+
+            // default is WAV; later openings keep the last choice
+            formatDropDown->setSelectedId (formatId (audium::ExportFormat::wav), dontSendNotification);
+
+            // the bit depths on offer depend on the format
+            formatDropDown->onChange = [this] { updateBitDepthComboBox(); };
+        }
     }
     
     void updateSampleRateComboBox (AudioIODevice* currentDevice)
@@ -129,26 +157,39 @@ public:
             bitDepthLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
             bitDepthLabel->attachToComponent (bitDepthDropDown.get(), true);
         }
-        else {
-            bitDepthDropDown->clear();
-        }
+        
+        // keep the current choice where the format allows it, else 24 bits
+        auto selected = bitDepthDropDown->getSelectedId();
+        bitDepthDropDown->clear (dontSendNotification);
         
         const auto getBitDepthString = [] (int depth) { return String (depth) + " Bits"; };
+        const auto supported = audium::supportedBitDepths (getFormat());
 
         for (auto bits : availableBitDepths) {
-            bitDepthDropDown->addItem (getBitDepthString (bits), bits);
+            if (supported.contains ((int) bits))
+                bitDepthDropDown->addItem (getBitDepthString ((int) bits), (int) bits);
         }
 
-        // default is 24 bits
-        bitDepthDropDown->setText (getBitDepthString (24), dontSendNotification);
+        if (! supported.contains (selected))
+            selected = 24;
+        bitDepthDropDown->setSelectedId (selected, dontSendNotification);
     }
 
+    
+    audium::ExportFormat getFormat() const
+    {
+        if (formatDropDown != nullptr && formatDropDown->getSelectedId() == formatId (audium::ExportFormat::flac))
+            return audium::ExportFormat::flac;
+        return audium::ExportFormat::wav;
+    }
     
     juce::Value& getSampleRate() const { return sampleRateDropDown->getSelectedIdAsValue(); }
     juce::Value& getOutputChannels() const { return outputChanDropDown->getSelectedIdAsValue(); }
     juce::Value& getBitDepth() const { return bitDepthDropDown->getSelectedIdAsValue(); }
     
 private:
+    
+    static int formatId (audium::ExportFormat format) { return (int) format + 1; }
     
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
@@ -179,8 +220,8 @@ private:
     };
 
     
-    std::unique_ptr<juce::Label> sampleRateLabel, outputChanLabel, bitDepthLabel;
-    std::unique_ptr<ComboBox> sampleRateDropDown, outputChanDropDown, bitDepthDropDown;
+    std::unique_ptr<juce::Label> formatLabel, sampleRateLabel, outputChanLabel, bitDepthLabel;
+    std::unique_ptr<ComboBox> formatDropDown, sampleRateDropDown, outputChanDropDown, bitDepthDropDown;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExportAudioComponent)
 };

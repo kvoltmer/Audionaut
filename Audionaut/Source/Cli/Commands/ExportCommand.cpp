@@ -9,6 +9,7 @@
 
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/Export/ExportAudioConfig.h"
+#include "Engine/Export/ExportFormat.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListContainer.h"
@@ -50,11 +51,13 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "export requires an existing <project.audium>");
 
     if (outputValue.isEmpty())
-        return context.fail (exitUsage, "usage", "export requires -o <out.wav>");
+        return context.fail (exitUsage, "usage", "export requires -o <out.wav|out.flac>");
 
+    // the format follows the extension
     auto outputFile = workingDirectory().getChildFile (outputValue);
-    if (! outputFile.hasFileExtension (".wav"))
-        return context.fail (exitUsage, "usage", "the output file must end with .wav");
+    auto format = exportFormatForFile (outputFile);
+    if (! format)
+        return context.fail (exitUsage, "usage", "the output file must end with .wav or .flac");
 
     ScopedCoutToStderr guard (context.json);
     int openFailure = exitFailure;
@@ -66,6 +69,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
 
     auto config = std::make_shared<ExportAudioConfig>();
     config->fileName = outputFile;
+    config->format = *format;
 
     if (regionName.isNotEmpty()) {
         auto matches = findRegionsByName (*session->getAudioTrackContainer(), regionName, trackId);
@@ -87,7 +91,9 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
             new PlayListItem (*track->getPlayListContainer(), region, track->getSelectionManager()));
         config->numChannels = track->getNumAudioTrackChannels();
         config->sampleRate = region->getResourcesMaxSampleRate();
-        config->bitDepth = region->getResourcesMaxBitDepth();
+        // the source's depth, as deep as the format allows (a 32-bit float
+        // source exported as FLAC becomes 24 bits); --bit-depth overrides it
+        config->bitDepth = closestSupportedBitDepth (*format, region->getResourcesMaxBitDepth());
     }
 
     if (sampleRateValue.isNotEmpty())
@@ -138,12 +144,12 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitFailure, "export_failed", error);
     }
 
-    // multi-mono splits into -01.wav, -02.wav, ... and deletes the base file
-    auto firstMonoFile = outputFile.getSiblingFile (outputFile.getFileNameWithoutExtension() + "-01.wav");
-    auto produced = config->multiMono ? firstMonoFile : outputFile;
+    // multi-mono writes -01.wav, -02.wav, ... (or .flac) instead of the base file
+    auto produced = config->multiMono ? AudioExporter::monoFileFor (outputFile, 1, *format) : outputFile;
 
     context.log ("exported " + produced.getFullPathName());
     nlohmann::json result = { { "outputFile", produced.getFullPathName().toStdString() },
+                              { "format", fileExtension (*format).substring (1).toStdString() },
                               { "sampleRate", config->sampleRate },
                               { "bitDepth", config->bitDepth },
                               { "numChannels", config->numChannels },

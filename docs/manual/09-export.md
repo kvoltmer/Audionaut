@@ -8,11 +8,15 @@ and the mix of all tracks.
 
 *File → Export Audio…* (**Cmd+Alt+B**). The dialog offers:
 
+- **Format** — WAV or FLAC
 - **Sample rate**
 - **Output channels**
 - **Bit depth**
 
-The result is a WAV file.
+**WAV** takes 16, 24 or 32 bits. **FLAC** is lossless, so it holds exactly
+the same audio as a WAV of the same bit depth, in a noticeably smaller file.
+It takes 16 or 24 bits, and one FLAC file holds at most eight channels. For a
+wider multi-channel export, choose multi-mono (one file per channel) or WAV.
 
 **Mono** and **stereo** exports render the mix as you hear it, including
 each channel's [output routing](04-main-window.md#audio-routing): channels
@@ -27,9 +31,13 @@ Right-click a clip and choose **Export…**. The clip is bounced by itself —
 with its own gains and fades applied, so it sounds exactly as it does in the
 arrangement.
 
+Name the file `.wav` or `.flac` to pick the format. A FLAC from a 32-bit
+float source is written at 24 bits.
+
 ## Exporting from the command line
 
-The `export` verb of `audionaut-cli` renders the same way and adds a few
+The `export` verb of `audionaut-cli` renders the same way. The format follows
+the output file's extension (`-o mix.wav` or `-o mix.flac`). It adds a few
 scripted conveniences: a start/length window, one-mono-file-per-channel
 (`--multi-mono`), and bouncing a named region (always dry — a region is raw
 material; gains and fades belong to clips). See

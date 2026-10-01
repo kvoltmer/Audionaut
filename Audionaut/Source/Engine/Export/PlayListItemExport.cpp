@@ -43,10 +43,12 @@ bool PlayListItemExport::exportItem()
     if (useFileChooser) {
         // asynchronous: the export runs once the user has chosen a file, so
         // there is no result to report yet
+        // the chosen file's extension picks WAV or FLAC
         ExportUtil::exportAudio(audioRegion->getName() + ".wav",
                                 audiumEngine,
                                 config,
-                                exportThread);
+                                exportThread,
+                                true);
         return false;
     }
     else {
