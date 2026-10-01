@@ -32,7 +32,9 @@ each channel's [output routing](04-main-window.md#audio-routing): channels
 routed directly to outputs 1 or 2 land on those file channels unpanned, and
 channels routed to higher outputs are left out. **Multi-channel** and
 **multi-mono** exports are stems — every channel of the arrangement goes to
-its own file channel (or file), regardless of routing.
+its own file channel (or file), regardless of routing. Multi-mono files are
+named after the one you choose, numbered per channel: `mix.flac` becomes
+`mix-01.flac`, `mix-02.flac`, and so on.
 
 ## Exporting a single clip
 
@@ -48,8 +50,8 @@ file uses the default quality.
 
 The `export` verb of `audionaut-cli` renders the same way. The format follows
 the output file's extension (`-o mix.wav`, `.flac`, `.aiff` or `.ogg`), and an
-Ogg Vorbis export takes `--quality 0`–`10` instead of `--bit-depth`. It adds a few
-scripted conveniences: a start/length window, one-mono-file-per-channel
-(`--multi-mono`), and bouncing a named region (always dry — a region is raw
-material; gains and fades belong to clips). See
+Ogg Vorbis export takes `--quality 0`–`10` (6, about 192 kbps, by default)
+instead of `--bit-depth`. It adds a few scripted conveniences: a start/length
+window, one-mono-file-per-channel (`--multi-mono`), and bouncing a named region
+(always dry — a region is raw material; gains and fades belong to clips). See
 [The command line and AI agents](11-cli-and-agents.md).
