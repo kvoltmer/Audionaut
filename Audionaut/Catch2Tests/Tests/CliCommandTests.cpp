@@ -634,6 +634,227 @@ SCENARIO ("cli import and export round trip", "[cli]")
     workDir.deleteRecursively();
 }
 
+SCENARIO ("cli export picks the format from the output extension", "[cli][export][flac]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("formats.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    auto readerFor = [] (const juce::File& file) {
+        juce::AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+        return std::unique_ptr<juce::AudioFormatReader> (formatManager.createReaderFor (file));
+    };
+
+    GIVEN ("a project with a 32-bit float file imported") {
+        // one second of a quiet constant, written as 32-bit float
+        auto source = workDir.getChildFile ("float-source.wav");
+        {
+            std::unique_ptr<juce::OutputStream> stream (source.createOutputStream());
+            REQUIRE (stream != nullptr);
+            juce::WavAudioFormat wav;
+            auto writer = wav.createWriterFor (stream, juce::AudioFormatWriter::Options{}
+                                                           .withSampleRate (44100.0)
+                                                           .withNumChannels (1)
+                                                           .withBitsPerSample (32)
+                                                           .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint));
+            REQUIRE (writer != nullptr);
+            juce::AudioBuffer<float> buffer (1, 44100);
+            for (auto s = 0; s < buffer.getNumSamples(); s++)
+                buffer.setSample (0, s, 0.25f);
+            REQUIRE (writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples()));
+        }
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " " + source.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        auto regionName = source.getFileNameWithoutExtension();
+
+        WHEN ("the project is exported to a .flac file") {
+            auto output = workDir.getChildFile ("mix.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("a FLAC file is written and the result says so") {
+                REQUIRE (envelope["result"]["format"] == "flac");
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->getFormatName() == "FLAC file");
+                REQUIRE (reader->lengthInSamples > 0);
+            }
+        }
+
+        WHEN ("the float region is exported to FLAC without a bit depth") {
+            auto output = workDir.getChildFile ("region.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --region " + regionName),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("it is written as deep as FLAC goes: 24 bits") {
+                REQUIRE (envelope["result"]["bitDepth"] == 24);
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->bitsPerSample == 24);
+            }
+        }
+
+        WHEN ("a 32-bit FLAC is asked for explicitly") {
+            auto output = workDir.getChildFile ("deep.flac");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName() + " --channels 1 --bit-depth 32"),
+                                            context);
+
+            THEN ("the verb refuses instead of quietly writing 24 bits") {
+                REQUIRE (exitCode == cli::exitUsage);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported multi-mono to FLAC") {
+            auto output = workDir.getChildFile ("stems.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --multi-mono"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result names the first FLAC mono file") {
+                auto first = workDir.getChildFile ("stems-01.flac");
+                REQUIRE (envelope["result"]["outputFile"] == first.getFullPathName().toStdString());
+                REQUIRE (first.existsAsFile());
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported to .aiff and to .ogg") {
+            auto aiff = workDir.getChildFile ("mix.aiff");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + aiff.getFullPathName() + " --channels 1 --bit-depth 16"),
+                                     context)
+                     == cli::exitOk);
+            auto aiffResult = envelope["result"];
+
+            auto ogg = workDir.getChildFile ("mix.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+            auto oggResult = envelope["result"];
+
+            THEN ("each is written in its format; the Ogg reports its bit rate instead of a bit depth") {
+                REQUIRE (aiffResult["format"] == "aiff");
+                REQUIRE (aiffResult["bitDepth"] == 16);
+                REQUIRE (readerFor (aiff)->getFormatName() == "AIFF file");
+
+                REQUIRE (oggResult["format"] == "ogg");
+                REQUIRE (oggResult["bitrateKbps"] == 192);
+                REQUIRE_FALSE (oggResult.contains ("bitDepth"));
+                REQUIRE (readerFor (ogg)->getFormatName() == "Ogg-Vorbis file");
+            }
+        }
+
+        WHEN ("an Ogg export is given a bit rate") {
+            auto ogg = workDir.getChildFile ("small.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1 --bitrate 96"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result reports it") {
+                REQUIRE (envelope["result"]["bitrateKbps"] == 96);
+                REQUIRE (ogg.existsAsFile());
+            }
+        }
+
+        WHEN ("bit rate and bit depth are given to the wrong kind of format") {
+            auto depthForOgg = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                         + workDir.getChildFile ("a.ogg").getFullPathName()
+                                                         + " --bit-depth 24"),
+                                               context);
+            auto depthMessage = envelope["error"]["message"].get<std::string>();
+            auto bitRateForWav = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                           + workDir.getChildFile ("b.wav").getFullPathName()
+                                                           + " --bitrate 192"),
+                                                 context);
+            auto bitRateOffScale = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                             + workDir.getChildFile ("c.ogg").getFullPathName()
+                                                             + " --bitrate 100"),
+                                                   context);
+
+            THEN ("each is a usage error and nothing is written") {
+                REQUIRE (depthForOgg == cli::exitUsage);
+                REQUIRE (depthMessage.find ("--bitrate") != std::string::npos);
+                REQUIRE (bitRateForWav == cli::exitUsage);
+                REQUIRE (bitRateOffScale == cli::exitUsage);
+                for (auto name : { "a.ogg", "b.wav", "c.ogg" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported to .mp3") {
+            auto mp3 = workDir.getChildFile ("mix.mp3");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + mp3.getFullPathName() + " --channels 1 --bitrate 320"),
+                                     context)
+                     == cli::exitOk);
+            auto result = envelope["result"];
+
+            auto offered = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                     + workDir.getChildFile ("d.mp3").getFullPathName()
+                                                     + " --bitrate 500"),
+                                           context);
+            auto offeredMessage = envelope["error"]["message"].get<std::string>();
+            auto wide = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                  + workDir.getChildFile ("e.mp3").getFullPathName()
+                                                  + " --channels 3"),
+                                        context);
+
+            THEN ("an MP3 is written at the asked bit rate; other rates and channel counts are refused") {
+                REQUIRE (result["format"] == "mp3");
+                REQUIRE (result["bitrateKbps"] == 320);
+                REQUIRE_FALSE (result.contains ("bitDepth"));
+                juce::MP3AudioFormat decoder;
+                std::unique_ptr<juce::AudioFormatReader> reader (decoder.createReaderFor (mp3.createInputStream().release(), true));
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->lengthInSamples > 0);
+
+                // 500 kbps is an Ogg rate, not an MP3 one; the message lists MP3's
+                REQUIRE (offered == cli::exitUsage);
+                REQUIRE (offeredMessage.find ("320") != std::string::npos);
+                REQUIRE (wide == cli::exitUsage);
+                for (auto name : { "d.mp3", "e.mp3" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
+        WHEN ("the output has an extension no export writes") {
+            auto output = workDir.getChildFile ("mix.wma");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName()),
+                                            context);
+
+            THEN ("it is a usage error naming the formats") {
+                REQUIRE (exitCode == cli::exitUsage);
+                auto message = envelope["error"]["message"].get<std::string>();
+                REQUIRE (message.find (".flac") != std::string::npos);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+    }
+
+    context.envelopeSink = nullptr;
+    workDir.deleteRecursively();
+}
+
 SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][separation]")
 {
     auto workDir = makeWorkDirectory();

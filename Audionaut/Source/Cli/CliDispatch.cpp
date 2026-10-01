@@ -134,12 +134,16 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runImport },
 
         { "export",
-          "export <project.audium> -o <out.wav> [--sample-rate N] [--bit-depth N]\n"
+          "export <project.audium> -o <out.wav|.flac|.aiff|.ogg|.mp3> [--sample-rate N]\n"
+          "                          [--bit-depth N | --bitrate KBPS]\n"
           "                          [--channels N] [--multi-mono] [--start S] [--length S]\n"
           "                          [--region NAME [--track N]] [--json]",
-          "Renders the project (or one region) offline to a WAV file.",
-          "Renders the project offline (no audio device needed). --multi-mono writes one mono file per "
-          "channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
+          "Renders the project (or one region) offline to a WAV, FLAC, AIFF, Ogg Vorbis or MP3 file.",
+          "Renders the project offline (no audio device needed). The output's extension picks the format: "
+          ".wav (8/16/24/32 bit), .flac (lossless, 16/24 bit, up to 8 channels), .aiff (8/16/24 bit), "
+          ".ogg (Ogg Vorbis, lossy: --bitrate 64-500 kbps, up to 8 channels) or .mp3 (lossy: --bitrate "
+          "96/128/160/192/256/320 kbps, mono or stereo, up to 48 kHz); lossy formats default to 192 kbps. "
+          "--multi-mono writes one mono file per channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
           runExport },
 
         { "analyze",
@@ -231,9 +235,13 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "                          [--fade-in-curve C] [--fade-out-curve C]\n"
           "                          [--track N] [--unit ...] [--json]",
           "Sets a clip's fade lengths, offsets and curves.",
-          "Sets fade lengths and ramp offsets (in the given unit; 0 clears, offsets may be negative to "
-          "reach outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped "
-          "against each other within the clip.",
+          "Sets the fade ramps (in the given unit; 0 clears) and curve exponents (0.1-4, 0.5 = equal "
+          "power). Each value is a ramp edge measured inward from the clip edge: the fade-in runs from "
+          "--fade-in-start to --fade-in after the clip start, the fade-out from --fade-out to "
+          "--fade-out-end before the clip end, so a ramp lasts --fade-in minus --fade-in-start (or "
+          "--fade-out minus --fade-out-end). A negative offset puts that edge outside the clip, playing "
+          "source audio beyond it: --fade-out 0.25 --fade-out-end -0.25 --unit seconds is a 0.5 s ramp "
+          "centred on the clip end. Values are clamped against each other within the clip.",
           runClipFades },
 
         { "clip-speed",

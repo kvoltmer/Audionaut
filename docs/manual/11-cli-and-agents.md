@@ -10,6 +10,11 @@ Everything the timeline can do is also available headlessly. Two front doors:
   `Audionaut.exe` in `Program Files\Audionaut` on Windows, and `audionaut`
   (from the .deb) or the AppImage on Linux. This is what AI agents use.
 
+<figure>
+  <img src="img/agent-flow.svg" width="960" alt="How an agent edit reaches Audionaut: Claude calls a tool on audionaut-mcp, which runs one Audionaut command. If the project is open in the app, the command is handed to the running app, runs on a copy of the live state and lands as one undo step; Project.json is not written. If it is not open, the project file is read and written directly. The reply comes back as one JSON envelope.">
+  <figcaption>What happens when an agent edits a project: each tool call runs one Audionaut command. If the project is open, your running app does the work and you get one undo step; otherwise the project file is edited directly.</figcaption>
+</figure>
+
 ## Working on a project that is open in the app
 
 You do not have to save, close, or otherwise get out of the way before handing
@@ -99,6 +104,9 @@ audionaut-cli create-region song.audium --name chorus --start 17 --end 25
 audionaut-cli place-clip song.audium --region chorus --at 33
 audionaut-cli clip-fades song.audium --region chorus --fade-in 1 --unit beats
 audionaut-cli export     song.audium -o mix.wav --sample-rate 48000
+audionaut-cli export     song.audium -o mix.flac   # lossless FLAC, 16/24 bit
+audionaut-cli export     song.audium -o mix.ogg --bitrate 160   # Ogg Vorbis
+audionaut-cli export     song.audium -o mix.mp3 --bitrate 320   # MP3 (LAME)
 ```
 
 ## AI agents (MCP)

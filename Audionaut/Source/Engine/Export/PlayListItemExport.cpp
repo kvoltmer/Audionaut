@@ -10,8 +10,6 @@
 
 #include "Engine/Export/PlayListItemExport.h"
 #include "Engine/Project/ProjectFileStore.h"
-
-#include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"
 #include "Engine/Group/AudioTrack.h"
 
@@ -43,21 +41,14 @@ bool PlayListItemExport::exportItem()
     exportThread = std::make_shared<audium::AudioExportThread>(*audiumEngine.get(), config);
 
     if (useFileChooser) {
-        
-        String defaultFileName;
-#if !defined(AUDIONAUT_HEADLESS)
-        defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
-        defaultFileName += File::getSeparatorString() + audioRegion->getName() + ".wav";
-        
-#endif
-        juce::File dir(defaultFileName);
-        chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-        // asynchronous: the export runs when the chooser closes, so there
-        // is no result to report yet
-        ExportUtil::exportAudio(chooser,
+        // asynchronous: the export runs once the user has chosen a file, so
+        // there is no result to report yet
+        // the chosen file's extension picks WAV or FLAC
+        ExportUtil::exportAudio(audioRegion->getName() + ".wav",
                                 audiumEngine,
                                 config,
-                                exportThread);
+                                exportThread,
+                                true);
         return false;
     }
     else {

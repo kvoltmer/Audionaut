@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.6.3"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/&#10;../../../ThirdParty/lame/include"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.6.4"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
-              cppLanguageStandard="20" compilerFlagSchemes="demucs,rubberband" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;DEMUCS_ENABLED=1&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
+              cppLanguageStandard="20" compilerFlagSchemes="demucs,rubberband,lame" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;AUTO_EDIT_ENABLED=0&#10;DEMUCS_ENABLED=1&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
     <GROUP id="{D3A1C5E7-2B4F-4A6C-9E1D-5F7B9C0A2E4D}" name="Submodules">
       <GROUP id="{E4B2D6F8-3C5A-4B7D-8F2E-6A8C0D1B3F5E}" name="demucs.cpp">
@@ -27,6 +27,50 @@
       </GROUP>
       <GROUP id="{B1C2D3E4-0002-4B7D-8F2E-6A8C0D1B3F5E}" name="rubberband">
         <FILE id="Rbb001" name="RubberBandSingle.cpp" compile="1" resource="0" file="../Submodules/rubberband/single/RubberBandSingle.cpp" compilerFlagScheme="rubberband"/>
+      </GROUP>
+    </GROUP>
+    <GROUP id="{C7A4E2B9-5D31-4F68-A0B2-3E9D71C6F4A8}" name="ThirdParty">
+      <GROUP id="{C7A4E2B9-5D31-4F68-A0B2-3E9D71C6F4A9}" name="lame">
+        <FILE id="Lam001" name="VbrTag.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/VbrTag.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam002" name="bitstream.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/bitstream.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam003" name="encoder.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/encoder.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam004" name="fft.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/fft.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam005" name="gain_analysis.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/gain_analysis.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam006" name="id3tag.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/id3tag.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam007" name="lame.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/lame.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam008" name="newmdct.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/newmdct.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam009" name="presets.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/presets.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam010" name="psymodel.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/psymodel.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam011" name="quantize.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/quantize.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam012" name="quantize_pvt.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/quantize_pvt.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam013" name="reservoir.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/reservoir.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam014" name="set_get.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/set_get.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam015" name="tables.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/tables.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam016" name="takehiro.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/takehiro.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam017" name="util.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/util.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam018" name="vbrquantize.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/vbrquantize.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="Lam019" name="version.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/version.c"
+              compilerFlagScheme="lame"/>
+        <FILE id="LamCfg" name="lame_config.h" compile="0" resource="0" file="../ThirdParty/lame/audionaut/lame_config.h"/>
+        <FILE id="LamPrv" name="PROVENANCE.md" compile="0" resource="0" file="../ThirdParty/lame/PROVENANCE.md"/>
       </GROUP>
     </GROUP>
     <GROUP id="{E0D67BE0-319C-60D6-58A5-72CC48B47506}" name="Catch2Tests">
@@ -112,6 +156,10 @@
               file="Source/Application/ProjectMonitor.cpp"/>
         <FILE id="PrjMn2" name="ProjectMonitor.h" compile="0" resource="0"
               file="Source/Application/ProjectMonitor.h"/>
+        <FILE id="GuiPr1" name="GuiUserPrompter.cpp" compile="1" resource="0"
+              file="Source/Application/GuiUserPrompter.cpp"/>
+        <FILE id="GuiPr2" name="GuiUserPrompter.h" compile="0" resource="0"
+              file="Source/Application/GuiUserPrompter.h"/>
       </GROUP>
       <GROUP id="{C991B859-B2C9-54A4-C803-C217BC28FC26}" name="Util">
         <GROUP id="{E06E4F23-6CE8-7605-2078-9846BE4FC6DD}" name="native">
@@ -195,6 +243,10 @@
                 file="Source/Engine/Export/PlayListItemExport.h"/>
           <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
                 file="Source/Engine/Export/ExportAudioConfig.h"/>
+          <FILE id="eXpFmT" name="ExportFormat.h" compile="0" resource="0" file="Source/Engine/Export/ExportFormat.h"/>
+          <FILE id="Mp3AFc" name="Mp3AudioFormat.cpp" compile="1" resource="0"
+                file="Source/Engine/Export/Mp3AudioFormat.cpp"/>
+          <FILE id="Mp3AFh" name="Mp3AudioFormat.h" compile="0" resource="0" file="Source/Engine/Export/Mp3AudioFormat.h"/>
           <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"
@@ -224,6 +276,7 @@
           <FILE id="EVuaOX" name="DspClip.h" compile="0" resource="0" file="Source/Engine/Core/DspClip.h"/>
           <FILE id="bNePQp" name="DspClipData.h" compile="0" resource="0" file="Source/Engine/Core/DspClipData.h"/>
           <FILE id="HmCore" name="HeadlessMode.h" compile="0" resource="0" file="Source/Engine/Core/HeadlessMode.h"/>
+          <FILE id="UsrPr1" name="UserPrompter.h" compile="0" resource="0" file="Source/Engine/Core/UserPrompter.h"/>
           <FILE id="DspLdM" name="DspLoadMeter.h" compile="0" resource="0" file="Source/Engine/Core/DspLoadMeter.h"/>
         </GROUP>
         <FILE id="f3Gy4c" name="Streamable.h" compile="0" resource="0" file="Source/Engine/Streamable.h"/>
@@ -271,6 +324,10 @@
           <FILE id="L1oVjp" name="ResourceGroup.cpp" compile="1" resource="0"
                 file="Source/Engine/Group/ResourceGroup.cpp"/>
           <FILE id="bqmXaq" name="ResourceGroup.h" compile="0" resource="0" file="Source/Engine/Group/ResourceGroup.h"/>
+          <FILE id="WfCol1" name="WaveFormColours.cpp" compile="1" resource="0"
+                file="Source/Engine/Group/WaveFormColours.cpp"/>
+          <FILE id="WfCol2" name="WaveFormColours.h" compile="0" resource="0"
+                file="Source/Engine/Group/WaveFormColours.h"/>
         </GROUP>
         <GROUP id="{72F2B5A0-7A8C-3648-A73C-97D66220C0AE}" name="Link">
           <FILE id="el7wlW" name="LinkAudioDevice.cpp" compile="1" resource="0"
@@ -472,7 +529,6 @@
           <FILE id="j5Dgzu" name="SettingsDialog.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SettingsDialog.h"/>
         </GROUP>
-        <FILE id="Jt0jme" name="ColourIds.cpp" compile="1" resource="0" file="Source/Interface/ColourIds.cpp"/>
         <FILE id="WxdqR9" name="ColourIds.h" compile="0" resource="0" file="Source/Interface/ColourIds.h"/>
         <GROUP id="{5B27ED8A-CA94-0C20-47D2-019C8929A810}" name="Widgets">
           <FILE id="WylrD8" name="audium_AudioThumbnail.cpp" compile="1" resource="0"
@@ -699,14 +755,14 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" extraCompilerFlags="-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" rubberband="-O3 -w" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraCompilerFlags="-isystem $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" rubberband="-O3 -w" lame="-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
                appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&#10;&#9;&lt;string&gt;13.0&lt;/string&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="25" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1" extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="26" microphonePermissionNeeded="1"
+               localNetworkPermissionNeeded="1" extraLinkerFlags="$(SRCROOT)/../../../Submodules/essentia/build/src/libessentia.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a $(SRCROOT)/../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -liconv">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source&#10;$(SRCROOT)/../../../Submodules/essentia/src"
                        customXcodeFlags="INSTALL_PATH=/Applications" defines="JUCE_ENABLE_REPAINT_DEBUGGING=0"
@@ -733,8 +789,8 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" rubberband="-O3 -w" demucs="-O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src" smallIcon="qhU3Rr" bigIcon="gdiYPG"
-                extraDefs="LINK_PLATFORM_LINUX=1" extraLinkerFlags="../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libmp3lame.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm">
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" rubberband="-O3 -w" lame="-O3 -w -include ../../../ThirdParty/lame/audionaut/lame_config.h -I../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+                extraDefs="LINK_PLATFORM_LINUX=1" extraLinkerFlags="../../../Submodules/essentia/build/src/libessentia.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libchromaprint.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavformat.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavcodec.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libswresample.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libavutil.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libfftw3f.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libz.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libsamplerate.a ../../../Submodules/essentia/packaging/debian_3rdparty/lib/libyaml.a -ldrm">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src"
                        extraCompilerFlags="-Wno-multichar -isystem ../../../Submodules/essentia/packaging/debian_3rdparty/include/eigen3" targetName="audionaut"/>
@@ -759,7 +815,7 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;_WIN32_WINNT=0x0A00&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
+    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" lame="/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;_WIN32_WINNT=0x0A00&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN&#10;YAML_DECLARE_STATIC"
             smallIcon="qhU3Rr" bigIcon="gdiYPG" externalLibraries="essentia.lib&#10;fftw3f.lib&#10;samplerate.lib&#10;yaml.lib&#10;avformat.lib&#10;avcodec.lib&#10;avutil.lib&#10;swresample.lib&#10;ws2_32.lib&#10;secur32.lib&#10;crypt32.lib&#10;ncrypt.lib&#10;bcrypt.lib&#10;mfplat.lib&#10;mfuuid.lib&#10;strmiids.lib">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source&#10;../../../Submodules/essentia/src&#10;../../../Submodules/essentia/build-msvc/generated&#10;$(AUDIONAUT_VCPKG_PREFIX)/include&#10;../../../../vcpkg/installed/x64-windows-static-md/include"

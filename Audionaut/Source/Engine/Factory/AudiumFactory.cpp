@@ -26,8 +26,11 @@
 
 namespace audium {
 
-std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
+std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter)
 {
+    if (userPrompter == nullptr)
+        userPrompter = std::make_shared<HeadlessUserPrompter>();
+
     auto undoManager                = std::make_shared<juce::UndoManager>();
     
     auto selectionManager           = std::make_shared<SelectionManager>();
@@ -72,7 +75,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                                audioThumbnailCache,
                                                                                tempoProvider,
                                                                                voiceSourceContainer,
-                                                                               analysisWorker);
+                                                                               analysisWorker,
+                                                                               userPrompter);
 
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     
@@ -136,7 +140,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine()
                                                                      audioBusInterface,
                                                                      recordingActionHandler,
                                                                      projectFileStore,
-                                                                     projectSerializer);
+                                                                     projectSerializer,
+                                                                     userPrompter);
 
     return audiumEngine;
 }

@@ -207,13 +207,19 @@ server.registerTool(
   {
     title: "Export audio",
     description:
-      "Renders the project offline to a WAV file (no audio device needed). Pass region to bounce a " +
-      "single region instead - always dry, without any clip's gains or fades.",
+      "Renders the project offline to an audio file (no audio device needed). The output's extension " +
+      "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
+      "channels per file), .aiff (8/16/24 bit), .ogg (Ogg Vorbis, lossy, at most 8 channels) or .mp3 " +
+      "(lossy, mono or stereo, at most 48 kHz). Lossy formats take bitrate_kbps instead of bit_depth. " +
+      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades.",
     inputSchema: {
       project: projectParam,
-      output: z.string().describe("Output .wav path"),
+      output: z.string().describe("Output path ending in .wav, .flac, .aiff, .ogg or .mp3 - the format follows the extension"),
       sample_rate: z.number().int().positive().optional().describe("Sample rate in Hz (default 44100)"),
-      bit_depth: z.number().int().positive().optional().describe("Bit depth (default 24)"),
+      bit_depth: z.number().int().positive().optional().describe("Bit depth (default 24; not for .ogg/.mp3)"),
+      bitrate_kbps: z.number().int().positive().optional()
+        .describe("Bit rate for .ogg (64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 500) or .mp3 " +
+                  "(96, 128, 160, 192, 256, 320); default 192"),
       channels: z.number().int().min(1).optional().describe("Output channel count (default 2)"),
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
@@ -222,8 +228,8 @@ server.registerTool(
       track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
-  async ({ project, output, sample_rate, bit_depth, channels, multi_mono, start_seconds, length_seconds,
-           region, track }) =>
+  async ({ project, output, sample_rate, bit_depth, bitrate_kbps, channels, multi_mono, start_seconds,
+           length_seconds, region, track }) =>
     runCli([
       "export",
       project,
@@ -231,6 +237,7 @@ server.registerTool(
       output,
       ...(sample_rate ? ["--sample-rate", String(sample_rate)] : []),
       ...(bit_depth ? ["--bit-depth", String(bit_depth)] : []),
+      ...(bitrate_kbps !== undefined ? ["--bitrate", String(bitrate_kbps)] : []),
       ...(channels ? ["--channels", String(channels)] : []),
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),
@@ -615,15 +622,20 @@ server.registerTool(
   {
     title: "Set clip fades",
     description:
-      "Sets the addressed clip's fade lengths, ramp offsets (0 clears; offsets may be negative to reach " +
-      "outside the clip) and curve exponents (0.1-4, 0.5 = equal power). Values are clamped against each " +
-      "other within the clip. The address must match exactly one clip.",
+      "Sets the addressed clip's fade ramps and curve exponents (0.1-4, 0.5 = equal power). All four fade " +
+      "values are in `unit` (default bars) and 0 clears one. Each ramp has two edges measured inward from " +
+      "the clip edge: the fade-in runs from fade_in_start to fade_in after the clip start, the fade-out " +
+      "from fade_out to fade_out_end before the clip end, so a ramp lasts fade_in - fade_in_start (or " +
+      "fade_out - fade_out_end). A negative offset puts that edge outside the clip, playing source audio " +
+      "beyond it - e.g. fade_out 0.25 with fade_out_end -0.25 (seconds) is a 0.5 s ramp centred on the " +
+      "clip end, the outgoing half of a crossfade. Values are clamped against each other within the clip. " +
+      "The address must match exactly one clip.",
     inputSchema: {
       project: projectParam,
-      fade_in: z.number().min(0).optional().describe("Fade-in length"),
-      fade_out: z.number().min(0).optional().describe("Fade-out length"),
-      fade_in_start: z.number().optional().describe("Fade-in ramp start offset from the clip start"),
-      fade_out_end: z.number().optional().describe("Fade-out ramp end offset from the clip end"),
+      fade_in: z.number().min(0).optional().describe("Where the fade-in ramp reaches full level, measured from the clip start; the ramp length only when fade_in_start is 0"),
+      fade_out: z.number().min(0).optional().describe("Where the fade-out ramp begins, measured back from the clip end; the ramp length only when fade_out_end is 0"),
+      fade_in_start: z.number().optional().describe("Where the fade-in ramp begins, measured from the clip start; negative = before the clip start"),
+      fade_out_end: z.number().optional().describe("Where the fade-out ramp reaches silence, measured back from the clip end; negative = past the clip end"),
       fade_in_curve: z.number().optional().describe("Fade-in curve exponent (0.1-4, 0.5 = equal power)"),
       fade_out_curve: z.number().optional().describe("Fade-out curve exponent (0.1-4, 0.5 = equal power)"),
       at: z.number().optional().describe("Timeline position of the clip (exclusive with region)"),

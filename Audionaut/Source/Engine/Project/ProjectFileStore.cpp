@@ -196,7 +196,6 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
 
                 if (serializer->readFromJson(projectJson, true)) {
                     currentProjectFile = inFile;
-                    currentJson = std::move(projectJson);
                     undoManager->clearUndoHistory();
                     playListScheduler->commitPlayListData();
                     refreshDiskStamps();
@@ -314,12 +313,10 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
         projectDirectory = packageDirectory;
 
         std::string writeError;
-        json serialized;
-        if (writeJsonToFile(file, writeError, &serialized)) {
+        if (writeJsonToFile(file, writeError)) {
             discardPartialSave.release();
 
             currentProjectFile = file;
-            currentJson = std::move(serialized);
             undoManager->clearUndoHistory();
 
             // Persist analysis results alongside the project file.
@@ -447,19 +444,40 @@ bool ProjectFileStore::analysisChangedOnDisk() const
     return analysisChangedOnDisk(projectDirectory.getChildFile(AnalysisCache::fileName));
 }
 
+std::vector<juce::File> ProjectFileStore::findObsoleteAudioFiles() const
+{
+    // The package's audio belongs to the project as saved on disk, so the
+    // saved Project.json decides what is obsolete - not the in-memory state.
+    // Agent edits, autosave restore and their undo/redo apply unsaved states,
+    // and a discard compared against those offered audio the saved project
+    // still references for the trash.
+    if (!currentProjectFile.existsAsFile())
+        return {};
+
+    try
+    {
+        return audioResourceContainer->findObsoleteAudioFiles(readProjectJson(currentProjectFile));
+    }
+    catch (std::exception &ex)
+    {
+        // unreadable: nothing can be proven obsolete, so nothing is trashed
+        std::cout << "findObsoleteAudioFiles: " << ex.what() << std::endl;
+    }
+    return {};
+}
+
 void ProjectFileStore::deleteObsoleteAudioFiles()
 {
-    audioResourceContainer->deleteObsoleteAudioFiles(currentJson);
+    audioResourceContainer->trashRedundantFiles(findObsoleteAudioFiles());
 }
 
 void ProjectFileStore::closeProject()
 {
     currentProjectFile = juce::File();
-    currentJson.clear();
     changedExternally = false;
 }
 
-bool ProjectFileStore::writeJsonToFile (const juce::File& target, std::string& error, json* serializedOut)
+bool ProjectFileStore::writeJsonToFile (const juce::File& target, std::string& error)
 {
     jassert(serializer != nullptr);
 
@@ -469,12 +487,7 @@ bool ProjectFileStore::writeJsonToFile (const juce::File& target, std::string& e
         return false;
     }
 
-    if (!writeJsonAtomically(target, serialized, error))
-        return false;
-
-    if (serializedOut != nullptr)
-        *serializedOut = std::move(serialized);
-    return true;
+    return writeJsonAtomically(target, serialized, error);
 }
 
 bool ProjectFileStore::applyFileAsUndoableReload (const juce::File& sourceFile,

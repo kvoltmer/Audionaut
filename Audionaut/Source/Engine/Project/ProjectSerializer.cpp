@@ -13,7 +13,7 @@
 #include "Engine/Analysis/AnalysisCache.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Playback/AudioBusInterface.h"
-#include "Interface/ColourIds.h"
+#include "Engine/Group/WaveFormColours.h"
 
 namespace audium {
 
@@ -44,10 +44,6 @@ bool ProjectSerializer::writeToJson (json& output)
     jsonAudium["ui_state"] = uiState;
     jsonAudium["scheduler"] = playListScheduler->data;
     output["audium"] = jsonAudium;
-
-    // NOTE: this only serializes; the store's currentJson (the state whose
-    // file references are authoritative for obsolete-file cleanup) is updated
-    // explicitly by the store's open/save/apply paths, never by snapshots.
     return true;
 }
 

@@ -15,7 +15,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Analysis/AnalysisWorker.h"
-#include "Engine/Core/HeadlessMode.h"
+#include "Engine/Core/UserPrompter.h"
 
 using namespace juce;
 
@@ -149,13 +149,11 @@ bool AudioResourceContainer::copyAudioFiles(const juce::File sourceDirectory,
         }
     }
 #if _DEBUG
-    if (debugString.isNotEmpty() && ! HeadlessMode::isHeadless()) {
+    if (debugString.isNotEmpty()) {
 
         auto messageString = "Destination: " + destinationDirectory.getFullPathName() + "\n\n";
         messageString += debugString;
-        NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                              "copyAudioFiles",
-                                              messageString);
+        userPrompter->showMessage("copyAudioFiles", messageString);
     }
 #endif
     return true;
@@ -371,8 +369,9 @@ void AudioResourceContainer::cleanup()
         analysisWorker->cancelAll();
 }
 
-void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
+std::vector<juce::File> AudioResourceContainer::findObsoleteAudioFiles(const json &json)
 {
+    std::vector<juce::File> redundantFiles;
     std::vector<std::string> jsonPaths;
     
     if (!json.empty()) {
@@ -390,9 +389,7 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                 }
             }
         }
-        
-        
-        std::vector<juce::File> redundantFiles;
+
         auto audioDir = getAudioFileDirectory(ProjectFileStore::projectDirectory);
         for (auto& found : audioDir.findChildFiles (File::findFiles, false, "*")) {
             
@@ -401,9 +398,9 @@ void AudioResourceContainer::deleteObsoleteAudioFiles(const json &json)
                 redundantFiles.push_back(found);
             }
         }
-        
-        trashRedundantFiles(redundantFiles);
     }
+
+    return redundantFiles;
 }
 
 void AudioResourceContainer::deleteObsoleteAudioFiles(const juce::File projectDirectory)
@@ -424,14 +421,11 @@ void AudioResourceContainer::trashRedundantFiles(const std::vector<juce::File>& 
     if (redundantFiles.empty())
         return;
 
-    // Headless sessions (CLI, MCP, in-app CLI mode) never delete: there is
-    // nobody to ask, and the remove-track / remove-channel verbs promise that
-    // the audio files stay in the package. Cleaning up is a GUI decision.
-    // Runtime check, not the compile-time define: the GUI binary runs this
-    // same code windowless in its in-app CLI mode.
-    if (HeadlessMode::isHeadless())
-        return;
-
+    // Headless sessions (CLI, MCP, in-app CLI mode) never delete: their
+    // prompter declines (there is nobody to ask, and the remove-track /
+    // remove-channel verbs promise that the audio files stay in the
+    // package). Cleaning up is a GUI decision, taken through the GUI's
+    // prompter.
     String redundantFilesString;
     for (size_t i = 0; i < redundantFiles.size(); i++) {
         redundantFilesString += redundantFiles[i].getFullPathName() + "\n";
@@ -443,17 +437,16 @@ void AudioResourceContainer::trashRedundantFiles(const std::vector<juce::File>& 
         }
     }
 
-    const auto confirmed = NativeMessageBox::showYesNoBox(MessageBoxIconType::WarningIcon,
-                                                          "Redundant files found. Move files to trash?",
-                                                          "The following audio files are not used in the project anymore:\n\n" +
-                                                          redundantFilesString +
-                                                          "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
+    const auto confirmed = userPrompter->confirm("Redundant files found. Move files to trash?",
+                                                 "The following audio files are not used in the project anymore:\n\n" +
+                                                 redundantFilesString +
+                                                 "\nDo you want to move " + String(redundantFiles.size()) + " files to trash?");
     if (! confirmed)
         return;
 
     for (auto& file : redundantFiles) {
         if (! file.moveToTrash()) {
-            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Error", "Moving files to trash failed.");
+            userPrompter->showMessage("Error", "Moving files to trash failed.");
             return;
         }
     }

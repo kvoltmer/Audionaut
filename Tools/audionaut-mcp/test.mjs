@@ -184,6 +184,31 @@ try {
   });
   check("export_audio", !exported.isError && exported.content[0].text.includes("mix.wav"), exported.content?.[0]?.text);
 
+  const flac = await client.callTool({
+    name: "export_audio",
+    arguments: { project, output: join(workDir, "mix.flac"), channels: 1 },
+  });
+  check("export_audio to FLAC", !flac.isError && flac.content[0].text.includes('"format": "flac"'),
+        flac.content?.[0]?.text);
+
+  const ogg = await client.callTool({
+    name: "export_audio",
+    arguments: { project, output: join(workDir, "mix.ogg"), channels: 1, bitrate_kbps: 112 },
+  });
+  check("export_audio to Ogg Vorbis with a bit rate",
+        !ogg.isError && ogg.content[0].text.includes('"format": "ogg"') &&
+          ogg.content[0].text.includes('"bitrateKbps": 112'),
+        ogg.content?.[0]?.text);
+
+  const mp3 = await client.callTool({
+    name: "export_audio",
+    arguments: { project, output: join(workDir, "mix.mp3"), channels: 1 },
+  });
+  check("export_audio to MP3 at the default bit rate",
+        !mp3.isError && mp3.content[0].text.includes('"format": "mp3"') &&
+          mp3.content[0].text.includes('"bitrateKbps": 192'),
+        mp3.content?.[0]?.text);
+
   // Analysis needs Essentia; accept either success or a clean unavailable error.
   const analyzed = await client.callTool({ name: "analyze", arguments: { target: project } });
   const analyzeClean = !analyzed.isError || analyzed.content[0].text.startsWith("essentia_unavailable");

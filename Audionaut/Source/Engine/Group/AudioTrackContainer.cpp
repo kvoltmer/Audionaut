@@ -17,8 +17,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/PlayList/TransportLoop.h"
-
-#include "Interface/ColourIds.h"
+#include "Engine/Group/WaveFormColours.h"
 
 namespace audium {
 
@@ -46,13 +45,15 @@ void AudioTrackContainer::cleanup()
     selectionManager->clear();
     voiceSourceContainer->cleanup();
     audioResourceContainer->cleanup();
-    
+
+    const auto previousNumChannels = getNumAudioTrackChannels();
     for (auto track : audioTracks)
     {
         track->cleanup();
     }
     audioTracks.clear();
     publishNumAudioTrackChannels();
+    commitChannelLayout(0, previousNumChannels);
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
@@ -107,9 +108,13 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     });
     
     if (it != audioTracks.end()) {
+        const auto previousNumChannels = getNumAudioTrackChannels();
+        const auto index = static_cast<std::size_t>(std::distance(audioTracks.begin(), it));
+
         track->cleanup();
         audioTracks.erase(it);
         publishNumAudioTrackChannels();
+        commitChannelLayout(index, previousNumChannels);
         return true;
     }
     
@@ -194,7 +199,7 @@ bool AudioTrackContainer::writeToJson (json& output)
     }
     output["master_gain"] = getMasterGain();
     
-    output["loop_data"] = transportLoop->loopData;
+    output["loop_data"] = transportLoop->getLoopData();
     
     return true;
 }
@@ -252,7 +257,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     }
     
     if (input.contains("loop_data")) {
-        transportLoop->loopData = input["loop_data"];
+        transportLoop->setLoopData(input["loop_data"].get<LoopData>());
     }
     
     return true;
@@ -312,6 +317,16 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
 void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
 {
     publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
+}
+
+void AudioTrackContainer::commitChannelLayout(std::size_t firstTrack, int previousNumChannels)
+{
+    for (auto t = firstTrack; t < audioTracks.size(); ++t)
+        for (auto& channel : audioTracks[t]->audioChannelContainer->getObjects())
+            channel->commitChannelData();
+
+    for (auto busChannel = getNumAudioTrackChannels(); busChannel < previousNumChannels; ++busChannel)
+        audioBusInterface->setChannelData(busChannel, AudioChannelData());
 }
 
 bool AudioTrackContainer::anyChannelSolo() const

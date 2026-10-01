@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Export/ExportFormat.h"
 #include "Engine/AudioSources/RenderTiming.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/PlayList/PlayListScheduler.h"
@@ -78,18 +79,51 @@ public:
         return written;
     }
 
+    /** The file a multi-mono export writes for one channel (1-based):
+        "mix.flac", channel 3 -> "mix-03.flac". */
+    static juce::File monoFileFor(const juce::File &target, int channel, ExportFormat format)
+    {
+        return target.getSiblingFile(target.getFileNameWithoutExtension() + "-"
+                                     + juce::String(formatInteger(channel)) + fileExtension(format));
+    }
+
 private:
     /** Renders into a temporary file beside the target and only then swaps
-        it in, so a failed or cancelled bounce leaves no partial file. */
+        it in, so a failed or cancelled bounce leaves no partial file. A
+        multi-mono export renders a WAV intermediate instead and encodes the
+        mono files from it, so the channel limit of the target format (FLAC:
+        eight) does not apply to the intermediate. */
     bool writeOutput(const std::function<void()> &updateProgress)
     {
         using Failure = ExportAudioConfig::Failure;
 
-        juce::WavAudioFormat wav;
-        if (! wav.getPossibleBitDepths().contains(config->bitDepth))
+        if (isLossy(config->format)) {
+            const auto steps = qualityOptions(config->format);
+            if (config->quality < -1 || config->quality >= steps.size())
+                return fail(Failure::unsupportedFormat,
+                            "unsupported quality " + juce::String(config->quality)
+                                + " (" + aFileOf(config->format) + " offers "
+                                + steps.joinIntoString(", ") + ")");
+        }
+
+        const auto depths = supportedBitDepths(config->format);
+        if (! isLossy(config->format) && ! depths.contains(config->bitDepth)) {
+            juce::String depthList;
+            for (auto i = 0; i < depths.size(); i++)
+                depthList << (i == 0 ? "" : i == depths.size() - 1 ? " or " : ", ") << depths[i];
             return fail(Failure::unsupportedFormat,
                         "unsupported bit depth " + juce::String(config->bitDepth)
-                            + " (a WAV file takes 8, 16, 24 or 32 bits)");
+                            + " (" + aFileOf(config->format) + " takes " + depthList + " bits)");
+        }
+
+        if (! config->multiMono && config->numChannels > maxChannels(config->format))
+            return fail(Failure::unsupportedFormat,
+                        aFileOf(config->format) + " cannot hold " + juce::String(config->numChannels)
+                            + " channels (at most " + juce::String(maxChannels(config->format))
+                            + "); export multi-mono or as WAV instead");
+
+        const auto renderAs = config->multiMono ? ExportFormat::wav : config->format;
+        auto renderFormat = createAudioFormat(renderAs);
 
         juce::TemporaryFile tempFile (config->fileName);
         std::unique_ptr<juce::OutputStream> outStream (tempFile.getFile().createOutputStream());
@@ -97,13 +131,12 @@ private:
             return fail(Failure::cannotOpenOutput,
                         "could not open " + config->fileName.getFullPathName() + " for writing");
 
-        auto opt = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
-                                                      .withNumChannels (config->numChannels)
-                                                      .withBitsPerSample (config->bitDepth);
-        auto writer = wav.createWriterFor (outStream, opt);
+        auto writer = renderFormat->createWriterFor (outStream, writerOptions(renderAs, config->numChannels));
         if (writer == nullptr)
             return fail(Failure::unsupportedFormat,
-                        "a WAV file cannot hold " + juce::String(config->numChannels) + " channels");
+                        "could not create " + aFileOf(renderAs) + " with "
+                            + juce::String(config->numChannels) + " channels at "
+                            + juce::String(config->sampleRate) + " Hz");
 
         auto written = config->playListItem != nullptr
                      ? audiumEngine.getPlayListScheduler()->bouncePlayListItem(writer.get(), config, updateProgress)
@@ -118,34 +151,41 @@ private:
             return fail(Failure::writeFailed,
                         "could not write " + config->fileName.getFullPathName() + " (is the disk full?)");
 
+        // the temporary file is only the intermediate here and goes with it
+        if (config->multiMono)
+            return splitIntoMonoFiles(tempFile.getFile(), updateProgress);
+
         if (! tempFile.overwriteTargetFileWithTemporary())
             return fail(Failure::writeFailed,
                         "could not replace " + config->fileName.getFullPathName());
 
-        return config->multiMono ? splitIntoMonoFiles(updateProgress) : true;
+        return true;
     }
 
-    /** Splits the multichannel file written above into -01.wav, -02.wav, ...
-        beside it and removes it. All or nothing: a failure or a cancel also
-        removes the mono files written so far. */
-    bool splitIntoMonoFiles(const std::function<void()> &updateProgress)
+    /** Splits the multichannel WAV intermediate into -01, -02, ... files of
+        the target format beside the target file. All or nothing: a failure
+        or a cancel also removes the mono files written so far. */
+    bool splitIntoMonoFiles(const juce::File &intermediate, const std::function<void()> &updateProgress)
     {
         using Failure = ExportAudioConfig::Failure;
 
-        juce::AudioFormatManager formatManager;
-        formatManager.registerBasicFormats();
-        std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor(config->fileName));
-        if (reader == nullptr) {
-            config->fileName.deleteFile();
+        // read back as WAV whatever its extension says: the temporary file
+        // carries the target's extension
+        juce::WavAudioFormat wav;
+        std::unique_ptr<juce::AudioFormatReader> reader;
+        if (auto in = intermediate.createInputStream())
+            reader.reset(wav.createReaderFor(in.release(), true));
+        if (reader == nullptr)
             return fail(Failure::writeFailed,
-                        "could not read back " + config->fileName.getFullPathName() + " to split it into mono files");
-        }
+                        "could not read back the bounce of " + config->fileName.getFullPathName()
+                            + " to split it into mono files");
 
         const auto numChannels = (int)reader->numChannels;
         juce::AudioBuffer<float> buf(numChannels, (int)reader->lengthInSamples);
         reader->read(&buf, 0, (int)reader->lengthInSamples, 0, true, true);
-        reader.reset(); // release the file before it is deleted below
+        reader.reset(); // release the file before it is deleted
 
+        auto monoFormat = createAudioFormat(config->format);
         juce::Array<juce::File> monoFiles;
         auto ok = true;
 
@@ -155,9 +195,7 @@ private:
             if (config->userCanceled)
                 break;
 
-            auto trackNumber = formatInteger(c + 1);
-            auto siblingName = config->fileName.getFileNameWithoutExtension() + "-" + juce::String(trackNumber) + ".wav";
-            auto monoFile = config->fileName.getSiblingFile(siblingName);
+            auto monoFile = monoFileFor(config->fileName, c + 1, config->format);
 
             juce::TemporaryFile temp (monoFile);
             std::unique_ptr<juce::OutputStream> out (temp.getFile().createOutputStream());
@@ -166,13 +204,10 @@ private:
                 break;
             }
 
-            juce::WavAudioFormat monoWav;
-            auto monoOpt = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
-                                                              .withNumChannels (1)
-                                                              .withBitsPerSample (config->bitDepth);
-            auto monoWriter = monoWav.createWriterFor (out, monoOpt);
+            auto monoWriter = monoFormat->createWriterFor (out, writerOptions(config->format, 1));
             if (monoWriter == nullptr) {
-                ok = fail(Failure::unsupportedFormat, "could not create a mono WAV writer for " + monoFile.getFullPathName());
+                ok = fail(Failure::unsupportedFormat, "could not create a mono " + formatName(config->format)
+                                                          + " writer for " + monoFile.getFullPathName());
                 break;
             }
 
@@ -189,9 +224,6 @@ private:
             monoFiles.add(monoFile);
         }
 
-        // the multichannel file was only the intermediate
-        config->fileName.deleteFile();
-
         if (! ok || config->userCanceled) {
             for (auto& monoFile : monoFiles)
                 monoFile.deleteFile();
@@ -199,6 +231,25 @@ private:
         }
 
         return true;
+    }
+
+    /** How to write a file of the given format: the export's bit depth for
+        a lossless format, its quality for a lossy one. The WAV intermediate
+        of a lossy multi-mono export is written as 32-bit float, so the
+        encoder gets the full resolution of the render. */
+    juce::AudioFormatWriter::Options writerOptions(ExportFormat format, int numChannels) const
+    {
+        auto options = juce::AudioFormatWriter::Options{}.withSampleRate (config->sampleRate)
+                                                         .withNumChannels (numChannels);
+        if (isLossy(format))
+            return options.withBitsPerSample (32)
+                          .withQualityOptionIndex (config->quality >= 0 ? config->quality : defaultQuality(format));
+
+        if (isLossy(config->format))
+            return options.withBitsPerSample (32)
+                          .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint);
+
+        return options.withBitsPerSample (config->bitDepth);
     }
 
     bool fail(ExportAudioConfig::Failure failure, const juce::String &error)

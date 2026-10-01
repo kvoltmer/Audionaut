@@ -121,6 +121,27 @@ if(APPLE)
     target_link_libraries(audionaut_rubberband PUBLIC "-framework Accelerate")   # the single-file build uses vDSP
 endif()
 
+# LAME (LGPL), the MP3 encoder behind MP3 export, vendored from the official
+# 4.0 release tarball (see ThirdParty/lame/PROVENANCE.md). Only the encoder
+# is built. Its configuration header is force-included rather than found as
+# <config.h>, so no other config.h on the include paths can stand in for it.
+set(LAME_PATH "${CMAKE_CURRENT_LIST_DIR}/../../ThirdParty/lame")
+file(GLOB LAME_SOURCES ${LAME_PATH}/libmp3lame/*.c)
+add_library(audionaut_lame STATIC ${LAME_SOURCES})
+set_property(TARGET audionaut_lame PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(audionaut_lame
+    PRIVATE ${LAME_PATH}/libmp3lame
+    PUBLIC  ${LAME_PATH}/include)
+if(MSVC)
+    target_compile_definitions(audionaut_lame PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(audionaut_lame PRIVATE /w /MP "/FI${LAME_PATH}/audionaut/lame_config.h")
+else()
+    target_compile_options(audionaut_lame PRIVATE -O3 -w -include "${LAME_PATH}/audionaut/lame_config.h")
+    if(NOT APPLE)
+        target_link_libraries(audionaut_lame PUBLIC m)
+    endif()
+endif()
+
 # Code coverage. Off by default; the instrumentation is attached to the
 # AudionautTests target only (see below), so JUCE, Catch2 and the other
 # submodules are never instrumented and never appear in the report.
@@ -332,6 +353,7 @@ function(audionaut_configure_common target)
         target_link_libraries(${target} PRIVATE audionaut_demucs)
     endif()
     target_link_libraries(${target} PRIVATE audionaut_rubberband)
+    target_link_libraries(${target} PRIVATE audionaut_lame)
 
     if(AUDIONAUT_ENABLE_ESSENTIA AND MSVC)
         # MSVC's linker resolves archives by symbol table rather than left to
@@ -354,7 +376,10 @@ function(audionaut_configure_common target)
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libavcodec.a
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libswresample.a
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libavutil.a
-                ${ESSENTIA_3RDPARTY_LIB_PATH}/libmp3lame.a
+                # libavcodec's MP3 encoder calls LAME; it gets ours (4.0, the one
+                # the MP3 export uses) instead of essentia's own libmp3lame.a,
+                # so the binary carries exactly one LAME
+                audionaut_lame
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libfftw3f.a
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libz.a
                 ${ESSENTIA_3RDPARTY_LIB_PATH}/libsamplerate.a

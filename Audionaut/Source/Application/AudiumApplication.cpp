@@ -16,6 +16,7 @@
 #include "Engine/Factory/AudiumFactory.h"
 #include "Application/AudiumMenuModel.h"
 #include "Application/ProjectMonitor.h"
+#include "Application/GuiUserPrompter.h"
 #include "Cli/AgentHost.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
@@ -166,11 +167,16 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // otherwise handleAsyncUpdate asks for consent and logs the launch then
 
 
-    // create audium engine
-    audiumEngine = audium::AudiumFactory::createAudiumEngine();
+    // create audium engine; its questions and messages go through the
+    // native dialogs
+    audiumEngine = audium::AudiumFactory::createAudiumEngine(std::make_shared<audium::GuiUserPrompter>());
     fileStore = audiumEngine->getProjectFileStore();
     serializer = audiumEngine->getProjectSerializer();
-    audiumEngine->initialise();
+
+    std::unique_ptr<XmlElement> savedAudioDeviceState;
+    if (getPreferences().valueExists(PreferenceKeys::audioDeviceSettings))
+        savedAudioDeviceState = juce::XmlDocument (getPreferences().getValue(PreferenceKeys::audioDeviceSettings)).getDocumentElement();
+    audiumEngine->initialise(savedAudioDeviceState.get());
     applyAnalysisPreferences();
 
 
@@ -500,6 +506,9 @@ void AudiumApplication::shutdown()
 
     if (audiumEngine != nullptr)
     {
+        if (auto stateXml = audiumEngine->getAudioDeviceManager()->createStateXml())
+            getPreferences().setValue(PreferenceKeys::audioDeviceSettings, stateXml->toString().toStdString());
+
         audiumEngine->uninitialise();
         audiumEngine.reset();
     }
@@ -698,6 +707,7 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::saveProject);
     menu.addCommandItem (commandManager.get(), CommandIDs::saveProjectAs);
+    menu.addCommandItem (commandManager.get(), CommandIDs::revertProject);
     menu.addCommandItem (commandManager.get(), CommandIDs::defaultProject);
     menu.addSeparator();
     
@@ -810,6 +820,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
+                                CommandIDs::revertProject,
                                 CommandIDs::showAboutWindow,
                                 CommandIDs::showSettingsWindow,
                                 CommandIDs::checkForNewVersion,
@@ -846,6 +857,15 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::saveProjectAs:
         result.setInfo ("Save as...", "Saves the current project to a new location", CommandCategories::general, 0);
         result.defaultKeypresses.add ({ 's', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
+        break;
+
+    case CommandIDs::revertProject:
+        result.setInfo ("Revert to Saved", "Discards all changes and reopens the last saved version",
+                        CommandCategories::general, 0);
+        // also queried by initCommandManager(), before the engine exists
+        result.setActive (fileStore != nullptr && audiumEngine != nullptr &&
+                          fileStore->getCurrentProjectFile().existsAsFile() &&
+                          audiumEngine->getUndoManager()->canUndo());
         break;
     case CommandIDs::showAboutWindow:
         result.setInfo ("About", "Shows the 'About' page.", CommandCategories::general, 0);
@@ -910,6 +930,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
         case CommandIDs::saveProjectAs:
             saveProjectAs();
             break;
+        case CommandIDs::revertProject:
+            revertProject();
+            break;
         case CommandIDs::showAboutWindow:
             showAboutWindow();
             break;
@@ -960,6 +983,39 @@ void AudiumApplication::createNewProject()
 
         refreshWindowTitle();
         updateAgentHost();
+    });
+}
+
+void AudiumApplication::revertProject()
+{
+    const auto projectFile = fileStore->getCurrentProjectFile();
+    if (!projectFile.existsAsFile())
+        return;
+
+    auto docName = projectFile.getFileName() == audium::ProjectFileStore::projectFileName
+                       ? projectFile.getParentDirectory().getFileName()
+                       : projectFile.getFileName();
+
+    auto options = MessageBoxOptions::makeOptionsOkCancel (MessageBoxIconType::WarningIcon,
+                                                           TRANS ("Revert to Saved?"),
+                                                           TRANS ("Do you want to discard all changes to \"")
+                                                               + docName + "\" "
+                                                               + TRANS ("and reopen the last saved version?\n\n"
+                                                                        "This cannot be undone."),
+                                                           TRANS ("Revert"),
+                                                           TRANS ("Cancel"));
+
+    NativeMessageBox::showAsync(options, [this, projectFile] (int result) {
+        if (result != 0)
+            return;
+
+        // a deliberate revert must not look like a crash on next open
+        fileStore->deleteAutosave();
+
+        // reopening loads the saved state and clears the undo history; the
+        // open's own consistency check then offers the audio only this
+        // session created (recordings, imports, stems) for the trash
+        openFileInternal(projectFile, {});
     });
 }
 

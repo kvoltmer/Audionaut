@@ -60,6 +60,9 @@ private:
             
             safeThis->config = std::make_shared<audium::ExportAudioConfig>();
             
+            safeThis->config->format = exportAudioComponent->getFormat();
+            safeThis->config->quality = exportAudioComponent->getQuality();
+            
             // get the sample rate
             safeThis->config->sampleRate = exportAudioComponent->getSampleRate().toString().getDoubleValue();
             
@@ -74,13 +77,8 @@ private:
             safeThis->config->numChannels = chans;
             
             safeThis->config->bitDepth = exportAudioComponent->getBitDepth().toString().getIntValue();
-            juce::File dir;
-        #if !defined(AUDIONAUT_HEADLESS)
-            dir = AudiumApplication::getApp().initialSaveDirectory;
-        #endif
-            safeThis->chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
             auto exportThread = std::make_shared<audium::AudioExportThread>(*audiumEngine.get(), config);
-            audium::ExportUtil::exportAudio(safeThis->chooser, audiumEngine, safeThis->config, exportThread);
+            audium::ExportUtil::exportAudio({}, audiumEngine, safeThis->config, exportThread);
 
 
         };
@@ -93,8 +91,6 @@ private:
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<MainComponent> mainComponent;
-    
-    std::shared_ptr<juce::FileChooser> chooser;
     
     
 public:

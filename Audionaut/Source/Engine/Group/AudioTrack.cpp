@@ -299,6 +299,16 @@ std::shared_ptr<AudioChannel> AudioTrack::addChannel()
                                                       getAudioTrackContainer().audioBusInterface);
         audioChannelContainer->push_back(channel);
         owner.publishNumAudioTrackChannels();
+
+        // The new channel's bus channel gets its state (and channel number,
+        // which input monitoring and recording go by) right away; on an
+        // earlier track it also moves every later track up the bus.
+        const auto id = getId();
+        if (id >= 0 && id + 1 < owner.getNumItems())
+            owner.commitChannelLayout(static_cast<std::size_t>(id), owner.getNumAudioTrackChannels());
+        else if (id >= 0)
+            channel->commitChannelData();
+
         return channel;
     }
     std::cout << "error: max audio channels reached: " << getAudioTrackContainer().getNumAudioTrackChannels() << std::endl;
@@ -590,11 +600,16 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     
     if (audioChannelContainer->objectExists(channel)) {
         const auto channelNumber = channel->getChannelNumber();
+        const auto previousNumChannels = owner.getNumAudioTrackChannels();
         audioResourceContainer.onDeleteChannel(this, channel);
         
         if (audioChannelContainer->deleteObject(channel)) {
             result = true;
             owner.publishNumAudioTrackChannels();
+
+            // this track's later channels and every later track move down the bus
+            if (const auto id = getId(); id >= 0)
+                owner.commitChannelLayout(static_cast<std::size_t>(id), previousNumChannels);
 
             // mapping changes for resources
             for (auto resource : getAudioResources()) {
@@ -835,11 +850,10 @@ void AudioTrack::dropSelectedAudioRegions(int insertIndex)
     }
 }
 
-void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
+bool AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
 {
     // drop all selected regions
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
-    jassert(selectedObjects.size() > 0);
     
     std::vector<std::shared_ptr<AudioRegion>> selectedRegions;
     for (auto object : selectedObjects) {
@@ -847,6 +861,9 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
             selectedRegions.push_back(region);
         }
     }
+
+    if (selectedRegions.empty())
+        return false;
     // sort selected regions by id
     std::sort(selectedRegions.begin(), selectedRegions.end(),
               [this](const std::shared_ptr<AudioRegion> i1, const std::shared_ptr<AudioRegion> i2)
@@ -868,6 +885,7 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
     }
     
     getPlayListContainer()->sortByPosition();
+    return true;
 }
 
 void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,

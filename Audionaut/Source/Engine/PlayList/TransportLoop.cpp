@@ -33,18 +33,15 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
             
             if (context == audium::seconds)
                 newRange = tempoProvider->secondsToClocks(newRange);
-            
-            if (loopData.loopActive) {
-                if (loopCount > 0) {
-                    auto oldRange = getLoopPositionRange(audium::clocks);
-                    auto loopDuration = loopCount * oldRange.getLength();
-                    loopCount = loopDuration / newRange.getLength();
-                }
-            }
+
+            // loopCount is rescaled to the new length by the audio thread
+            // when it takes the range over (pullLoopData), so both change
+            // in the same block
             loopData.loopStartPositionClocks = newRange.getStart();
             loopData.loopEndPositionClocks = newRange.getEnd();
-            
-            
+            publishLoopData();
+
+
             // undo
             if (action != nullptr &&
                 undoManager != nullptr) {
@@ -62,8 +59,18 @@ void TransportLoop::setLoopPositionRange(std::shared_ptr<AudioTrackContainer> au
 
 juce::Range<double> TransportLoop::getLoopPositionRange(audium::TimeContextType context) const
 {
-    juce::Range<double> range(loopData.loopStartPositionClocks,
-                              loopData.loopEndPositionClocks);
+    return loopRangeOf(loopData, context);
+}
+
+juce::Range<double> TransportLoop::getProcessedLoopPositionRange(audium::TimeContextType context) const
+{
+    return loopRangeOf(processedLoopData, context);
+}
+
+juce::Range<double> TransportLoop::loopRangeOf(const LoopData& data, audium::TimeContextType context) const
+{
+    juce::Range<double> range(data.loopStartPositionClocks,
+                              data.loopEndPositionClocks);
     if (context == audium::clocks) {
         return range;
     }
@@ -82,6 +89,43 @@ bool TransportLoop::isLoopActive() const
 void TransportLoop::setLoopActive(bool bActive)
 {
     loopData.loopActive = bActive;
+    publishLoopData();
+}
+
+void TransportLoop::setLoopData(const LoopData& newData)
+{
+    loopData = newData;
+    publishLoopData();
+}
+
+void TransportLoop::publishLoopData()
+{
+    // one-element snapshot; the copy happens on this (the message) thread
+    publishedLoopData.getProducerObjects().assign(1, loopData);
+    publishedLoopData.commit();
+}
+
+void TransportLoop::pullLoopData()
+{
+    if (! publishedLoopData.pull())
+        return;
+
+    const auto& snapshot = publishedLoopData.getConsumerObjects();
+    if (snapshot.empty())
+        return;
+
+    const auto& next = snapshot.front();
+
+    // keep the time already looped when the length changes, so the
+    // position (which has loopCount lengths subtracted) does not jump
+    if (processedLoopData.loopActive && loopCount > 0) {
+        const auto oldLength = processedLoopData.loopEndPositionClocks - processedLoopData.loopStartPositionClocks;
+        const auto newLength = next.loopEndPositionClocks - next.loopStartPositionClocks;
+        if (newLength > 0.0 && ! juce::exactlyEqual(newLength, oldLength))
+            loopCount = static_cast<int>(loopCount * oldLength / newLength);
+    }
+
+    processedLoopData = next;
 }
 
 const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
@@ -90,9 +134,11 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
 {
     TransportLoop::LoopResult result;
     result.context = context;
-    
-    auto loopRange = getLoopPositionRange(context);
-    
+
+    // this block's loop data: taken over whole, read from nowhere else
+    pullLoopData();
+    auto loopRange = loopRangeOf(processedLoopData, context);
+
     jassert(externalSampleRate > 0.0);
     auto thisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     
@@ -102,8 +148,8 @@ const TransportLoop::LoopResult TransportLoop::processLoop(double thePosition,
     // subtract previous loops
     thePosition -= (static_cast<double>(loopCount) * loopRange.getLength());
     // jassert(thePosition >= 0.0);
-    
-    if (loopData.loopActive) {
+
+    if (processedLoopData.loopActive) {
         if (withinLoop &&
             thePosition + thisBuffer > loopRange.getEnd()) {
             
