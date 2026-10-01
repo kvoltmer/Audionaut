@@ -180,6 +180,27 @@ SCENARIO("FLAC export", "[engine][export][flac]")
         }
     }
 
+    GIVEN("a 24-bit FLAC and a 24-bit WAV bounce of the same project, one after the other")
+    {
+        auto flac = makeConfig("same.flac", ExportFormat::flac);
+        auto wav = makeConfig("same.wav", ExportFormat::wav);
+        REQUIRE(AudioExporter(*engine, flac).bounce());
+        REQUIRE(AudioExporter(*engine, wav).bounce());
+
+        THEN("the FLAC holds exactly the WAV's samples")
+        {
+            auto flacBuffer = audioFileToAudioBuffer(flac->fileName);
+            auto wavBuffer = audioFileToAudioBuffer(wav->fileName);
+            REQUIRE(flacBuffer.getNumSamples() == wavBuffer.getNumSamples());
+
+            auto differing = 0;
+            for (auto s = 0; s < flacBuffer.getNumSamples(); s++)
+                if (flacBuffer.getSample(0, s) != wavBuffer.getSample(0, s))
+                    differing++;
+            REQUIRE(differing == 0);
+        }
+    }
+
     GIVEN("a FLAC export at 32 bits")
     {
         auto config = makeConfig("deep.flac", ExportFormat::flac);
@@ -373,6 +394,66 @@ SCENARIO("AIFF and Ogg Vorbis export", "[engine][export][aiff][ogg]")
             REQUIRE(mono.getFileName() == "stems-01.ogg");
             REQUIRE(formatNameOf(mono) == "Ogg-Vorbis file");
             REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 1);
+        }
+    }
+
+    workDir.deleteRecursively();
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+}
+
+// Exporting twice in one session must give the same file twice: the first
+// bounce must not leave state behind (a voice still fading out, a stale
+// read-ahead) that bleeds into the start of the next one.
+SCENARIO("a second bounce renders like the first", "[engine][export][rebounce]")
+{
+    auto inputFile = createRampAudioFile(1.0);
+
+    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-rebounce-tests");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto bounce = [&](const String& fileName) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->sampleRate = 44100.0;
+        config->numChannels = 1;
+        config->bitDepth = 32;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        REQUIRE(AudioExporter(*engine, config).bounce());
+        return audioFileToAudioBuffer(config->fileName);
+    };
+
+    GIVEN("the project bounced twice in a row")
+    {
+        auto first = bounce("first.wav");
+        auto second = bounce("second.wav");
+
+        THEN("both files hold the same samples")
+        {
+            REQUIRE(first.getNumSamples() == second.getNumSamples());
+
+            auto differing = 0;
+            auto firstDiffering = -1, lastDiffering = -1;
+            for (auto s = 0; s < first.getNumSamples(); s++) {
+                if (first.getSample(0, s) != second.getSample(0, s)) {
+                    differing++;
+                    if (firstDiffering < 0)
+                        firstDiffering = s;
+                    lastDiffering = s;
+                }
+            }
+            INFO("differing samples: " << differing << " (from " << firstDiffering << " to " << lastDiffering << ")");
+            String samples;
+            for (auto s : { 0, 1, 2, 3, 10, 100, 500, 1000, 1022, 1023, 1024 })
+                samples << "\n  " << s << ": " << first.getSample(0, s) << " vs " << second.getSample(0, s)
+                        << " (second - first = " << (second.getSample(0, s) - first.getSample(0, s)) << ")";
+            INFO(samples);
+            REQUIRE(differing == 0);
         }
     }
 
