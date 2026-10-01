@@ -207,11 +207,13 @@ server.registerTool(
   {
     title: "Export audio",
     description:
-      "Renders the project offline to a WAV file (no audio device needed). Pass region to bounce a " +
-      "single region instead - always dry, without any clip's gains or fades.",
+      "Renders the project offline to an audio file (no audio device needed). The output's extension " +
+      "picks the format: .wav (8/16/24/32 bit) or .flac (lossless and compressed, 16/24 bit, at most 8 " +
+      "channels per file). Pass region to bounce a single region instead - always dry, without any " +
+      "clip's gains or fades.",
     inputSchema: {
       project: projectParam,
-      output: z.string().describe("Output .wav path"),
+      output: z.string().describe("Output path ending in .wav or .flac - the format follows the extension"),
       sample_rate: z.number().int().positive().optional().describe("Sample rate in Hz (default 44100)"),
       bit_depth: z.number().int().positive().optional().describe("Bit depth (default 24)"),
       channels: z.number().int().min(1).optional().describe("Output channel count (default 2)"),

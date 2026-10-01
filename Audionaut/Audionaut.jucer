@@ -199,6 +199,7 @@
                 file="Source/Engine/Export/PlayListItemExport.h"/>
           <FILE id="QNyjxw" name="ExportAudioConfig.h" compile="0" resource="0"
                 file="Source/Engine/Export/ExportAudioConfig.h"/>
+          <FILE id="eXpFmT" name="ExportFormat.h" compile="0" resource="0" file="Source/Engine/Export/ExportFormat.h"/>
           <FILE id="JiHzcv" name="AudioExportThread.cpp" compile="1" resource="0"
                 file="Source/Engine/Export/AudioExportThread.cpp"/>
           <FILE id="duXPV9" name="AudioExportThread.h" compile="0" resource="0"

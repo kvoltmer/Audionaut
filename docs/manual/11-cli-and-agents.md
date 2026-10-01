@@ -104,6 +104,7 @@ audionaut-cli create-region song.audium --name chorus --start 17 --end 25
 audionaut-cli place-clip song.audium --region chorus --at 33
 audionaut-cli clip-fades song.audium --region chorus --fade-in 1 --unit beats
 audionaut-cli export     song.audium -o mix.wav --sample-rate 48000
+audionaut-cli export     song.audium -o mix.flac   # lossless FLAC, 16/24 bit
 ```
 
 ## AI agents (MCP)

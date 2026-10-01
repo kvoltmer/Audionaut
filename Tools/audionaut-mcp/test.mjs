@@ -184,6 +184,13 @@ try {
   });
   check("export_audio", !exported.isError && exported.content[0].text.includes("mix.wav"), exported.content?.[0]?.text);
 
+  const flac = await client.callTool({
+    name: "export_audio",
+    arguments: { project, output: join(workDir, "mix.flac"), channels: 1 },
+  });
+  check("export_audio to FLAC", !flac.isError && flac.content[0].text.includes('"format": "flac"'),
+        flac.content?.[0]?.text);
+
   // Analysis needs Essentia; accept either success or a clean unavailable error.
   const analyzed = await client.callTool({ name: "analyze", arguments: { target: project } });
   const analyzeClean = !analyzed.isError || analyzed.content[0].text.startsWith("essentia_unavailable");

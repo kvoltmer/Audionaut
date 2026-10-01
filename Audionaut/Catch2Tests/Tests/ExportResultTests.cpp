@@ -121,3 +121,112 @@ SCENARIO("export result honesty", "[engine][export]")
     if (inputFile.existsAsFile())
         inputFile.deleteFile();
 }
+
+// FLAC is lossless: a FLAC bounce holds the very samples a WAV bounce of the
+// same depth does. The format's limits (16/24 bit, eight channels per file)
+// are refused up front, like any other unsupported format.
+SCENARIO("FLAC export", "[engine][export][flac]")
+{
+    auto inputFile = createRampAudioFile(1.0);
+
+    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-flac-export-tests");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto makeConfig = [&](const String& fileName, ExportFormat format) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->format = format;
+        config->sampleRate = 44100.0;
+        config->numChannels = 1;
+        config->bitDepth = 24;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        return config;
+    };
+
+    GIVEN("a 24-bit FLAC bounce of a ramp")
+    {
+        auto flac = makeConfig("bounce.flac", ExportFormat::flac);
+        REQUIRE(AudioExporter(*engine, flac).bounce());
+
+        THEN("the file is a 24-bit FLAC holding the ramp to within 24-bit quantisation")
+        {
+            AudioFormatManager formatManager;
+            formatManager.registerBasicFormats();
+            std::unique_ptr<AudioFormatReader> reader (formatManager.createReaderFor(flac->fileName));
+            REQUIRE(reader != nullptr);
+            REQUIRE(reader->getFormatName() == "FLAC file");
+            REQUIRE(reader->bitsPerSample == 24);
+            reader.reset();
+
+            auto bounced = audioFileToAudioBuffer(flac->fileName);
+            auto source = audioFileToAudioBuffer(inputFile);
+            REQUIRE(bounced.getNumSamples() == source.getNumSamples());
+
+            // lossless: nothing beyond the 24-bit rounding of the float source
+            const auto lsb = 1.0f / 8388608.0f;
+            auto maxDiff = 0.0f;
+            for (auto s = 0; s < bounced.getNumSamples(); s++)
+                maxDiff = std::max(maxDiff, std::abs(bounced.getSample(0, s) - source.getSample(0, s)));
+            INFO("largest deviation: " << maxDiff / lsb << " LSB");
+            REQUIRE(maxDiff <= 2.0f * lsb);
+
+            // and actually compressed: smaller than the 24-bit PCM it holds
+            REQUIRE(flac->fileName.getSize() < (int64) bounced.getNumSamples() * 3);
+        }
+    }
+
+    GIVEN("a FLAC export at 32 bits")
+    {
+        auto config = makeConfig("deep.flac", ExportFormat::flac);
+        config->bitDepth = 32;
+
+        THEN("it is refused, names format and depth, and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("32"));
+            REQUIRE(config->error.contains("FLAC"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("a FLAC export of more channels than one FLAC file holds")
+    {
+        auto config = makeConfig("wide.flac", ExportFormat::flac);
+        config->numChannels = 9;
+
+        THEN("it is refused and writes nothing")
+        {
+            REQUIRE_FALSE(AudioExporter(*engine, config).bounce());
+            REQUIRE(config->failure == ExportAudioConfig::Failure::unsupportedFormat);
+            REQUIRE(config->error.contains("9"));
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 0);
+        }
+    }
+
+    GIVEN("a multi-mono FLAC export")
+    {
+        auto config = makeConfig("stems.flac", ExportFormat::flac);
+        config->multiMono = true;
+
+        REQUIRE(AudioExporter(*engine, config).bounce());
+
+        THEN("only the FLAC mono files are left - no base file, no intermediate")
+        {
+            auto mono = AudioExporter::monoFileFor(config->fileName, 1, ExportFormat::flac);
+            REQUIRE(mono.getFileName() == "stems-01.flac");
+            REQUIRE(mono.existsAsFile());
+            REQUIRE(audioFileToAudioBuffer(mono).getNumSamples() == 44100);
+            REQUIRE(workDir.getNumberOfChildFiles(File::findFiles) == 1);
+        }
+    }
+
+    workDir.deleteRecursively();
+    if (inputFile.existsAsFile())
+        inputFile.deleteFile();
+}
