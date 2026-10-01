@@ -710,6 +710,14 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // voices, whose fades and filters decay into denormal territory
     juce::ScopedNoDenormals noDenormals;
 
+    // Run the commands still queued for the audio thread before any voice
+    // starts: a stopAllVoices from the previous bounce (or from stopping the
+    // transport just before exporting) would otherwise run inside the first
+    // rendered block - after process() has started the voices - and fade it
+    // out to silence. Safe here: the exporter bypasses the device callback,
+    // so this thread is the only one draining the queue.
+    audioBusInterface->invokeCommands();
+
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
