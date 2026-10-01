@@ -17,7 +17,7 @@ public:
     ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
-        setSize(300, 130);
+        setSize(400, 130);
     }
 
     ~ExportAudioComponent() override
@@ -32,7 +32,7 @@ public:
     void resized() override
     {
                 
-        juce::Rectangle<int> r(proportionOfWidth(0.5f), 20, proportionOfWidth(0.4f), 3000);
+        juce::Rectangle<int> r(proportionOfWidth(0.42f), 20, proportionOfWidth(0.5f), 3000);
         
         const int h = 23;
         const int space = h / 4;
