@@ -98,11 +98,12 @@ private:
         using Failure = ExportAudioConfig::Failure;
 
         if (isLossy(config->format)) {
-            const auto steps = qualityOptions(config->format).size();
-            if (config->quality < -1 || config->quality >= steps)
+            const auto steps = qualityOptions(config->format);
+            if (config->quality < -1 || config->quality >= steps.size())
                 return fail(Failure::unsupportedFormat,
                             "unsupported quality " + juce::String(config->quality)
-                                + " (" + aFileOf(config->format) + " takes 0 to " + juce::String(steps - 1) + ")");
+                                + " (" + aFileOf(config->format) + " offers "
+                                + steps.joinIntoString(", ") + ")");
         }
 
         const auto depths = supportedBitDepths(config->format);

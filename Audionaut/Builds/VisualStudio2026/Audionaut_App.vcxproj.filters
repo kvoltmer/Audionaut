@@ -11,6 +11,12 @@
     <Filter Include="Audionaut\Submodules">
       <UniqueIdentifier>{C466D4A6-ED53-DDE5-2A30-37BD2DF4AB9A}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\ThirdParty\lame">
+      <UniqueIdentifier>{350540AA-61D0-4528-AF92-EF9460BB0FD8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\ThirdParty">
+      <UniqueIdentifier>{D379A37C-0BFF-4CEB-4715-4C9390190081}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Catch2Tests">
       <UniqueIdentifier>{A5516E1B-93FA-21AA-E5F7-F4470EE48EAC}</UniqueIdentifier>
     </Filter>
@@ -1039,6 +1045,63 @@
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <Filter>Audionaut\Submodules\rubberband</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\VbrTag.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\bitstream.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\encoder.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\fft.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\gain_analysis.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\id3tag.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\lame.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\newmdct.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\presets.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\psymodel.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\quantize.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\quantize_pvt.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\reservoir.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\set_get.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\tables.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\takehiro.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\util.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\vbrquantize.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\version.c">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\Commands\Commands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
@@ -1172,6 +1235,9 @@
       <Filter>Audionaut\Source\Engine\AudioSources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\PlayListItemExport.cpp">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Export\Mp3AudioFormat.cpp">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp">
@@ -4713,6 +4779,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\ThirdParty\lame\audionaut\lame_config.h">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Cli\Commands\Commands.h">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClInclude>
@@ -4837,6 +4906,9 @@
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\ExportFormat.h">
+      <Filter>Audionaut\Source\Engine\Export</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Export\Mp3AudioFormat.h">
       <Filter>Audionaut\Source\Engine\Export</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Export\AudioExportThread.h">
@@ -10292,6 +10364,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\ThirdParty\lame\PROVENANCE.md">
+      <Filter>Audionaut\ThirdParty\lame</Filter>
+    </None>
     <None Include="..\..\Catch2Tests\CMakeLists.txt">
       <Filter>Audionaut\Catch2Tests</Filter>
     </None>

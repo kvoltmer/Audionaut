@@ -105,7 +105,8 @@ audionaut-cli place-clip song.audium --region chorus --at 33
 audionaut-cli clip-fades song.audium --region chorus --fade-in 1 --unit beats
 audionaut-cli export     song.audium -o mix.wav --sample-rate 48000
 audionaut-cli export     song.audium -o mix.flac   # lossless FLAC, 16/24 bit
-audionaut-cli export     song.audium -o mix.ogg --quality 6   # Ogg Vorbis, about 192 kbps
+audionaut-cli export     song.audium -o mix.ogg --bitrate 160   # Ogg Vorbis
+audionaut-cli export     song.audium -o mix.mp3 --bitrate 320   # MP3 (LAME)
 ```
 
 ## AI agents (MCP)

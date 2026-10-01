@@ -749,58 +749,94 @@ SCENARIO ("cli export picks the format from the output extension", "[cli][export
                      == cli::exitOk);
             auto oggResult = envelope["result"];
 
-            THEN ("each is written in its format; the Ogg reports its quality instead of a bit depth") {
+            THEN ("each is written in its format; the Ogg reports its bit rate instead of a bit depth") {
                 REQUIRE (aiffResult["format"] == "aiff");
                 REQUIRE (aiffResult["bitDepth"] == 16);
                 REQUIRE (readerFor (aiff)->getFormatName() == "AIFF file");
 
                 REQUIRE (oggResult["format"] == "ogg");
-                REQUIRE (oggResult["quality"] == 6);
+                REQUIRE (oggResult["bitrateKbps"] == 192);
                 REQUIRE_FALSE (oggResult.contains ("bitDepth"));
                 REQUIRE (readerFor (ogg)->getFormatName() == "Ogg-Vorbis file");
             }
         }
 
-        WHEN ("an Ogg export is given a quality") {
+        WHEN ("an Ogg export is given a bit rate") {
             auto ogg = workDir.getChildFile ("small.ogg");
             REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
-                                               + ogg.getFullPathName() + " --channels 1 --quality 2"),
+                                               + ogg.getFullPathName() + " --channels 1 --bitrate 96"),
                                      context)
                      == cli::exitOk);
 
             THEN ("the result reports it") {
-                REQUIRE (envelope["result"]["quality"] == 2);
+                REQUIRE (envelope["result"]["bitrateKbps"] == 96);
                 REQUIRE (ogg.existsAsFile());
             }
         }
 
-        WHEN ("quality and bit depth are given to the wrong kind of format") {
+        WHEN ("bit rate and bit depth are given to the wrong kind of format") {
             auto depthForOgg = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                          + workDir.getChildFile ("a.ogg").getFullPathName()
                                                          + " --bit-depth 24"),
                                                context);
             auto depthMessage = envelope["error"]["message"].get<std::string>();
-            auto qualityForWav = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+            auto bitRateForWav = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                            + workDir.getChildFile ("b.wav").getFullPathName()
-                                                           + " --quality 5"),
+                                                           + " --bitrate 192"),
                                                  context);
-            auto qualityOffScale = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+            auto bitRateOffScale = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                              + workDir.getChildFile ("c.ogg").getFullPathName()
-                                                             + " --quality 11"),
+                                                             + " --bitrate 100"),
                                                    context);
 
             THEN ("each is a usage error and nothing is written") {
                 REQUIRE (depthForOgg == cli::exitUsage);
-                REQUIRE (depthMessage.find ("--quality") != std::string::npos);
-                REQUIRE (qualityForWav == cli::exitUsage);
-                REQUIRE (qualityOffScale == cli::exitUsage);
+                REQUIRE (depthMessage.find ("--bitrate") != std::string::npos);
+                REQUIRE (bitRateForWav == cli::exitUsage);
+                REQUIRE (bitRateOffScale == cli::exitUsage);
                 for (auto name : { "a.ogg", "b.wav", "c.ogg" })
                     REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
             }
         }
 
+        WHEN ("the project is exported to .mp3") {
+            auto mp3 = workDir.getChildFile ("mix.mp3");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + mp3.getFullPathName() + " --channels 1 --bitrate 320"),
+                                     context)
+                     == cli::exitOk);
+            auto result = envelope["result"];
+
+            auto offered = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                     + workDir.getChildFile ("d.mp3").getFullPathName()
+                                                     + " --bitrate 500"),
+                                           context);
+            auto offeredMessage = envelope["error"]["message"].get<std::string>();
+            auto wide = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                  + workDir.getChildFile ("e.mp3").getFullPathName()
+                                                  + " --channels 3"),
+                                        context);
+
+            THEN ("an MP3 is written at the asked bit rate; other rates and channel counts are refused") {
+                REQUIRE (result["format"] == "mp3");
+                REQUIRE (result["bitrateKbps"] == 320);
+                REQUIRE_FALSE (result.contains ("bitDepth"));
+                juce::MP3AudioFormat decoder;
+                std::unique_ptr<juce::AudioFormatReader> reader (decoder.createReaderFor (mp3.createInputStream().release(), true));
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->lengthInSamples > 0);
+
+                // 500 kbps is an Ogg rate, not an MP3 one; the message lists MP3's
+                REQUIRE (offered == cli::exitUsage);
+                REQUIRE (offeredMessage.find ("320") != std::string::npos);
+                REQUIRE (wide == cli::exitUsage);
+                for (auto name : { "d.mp3", "e.mp3" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
         WHEN ("the output has an extension no export writes") {
-            auto output = workDir.getChildFile ("mix.mp3");
+            auto output = workDir.getChildFile ("mix.wma");
             auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
                                                       + output.getFullPathName()),
                                             context);

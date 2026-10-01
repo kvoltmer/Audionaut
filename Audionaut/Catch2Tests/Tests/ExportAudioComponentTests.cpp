@@ -72,5 +72,33 @@ SCENARIO ("the export dialog offers a quality for a lossy format", "[interface][
         }
     }
 
+    GIVEN ("Ogg Vorbis at 96 kbps, then MP3 chosen")
+    {
+        format->setSelectedId ((int) audium::ExportFormat::ogg + 1, sendNotificationSync);
+        auto* quality = comboBoxesOf (component).back();
+        quality->setSelectedId (3, sendNotificationSync);   // "96 kbps"
+        format->setSelectedId ((int) audium::ExportFormat::mp3 + 1, sendNotificationSync);
+
+        THEN ("MP3's bit rates are offered and the bit rate, not the list position, is kept")
+        {
+            REQUIRE (component.getFormat() == audium::ExportFormat::mp3);
+            REQUIRE (quality->getNumItems() == 6);
+            REQUIRE (quality->getText() == "96 kbps");
+            REQUIRE (component.getQuality() == 0);
+        }
+
+        AND_WHEN ("a rate MP3 lacks is picked in Ogg Vorbis and MP3 chosen again")
+        {
+            format->setSelectedId ((int) audium::ExportFormat::ogg + 1, sendNotificationSync);
+            quality->setSelectedId (11, sendNotificationSync);   // "500 kbps"
+            format->setSelectedId ((int) audium::ExportFormat::mp3 + 1, sendNotificationSync);
+
+            THEN ("MP3 falls back to the default 192 kbps")
+            {
+                REQUIRE (quality->getText() == "192 kbps");
+            }
+        }
+    }
+
     component.setLookAndFeel (nullptr);
 }
