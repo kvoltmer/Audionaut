@@ -850,11 +850,10 @@ void AudioTrack::dropSelectedAudioRegions(int insertIndex)
     }
 }
 
-void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
+bool AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType context)
 {
     // drop all selected regions
     auto selectedObjects = getSelectionManager()->getSelectedObjects();
-    jassert(selectedObjects.size() > 0);
     
     std::vector<std::shared_ptr<AudioRegion>> selectedRegions;
     for (auto object : selectedObjects) {
@@ -862,6 +861,9 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
             selectedRegions.push_back(region);
         }
     }
+
+    if (selectedRegions.empty())
+        return false;
     // sort selected regions by id
     std::sort(selectedRegions.begin(), selectedRegions.end(),
               [this](const std::shared_ptr<AudioRegion> i1, const std::shared_ptr<AudioRegion> i2)
@@ -883,6 +885,7 @@ void AudioTrack::dropSelectedAudioRegions(double pos, audium::TimeContextType co
     }
     
     getPlayListContainer()->sortByPosition();
+    return true;
 }
 
 void AudioTrack::dropPlayListItem(std::shared_ptr<PlayListItem> item,
