@@ -231,6 +231,21 @@ public:
     void publishNumAudioTrackChannels() noexcept;
 
     /**
+     * @brief Re-sends the mixer state of the track at `firstTrack` and of
+     *        every track after it to the bus.
+     *
+     * The bus keeps mixer state per bus channel (track channel offset +
+     * channel), so adding or removing a channel or track moves every later
+     * channel to another bus channel - its gain, pan, mute and solo have to
+     * follow it there, or the channel now at the old index plays with them.
+     * Bus channels from the current channel count up to `previousNumChannels`
+     * are reset to defaults: a channel that takes one over later must not
+     * inherit a removed channel's state (a stale solo silences every other
+     * channel). Message thread.
+     */
+    void commitChannelLayout(std::size_t firstTrack, int previousNumChannels);
+
+    /**
      * @brief Checks if any channel in the container is soloed.
      * @return True if any channel is soloed, false otherwise.
      */
