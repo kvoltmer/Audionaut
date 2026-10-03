@@ -125,9 +125,12 @@ modules:
       # OFF: essentia's test/models submodule (MTG/essentia-models) has Git
       # LFS disabled upstream, which kills flatpak-builder's recursive
       # fetch — and it is test-only data anyway, as is test/audio, Catch2,
-      # and demucs.cpp's vendor/{demucs,googletest,libnyquist}. The
-      # submodules the Linux build really needs are pinned individually
-      # below (commits = `git ls-tree <tag> Submodules/`).
+      # demucs.cpp's vendor/{demucs,googletest,libnyquist} and farbot's
+      # googletest. The submodules the Linux build really needs are pinned
+      # individually below (commits = `git ls-tree <tag> Submodules/`); every
+      # pinned source disables nested submodules too — none are needed, and
+      # the runners' older flatpak-builder (1.2.x) fails to clone nested
+      # mirrors whose pinned commit sits behind no branch head.
       # All pins are kept current by sync-pins.py (run automatically by
       # release-linux.yml; run it by hand when bumping the committed pins).
       - type: git
@@ -140,6 +143,7 @@ modules:
         url: https://github.com/juce-framework/JUCE.git
         commit: 72782788ce18c2d4d760b28e0921d6ffc6431102
         dest: Submodules/JUCE
+        disable-submodules: true
       - type: git
         url: https://github.com/MTG/essentia.git
         commit: b9fa6cb674ca43dfb94d28d293aeda441c6745db
@@ -149,10 +153,12 @@ modules:
         url: https://github.com/hogliux/farbot.git
         commit: d8f132c2e2ac44b379632e452700abe71ca3a92e
         dest: Submodules/farbot
+        disable-submodules: true
       - type: git
         url: https://github.com/nlohmann/json.git
         commit: f682cd2ef1677e1218d714abb177fa2a93eadccf
         dest: Submodules/json
+        disable-submodules: true
       - type: git
         url: https://github.com/Ableton/link.git
         commit: 9c9091275e707ab09d09a5a608fcdb84bf0dec85
@@ -162,6 +168,7 @@ modules:
         url: https://github.com/chriskohlhoff/asio.git
         commit: 8806a6803cde7054c3049d3666d3ec36786568c5
         dest: Submodules/link/modules/asio-standalone
+        disable-submodules: true
       - type: git
         url: https://github.com/sevagh/demucs.cpp.git
         commit: f1206e9adeea103aef4a636b9e62297cf1f8e34e
@@ -171,10 +178,12 @@ modules:
         url: https://gitlab.com/libeigen/eigen.git
         commit: dd8c71e62852b2fe429edb6682ac91fd1c578a26
         dest: Submodules/demucs.cpp/vendor/eigen
+        disable-submodules: true
       - type: git
         url: https://github.com/breakfastquay/rubberband.git
         commit: e4296ac80b1170018a110bc326fd0d45a0eb27d6
         dest: Submodules/rubberband
+        disable-submodules: true
 
       # AppStream metadata, maintained next to this manifest.
       - type: file
