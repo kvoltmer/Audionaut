@@ -1,11 +1,12 @@
 name: Linux Release
 
-# Builds the Release Linux binary, packages it as an AppImage and a .deb, and
-# attaches both to a GitHub Release. Trigger by pushing a version tag:
+# Builds the Release Linux binary, packages it as an AppImage, a .deb and a
+# Flatpak bundle, and attaches all three to a GitHub Release. Trigger by
+# pushing a version tag:
 #   git tag v1.2.0 && git push origin v1.2.0
 # The tag must match the version in Audionaut.jucer (checked below).
 #
-# Can also be run manually from the Actions tab to exercise the build and both
+# Can also be run manually from the Actions tab to exercise the build and the
 # packaging paths - a manual run skips the tag check and publishes nothing.
 
 on:
@@ -104,5 +105,86 @@ jobs:
           gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
         else
           gh release create "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" \
+            --title "Audionaut $GITHUB_REF_NAME" --generate-notes
+        fi
+
+  flatpak:
+    # Builds the Flatpak bundle from Audionaut/Builds/Flatpak. Independent of
+    # the package job: flatpak-builder compiles everything itself inside the
+    # GNOME SDK, fetching sources from the manifest (sync-pins.py first points
+    # the manifest's git pins at the ref being built, so the committed pins
+    # never go stale in a release).
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check tag matches .jucer version
+      # Same check as the package job; jobs are independent so each guards
+      # its own upload.
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        JUCER_VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        echo "tag: $TAG_VERSION  .jucer: $JUCER_VERSION"
+        if [ "$TAG_VERSION" != "$JUCER_VERSION" ]; then
+          echo "::error::Tag version ($TAG_VERSION) does not match Audionaut.jucer version ($JUCER_VERSION). Bump the .jucer version (and re-save with Projucer) or fix the tag."
+          exit 1
+        fi
+
+    - name: Install flatpak-builder
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y flatpak flatpak-builder
+        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        flatpak install --user -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
+
+    - name: Point the manifest at this ref
+      # sync-pins.py rewrites the manifest's app tag/commit to the ref being
+      # built and refreshes the submodule pins from this checkout's gitlinks.
+      # Only link and demucs.cpp need initializing - they contain the two
+      # nested pins (asio-standalone, eigen); the top-level pins are read
+      # straight from the tree.
+      run: |
+        git submodule update --init Submodules/link Submodules/demucs.cpp
+        REF_TYPE=branch
+        [ "$GITHUB_REF_TYPE" = "tag" ] && REF_TYPE=tag
+        python3 Audionaut/Builds/Flatpak/sync-pins.py \
+          --url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" \
+          --ref "$GITHUB_REF_NAME" --ref-type "$REF_TYPE" --commit "$GITHUB_SHA"
+
+    - name: Restore flatpak-builder cache
+      # Source downloads (git mirrors, tarballs) plus ccache; cuts a full
+      # rebuild from ~45 to a few minutes when the manifest barely changed.
+      uses: actions/cache@v4
+      with:
+        path: .flatpak-builder
+        key: flatpak-builder-${{ hashFiles('Audionaut/Builds/Flatpak/app.audionaut.Audionaut.yml') }}
+        restore-keys: flatpak-builder-
+
+    - name: Build Flatpak
+      run: |
+        flatpak-builder --user --force-clean --ccache --repo=flatpak-repo \
+          build-dir Audionaut/Builds/Flatpak/app.audionaut.Audionaut.yml
+
+    - name: Bundle
+      # Same VERSION-from-.jucer convention as the AppImage step.
+      run: |
+        VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        flatpak build-bundle flatpak-repo "Audionaut-$VERSION-x86_64.flatpak" \
+          app.audionaut.Audionaut master
+        ls -l *.flatpak
+
+    - name: Upload to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # The package job usually creates the release well before this job
+        # finishes; create it here too in case this one wins the race.
+        if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" Audionaut-*.flatpak --clobber
+        else
+          gh release create "$GITHUB_REF_NAME" Audionaut-*.flatpak \
             --title "Audionaut $GITHUB_REF_NAME" --generate-notes
         fi
