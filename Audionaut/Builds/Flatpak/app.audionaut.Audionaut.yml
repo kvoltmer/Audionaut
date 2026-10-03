@@ -10,8 +10,9 @@
 # `sources:` lists below (that is why Essentia's 3rd-party tarballs are
 # pre-seeded and curl is shimmed), and the git source must pin a commit.
 #
-# STATUS: skeleton. Builds are expected to work but have not yet been
-# exercised end to end; see TODOs inline and README.md next to this file.
+# Verified end to end: builds, installs and runs in the sandbox. Remaining
+# gaps (screenshots, aarch64, Flathub submission) in README.md next to this
+# file.
 
 app-id: app.audionaut.Audionaut
 # GNOME runtime rather than Freedesktop: the LinuxMakefile compile needs
@@ -127,7 +128,8 @@ modules:
       # and demucs.cpp's vendor/{demucs,googletest,libnyquist}. The
       # submodules the Linux build really needs are pinned individually
       # below (commits = `git ls-tree <tag> Submodules/`).
-      # TODO: bump tag+commit (and submodule pins) on each release.
+      # All pins are kept current by sync-pins.py (run automatically by
+      # release-linux.yml; run it by hand when bumping the committed pins).
       - type: git
         url: https://github.com/kvoltmer/Audionaut.git
         tag: v1.6.4

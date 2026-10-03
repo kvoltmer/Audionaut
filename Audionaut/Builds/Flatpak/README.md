@@ -1,8 +1,8 @@
 # Flatpak packaging
 
-Skeleton for a Flatpak of Audionaut, aimed at Flathub. Status: **not yet
-built end to end** — the manifest encodes the plan; expect iteration on the
-Essentia module in particular.
+Flatpak packaging for Audionaut, aimed at Flathub. Verified end to end:
+builds, installs and runs in the sandbox (audio via PipeWire, home access,
+Essentia analysis, file import).
 
 ## Files
 
@@ -12,6 +12,10 @@ Essentia module in particular.
   MIME definition and metainfo renamed to the app id.
 - `app.audionaut.Audionaut.metainfo.xml` — AppStream metadata, required by
   Flathub. Also suitable for the .deb (`/usr/share/metainfo`).
+- `sync-pins.py` — rewrites the manifest's git pins (app tag/commit and
+  every submodule commit) from the current checkout. The release workflow
+  runs it so release builds always build the pushed tag; run it by hand to
+  bump the committed pins.
 
 ## Local build
 
@@ -28,9 +32,6 @@ temporarily (`url: ../../..` style paths work with flatpak-builder).
 
 ## Known gaps / TODOs
 
-- **Untested**: the offline curl shim around Essentia's `build_*.sh`
-  downloads, the setuptools/`distutils` shim for waf on Python 3.12, and
-  the full compile inside the sandbox all need a first real run.
 - **Screenshots**: metainfo points at the social-preview card as a
   placeholder; Flathub review wants real UI screenshots (PNG).
 - **File access** is `--filesystem=home` because `.audium` projects are
@@ -42,10 +43,13 @@ temporarily (`url: ../../..` style paths work with flatpak-builder).
   Flathub anyway — a reviewer may ask about phone-home behaviour.
 - **x86_64 only**: Essentia's fftw build config passes x86 SSE2 flags;
   aarch64 needs the arm patches from `build_essentia.sh` extended to Linux.
-- **Release automation**: the git `tag`/`commit` pin must be bumped per
-  release. Once on Flathub, that's a PR to the `flathub/app.audionaut.Audionaut`
-  repo (can be automated from `release-linux.yml`, or via Flathub's
-  external-data-checker).
+- **Release automation**: handled for the GitHub-release bundle —
+  `release-linux.yml` runs `sync-pins.py` and attaches
+  `Audionaut-<version>-x86_64.flatpak` to the release. Installing a bundle
+  needs the flathub remote configured for the runtime, then
+  `flatpak install ./Audionaut-<version>-x86_64.flatpak`. Once on Flathub,
+  releases additionally mean a pin-bump PR to the
+  `flathub/app.audionaut.Audionaut` repo (automatable the same way).
 - **Separate user data**: a Flatpak stores settings/models under
   `~/.var/app/app.audionaut.Audionaut/`, separate from a .deb install —
   users switching package formats re-download the Demucs model.
