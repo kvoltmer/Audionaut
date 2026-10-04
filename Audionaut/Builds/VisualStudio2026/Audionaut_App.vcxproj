@@ -3595,6 +3595,7 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProjectSettingsComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ImportOptionsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\PrivacySettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>

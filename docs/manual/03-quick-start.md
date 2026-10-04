@@ -11,13 +11,27 @@ line) as one unit.
 
 ## 2. Import audio
 
-Drag audio files into the arrangement — either from your system's file
-manager, or from Audionaut's own **File Browser** (*View → Open File
-Browser*), which starts in your Music folder and supports multi-selection.
+Choose **File → Import...** (⇧⌘I) and pick one or more audio files. They land
+on new tracks starting at the playhead. When you pick several files, the
+*Multiple files* option in the dialog decides how they are laid out:
 
-Imported files land on a track. Files imported together become the channels
-of one track: an eight-stem export becomes one track with eight channels that
-always play in sync.
+- **Separate tracks** — one track per file.
+- **One track, stacked channels** — the files become the channels of one
+  clip: an eight-stem export becomes one track with eight channels that
+  always play in sync.
+- **One track, back to back** — the files follow each other on one track.
+
+Audionaut remembers your choice. A single *Undo* takes the whole import back.
+
+To add audio to a track you already have, **right-click an empty spot on the
+track** and choose **Import Audio...**. The files land on that track where you
+clicked (snapped to the grid when snapping is on), stacked as channels of one
+clip or back to back.
+
+You can also drag audio files into the arrangement — either from your
+system's file manager, or from Audionaut's own **File Browser** (*View → Open
+File Browser*), which starts in your Music folder and supports
+multi-selection. Files dragged in together become the channels of one track.
 
 If automatic analysis is enabled (*Settings → Analysis*), Audionaut starts
 analysing new material in the background right away — this powers the Auto

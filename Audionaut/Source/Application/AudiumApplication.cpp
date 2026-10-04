@@ -11,6 +11,7 @@
 #include "Engine/Core/HeadlessMode.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Factory/AudiumFactory.h"
@@ -704,6 +705,8 @@ PopupMenu AudiumApplication::createFileMenu()
         menu.addSubMenu ("Open Recent", recentFilesMenu);
     }
 
+    menu.addCommandItem (commandManager.get(), CommandIDs::importAudio);
+
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::saveProject);
     menu.addCommandItem (commandManager.get(), CommandIDs::saveProjectAs);
@@ -817,6 +820,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
 
     const CommandID ids[] = {   CommandIDs::newProject,
                                 CommandIDs::openProject,
+                                CommandIDs::importAudio,
                                 CommandIDs::defaultProject,
                                 CommandIDs::saveProject,
                                 CommandIDs::saveProjectAs,
@@ -843,6 +847,13 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::openProject:
         result.setInfo ("Open...", "Opens a project", CommandCategories::general, 0);
         result.defaultKeypresses.add (KeyPress ('o', ModifierKeys::commandModifier, 0));
+        break;
+
+    case CommandIDs::importAudio:
+        result.setInfo ("Import...", "Imports audio files at the playhead", CommandCategories::general, 0);
+        result.defaultKeypresses.add ({ 'i', ModifierKeys::commandModifier | ModifierKeys::shiftModifier, 0 });
+        // also queried by initCommandManager(), before the engine exists
+        result.setActive (fileStore != nullptr && audiumEngine != nullptr);
         break;
             
     case CommandIDs::defaultProject:
@@ -904,6 +915,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::openProject:
             askUserToOpenFile();
+            break;
+        case CommandIDs::importAudio:
+            askUserToImportAudio();
             break;
         case CommandIDs::defaultProject:
             if (fileStore->getCurrentProjectFile() != File()) {
@@ -1062,6 +1076,67 @@ void AudiumApplication::openFile(juce::File file)
     }
 
     openFileInternal(file, autosaveToOffer);
+}
+
+void AudiumApplication::askUserToImportAudio(std::shared_ptr<audium::AudioTrack> targetTrack,
+                                             std::optional<double> positionClocks)
+{
+    // the track's own import remembers its layout apart from File > Import...
+    const auto* placementKey = targetTrack != nullptr ? PreferenceKeys::trackImportPlacement
+                                                      : PreferenceKeys::importPlacement;
+    auto placement = ImportOptionsComponent::fromString(getPreferences().getValue(placementKey));
+    importOptions = std::make_unique<ImportOptionsComponent>(placement, targetTrack == nullptr);
+
+    auto wildcard = audiumEngine->getAudioResourceContainer()->getAudioFormatManager()->getWildcardForAllFormats();
+    chooser = std::make_unique<FileChooser> ("Import Audio", initialOpenDirectory, wildcard);
+    auto flags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles | FileBrowserComponent::canSelectMultipleItems;
+
+    chooser->launchAsync (flags, [this, placementKey, positionClocks, intoTrack = targetTrack != nullptr,
+                           weakTrack = std::weak_ptr<audium::AudioTrack> (targetTrack)] (const FileChooser& fc) {
+        auto files = fc.getResults();
+        auto placement = importOptions->getPlacement();
+        getPreferences().setValue(placementKey, ImportOptionsComponent::toString(placement).toStdString());
+        if (files.isEmpty())
+            return;
+
+        // the chooser does not block the app: an undo or agent edit meanwhile
+        // can delete the track or rebuild the container, leaving it orphaned -
+        // so ask the current container, not the track
+        auto targetTrack = weakTrack.lock();
+        const auto& tracks = audiumEngine->getAudioTrackContainer()->getAudioTracks();
+        if (intoTrack && std::find (tracks.begin(), tracks.end(), targetTrack) == tracks.end()) {
+            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon, "Import",
+                                                  "The track is no longer in the project.");
+            return;
+        }
+
+        StringArray filenames;
+        for (auto& file : files)
+            filenames.add (file.getFullPathName());
+
+        auto position = positionClocks.value_or (audiumEngine->getPlayListScheduler()->getAbsolutePosition(audium::clocks));
+        auto imported = audiumEngine->getAudioTrackContainer()->importAudioFiles(filenames, position, placement,
+                                                                                 [] (std::string failed) {
+            NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                  "Import",
+                                                  "These files could not be imported:\n\n" + String(failed));
+        }, targetTrack);
+
+        if (imported > 0) {
+            initialOpenDirectory = files.getFirst().getParentDirectory();
+            updateSettings();
+
+            StringPairArray parameters;
+            parameters.set ("count", String (imported));
+            parameters.set ("placement", ImportOptionsComponent::toString(placement));
+            parameters.set ("target", intoTrack ? "track" : "new_tracks");
+            logUsageEvent("file_import", parameters);
+        }
+
+        updateUI();
+        refreshWindowTitle();
+        updateAgentHost();
+    }, importOptions.get());
 }
 
 void AudiumApplication::openFileInternal(juce::File file, juce::File autosaveToOffer)

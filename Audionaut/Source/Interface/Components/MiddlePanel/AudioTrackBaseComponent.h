@@ -57,6 +57,9 @@ protected:
     
     bool externalDragAndDrop = false;
 
+    /// the empty track area's menu: Import Audio... at the clicked position
+    void showContextMenu (int x);
+
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrackBaseComponent)
 };

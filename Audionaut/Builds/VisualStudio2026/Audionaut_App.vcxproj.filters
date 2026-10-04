@@ -5175,6 +5175,9 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProjectSettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ImportOptionsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\PrivacySettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>

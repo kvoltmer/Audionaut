@@ -10,6 +10,7 @@
 #include "AudiumMainWindow.h"
 #include "AudiumMenuModel.h"
 #include "Application/AudiumCommandIDs.h"
+#include "Interface/Dialogs/ImportOptionsComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Util/Preferences.h"
 
@@ -21,6 +22,7 @@ namespace audium {
 namespace cli { namespace agent { class AgentHost; } } class UsageAnalytics; class UpdateChecker; class ProjectMonitor; class ProjectFileStore; class ProjectSerializer; }
 
 class AudiumApplication  : public juce::JUCEApplication,
+                           public AudioImporter,
                            private juce::AsyncUpdater,
                            private juce::ApplicationCommandManagerListener
 {
@@ -70,6 +72,9 @@ public:
     void revertProject();
     
     void askUserToOpenFile();
+    /// File > Import... into new tracks at the playhead, or a track's Import Audio... into it at the mouse
+    void askUserToImportAudio(std::shared_ptr<audium::AudioTrack> targetTrack = nullptr,
+                              std::optional<double> positionClocks = std::nullopt) override;
     void openFile(juce::File file);
     void openFileInternal(juce::File file, juce::File autosaveToOffer);
     
@@ -123,6 +128,7 @@ private:
     std::unique_ptr<audium::UpdateChecker> updateChecker;
     std::unique_ptr<AudiumMenuModel> menuModel;
     std::unique_ptr<juce::FileChooser> chooser;
+    std::unique_ptr<ImportOptionsComponent> importOptions;  // the Import... chooser's placement option, outlives the async dialog
     std::unique_ptr<juce::Component> aboutComponent;
     std::unique_ptr<AboutSplashScreen> splashScreen;
     std::unique_ptr<juce::Component> fileBrowserView;
