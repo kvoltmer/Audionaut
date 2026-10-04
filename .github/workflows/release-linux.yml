@@ -114,7 +114,13 @@ jobs:
     # GNOME SDK, fetching sources from the manifest (sync-pins.py first points
     # the manifest's git pins at the ref being built, so the committed pins
     # never go stale in a release).
-    runs-on: ubuntu-22.04
+    #
+    # ubuntu-24.04 for flatpak-builder 1.4.x: 22.04's 1.2.x cannot clone
+    # nested submodule mirrors pinned behind branch heads and still invokes
+    # the legacy appstream-compose, which the GNOME 48 SDK no longer ships.
+    # Unlike the package job, nothing here links against the runner's glibc
+    # (the whole build happens inside the SDK), so the newer runner is safe.
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
