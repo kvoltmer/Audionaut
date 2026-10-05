@@ -69,8 +69,10 @@ monitoring. Each take becomes a region and a single undo step.
 
 ## Import and export
 
-- **Import:** WAV, AIFF, FLAC, Ogg Vorbis and MP3, by drag and drop from
-  your file manager or the built-in File Browser.
+- **Import:** WAV, AIFF, FLAC, Ogg Vorbis and MP3, with *File → Import...*
+  (at the playhead; several files as separate tracks, stacked channels or
+  back to back) or by drag and drop from your file manager or the built-in
+  File Browser.
 - **Export** renders offline, faster than real time, to **WAV, FLAC, AIFF,
   Ogg Vorbis or MP3** (LAME built in). Mixes can be mono or stereo, and
   stems multichannel or one file per channel. A single clip exports from its
@@ -117,7 +119,6 @@ Planned or under consideration, not available today:
 - Timeline markers and labels, import and export of label or region lists,
   and OSC cues
 - Automatic crossfades when clips are dragged over each other
-- Import from a menu (today it's drag and drop only)
 - Speech-specific tools (silence or filler-word removal)
 - Flatpak, and a code-signed Windows installer
 

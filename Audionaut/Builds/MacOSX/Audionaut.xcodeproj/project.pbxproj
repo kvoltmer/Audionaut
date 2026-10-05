@@ -570,6 +570,7 @@
 		D1A83A17077D93FB902AE177 /* TimeContext.h */ /* TimeContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TimeContext.h; path = ../../Source/Engine/TimeContext.h; sourceTree = SOURCE_ROOT; };
 		D2AC1556449B8EE867AA4ED7 /* UpdateChecker.h */ /* UpdateChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UpdateChecker.h; path = ../../Source/Application/UpdateChecker.h; sourceTree = SOURCE_ROOT; };
 		D2B7FA8F26B102DD025AD1F4 /* DemucsModelStore.cpp */ /* DemucsModelStore.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DemucsModelStore.cpp; path = ../../Source/Engine/Separation/DemucsModelStore.cpp; sourceTree = SOURCE_ROOT; };
+		D3E2D7B345D4899C91495D97 /* ImportOptionsComponent.h */ /* ImportOptionsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ImportOptionsComponent.h; path = ../../Source/Interface/Dialogs/ImportOptionsComponent.h; sourceTree = SOURCE_ROOT; };
 		D459B5B5D32F218D6599B47E /* ClipDynamics.h */ /* ClipDynamics.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClipDynamics.h; path = ../../Source/Engine/PlayList/ClipDynamics.h; sourceTree = SOURCE_ROOT; };
 		D472A758A1E583B5C0E44017 /* DemucsModelStore.h */ /* DemucsModelStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DemucsModelStore.h; path = ../../Source/Engine/Separation/DemucsModelStore.h; sourceTree = SOURCE_ROOT; };
 		D66220847DE18D8AB52B260E /* ResourceGroup.cpp */ /* ResourceGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ResourceGroup.cpp; path = ../../Source/Engine/Group/ResourceGroup.cpp; sourceTree = SOURCE_ROOT; };
@@ -1185,6 +1186,7 @@
 				5748E48D0FD69B1DD334D80C,
 				A6225D1073F70749B7408B92,
 				D77D776E7BED7DDC00FF6996,
+				D3E2D7B345D4899C91495D97,
 				5BB5B602ECA038389B436BF7,
 				F4DE426B74038D2458D7B572,
 				29D87B31AE24B528AF69492C,

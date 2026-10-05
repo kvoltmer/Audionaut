@@ -274,6 +274,30 @@ public:
                        double positionClocks,
                        std::function<void (std::string)> callback,
                        bool undo);
+
+    /** How importAudioFiles() lays out more than one file. */
+    enum class ImportPlacement
+    {
+        separateTracks,     ///< one new track per file, all starting at the position
+        stackedChannels,    ///< one new track, the files become channels of one clip
+        backToBack          ///< one new track, the files follow each other
+    };
+
+    /**
+     * @brief Imports audio files as one undo step, into new tracks or an existing one.
+     * @param filenames The audio files to import.
+     * @param positionClocks Where the (first) clip starts, in transport clocks.
+     * @param placement How several files are laid out; ignored for a single file.
+     * @param callback Receives the files that could not be imported, if any.
+     * @param targetTrack An existing track to import into instead of new tracks;
+     *        separateTracks then falls back to stackedChannels.
+     * @return The number of files imported.
+     */
+    int importAudioFiles(const juce::StringArray& filenames,
+                         double positionClocks,
+                         ImportPlacement placement,
+                         std::function<void (std::string)> callback,
+                         std::shared_ptr<AudioTrack> targetTrack = nullptr);
     
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
     std::shared_ptr<ClipOverlayTarget> clipOverlayTarget = std::make_shared<ClipOverlayTarget>();
