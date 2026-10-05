@@ -53,15 +53,12 @@
   <url type="vcs-browser">https://github.com/kvoltmer/Audionaut</url>
   <url type="donation">https://github.com/sponsors/kvoltmer</url>
 
-  <!-- TODO: replace with real UI screenshots (PNG, 16:9 preferred, publicly
-       reachable — e.g. committed under docs/media/ and referenced via a
-       raw.githubusercontent.com URL pinned to a tag). The social-preview
-       card below is a placeholder so validation passes; Flathub review will
-       want genuine screenshots. -->
+  <!-- Screenshot URLs are pinned to the commit that added the image so the
+       content behind them never shifts; bump the pin when retaking them. -->
   <screenshots>
     <screenshot type="default">
-      <caption>Audionaut editing a multitrack session</caption>
-      <image>https://raw.githubusercontent.com/kvoltmer/Audionaut/9bbd2bea/docs/media/social-preview.png</image>
+      <caption>Editing a multitrack session: clips on the timeline, per-track playlist and region list</caption>
+      <image>https://raw.githubusercontent.com/kvoltmer/Audionaut/59b6079d8b21bbffc778cb3a7817e689243d7083/docs/media/screenshot-arrangement.png</image>
     </screenshot>
   </screenshots>
 
