@@ -6,6 +6,10 @@ Code, Claude Desktop, and any other MCP client) edit
 auto-edit and export. It is a thin wrapper: every tool runs one Audionaut
 command with `--json` and relays the result — no engine logic lives here.
 
+**Requires the Audionaut app** ([Mac App Store](https://apps.apple.com/app/id6743627933) /
+[GitHub Releases](https://github.com/kvoltmer/Audionaut/releases)). On its own
+this package does nothing.
+
 ## Quick start
 
 You need [Audionaut](https://audionaut.app/download) — 1.6.3 or later is
