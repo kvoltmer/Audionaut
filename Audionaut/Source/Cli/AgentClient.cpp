@@ -21,7 +21,11 @@ constexpr int helloTimeoutMs   = 2000;
 class ClientConnection final : public juce::InterprocessConnection
 {
 public:
-    ClientConnection() : juce::InterprocessConnection (false) {}
+    explicit ClientConnection (CliContext& context_) :
+        juce::InterprocessConnection (false),
+        context (context_)
+    {
+    }
 
     ~ClientConnection() override { disconnect(); }
 
@@ -50,6 +54,16 @@ public:
             result = message;
             resultArrived.signal();
         }
+        // Streamed while the verb runs. Rendered from this connection thread:
+        // the caller's thread is parked in waitForResult, and the one socket
+        // delivers these in order, all before the result.
+        else if (kind == "log") {
+            context.log (juce::String (message.value ("line", std::string())));
+        }
+        else if (kind == "progress") {
+            context.progress (message.value ("fraction", 0.0),
+                              juce::String (message.value ("message", std::string())));
+        }
     }
 
     bool waitForHello()  { return helloArrived.wait (helloTimeoutMs) && ! lost; }
@@ -59,6 +73,7 @@ public:
     json result;
 
 private:
+    CliContext& context;
     juce::WaitableEvent helloArrived;
     juce::WaitableEvent resultArrived;
     std::atomic<bool> lost { false };
@@ -112,7 +127,7 @@ RouteOutcome routeCommand (const juce::ArgumentList& args,
 
     // From here the app holds this project, so every path must end in an
     // answer. Returning "not handled" would send the verb to the file.
-    ClientConnection connection;
+    ClientConnection connection (context);
 
     if (! connection.connectToSocket ("127.0.0.1", marker->port, connectTimeoutMs))
         return { true, refuse (context, "Audionaut is holding this project but did not answer on its "
@@ -140,6 +155,7 @@ RouteOutcome routeCommand (const juce::ArgumentList& args,
     const auto envelope = connection.result.value ("envelope", json());
     const auto exitCode = connection.result.value ("exitCode", exitFailure);
 
+    // Empty from a host that streamed it; filled by one that predates streaming.
     for (auto& line : connection.result.value ("log", json::array()))
         if (line.is_string())
             context.log (juce::String (line.get<std::string>()));

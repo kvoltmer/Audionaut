@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-import { outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
+import { outsideMusicFolder, parseEnvelope, parseProgressLine, resolveCli, userPath } from "./locate.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, "..", "..");
@@ -70,7 +70,79 @@ function check(name, condition, detail = "") {
         parseEnvelope('settings: /home/u/.config/x.settings\n{\n  "ok": true\n}\n')?.ok === true);
   check("output without an envelope is rejected", parseEnvelope("segfault") === null && parseEnvelope("") === null);
 
+  const tick = parseProgressLine('{"message":"Separating stems","progress":0.35}');
+  check("a --progress-json line parses", tick?.fraction === 0.35 && tick?.message === "Separating stems");
+  check("other stderr lines are not progress",
+        parseProgressLine("JUCE v9.0.2") === null && parseProgressLine("{") === null &&
+        parseProgressLine('{"ok":true}') === null);
+
   rmSync(scratch, { recursive: true, force: true });
+}
+
+// --- progress relay, against a stand-in CLI --------------------------------
+// The CLI is `node` itself and the verb runs as a script: `node separate ...`
+// loads ./separate from the server's working directory. That works on every
+// CI platform, where a shell script would not. Its ticks span longer than the
+// shortened idle timeout, so finishing proves each tick restarts the clock.
+{
+  const scratch = mkdtempSync(join(tmpdir(), "audionaut-progress-"));
+  const standIn = `const args = process.argv.slice(2);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+(async () => {
+  process.stderr.write("JUCE v9.0.2\\n");
+  if (args[0].includes("hang")) await sleep(3000);
+  for (const [message, progress] of [["Rendering clip", 0], ["Separating stems", 0.25], ["Separating stems", 0.25],
+                                     ["Separating stems", 0.5], ["Separating stems", 0.75], ["Writing stems", 1]]) {
+    process.stderr.write(JSON.stringify({ message, progress }) + "\\n");
+    await sleep(300);
+  }
+  process.stdout.write(JSON.stringify({ ok: true, result: { args } }));
+})();
+`;
+  for (const verb of ["separate", "export", "analyze"]) writeFileSync(join(scratch, verb), standIn);
+
+  const transport = new StdioClientTransport({
+    command: "node",
+    args: [join(here, "index.js")],
+    cwd: scratch,
+    env: { ...process.env, AUDIONAUT_CLI: process.execPath, AUDIONAUT_SKIP_PATH_CHECK: "1",
+           AUDIONAUT_CLI_IDLE_TIMEOUT_MS: "1000", AUDIONAUT_DISABLE_ANALYTICS: "1" },
+  });
+  const client = new Client({ name: "audionaut-mcp-progress-test", version: "0.0.1" });
+  await client.connect(transport);
+
+  try {
+    const seen = [];
+    const separated = await client.callTool(
+      { name: "separate_stems", arguments: { project: join(scratch, "song.audium") } },
+      undefined,
+      { onprogress: (progress) => seen.push(progress) }
+    );
+    check("separate_stems outlives the idle timeout while it reports progress", !separated.isError,
+          separated.content?.[0]?.text);
+    check("the CLI is asked for --progress-json",
+          separated.content?.[0]?.text.includes("--progress-json"), separated.content?.[0]?.text);
+    check("progress arrives as percent of 100, banner skipped, repeat dropped",
+          JSON.stringify(seen.map((p) => p.progress)) === "[0,25,50,75,100]" &&
+            seen.every((p) => p.total === 100) && seen[0].message === "Rendering clip",
+          JSON.stringify(seen));
+
+    for (const [name, args] of [["export_audio", { project: join(scratch, "song.audium"), output: join(scratch, "mix.wav") }],
+                                ["analyze", { target: join(scratch, "song.audium") }]]) {
+      const ticks = [];
+      const done = await client.callTool({ name, arguments: args }, undefined,
+                                         { onprogress: (progress) => ticks.push(progress.progress) });
+      check(`${name} relays progress`, !done.isError && JSON.stringify(ticks) === "[0,25,50,75,100]",
+            `${JSON.stringify(ticks)} ${done.content?.[0]?.text}`);
+    }
+
+    const hung = await client.callTool({ name: "separate_stems", arguments: { project: join(scratch, "hang.audium") } });
+    check("a CLI silent past the idle timeout is stopped with a tool error",
+          hung.isError === true && /no sign of life/.test(hung.content?.[0]?.text), hung.content?.[0]?.text);
+  } finally {
+    await client.close();
+    rmSync(scratch, { recursive: true, force: true });
+  }
 }
 
 const cli = await resolveCli();

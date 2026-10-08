@@ -65,6 +65,12 @@ AppImage.
 `separate_stems` needs the Demucs model, which you download once in the app
 (Settings ▸ Separation). The model weights are licensed for research use.
 
+A stem split takes minutes for a full song, and exporting or analysing a long
+project can too. When your client sends a `progressToken` with the call,
+`separate_stems`, `export_audio` and `analyze` report progress (Audionaut
+1.6.5 and later). A call is only stopped after ten minutes without any sign of
+life, not ten minutes in total.
+
 ## Projects that are open in Audionaut
 
 The tools do not need the user to save first, and they will not write over a

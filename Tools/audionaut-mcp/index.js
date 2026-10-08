@@ -9,7 +9,7 @@
 // relays the {ok, result|error} envelope; no engine logic lives here. See
 // README.md for registration instructions.
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { platform, release } from "node:os";
 import { promisify } from "node:util";
@@ -18,7 +18,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-import { notFoundMessage, outsideMusicFolder, parseEnvelope, resolveCli, userPath } from "./locate.js";
+import {
+  notFoundMessage,
+  outsideMusicFolder,
+  parseEnvelope,
+  parseProgressLine,
+  resolveCli,
+  userPath,
+} from "./locate.js";
 
 const execFileAsync = promisify(execFile);
 const { version } = createRequire(import.meta.url)("./package.json");
@@ -64,6 +71,96 @@ async function check() {
 
 const errorResult = (text) => ({ content: [{ type: "text", text }], isError: true });
 
+// How long the CLI may stay silent before it counts as hung. Silence, not
+// total time: every stderr line restarts the clock, so a separation that keeps
+// reporting progress runs as long as it needs. (The smoke test shortens it.)
+const idleTimeoutMs = Number(process.env.AUDIONAUT_CLI_IDLE_TIMEOUT_MS) || 10 * 60 * 1000;
+const maxStdoutBytes = 32 * 1024 * 1024; // --raw project dumps can be large
+
+// Runs the CLI once. stdout is collected for the envelope; stderr is read line
+// by line for --progress-json ticks. Resolves - never rejects - with the
+// stdout and exit status, and an error when the run was cut short or could
+// not start.
+function runProcess(argv, { onProgress, signal }) {
+  return new Promise((resolve) => {
+    const stdout = [];
+    let stdoutBytes = 0;
+    let stderrRest = "";
+    let failure = null;
+    let settled = false;
+    let timer;
+
+    const child = spawn(cli.path, argv, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+
+    const finish = (code = null, exitSignal = null) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      resolve({ stdout: Buffer.concat(stdout).toString("utf8"), error: failure, code, exitSignal });
+    };
+    const stop = (error) => {
+      failure ??= error;
+      child.kill();
+    };
+    const restartClock = () => {
+      clearTimeout(timer);
+      timer = setTimeout(
+        () => stop(new Error(`Audionaut gave no sign of life for ${Math.round(idleTimeoutMs / 1000)} s and was stopped`)),
+        idleTimeoutMs
+      );
+    };
+    // An agent that gives up stops the CLI. When the app holds the project
+    // the app finishes the verb anyway; its result is then simply not read.
+    const onAbort = () => stop(new Error("cancelled by the client"));
+
+    restartClock();
+    signal?.addEventListener("abort", onAbort, { once: true });
+
+    child.stdout.on("data", (chunk) => {
+      stdoutBytes += chunk.length;
+      if (stdoutBytes > maxStdoutBytes) stop(new Error("Audionaut's reply was larger than 32 MB"));
+      else stdout.push(chunk);
+    });
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (text) => {
+      restartClock();
+      const lines = (stderrRest + text).split(/\r?\n/);
+      stderrRest = lines.pop();
+      for (const line of lines) {
+        const progress = parseProgressLine(line);
+        if (progress) onProgress?.(progress);
+      }
+    });
+    child.on("error", (error) => {
+      failure ??= error;
+      if (child.pid === undefined) finish(); // never started: no "close" to wait for
+    });
+    child.on("close", finish);
+  });
+}
+
+// Relays CLI progress as MCP progress notifications - only when the client
+// asked for them by sending a progressToken. MCP wants progress to increase
+// with every notification, so repeats are dropped.
+function progressRelay(extra) {
+  const progressToken = extra?._meta?.progressToken;
+  if (progressToken === undefined) return undefined;
+
+  let last = -1;
+  return ({ fraction, message }) => {
+    const progress = Math.round(fraction * 100);
+    if (progress <= last) return;
+    last = progress;
+    extra
+      .sendNotification({
+        method: "notifications/progress",
+        params: { progressToken, progress, total: 100, ...(message ? { message } : {}) },
+      })
+      .catch(() => {}); // a client that went away is the abort handler's business
+  };
+}
+
 // Runs one CLI command and converts its --json envelope into an MCP tool
 // result. CLI failures come back as isError results (the agent can read the
 // code/message and adjust), never as thrown protocol errors.
@@ -72,7 +169,10 @@ const errorResult = (text) => ({ content: [{ type: "text", text }], isError: tru
 // names any further path arguments (import's files, export's output). Paths
 // are made absolute here, and for the sandboxed macOS app checked against
 // ~/Music first - the app would only fail with an unhelpful error.
-async function runCli(args, pathIndexes = []) {
+//
+// extra is the tool call's request context: with it, progress the verb
+// reports reaches the client and a cancelled call stops the CLI.
+async function runCli(args, pathIndexes = [], extra = undefined) {
   if (!cli.path) return errorResult(notFoundMessage(cli));
 
   args = [...args];
@@ -89,28 +189,23 @@ async function runCli(args, pathIndexes = []) {
       );
   }
 
-  let stdout;
-  try {
-    ({ stdout } = await execFileAsync(cli.path, [...args, "--json", "--quiet"], {
-      timeout: 10 * 60 * 1000, // export/analyze of long projects can be slow
-      maxBuffer: 32 * 1024 * 1024, // --raw project dumps can be large
-      windowsHide: true,
-    }));
-  } catch (error) {
-    // Non-zero exit still writes the envelope to stdout; prefer it over the
-    // raw error so the agent sees the CLI's own code/message.
-    stdout = error.stdout;
-    if (!stdout)
-      return errorResult(
-        error.code === "ENOENT" ? notFoundMessage({ ...cli, searched: [cli.path] }) : `Audionaut failed: ${error.message}`
-      );
-  }
+  // --progress-json is ignored by apps that predate it (1.6.4 and older).
+  const { stdout, error, code, exitSignal } = await runProcess([...args, "--json", "--quiet", "--progress-json"], {
+    onProgress: progressRelay(extra),
+    signal: extra?.signal,
+  });
 
+  if (error?.code === "ENOENT") return errorResult(notFoundMessage({ ...cli, searched: [cli.path] }));
+  if (error) return errorResult(`Audionaut failed: ${error.message}`);
+
+  // A non-zero exit still writes the envelope to stdout, so the exit code
+  // itself is not consulted: the envelope carries the CLI's own code/message.
   if (!stdout && process.platform === "win32")
     return errorResult(
       "Audionaut ran but returned nothing. On Windows this can happen with Audionaut 1.6.2 and older; " +
         "update Audionaut to 1.6.3 or later."
     );
+  if (!stdout) return errorResult(`Audionaut exited (${exitSignal ?? `code ${code}`}) without a reply`);
 
   const envelope = parseEnvelope(stdout);
   if (!envelope) return errorResult(`Audionaut returned unparseable output: ${String(stdout).slice(0, 2000)}`);
@@ -211,7 +306,8 @@ server.registerTool(
       "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
       "channels per file), .aiff (8/16/24 bit), .ogg (Ogg Vorbis, lossy, at most 8 channels) or .mp3 " +
       "(lossy, mono or stereo, at most 48 kHz). Lossy formats take bitrate_kbps instead of bit_depth. " +
-      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades.",
+      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades. " +
+      "Reports progress in 5% steps when the call carries a progressToken.",
     inputSchema: {
       project: projectParam,
       output: z.string().describe("Output path ending in .wav, .flac, .aiff, .ogg or .mp3 - the format follows the extension"),
@@ -229,7 +325,7 @@ server.registerTool(
     },
   },
   async ({ project, output, sample_rate, bit_depth, bitrate_kbps, channels, multi_mono, start_seconds,
-           length_seconds, region, track }) =>
+           length_seconds, region, track }, extra) =>
     runCli([
       "export",
       project,
@@ -244,7 +340,7 @@ server.registerTool(
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
-    ], [3])
+    ], [3], extra)
 );
 
 server.registerTool(
@@ -254,7 +350,8 @@ server.registerTool(
     description:
       "Runs Essentia audio analysis (segment boundaries, beats, BPM) on the project's audio files - or one " +
       "standalone audio file - and caches the results next to the project for auto_edit/assemble to use. " +
-      "Fails with essentia_unavailable in builds without Essentia.",
+      "Fails with essentia_unavailable in builds without Essentia. Reports progress as each file and type " +
+      "finishes when the call carries a progressToken.",
     inputSchema: {
       target: z.string().describe("A .audium project package or a single audio file"),
       types: z
@@ -263,7 +360,7 @@ server.registerTool(
         .describe("Comma-separated analysis types, e.g. \"sbic,beat_degara\" (default: the merge set)"),
     },
   },
-  async ({ target, types }) => runCli(["analyze", target, ...(types ? ["--types", types] : [])])
+  async ({ target, types }, extra) => runCli(["analyze", target, ...(types ? ["--types", types] : [])], [], extra)
 );
 
 server.registerTool(
@@ -595,7 +692,8 @@ server.registerTool(
     title: "Separate stems",
     description:
       "Splits a clip into Drums/Bass/Other/Vocals tracks with the Demucs (htdemucs) source separator, " +
-      "aligned with the source clip. Slow: minutes for a full song, CPU only. Needs the model weights, " +
+      "aligned with the source clip. Slow: minutes for a full song, CPU only; reports progress in 5% steps " +
+      "when the call carries a progressToken. Needs the model weights, " +
       "which the Audionaut app downloads once (Settings > Separation); fails with model_missing until then, " +
       "and with demucs_unavailable in builds without Demucs.",
     inputSchema: {
@@ -606,15 +704,19 @@ server.registerTool(
       mute_source: z.boolean().optional().describe("Mute the source track's channels (default true)"),
     },
   },
-  async ({ project, track, clip, threads, mute_source }) =>
-    runCli([
-      "separate",
-      project,
-      ...(track !== undefined ? ["--track", String(track)] : []),
-      ...(clip !== undefined ? ["--clip", String(clip)] : []),
-      ...(threads !== undefined ? ["--threads", String(threads)] : []),
-      ...(mute_source === false ? ["--no-mute-source"] : []),
-    ])
+  async ({ project, track, clip, threads, mute_source }, extra) =>
+    runCli(
+      [
+        "separate",
+        project,
+        ...(track !== undefined ? ["--track", String(track)] : []),
+        ...(clip !== undefined ? ["--clip", String(clip)] : []),
+        ...(threads !== undefined ? ["--threads", String(threads)] : []),
+        ...(mute_source === false ? ["--no-mute-source"] : []),
+      ],
+      [],
+      extra
+    )
 );
 
 server.registerTool(

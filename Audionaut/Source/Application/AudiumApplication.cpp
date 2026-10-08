@@ -126,6 +126,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         cli::CliContext context; // captures the real stdout before any redirect
         context.json = args.removeOptionIfFound ("--json");
         context.quiet = args.removeOptionIfFound ("--quiet");
+        context.progressJson = args.removeOptionIfFound ("--progress-json");
         context.preferences = &getPreferences(); // consent-gated CLI analytics
 
         const auto exitCode = cli::performCliCommand (args, context);
