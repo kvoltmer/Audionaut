@@ -145,13 +145,10 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     if (config->sampleRate <= 0 || config->bitDepth <= 0 || config->numChannels < 1)
         return context.fail (exitUsage, "usage", "invalid export format options");
 
-    auto lastLoggedProgress = 0.0;
+    ProgressSteps steps (context);
     AudioExporter exporter (*session.get(), config);
-    auto written = exporter.bounce ([&] (double progress) {
-        if (progress - lastLoggedProgress >= 0.1) {
-            lastLoggedProgress = progress;
-            context.log ("export: " + juce::String (juce::roundToInt (progress * 100)) + "%");
-        }
+    auto written = exporter.bounce ([&steps] (double progress) {
+        steps (progress, "Exporting");
         return true;
     });
 
@@ -174,6 +171,9 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
 
         return context.fail (exitFailure, "export_failed", error);
     }
+
+    // the bounce's last report lands short of 1 (it reports before each block)
+    steps (1.0, "Exporting");
 
     // multi-mono writes -01.wav, -02.wav, ... (in the export's format) instead of the base file
     auto produced = config->multiMono ? AudioExporter::monoFileFor (outputFile, 1, *format) : outputFile;

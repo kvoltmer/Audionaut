@@ -136,6 +136,34 @@ private:
 };
 
 /**
+ * @class ProgressSteps
+ * @brief Forwards a verb's progress to CliContext::progress() once per 5% step.
+ *
+ * Engine callbacks fire many times a second for minutes; a wrapper wants a
+ * tick it can show, strictly increasing (MCP progress requires that), starting
+ * with 0%. A report that does not reach a new step - a repeat, or a callback
+ * running backwards - is dropped.
+ */
+class ProgressSteps {
+public:
+    explicit ProgressSteps (CliContext& context_) : context (context_) {}
+
+    void operator() (double fraction, const juce::String& message)
+    {
+        const auto step = static_cast<int> (juce::jlimit (0.0, 1.0, fraction) * 100.0) / 5;
+
+        if (step > lastStep) {
+            lastStep = step;
+            context.progress (fraction, message);
+        }
+    }
+
+private:
+    CliContext& context;
+    int lastStep = -1;
+};
+
+/**
  * @class ScopedCoutToStderr
  * @brief Redirects std::cout to stderr for its lifetime.
  *

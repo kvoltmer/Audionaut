@@ -86,9 +86,7 @@ function check(name, condition, detail = "") {
 // shortened idle timeout, so finishing proves each tick restarts the clock.
 {
   const scratch = mkdtempSync(join(tmpdir(), "audionaut-progress-"));
-  writeFileSync(
-    join(scratch, "separate"),
-    `const args = process.argv.slice(2);
+  const standIn = `const args = process.argv.slice(2);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 (async () => {
   process.stderr.write("JUCE v9.0.2\\n");
@@ -100,8 +98,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   }
   process.stdout.write(JSON.stringify({ ok: true, result: { args } }));
 })();
-`
-  );
+`;
+  for (const verb of ["separate", "export", "analyze"]) writeFileSync(join(scratch, verb), standIn);
 
   const transport = new StdioClientTransport({
     command: "node",
@@ -128,6 +126,15 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
           JSON.stringify(seen.map((p) => p.progress)) === "[0,25,50,75,100]" &&
             seen.every((p) => p.total === 100) && seen[0].message === "Rendering clip",
           JSON.stringify(seen));
+
+    for (const [name, args] of [["export_audio", { project: join(scratch, "song.audium"), output: join(scratch, "mix.wav") }],
+                                ["analyze", { target: join(scratch, "song.audium") }]]) {
+      const ticks = [];
+      const done = await client.callTool({ name, arguments: args }, undefined,
+                                         { onprogress: (progress) => ticks.push(progress.progress) });
+      check(`${name} relays progress`, !done.isError && JSON.stringify(ticks) === "[0,25,50,75,100]",
+            `${JSON.stringify(ticks)} ${done.content?.[0]?.text}`);
+    }
 
     const hung = await client.callTool({ name: "separate_stems", arguments: { project: join(scratch, "hang.audium") } });
     check("a CLI silent past the idle timeout is stopped with a tool error",

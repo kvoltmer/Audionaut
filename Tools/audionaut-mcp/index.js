@@ -306,7 +306,8 @@ server.registerTool(
       "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
       "channels per file), .aiff (8/16/24 bit), .ogg (Ogg Vorbis, lossy, at most 8 channels) or .mp3 " +
       "(lossy, mono or stereo, at most 48 kHz). Lossy formats take bitrate_kbps instead of bit_depth. " +
-      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades.",
+      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades. " +
+      "Reports progress in 5% steps when the call carries a progressToken.",
     inputSchema: {
       project: projectParam,
       output: z.string().describe("Output path ending in .wav, .flac, .aiff, .ogg or .mp3 - the format follows the extension"),
@@ -324,7 +325,7 @@ server.registerTool(
     },
   },
   async ({ project, output, sample_rate, bit_depth, bitrate_kbps, channels, multi_mono, start_seconds,
-           length_seconds, region, track }) =>
+           length_seconds, region, track }, extra) =>
     runCli([
       "export",
       project,
@@ -339,7 +340,7 @@ server.registerTool(
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
-    ], [3])
+    ], [3], extra)
 );
 
 server.registerTool(
@@ -349,7 +350,8 @@ server.registerTool(
     description:
       "Runs Essentia audio analysis (segment boundaries, beats, BPM) on the project's audio files - or one " +
       "standalone audio file - and caches the results next to the project for auto_edit/assemble to use. " +
-      "Fails with essentia_unavailable in builds without Essentia.",
+      "Fails with essentia_unavailable in builds without Essentia. Reports progress as each file and type " +
+      "finishes when the call carries a progressToken.",
     inputSchema: {
       target: z.string().describe("A .audium project package or a single audio file"),
       types: z
@@ -358,7 +360,7 @@ server.registerTool(
         .describe("Comma-separated analysis types, e.g. \"sbic,beat_degara\" (default: the merge set)"),
     },
   },
-  async ({ target, types }) => runCli(["analyze", target, ...(types ? ["--types", types] : [])])
+  async ({ target, types }, extra) => runCli(["analyze", target, ...(types ? ["--types", types] : [])], [], extra)
 );
 
 server.registerTool(
