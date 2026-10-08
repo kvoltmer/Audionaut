@@ -2,6 +2,8 @@
 #include <catch2/catch_approx.hpp>
 
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 #include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
@@ -925,6 +927,89 @@ SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][sep
             }
         }
     }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli progress reaches a wrapper as JSON lines on stderr", "[cli][progress]")
+{
+    // Swap stderr for a buffer for the scope of one THEN.
+    struct CapturedStderr
+    {
+        CapturedStderr() : saved (std::cerr.rdbuf (buffer.rdbuf())) {}
+        ~CapturedStderr() { std::cerr.rdbuf (saved); }
+        std::vector<std::string> lines()
+        {
+            std::vector<std::string> result;
+            std::istringstream in (buffer.str());
+            for (std::string line; std::getline (in, line);)
+                result.push_back (line);
+            return result;
+        }
+        std::ostringstream buffer;
+        std::streambuf* saved;
+    };
+
+    GIVEN ("a quiet --json run that asked for --progress-json") {
+        cli::CliContext context;
+        context.json = true;
+        context.quiet = true;
+        context.progressJson = true;
+
+        THEN ("progress is one parseable object per line, and plain logs stay quiet") {
+            CapturedStderr captured;
+            context.log ("chatter");
+            context.progress (0.35, "Separating stems");
+
+            const auto lines = captured.lines();
+            REQUIRE (lines.size() == 1);
+
+            const auto parsed = nlohmann::json::parse (lines[0]);
+            REQUIRE (parsed["progress"].get<double>() == Catch::Approx (0.35));
+            REQUIRE (parsed["message"] == "Separating stems");
+        }
+    }
+
+    GIVEN ("a human run") {
+        cli::CliContext context;
+
+        THEN ("progress is the familiar percentage line") {
+            CapturedStderr captured;
+            context.progress (0.35, "Separating stems");
+            REQUIRE (captured.lines() == std::vector<std::string> { "Separating stems 35%" });
+        }
+    }
+}
+
+SCENARIO ("cli separate reports each 5% step once, starting at 0", "[cli][separation][progress]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("progress.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+             == cli::exitOk);
+    REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                       + juce::File (testFilesDir + "sine-0dB.wav").getFullPathName()),
+                             context)
+             == cli::exitOk);
+
+    std::vector<double> fractions;
+    context.progressSink = [&fractions] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+
+    REQUIRE (cli::runSeparate (makeArgs ("separate " + project.getFullPathName()
+                                         + " --track 1 --backend fake --threads 1"),
+                               context)
+             == cli::exitOk);
+
+    REQUIRE_FALSE (fractions.empty());
+    REQUIRE (fractions.front() == Catch::Approx (0.0));
+    REQUIRE (fractions.back() == Catch::Approx (1.0));
+
+    for (size_t index = 1; index < fractions.size(); ++index)
+        REQUIRE (static_cast<int> (fractions[index] * 100.0) / 5 > static_cast<int> (fractions[index - 1] * 100.0) / 5);
 
     workDir.deleteRecursively();
 }

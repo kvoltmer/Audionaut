@@ -79,17 +79,18 @@ int runSeparate (const juce::ArgumentList& args, CliContext& context)
 
     StemSeparator separator (session.get(), backend);
 
-    // Progress goes to stderr in coarse steps: the real backend reports a
-    // few times a second for minutes.
-    auto lastReported = -1;
-    auto progress = [&context, &lastReported] (double fraction, const juce::String& message)
+    // Progress is reported in 5% steps: the real backend reports a few times
+    // a second for minutes. One report per step, so readers that need it
+    // strictly increasing (MCP progress) get that too.
+    auto lastStep = -1;
+    auto progress = [&context, &lastStep] (double fraction, const juce::String& message)
     {
-        const auto percent = static_cast<int> (fraction * 100.0);
+        const auto step = static_cast<int> (fraction * 100.0) / 5;
 
-        if (percent / 5 != lastReported / 5 || percent == 100)
+        if (step > lastStep)
         {
-            lastReported = percent;
-            context.log (message + " " + juce::String (percent) + "%");
+            lastStep = step;
+            context.progress (fraction, message);
         }
 
         return true;
