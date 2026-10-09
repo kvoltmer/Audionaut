@@ -20,7 +20,7 @@ Essentia analysis, file import).
 ## Local build
 
 ```
-flatpak install -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
+flatpak install -y flathub org.gnome.Platform//51 org.gnome.Sdk//51
 flatpak-builder --force-clean --user --install build-dir \
     Audionaut/Builds/Flatpak/app.audionaut.Audionaut.yml
 flatpak run app.audionaut.Audionaut
