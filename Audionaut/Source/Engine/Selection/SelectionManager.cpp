@@ -127,12 +127,20 @@ bool SelectionManager::canParseFromClipboard() {
 
 void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEngine,
                                           bool duplicateAction) {
-
     try {
         json data = json::parse(juce::SystemClipboard::getTextFromClipboard().toStdString());
         std::cout << data.dump(2) << std::endl;
-        
-        
+        pasteFromJson(data, audiumEngine, duplicateAction);
+    }
+    catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
+}
+
+void SelectionManager::pasteFromJson(const json& data,
+                                     std::shared_ptr<AudiumEngine> audiumEngine,
+                                     bool duplicateAction) {
+    try {
         if (data.contains("lola")) {
             auto lolaData = data["lola"];
             // undo
@@ -159,13 +167,14 @@ void SelectionManager::pasteFromClipboard(std::shared_ptr<AudiumEngine> audiumEn
                 for (auto& jsonRegion : jsonRegions) {
                     if (jsonRegion.contains("track_id") &&
                         jsonRegion.contains("resource_group_id")) {
+                        // the source track/group may be gone since the copy - skip, don't crash
                         auto track_id = jsonRegion.at("track_id").get<int>();
                         auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id);
-                        jassert(audioTrack);
                         if (audioTrack != nullptr) {
                             auto resourceGroupId = jsonRegion.at("resource_group_id").get<int>();
-                            auto resourceGroup = audioTrack->resourceGroupContainer->getObjects()[resourceGroupId];
-                            jassert(resourceGroup);
+                            std::shared_ptr<ResourceGroup> resourceGroup;
+                            if (audioTrack->resourceGroupContainer->objectExistsAtIndex(resourceGroupId))
+                                resourceGroup = audioTrack->resourceGroupContainer->getObjects()[(size_t) resourceGroupId];
                             if (resourceGroup != nullptr) {
                                 std::string name;
                                 if (jsonRegion.contains("name"))
@@ -199,15 +208,20 @@ void SelectionManager::pastePlayListItems(const json &input,
     deselectAll();
     
     auto jsonPlayListItems = input["play_list_items"];
-    
+    if (! jsonPlayListItems.is_array() || jsonPlayListItems.empty())
+        return;
     
     // TODO: paste multiple objects
     auto& jsonElement = jsonPlayListItems.front();
     if (jsonElement.contains("track_id")) {
         
+        // the source track may have been deleted since the copy
         auto track_id = jsonElement.at("track_id").get<int>();
-        auto playListContainer = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id)->getPlayListContainer();
+        auto audioTrack = audiumEngine->getAudioTrackContainer()->getAudioTrack(track_id);
+        if (audioTrack == nullptr)
+            return;
         
+        auto playListContainer = audioTrack->getPlayListContainer();
         if (playListContainer != nullptr) {
             if (auto playListItem = playListContainer->createPlayListItemFromJson(jsonElement)) {
                 playListContainer->playListItems.push_back(playListItem);

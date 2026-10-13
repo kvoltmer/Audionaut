@@ -31,6 +31,10 @@ public:
     {
     }
 
+    /** Exports the item. Without the file chooser the export runs to
+        completion here and the result says whether the file was written;
+        with it the export runs asynchronously after the chooser closes and
+        this returns false right away. */
     bool exportItem();
     
 private:

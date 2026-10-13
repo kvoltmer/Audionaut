@@ -12,7 +12,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/Channel/AudioChannel.h"
 
@@ -346,12 +346,13 @@ bool AudioRegionContainer::readFromJson (json& input, bool rebuild)
                 }
                 else {
                     region = getRegion(regionData.region_id);
-                    if (region != nullptr) {
-                        region->data = regionData;
-                    }
-                    else {
+                    if (region == nullptr) {
+                        // the file names a region this graph does not have;
+                        // skip it rather than dereference nothing below
                         jassertfalse;
+                        continue;
                     }
+                    region->data = regionData;
                 }
                 
                 // in case the region was in recording state we must assume the file length as region length

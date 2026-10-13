@@ -4,10 +4,11 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Engine/Resource/AudioResource.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Resource/AudioResourceContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Factory/AudioResourceFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
@@ -45,9 +46,9 @@ AudioResource::~AudioResource()
 {
 }
 
-std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
+std::shared_ptr<VoiceSource> AudioResource::createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
 {
-    auto transportSource = audioTrack->getTransportSourceContainer()->createAndAddTransportSource(*this, audioFormatReaderSource);
+    auto voiceSource = audioTrack->getVoiceSourceContainer()->createAndAddVoiceSource(*this, audioFormatReaderSource);
     
     auto sampleRate = 44100.0;
     auto numSamples = 512;
@@ -57,9 +58,9 @@ std::shared_ptr<AudiumTransportSource> AudioResource::createNewTransportSource(s
         numSamples = device->getCurrentBufferSizeSamples();
     }
     
-    transportSource->prepareToPlay(numSamples, sampleRate);
+    voiceSource->prepareToPlay(numSamples, sampleRate);
     
-    return transportSource;
+    return voiceSource;
 }
 
 const juce::String AudioResource::getFileNameWithoutExtension() const
@@ -76,6 +77,14 @@ const juce::String AudioResource::getFullPathName() const
         return url.getLocalFile().getFullPathName();
     
     return "not a local file";
+}
+
+juce::File AudioResource::getLocalFile() const
+{
+    if (url.isLocalFile())
+        return url.getLocalFile();
+
+    return {};
 }
 
 const juce::String AudioResource::getUrlAsString() const
@@ -224,7 +233,7 @@ bool AudioResource::containsAbsolutePosition(double position, audium::TimeContex
 
 bool AudioResource::writeToJson (json& output)
 {
-    output["relative_file_path"]    = getRelativePath(AudiumEngine::projectDirectory).toStdString();
+    output["relative_file_path"]    = getRelativePath(ProjectFileStore::getSerializationBaseDirectory()).toStdString();
     output["number_of_channels"]    = getNumAudioFileChannels();
     if (not isRecording())
         output["length_in_seconds"]     = getFileLength(audium::seconds);
@@ -253,7 +262,7 @@ const juce::URL AudioResource::urlFromJson (json& input)
     // relative path is always a local file
     if (input.contains("relative_file_path")) {
         juce::String relPath = input["relative_file_path"].template get<std::string>();
-        filePath = AudiumEngine::projectDirectory.getChildFile(relPath).getFullPathName();
+        filePath = ProjectFileStore::getSerializationBaseDirectory().getChildFile(relPath).getFullPathName();
         if (File(filePath).existsAsFile())
             return URL(File(filePath));
     }
@@ -286,10 +295,7 @@ bool AudioResource::readFromJson (json& input, bool rebuild)
         lengthInSeconds = getFileLength(audium::seconds);
 //        std::cout << "readFromJson length " << lengthInSeconds << std::endl;
     }
-    if (! channelMapping->readFromJson(input, rebuild)) {
-        return false;
-    }
-    return true;
+    return channelMapping->readFromJson(input, rebuild);
 }
 
 } // namespace audium

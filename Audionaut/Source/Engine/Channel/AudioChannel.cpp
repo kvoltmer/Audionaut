@@ -4,7 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioChannel.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
@@ -61,27 +61,50 @@ bool AudioChannel::getSolo() const noexcept
     return data.solo;
 }
 
+void AudioChannel::setInputChannel(const int newInputChannel)
+{
+    data.inputChannel = newInputChannel;
+    commitChannelData();
+}
+
+int AudioChannel::getInputChannel() const noexcept
+{
+    return data.inputChannel;
+}
+
+void AudioChannel::setOutputChannel(const int newOutputChannel)
+{
+    data.outputChannel = newOutputChannel;
+    commitChannelData();
+}
+
+int AudioChannel::getOutputChannel() const noexcept
+{
+    return data.outputChannel;
+}
+
 void AudioChannel::setRecordEnabled(bool bEnabled)
 {
     auto numInputChannels = 0;
-    
-#if CATCH2_TESTS
+
+#if AUDIONAUT_HEADLESS
     numInputChannels = 1;
 #else
     auto currentDevice = getAudioTrack().getAudioResourceContainer().getAudioDeviceManager()->getCurrentAudioDevice();
-    
+
     if (currentDevice != nullptr) {
-        numInputChannels = currentDevice->getActiveInputChannels().toInteger();
+        numInputChannels = currentDevice->getActiveInputChannels().countNumberOfSetBits();
     }
 #endif
-    
-    if (getChannelNumber() < numInputChannels) {
+
+    const auto effectiveInput = data.inputChannel >= 0 ? data.inputChannel : getChannelNumber();
+    if (effectiveInput < numInputChannels) {
         data.record = bEnabled;
         audioBusInterface->setRecordEnabled(getChannelNumber() + audioTrack.getChannelOffset(), bEnabled);
     }
     else {
         data.record = false;
-        std::cout << "Error, no input mapped at channel " << getChannelNumber() << std::endl;
+        std::cout << "Error, no audio input " << effectiveInput << " available at channel " << getChannelNumber() << std::endl;
     }
     
     commitChannelData();

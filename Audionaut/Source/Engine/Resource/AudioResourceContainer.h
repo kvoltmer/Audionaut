@@ -15,7 +15,7 @@
 
 namespace audium {
 
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudiumEngine;
 class AnalysisWorker;
 
@@ -36,24 +36,24 @@ public:
      * @param formatManager_ A shared pointer to the `AudioFormatManager`.
      * @param audioThumbnailCache_ A shared pointer to the `AudioThumbnailCache`.
      * @param tempoProvider_ A shared pointer to the `TempoProvider`.
-     * @param transportSourceContainer_ A shared pointer to the `TransportSourceContainer`.
+     * @param voiceSourceContainer_ A shared pointer to the `VoiceSourceContainer`.
      * @param analysisWorker_ A shared pointer to the background `AnalysisWorker`.
      */
     AudioResourceContainer(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                            std::shared_ptr<juce::AudioFormatManager> formatManager_,
                            std::shared_ptr<juce::AudioThumbnailCache> audioThumbnailCache_,
                            std::shared_ptr<TempoProvider> tempoProvider_,
-                           std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                           std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                            std::shared_ptr<AnalysisWorker> analysisWorker_) :
         audioDeviceManager(audioDeviceManager_),
         formatManager(formatManager_),
         audioThumbnailCache(audioThumbnailCache_),
         tempoProvider(tempoProvider_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         analysisWorker(analysisWorker_)
     {
         formatManager->registerBasicFormats();
-        thread.startThread();
+        thread->startThread();
     }
     
 
@@ -66,6 +66,16 @@ public:
      * @brief Deletes the temporary project directory.
      */
     static void deleteTemporaryProjectDirectory();
+
+    /**
+     * @brief Whether this container owns the session's temporary directory.
+     *
+     * The temp directory is a process-wide static, so a second (scratch)
+     * container sharing a live session's directory must not delete it on
+     * teardown - that would take the running session's audio with it. Owning
+     * is the default; a scratch engine clears it right after construction.
+     */
+    void setOwnsTemporaryDirectory(bool shouldOwn) noexcept { ownsTemporaryDirectory = shouldOwn; }
     
     /**
      * @brief Creates a temporary project directory.
@@ -95,12 +105,18 @@ public:
     bool isAudioFileCurrentlyLoaded(const juce::File audioFile) const;
     
     /**
-     * @brief Copies or moves audio files between directories.
+     * @brief Copies the currently loaded audio files between directories.
+     *        Files are copied, never moved, so the source directory is left
+     *        intact; the caller decides when the originals are obsolete.
      * @param sourceDirectory The source directory.
      * @param destinationDirectory The destination directory.
+     * @param copiedFiles Receives every file created in the destination, so
+     *        a save that fails later can remove them again.
+     * @return False on the first file that couldn't be copied.
      */
-    bool copyOrMoveAudioFiles(const juce::File sourceDirectory,
-                              const juce::File destinationDirectory);
+    bool copyAudioFiles(const juce::File sourceDirectory,
+                        const juce::File destinationDirectory,
+                        juce::Array<juce::File>& copiedFiles);
 
     /**
      * @brief Changes the paths of audio files to a new directory.
@@ -148,9 +164,9 @@ public:
     /**
      * @brief Creates a transport source for the specified audio resource.
      * @param audioResource A shared pointer to the `AudioResource`.
-     * @return A shared pointer to the created `AudiumTransportSource`.
+     * @return A shared pointer to the created `VoiceSource`.
      */
-    std::shared_ptr<AudiumTransportSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
+    std::shared_ptr<VoiceSource> createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource);
 
     /**
      * @brief Removes the specified audio resource.
@@ -263,14 +279,26 @@ public:
     
     /**
      * @brief Retrieves the read-ahead thread.
-     * @return A pointer to the `TimeSliceThread`.
+     *
+     * Shared: a voice source keeps a reference for as long as its read-ahead
+     * buffers are registered with the thread. Voices retired while still
+     * rendering are released after this container's members (it co-owns the
+     * VoiceSourceContainer), so the thread must outlive them rather than the
+     * other way round - unregistering from a destroyed thread faults.
+     * @return The `TimeSliceThread`.
      */
-    juce::TimeSliceThread *getReadAheadThread() { return &thread; }
+    std::shared_ptr<juce::TimeSliceThread> getReadAheadThread() const { return thread; }
     
     
     void onRecordingFinished();
     
 private:
+    /// False for a scratch container sharing another session's temp directory.
+    bool ownsTemporaryDirectory = true;
+
+    /** Asks the user and moves the given files to the trash. A no-op in headless mode. */
+    void trashRedundantFiles(const std::vector<juce::File>& redundantFiles);
+
     /// Cancels pending background analysis of the file unless another loaded
     /// resource still references it.
     void cancelAnalysisIfUnloaded(const juce::File& audioFile);
@@ -290,14 +318,14 @@ private:
     /// Shared pointer to the `TempoProvider`.
     std::shared_ptr<TempoProvider> tempoProvider;
 
-    /// Shared pointer to the `TransportSourceContainer`.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    /// Shared pointer to the `VoiceSourceContainer`.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer;
 
     /// Background worker that analyses newly added audio resources off-thread.
     std::shared_ptr<AnalysisWorker> analysisWorker;
 
-    /// Thread for read-ahead operations.
-    juce::TimeSliceThread thread { "read ahead thread" };
+    /// Thread for read-ahead operations, co-owned by the voice sources reading through it.
+    std::shared_ptr<juce::TimeSliceThread> thread = std::make_shared<juce::TimeSliceThread> ("read ahead thread");
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioResourceContainer)

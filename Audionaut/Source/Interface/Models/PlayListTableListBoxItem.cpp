@@ -7,7 +7,6 @@
 #include "PlayListTableListBoxModel.h"
 
 #include "Engine/Region/AudioRegionContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 

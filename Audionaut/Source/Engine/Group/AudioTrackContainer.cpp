@@ -9,7 +9,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -44,7 +44,7 @@ const float AudioTrackContainer::getMasterGain() const noexcept
 void AudioTrackContainer::cleanup()
 {
     selectionManager->clear();
-    transportSourceContainer->cleanup();
+    voiceSourceContainer->cleanup();
     audioResourceContainer->cleanup();
     
     for (auto track : audioTracks)
@@ -52,6 +52,7 @@ void AudioTrackContainer::cleanup()
         track->cleanup();
     }
     audioTracks.clear();
+    publishNumAudioTrackChannels();
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getAudioTrack(int index) const
@@ -75,7 +76,7 @@ int AudioTrackContainer::getAudioTrackId(std::shared_ptr<const AudioTrack> searc
 int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> searchTrack) const
 {
     int numChannels = 0;
-    for (auto track : audioTracks) {
+    for (const auto& track : audioTracks) {
         if (track == searchTrack)
             return numChannels;
         
@@ -108,6 +109,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     if (it != audioTracks.end()) {
         track->cleanup();
         audioTracks.erase(it);
+        publishNumAudioTrackChannels();
         return true;
     }
     
@@ -211,7 +213,9 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     // fallback to rebuild:
     if (!rebuild && jsonTracks.size() != audioTracks.size())
         rebuild = true;
-    
+
+    lastReadRebuiltStructure = rebuild;
+
     if (rebuild) {
         cleanup();
         jassert(audioTracks.size() == 0);
@@ -238,7 +242,12 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         
         if ( !audioTrack->readFromJson(jsonElement, rebuild))
             return false;
-        
+
+        // a track that had to replace its channels changes the structure
+        // the UI is keyed on just as a replaced track does
+        if (audioTrack->didLastReadRebuildChannels())
+            lastReadRebuiltStructure = true;
+
         count++;
     }
     
@@ -247,11 +256,6 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     }
     
     return true;
-}
-
-int AudioTrackContainer::getSizeInUnits()
-{
-    return getNumItems() * 8;
 }
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::getDefaultGroup() const
@@ -299,10 +303,15 @@ void AudioTrackContainer::setSelectedRows(juce::SparseSet<int>& selectedRows)
 int AudioTrackContainer::getNumAudioTrackChannels() const
 {
     int channels = 0;
-    for (auto track : audioTracks) {
+    for (const auto& track : audioTracks) {
         channels += track->getNumAudioTrackChannels();
     }
     return channels;
+}
+
+void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
+{
+    publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
 }
 
 bool AudioTrackContainer::anyChannelSolo() const

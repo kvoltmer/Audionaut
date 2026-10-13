@@ -29,6 +29,12 @@ public:
         g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
         g.setColour (juce::Colours::transparentBlack);
         g.drawRect (getLocalBounds(), 1);
+
+        for (const auto& item : itemRectangles)
+        {
+            g.setColour (item.colour);
+            g.fillRect (item.bounds);
+        }
     }
     
 
@@ -39,8 +45,7 @@ public:
     
     void updateFromEngine()
     {
-        removeAllChildren();
-        groupRectangles.clear();
+        itemRectangles.clear();
         
         auto bounds = getLocalBounds().reduced(1, 1).toFloat();
         
@@ -50,14 +55,11 @@ public:
         
         auto totalLength = audiumEngine->getPlayListScheduler()->getTotalLength(audium::seconds, true);
         jassert(totalLength > 0.0);
-        int i = 0;
         for (auto track : audiumEngine->getAudioTrackContainer()->getAudioTracks())
         {
             for (auto item : track->getPositionableItems())
             {
-                groupRectangles.push_back(std::make_unique<juce::DrawableRectangle>());
-                addAndMakeVisible(groupRectangles[i].get());
-                groupRectangles[i]->setFill (track->getViewState().getColour().withAlpha (0.375f));
+                auto colour = track->getViewState().getColour().withAlpha (0.375f);
                 
                 auto position = item->getAbsolutePositionRange(audium::seconds);
                 auto relativePos = position.getStart() / totalLength;
@@ -67,16 +69,22 @@ public:
                 auto x = bounds.getX() + (bounds.getWidth() * relativePos);
                 auto w = bounds.getWidth() * relativeLength;
                 
-                groupRectangles[i]->setRectangle(juce::Rectangle<float>(x, y, w, h));
-                
-                i++;
+                itemRectangles.push_back ({ juce::Rectangle<float> (x, y, w, h), colour });
             }
             y += h;
         }
+
+        repaint();
     }
 
 private:
-    std::vector<std::unique_ptr<juce::DrawableRectangle>> groupRectangles;
+    struct ItemRectangle
+    {
+        juce::Rectangle<float> bounds;
+        juce::Colour colour;
+    };
+
+    std::vector<ItemRectangle> itemRectangles;
     
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     

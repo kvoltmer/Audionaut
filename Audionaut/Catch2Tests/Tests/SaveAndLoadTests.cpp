@@ -2,8 +2,11 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectSerializer.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
@@ -11,22 +14,21 @@ auto testFilesDirectory = String(CURRENT_SOURCE_DIR) + String("/TestFiles/");
 
 SCENARIO("create new session, load audio file and save", "[engine][load][save]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine     = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
         
     auto inFile = File(testFilesDirectory + "silence-fade.aiff");
     REQUIRE(inFile.existsAsFile());
     
-    auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + AudiumEngine::projectFileName);
+    auto outProjectFile = File(testFilesDirectory + "Sessions/testing.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("new project") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
         
-        engine->openFile(inFile, nullptr);
+        store->open(inFile, nullptr);
         
         WHEN("save project") {
-            REQUIRE(engine->saveFile(outProjectFile, nullptr));
+            REQUIRE(store->save(outProjectFile, nullptr));
 
             THEN("examine project") {
                 REQUIRE(outProjectFile.exists());
@@ -42,30 +44,25 @@ SCENARIO("create new session, load audio file and save", "[engine][load][save]")
     
     // cleanup ... comment out in case you need to isolate an issue
     outProjectFile.getParentDirectory().deleteRecursively();
-    
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 
 SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
     
     
     auto inProject = File(testFilesDirectory + "/Sessions/120-funk-export.audium");
     REQUIRE(inProject.existsAsFile());
-    auto outProject = File(testFilesDirectory + "/Sessions/legacy-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/legacy-test.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("open legacy project") {
     
-        engine->openFile(inProject, nullptr);
+        store->open(inProject, nullptr);
         
         WHEN("save project") {
-            REQUIRE(engine->saveFile(outProject, nullptr));
+            REQUIRE(store->save(outProject, nullptr));
 
             THEN("examine project") {
                 REQUIRE(outProject.exists());
@@ -77,33 +74,28 @@ SCENARIO("load legacy project and save", "[engine][load][save][leagacy]")
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-    
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("view state is persisted with the project", "[engine][load][save][ui_state]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
 
-    auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/ui-state-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a project with a zoom factor and a scroll position") {
-        engine->createNewProject();
+        engine->getProjectSerializer()->createNewProject();
 
-        engine->getUiState()["arrangement"]["zoom_factor"] = 4.0;
-        engine->getUiState()["arrangement"]["scroll_x"] = 1234.5;
-        engine->getUiState()["arrangement"]["scroll_y"] = 42.0;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["zoom_factor"] = 4.0;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["scroll_x"] = 1234.5;
+        engine->getProjectSerializer()->getUiState()["arrangement"]["scroll_y"] = 42.0;
 
         WHEN("the project is saved and loaded again") {
-            REQUIRE(engine->saveFile(outProject, nullptr));
-            REQUIRE(engine->openFile(outProject.getParentDirectory(), nullptr));
+            REQUIRE(store->save(outProject, nullptr));
+            REQUIRE(store->open(outProject.getParentDirectory(), nullptr));
 
             THEN("the view state is recalled") {
-                auto& arrangement = engine->getUiState()["arrangement"];
+                auto& arrangement = engine->getProjectSerializer()->getUiState()["arrangement"];
                 REQUIRE(arrangement["zoom_factor"].template get<double>() == 4.0);
                 REQUIRE(arrangement["scroll_x"].template get<double>() == 1234.5);
                 REQUIRE(arrangement["scroll_y"].template get<double>() == 42.0);
@@ -111,38 +103,33 @@ SCENARIO("view state is persisted with the project", "[engine][load][save][ui_st
         }
 
         WHEN("a new project is created") {
-            engine->cleanup();
-            engine->createNewProject();
+            engine->getProjectSerializer()->cleanup();
+            engine->getProjectSerializer()->createNewProject();
 
             THEN("the view state does not carry over") {
-                REQUIRE_FALSE(engine->getUiState().contains("arrangement"));
+                REQUIRE_FALSE(engine->getProjectSerializer()->getUiState().contains("arrangement"));
             }
         }
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("load project and save", "[engine][load][save][new]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
     
     
     auto inProject = File(testFilesDirectory + "/Sessions/simple-sine.audium/Project.json");
-    auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "/Sessions/out-test.audium/" + ProjectFileStore::projectFileName);
     
     GIVEN("open project") {
 
-        engine->openFile(inProject, nullptr);
+        store->open(inProject, nullptr);
 
         WHEN("save project") {
-            REQUIRE(engine->saveFile(outProject, nullptr));
+            REQUIRE(store->save(outProject, nullptr));
 
             THEN("examine project") {
                 REQUIRE(outProject.exists());
@@ -154,17 +141,12 @@ SCENARIO("load project and save", "[engine][load][save][new]")
     }
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 
 SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][load][save][clip][volume]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
 
     auto sourceSession = File(testFilesDirectory + "Sessions/move-channels.audium");
     REQUIRE(sourceSession.exists());
@@ -175,10 +157,10 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
                              .getNonexistentSibling();
     REQUIRE(sourceSession.copyDirectoryTo(fileUnderTest));
 
-    auto outProject = File(testFilesDirectory + "Sessions/clip-gain-test.audium/" + AudiumEngine::projectFileName);
+    auto outProject = File(testFilesDirectory + "Sessions/clip-gain-test.audium/" + ProjectFileStore::projectFileName);
 
     GIVEN("a legacy project with gains stored on the regions") {
-        REQUIRE(engine->openFile(fileUnderTest, nullptr));
+        REQUIRE(store->open(fileUnderTest, nullptr));
 
         auto playList = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
 
@@ -191,8 +173,8 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
         WHEN("a gain is changed and the project is saved and loaded again") {
             playList->getPlayListItem(0)->getDynamics().setGain(0, 0.25);
 
-            REQUIRE(engine->saveFile(outProject, nullptr));
-            REQUIRE(engine->openFile(outProject.getParentDirectory(), nullptr));
+            REQUIRE(store->save(outProject, nullptr));
+            REQUIRE(store->open(outProject.getParentDirectory(), nullptr));
 
             THEN("the new and the migrated gains survive the round trip") {
                 auto reloaded = engine->getAudioTrackContainer()->getAudioTrack(0)->getPlayListContainer();
@@ -207,9 +189,5 @@ SCENARIO("clip gain migrates from legacy region gain and persists", "[engine][lo
     // cleanup ... comment out in case you need to isolate an issue
     outProject.getParentDirectory().deleteRecursively();
     fileUnderTest.deleteRecursively();
-
-    engine = nullptr;
-    DeletedAtShutdown::deleteAll();
-    MessageManager::deleteInstance();
 }
 

@@ -1,26 +1,26 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "TestEngine.h"
 
 using namespace audium;
 
 SCENARIO("region split/create scenario", "[engine][region]")
 {
-    juce::MessageManager::getInstance();
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-
     GIVEN("Load session file")
     {
-        auto engine     = AudiumFactory::createAudiumEngine();
+        TestEngine engine;
+    auto store = engine->getProjectFileStore();
         auto fileUnderTest = File(String(CURRENT_SOURCE_DIR) + String("/TestFiles/Sessions/120-funk-export-5-seconds.audium"));
         REQUIRE(fileUnderTest.existsAsFile());
-        auto ok = engine->openFile(fileUnderTest, nullptr);
+        auto ok = store->open(fileUnderTest, nullptr);
         REQUIRE(ok);
         
         
@@ -80,13 +80,8 @@ SCENARIO("region split/create scenario", "[engine][region]")
             }
         }
         
-//        engine->saveFile(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds-out.audium"));
-
-        engine = nullptr;
+//        store->save(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds-out.audium"));
     }
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 

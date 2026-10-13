@@ -25,11 +25,6 @@ public:
         zoomHandler(zoomHandler),
         arrangementMode(arrangementMode)
     {
-        visibileRectangle = std::make_unique<juce::DrawableRectangle>();
-        addAndMakeVisible(visibileRectangle.get());
-        visibileRectangle->setFill (juce::Colours::transparentBlack);
-        visibileRectangle->setStrokeFill (juce::Colours::white);
-        visibileRectangle->setStrokeThickness(1.f);
         updateFromEngine();
         
 
@@ -49,7 +44,8 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-
+        g.setColour (juce::Colours::white);
+        g.drawRect (visibleRectangle, 1.f);
     }
     
 
@@ -75,7 +71,8 @@ public:
         
         auto h = bounds.getHeight();
         
-        visibileRectangle->setRectangle(juce::Rectangle<float>(x, y, w, h).reduced(1.f, 2.f));
+        visibleRectangle = juce::Rectangle<float> (x, y, w, h).reduced (1.f, 2.f);
+        repaint();
     }
     
     
@@ -148,7 +145,7 @@ public:
     }
 
 private:
-    std::unique_ptr<juce::DrawableRectangle>    visibileRectangle;
+    juce::Rectangle<float>                      visibleRectangle;
     std::shared_ptr<AudioTrackListBox>          audioTrackListBox;
     std::shared_ptr<audium::AudiumEngine>               audiumEngine;
     std::shared_ptr<ZoomHandler>                zoomHandler;

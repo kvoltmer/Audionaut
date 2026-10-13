@@ -7,9 +7,10 @@ name: Windows CI
 # collides with juce::Rectangle wherever a file does `using namespace juce`.
 # Header-collision bugs of that shape are invisible to the other runners.
 #
-# This is the Windows gate for pull requests; the CircleCI job
-# (.circleci/config.yml) mirrors it for pushes to main/develop and adds the
-# installer artifact. Keep the two in sync.
+# This is the only Windows CI: it gates pull requests and runs on pushes to
+# main/develop. The installer is built by release-windows.yml on v* tags.
+# (The CircleCI mirror was removed 2026-09-20: its 60-minute plan cap no
+# longer fit the test build, and this workflow covers the same ground.)
 
 on:
   push:
@@ -71,15 +72,70 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
+      with:
+        # setup-msbuild defaults to the x86 MSBuild. Since the runner image's
+        # MSVC 14.51 update, the x86-hosted compiler exhausts its heap on this
+        # solution ("fatal error C1002: compiler is out of heap space in
+        # pass 2" - broke develop with no code change). Use the 64-bit chain.
+        msbuild-architecture: x64
 
     - name: Build the app
       # -m builds projects in parallel; the solution only defines x64.
+      # PreferredToolArchitecture keeps cl.exe itself x64-hosted (the C1002
+      # heap ceiling is a property of the x86-hosted compiler).
       run: >
         msbuild Audionaut/Builds/VisualStudio2026/Audionaut.sln
         -m
         -p:Configuration=${{ env.BUILD_TYPE }}
         -p:Platform=x64
+        -p:PreferredToolArchitecture=x64
         -v:minimal
+
+    # Agents reach the app through Tools/audionaut-mcp, which runs the
+    # installed Audionaut.exe with --json and reads the reply from a pipe.
+    # The GUI-subsystem exe re-attaches to its parent's console for terminal
+    # use; that must not take the reply off a pipe the caller set up. This
+    # drives the built app exactly the way the MCP server does.
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: MCP server against the app
+      working-directory: Tools/audionaut-mcp
+      env:
+        AUDIONAUT_CLI: ${{ github.workspace }}\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe
+      run: |
+        npm ci
+        npm test
+
+    # The step above runs Node without a console, as CI does, so the app's
+    # AttachConsole fails and its reply stays on the pipe either way. In a
+    # terminal (Claude Code in Windows Terminal) Node has a console for the
+    # app to attach to; the app then must still answer on the pipe. This runs
+    # the check under conhost --headless to give Node a console. (It passed
+    # against 1.6.2's code too, so it may not match a real terminal exactly.)
+    - name: App answers on the pipe when its caller has a console
+      shell: pwsh
+      run: |
+        $app = "$env:GITHUB_WORKSPACE\Audionaut\Builds\VisualStudio2026\x64\${{ env.BUILD_TYPE }}\App\Audionaut.exe"
+        $result = Join-Path $env:RUNNER_TEMP "pipe-check.txt"
+        $check = Join-Path $env:RUNNER_TEMP "pipe-check.cjs"
+        Set-Content $check @'
+        const { spawnSync } = require("child_process");
+        const fs = require("fs");
+        const [app, result] = process.argv.slice(2);
+        const run = spawnSync(app, ["--json"], { encoding: "utf8", windowsHide: true });
+        let verdict;
+        try { JSON.parse(run.stdout); verdict = "PASS"; }
+        catch { verdict = "FAIL: stdout was " + JSON.stringify(run.stdout) + ", exit " + run.status; }
+        fs.writeFileSync(result, verdict);
+        '@
+        Start-Process conhost.exe -ArgumentList "--headless", "node", "`"$check`"", "`"$app`"", "`"$result`"" -Wait
+        $verdict = Get-Content $result -ErrorAction SilentlyContinue
+        if (-not $verdict) { $verdict = "FAIL: the check did not run" }
+        Write-Output $verdict
+        if (-not $verdict.StartsWith("PASS")) { exit 1 }
 
     - name: Configure tests
       # No -DCMAKE_BUILD_TYPE: the Visual Studio generator is multi-config and

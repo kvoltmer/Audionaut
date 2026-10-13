@@ -32,13 +32,22 @@ std::vector<float> OnsetSegmenter::analyze(const juce::File& audioFile)
 }
 
 std::vector<float> OnsetSegmenter::analyze(const juce::File& audioFile,
-                                           const Parameters& params)
+                                           const Parameters& params,
+                                           const std::atomic<bool>* shouldAbort)
 {
 #if ! ESSENTIA_ENABLED
-    juce::ignoreUnused (audioFile, params);
+    juce::ignoreUnused (audioFile, params, shouldAbort);
     return {};
 #else
     if (! audioFile.existsAsFile())
+        return {};
+
+    const auto aborted = [shouldAbort]
+    {
+        return shouldAbort != nullptr && shouldAbort->load(std::memory_order_relaxed);
+    };
+
+    if (aborted())
         return {};
 
     using namespace essentia;
@@ -68,6 +77,17 @@ std::vector<float> OnsetSegmenter::analyze(const juce::File& audioFile,
     onsetRate->output("onsetRate").set(rate);
 
     audio->compute();
+
+    // OnsetRate runs the whole file in one uninterruptible compute(), so the
+    // abort flag can only be honoured between the decode and the detection.
+    // An abandoned analysis returns empty, which the caller treats like a
+    // failure (nothing is cached, so it is retried next time).
+    if (aborted())
+    {
+        essentia::shutdown();
+        return {};
+    }
+
     onsetRate->compute();
 
     // OnsetRate already reports onset positions in seconds.

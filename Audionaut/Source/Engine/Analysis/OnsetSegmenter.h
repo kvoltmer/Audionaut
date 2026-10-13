@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 #include <JuceHeader.h>
 
@@ -43,10 +44,16 @@ public:
      * @brief Detects onsets for the given audio file.
      * @param audioFile The audio file to analyse.
      * @param params Onset-detection parameters.
-     * @return Onset timestamps in seconds. Empty on failure.
+     * @param shouldAbort Optional flag polled between the analysis stages
+     *        (decoding, onset detection). Once set, the analysis gives up at
+     *        the next poll and returns empty, so a caller shutting down (see
+     *        AnalysisWorker) waits for one stage at most rather than for the
+     *        whole file.
+     * @return Onset timestamps in seconds. Empty on failure or when aborted.
      */
     std::vector<float> analyze(const juce::File& audioFile,
-                               const Parameters& params);
+                               const Parameters& params,
+                               const std::atomic<bool>* shouldAbort = nullptr);
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OnsetSegmenter)

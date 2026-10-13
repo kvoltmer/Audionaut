@@ -12,6 +12,7 @@
 
 #include "Interface/Views/TransportView.h"
 #include "Interface/Controls/LoopDraggerControl.h"
+#include "Interface/Controls/RectangleMarker.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 class TransportPositionControl  :   public juce::Component,
@@ -35,17 +36,16 @@ public:
         transportView = std::make_unique<TransportView> (zoomHandler);
         addAndMakeVisible(transportView.get());
 
-        loopRangeMarker.setFill(Colours::white.withAlpha(0.1f));
-        loopRangeMarker.setStrokeFill(Colours::white.withAlpha(0.85f));
-        loopRangeMarker.setStrokeThickness(1.f);
+        loopRangeMarker.setFill (Colours::white.withAlpha (0.1f));
+        loopRangeMarker.setStroke (Colours::white.withAlpha (0.85f), 1.f);
 
-        addAndMakeVisible(loopRangeMarker);
+        addAndMakeVisible (loopRangeMarker);
         
         startPositionMarker.setFill (Colours::red.withAlpha (0.85f));
         addAndMakeVisible (startPositionMarker);
         
         mouseOverGridMarker.setFill(gridColour);
-        addAndMakeVisible(mouseOverGridMarker);
+        addAndMakeVisible (mouseOverGridMarker);
         
 
         loopDraggerControl = std::make_unique<LoopDraggerControl>(nullptr,
@@ -81,7 +81,11 @@ public:
 
     void resized() override
     {
-        transportView->setBounds(getLocalBounds());
+        transportView->setBounds (getLocalBounds());
+
+        for (auto* marker : { &loopRangeMarker, &startPositionMarker, &mouseOverGridMarker })
+            marker->setBounds (getLocalBounds());
+
         updateLoopView();
     }
     
@@ -98,6 +102,12 @@ public:
             auto loopActive = playListScheduler->getTransportLoop()->isLoopActive();
             loopRangeMarker.setVisible(loopActive);
             loopDraggerControl->setVisible(loopActive);
+
+            // follow loop changes made elsewhere (Loop Selection, undo) - but
+            // not while the user is dragging the loop handles, the dragger
+            // owns its bounds until onDragEnd commits them to the engine
+            if (loopActive && ! loopDraggerControl->isMouseButtonDown (true))
+                updateLoopView();
         }
             
     }
@@ -191,9 +201,9 @@ private:
     std::shared_ptr<ZoomHandler> zoomHandler;
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
-    juce::DrawableRectangle startPositionMarker;
-    juce::DrawableRectangle mouseOverGridMarker;
-    juce::DrawableRectangle loopRangeMarker;
+    RectangleMarker startPositionMarker;
+    RectangleMarker mouseOverGridMarker;
+    RectangleMarker loopRangeMarker;
     
     std::unique_ptr<TransportView> transportView;
     std::unique_ptr<LoopDraggerControl> loopDraggerControl;

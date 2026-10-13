@@ -2,10 +2,11 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Factory/AudioTrackFactory.h"
 #include "Engine/Resource/ChannelMapping.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 #include "Engine/Export/AudioExporter.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 
@@ -14,6 +15,7 @@
 #include "Engine/Recording/RecordingActionHandler.h"
 
 #include "TestUtils.h"
+#include "TestEngine.h"
 
 using namespace audium;
 using namespace juce;
@@ -21,11 +23,6 @@ using namespace juce;
 
 SCENARIO("recording scenario", "[engine][clip][volume]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-    
-    
-    
     auto sr = 44100.0;
     // generate DC offset
     auto inputFile = generateDcOffsetAudioFile(2.0);
@@ -37,11 +34,12 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
     bounceConfig->blockSize = 1024 * 4;
     bounceConfig->numChannels = 1;
 
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
 
     GIVEN("generated audio file with loop")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
         engine->getAudioTrackContainer()->getAudioRegionAdapter().splitRegions(1.0, audium::seconds);
         
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
@@ -84,30 +82,22 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
         }
     }
 
-    engine = nullptr;
-    
     if (bounceConfig->fileName.existsAsFile())
         bounceConfig->fileName.deleteFile();
     
     if (inputFile.existsAsFile())
         inputFile.deleteFile();
-
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 
 SCENARIO("clip gain is per playlist item, not per region", "[engine][clip][volume]")
 {
-    MessageManager::getInstance();
-    MessageManagerLock mmLock(Thread::getCurrentThread());
-
     auto inputFile = generateDcOffsetAudioFile(2.0);
-    auto engine = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
+    auto store = engine->getProjectFileStore();
 
     GIVEN("two playlist items sharing one region")
     {
-        engine->openFile(inputFile, nullptr);
+        store->open(inputFile, nullptr);
 
         auto track = engine->getAudioTrackContainer()->getAudioTrack(0);
         auto item0 = track->getPlayListContainer()->getPlayListItem(0);
@@ -130,12 +120,7 @@ SCENARIO("clip gain is per playlist item, not per region", "[engine][clip][volum
         }
     }
 
-    engine = nullptr;
-
     if (inputFile.existsAsFile())
         inputFile.deleteFile();
-
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
 }
 

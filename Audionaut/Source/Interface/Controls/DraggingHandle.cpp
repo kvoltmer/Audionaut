@@ -66,7 +66,7 @@ void DraggingHandle::mouseDrag (const juce::MouseEvent& e)
             auto newBounds = originalBounds + distance;
 
             auto topLimit = DraggerControl::draggerHeight;
-            auto bottomLimit = (bottomAnchorY > 0 ? bottomAnchorY : getParentHeight()) - controlHeight;
+            auto bottomLimit = std::max(topLimit, (bottomAnchorY > 0 ? bottomAnchorY : getParentHeight()) - controlHeight);
             newBounds.setY(juce::jlimit(topLimit, bottomLimit, newBounds.getY()));
 
             setBounds(newBounds);
@@ -176,7 +176,8 @@ void DraggingHandle::setValue(double val)
         auto midValue = std::pow(0.5, val);
         auto x = clipRange.getStart() + clipRange.getLength() / 2 - controlWidth / 2;
         auto y = static_cast<int>(bandBottom - midValue * bandHeight) - controlHeight / 2;
-        y = juce::jlimit(bandTop, bandBottom - controlHeight, y);
+        // a minimized track leaves the band shorter than the handle itself
+        y = juce::jlimit(bandTop, std::max(bandTop, bandBottom - controlHeight), y);
         setBounds(x, y, controlWidth, controlHeight);
         return;
     }

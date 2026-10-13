@@ -62,7 +62,15 @@ public:
     AnalysisWorker(std::shared_ptr<AnalysisProvider> analysisProvider,
                    std::vector<AnalysisType> defaultAnalysisTypes);
 
-    /** @brief Stops the background thread, waiting for any in-flight analysis. */
+    /**
+     * @brief Stops the background thread.
+     *
+     * Pending jobs are dropped and an analysis in flight is abandoned at its
+     * next stage (see AnalysisProvider::analyzeFile's abort flag), so this
+     * returns after at most one Essentia stage rather than after the whole
+     * file - quitting must not hang on a long recording's analysis. Nothing
+     * of the abandoned analysis is cached.
+     */
     ~AnalysisWorker() override;
 
     /**
@@ -145,6 +153,15 @@ public:
     /** @brief Total analyses left to do: queued plus any currently running. */
     int getRemainingCount() const;
 
+    /**
+     * @brief Analyses left for @p audioFile alone: its queued jobs plus one
+     *        if an analysis of it is running right now.
+     *
+     * Lets the UI show per-clip progress (the arrangement clip header) rather
+     * than only the global status line. Safe to call from the message thread.
+     */
+    int getRemainingCount(const juce::File& audioFile) const;
+
     /** @brief Name of the file being analysed right now, or empty if idle. */
     juce::String getCurrentFileName() const;
 
@@ -177,8 +194,17 @@ private:
     // True only while useTimeSlice() is running an analysis; read by the UI.
     std::atomic<bool> busy { false };
 
+    // Set by the destructor; the running analysis polls it between its stages
+    // and gives up once it is set.
+    std::atomic<bool> abortRequested { false };
+
     // Name of the file currently being analysed (empty when idle); guarded by mutex.
     juce::String currentFileName;
+
+    // Full file currently being analysed (invalid when idle), for the per-file
+    // remaining count - currentFileName alone cannot be compared to a path;
+    // guarded by mutex.
+    juce::File currentFile;
 
     // Type of the analysis currently running (nullopt when idle); guarded by mutex.
     std::optional<AnalysisType> currentAnalysisType;

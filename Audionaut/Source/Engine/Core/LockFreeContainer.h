@@ -5,48 +5,59 @@
 
 #pragma once
 
+#include <array>
+#include <atomic>
+#include <vector>
+
 #include <farbot/RealtimeTraits.hpp>
-#include <farbot/fifo.hpp>
 
 namespace audium
 {
 
 /**
  * @class LockFreeContainer
- * @brief A lock-free container for real-time data processing.
+ * @brief Hands whole snapshots of a vector from one producer thread to one
+ *        consumer thread without locks or consumer-side allocation.
  *
- * The `LockFreeContainer` class provides a mechanism for managing data in a
- * lock-free manner, suitable for real-time audio applications. It uses a FIFO
- * buffer for efficient data transfer between producer and consumer objects.
+ * The producer fills getProducerObjects() and commit()s; the consumer
+ * pull()s and then reads getConsumerObjects() until its next pull(). A
+ * commit replaces any snapshot the consumer has not pulled yet - the
+ * consumer only ever sees the latest - and no snapshot is ever dropped
+ * for size: the producer vectors grow on the producer thread as needed.
  *
- * @tparam _Tp The type of objects stored in the container. Must be move-assignable
- *             in a real-time context.
+ * Three slots rotate between the two threads: one the consumer reads, one
+ * the producer fills, and one in the middle that carries the latest
+ * snapshot across. Each side exchanges its own slot for the middle one on
+ * a single atomic, so exactly one slot is ever in the middle and neither
+ * side can take the other's - and the consumer never copies, moves or
+ * allocates.
+ *
+ * @tparam _Tp The element type. Must be move-assignable in a real-time
+ *             context.
  */
 template <class _Tp>
 class LockFreeContainer
 {
 public:
     /**
-     * @brief Constructs a `LockFreeContainer` with a specified capacity.
-     * @param capacity The maximum number of elements the container can hold.
+     * @brief Constructs a `LockFreeContainer`.
+     * @param capacity The element count to reserve up front; the slots
+     *        still grow (on the producer thread) beyond it when needed.
      */
-    LockFreeContainer(int capacity) :
-        fifo(capacity)
+    LockFreeContainer(int capacity)
     {
+        for (auto& slot : slots)
+            slot.reserve(static_cast<size_t>(capacity));
+
+        producer_objects.reserve(static_cast<size_t>(capacity));
     }
 
-
-    /**
-     * @brief Default destructor.
-     */
     ~LockFreeContainer() = default;
 
-    
     static_assert (farbot::is_realtime_move_assignable<_Tp>::value);
-    static_assert(! std::atomic<_Tp>::is_always_lock_free);
-    
+
     /**
-     * @brief Retrieves the producer objects.
+     * @brief Retrieves the producer objects (producer thread).
      * @return A reference to the vector of producer objects.
      */
     std::vector<_Tp> &getProducerObjects ()
@@ -55,7 +66,7 @@ public:
     }
 
     /**
-     * @brief Clears the producer objects.
+     * @brief Clears the producer objects (producer thread).
      */
     void clear ()
     {
@@ -63,74 +74,65 @@ public:
     }
 
     /**
-     * @brief Retrieves the consumer objects.
-     * @return A const reference to the vector of consumer objects.
+     * @brief Retrieves the consumer objects (consumer thread): the snapshot
+     *        the last pull() delivered, valid until the next pull().
      */
     const std::vector<_Tp> &getConsumerObjects ()
     {
-        return consumer_objects;
+        return slots[static_cast<size_t>(consumerSlot)];
     }
 
     /**
-     * @brief Commits the producer objects to the FIFO buffer.
+     * @brief Publishes a snapshot of the producer objects (producer thread).
      *
-     * This method transfers all producer objects to the FIFO buffer and marks
-     * them as committed.
+     * Copies the producer objects into the producer's slot and swaps it
+     * into the middle, marked fresh; whatever was there (an unpulled
+     * snapshot or a slot the consumer finished with) becomes the next
+     * producer slot.
      */
     void commit ()
     {
-        if (objects_committed.load()) {
-            objects_committed.store(false);
-            _Tp object;
-            while (fifo.pop (object)) {
-                ;
-            }
-        }
-        
-        for (_Tp object : producer_objects) {
-            fifo.push(std::move(object));
-        }
-        
-        objects_committed.store(true);
+        slots[static_cast<size_t>(producerSlot)] = producer_objects;
+
+        const auto previous = middle.exchange(producerSlot | freshBit);
+        producerSlot = previous & slotMask;
     }
 
     /**
-     * @brief Pulls objects from the FIFO buffer to the consumer objects.
-     * @return True if objects were successfully pulled, false otherwise.
+     * @brief Takes the latest committed snapshot, if any (consumer thread).
+     * @return True if a new snapshot was pulled, false if nothing was
+     *         committed since the last pull.
      */
+    /** Producer side: true once the consumer has taken over the last commit
+        (so nothing it references only through an older snapshot is reachable). */
+    bool isPulled () const noexcept
+    {
+        return (middle.load() & freshBit) == 0;
+    }
+
     bool pull ()
     {
-        if (objects_committed.load()) {
-            consumer_objects.clear();
-            _Tp object;
-            while (fifo.pop (object))
-                consumer_objects.push_back(object);
-            objects_committed.store(false);
-            return true;
-        }
-        return false;
+        // only the producer sets the fresh bit and only this clears it, so
+        // once seen it stays set until the exchange below
+        if ((middle.load() & freshBit) == 0)
+            return false;
+
+        const auto next = middle.exchange(consumerSlot);   // clean: no fresh bit
+        consumerSlot = next & slotMask;
+        return true;
     }
 
 private:
-    /**
-     * @brief The FIFO buffer for lock-free data transfer.
-     */
-    farbot::fifo<_Tp, farbot::fifo_options::concurrency::single, farbot::fifo_options::concurrency::single> fifo;
+    static constexpr int slotMask = 0x3;
+    static constexpr int freshBit = 0x4;
 
-    /**
-     * @brief The vector of producer objects.
-     */
+    std::array<std::vector<_Tp>, 3> slots;
+
     std::vector<_Tp> producer_objects;
 
-    /**
-     * @brief The vector of consumer objects.
-     */
-    std::vector<_Tp> consumer_objects;
-
-    /**
-     * @brief Indicates whether objects have been committed to the FIFO buffer.
-     */
-    std::atomic<bool> objects_committed = false;
+    int producerSlot = 0;               // producer thread only
+    int consumerSlot = 1;               // consumer thread only
+    std::atomic<int> middle { 2 };      // slot index, plus freshBit while unpulled
 };
 
 } // namespace audium

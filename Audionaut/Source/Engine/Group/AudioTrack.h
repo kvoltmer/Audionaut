@@ -24,7 +24,7 @@ class AudioResourceContainer;
 class AudioResource;
 class PlayListItem;
 class PlayListScheduler;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class ResourceGroup;
 class AudioChannel;
 class PositionableBase;
@@ -34,6 +34,8 @@ class AnalysisProvider;
 
 typedef SelectableObjectContainer<ResourceGroup> tResourceGroupContainer;
 typedef SelectableObjectContainer<AudioChannel> tAudioChannelContainer;
+
+struct UndoableChannelAction;
 
 /**
  * @class AudioTrack
@@ -51,7 +53,7 @@ public:
      * @brief Constructs an `AudioTrack` instance.
      * @param owner_ Reference to the owning `AudioTrackContainer`.
      * @param audioResourceContainer_ Reference to the container holding audio resources.
-     * @param transportSourceContainer_ Shared pointer to the transport source container.
+     * @param voiceSourceContainer_ Shared pointer to the voice source container.
      * @param selectionManager_ Shared pointer to the selection manager.
      * @param resourceGroups_ Shared pointer to the resource group container.
      * @param channels_ Shared pointer to the audio channel container.
@@ -59,27 +61,12 @@ public:
      */
     AudioTrack(AudioTrackContainer &owner_,
                AudioResourceContainer &audioResourceContainer_,
-               std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+               std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                std::shared_ptr<SelectionManager> selectionManager_,
                std::shared_ptr<tResourceGroupContainer> resourceGroups_,
                std::shared_ptr<tAudioChannelContainer> channels_,
                std::shared_ptr<AnalysisProvider> analysisProvider_,
-               juce::String nameString_) :
-        Selectable(selectionManager_),
-        owner(owner_),
-        audioResourceContainer(audioResourceContainer_),
-        transportSourceContainer(transportSourceContainer_),
-        selectionManager(selectionManager_),
-        analysisProvider(analysisProvider_),
-        resourceGroupContainer(resourceGroups_),
-        audioChannelContainer(channels_),
-        name(nameString_.toStdString())
-    {
-        playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
-                                                                                      owner.getTempoProvider(),
-                                                                                      transportSourceContainer,
-                                                                                      selectionManager));
-    }
+               juce::String nameString_);
     
     /**
      * @brief Destructor for `AudioTrack`.
@@ -119,7 +106,7 @@ public:
     AudioResourceContainer &getAudioResourceContainer() const { return audioResourceContainer; }
     AudioTrackContainer &getAudioTrackContainer() const { return owner; }
     std::shared_ptr<PlayListContainer> getPlayListContainer() const { return playListContainer; }
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const { return transportSourceContainer; }
+    std::shared_ptr<VoiceSourceContainer> getVoiceSourceContainer() const { return voiceSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     
     /**
@@ -134,7 +121,9 @@ public:
     bool readFromStream (juce::InputStream& inputStream, bool rebuild) override;
     bool writeToJson (json& output) override;
     bool readFromJson (json& input, bool rebuild) override;
-    int getSizeInUnits() override;
+    /** Whether the last readFromJson() replaced the channels instead of
+        reading them in place - see AudioTrackContainer::didLastReadRebuildStructure(). */
+    bool didLastReadRebuildChannels() const { return lastReadRebuiltChannels; }
     bool writeChannelToJson (json& output, AudioChannel* audioChannel);
     void mergeChannelFromJson(json& input);
     
@@ -160,9 +149,11 @@ public:
     bool isRecordEnabled(const int channelNumber = -1);
     bool isRecording(const int channelNumber = -1) const;
     
-    // undo for continious parameters:
-    void onDragStart();
-    void onDragEnd();
+    // Undo for one channel's mixer parameters (gain, pan, mute, solo,
+    // monitor): onDragStart snapshots that channel's data, onDragEnd
+    // records the change as one undo step - a no-op when nothing changed.
+    void onDragStart(int channelNumber);
+    void onDragEnd(const juce::String& transactionName = "Set Channel Parameter");
     
     // drag & drop:
     void dropSelectedAudioRegions(int insertIndex);
@@ -225,7 +216,7 @@ private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
     AudioResourceContainer &audioResourceContainer; ///< Reference to the audio resource container.
     std::shared_ptr<PlayListContainer> playListContainer; ///< Shared pointer to the playlist container.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer; ///< Shared pointer to the voice source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
     std::shared_ptr<AnalysisProvider> analysisProvider;
 public:
@@ -235,8 +226,9 @@ public:
 private:
     std::string name; ///< Name of the audio track.
     AudioTrackViewState viewState { *this }; ///< View/display state of the audio track.
-    std::unique_ptr<UndoableContainerAction> undoableContainerAction; ///< Undoable action container.
-    
+    std::unique_ptr<UndoableChannelAction> undoableChannelAction; ///< Pending channel-parameter undo step.
+    bool lastReadRebuiltChannels = false; ///< Set by readFromJson(): the channels were replaced.
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioTrack)
     
 };

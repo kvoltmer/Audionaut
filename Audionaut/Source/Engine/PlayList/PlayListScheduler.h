@@ -22,7 +22,8 @@ namespace audium {
 
 class PlayListContainer;
 class PlayListItem;
-class TransportSourceContainer;
+class VoiceSourceContainer;
+struct ClipFadeSpec;
 class AudioResourceContainer;
 class Playback;
 class DspClip;
@@ -47,7 +48,7 @@ public:
                       std::shared_ptr<TempoProvider> tempoProvider_,
                       std::shared_ptr<audium::LinkEngine> linkEngine_,
                       std::shared_ptr<audium::AudioClipContainer> audioClipContainer_,
-                      std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                      std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
                       std::shared_ptr<TransportLoop> transportLoop_) :
@@ -56,7 +57,7 @@ public:
         tempoProvider(tempoProvider_),
         linkEngine(linkEngine_),
         audioClipContainer(audioClipContainer_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         playback(playback_),
         audioBusInterface(audioBusInterface_),
         transportLoop(transportLoop_)
@@ -76,8 +77,28 @@ public:
     
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate);
     
+    /// The file position (seconds) a voice for the clip starts from when
+    /// the transport is at transportPosition - what scheduleClip seeks to,
+    /// and what the standby prime targets ahead of a loop wrap.
+    static double restartFilePosition(const audium::DspClip &clip,
+                                      const ClipFadeSpec &spec,
+                                      double transportPosition);
+
+    /// Runs the standby prime of a stretched voice over the blocks before
+    /// its next start - the clip's start or the loop wrap, whichever is
+    /// nearer; a no-op outside that window or for other clips.
+    void primeStandbyForUpcomingStart(const audium::DspClip &clip,
+                                      VoiceSource* voiceSource,
+                                      double transportPosition,
+                                      const TransportLoop::LoopResult &loopResult,
+                                      int numSamples);
+
+    /// Primes, whole and on the calling (message) thread, the standbys of
+    /// the stretched clips the first block after play start will schedule.
+    void primeStandbyAtPlayStart();
+
     bool scheduleClip(const audium::DspClip &clip,
-                      std::shared_ptr<AudiumTransportSource> transportSource,
+                      VoiceSource* voiceSource,
                       double transportPosition,
                       int sampleOffset,
                       int numSamples);
@@ -108,8 +129,10 @@ public:
     template <typename ProcessContext>
     void process (const ProcessContext& context, bool isPlaying, double beats, int numSamples) noexcept
     {
-        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getNumAudioTrackChannels());
-        
+        // the published count, never the track/channel vectors: the message
+        // thread grows and shrinks those underneath this callback
+        audioBusInterface->setNumAudioBusChannels(audioTrackContainer->getPublishedNumAudioTrackChannels());
+
         if (isPlaying &&
             beats >= 0.0) {
             
@@ -136,11 +159,15 @@ public:
         
     double getTotalLength(audium::TimeContextType context, bool addOverhead = false) const;
     
-    void bouncePlayListItem(juce::AudioFormatWriter* writer,
+    /** Renders the config's playlist item into the writer.
+        @return False when a write to the file failed. */
+    bool bouncePlayListItem(juce::AudioFormatWriter* writer,
                             std::shared_ptr<ExportAudioConfig> config,
                             std::function<void ()> callback);
-    
-    void bounceProject(juce::AudioFormatWriter* writer,
+
+    /** Renders the project (from the config's position) into the writer.
+        @return False when a write to the file failed. */
+    bool bounceProject(juce::AudioFormatWriter* writer,
                       std::shared_ptr<ExportAudioConfig> config,
                       std::function<void ()> callback);
     
@@ -171,6 +198,42 @@ public:
 #endif
     
     PlayListSchedulerData data;
+
+    /// Stretched clips prime a standby stretcher over the blocks before
+    /// their start (clip start, loop wrap, play start) instead of inside
+    /// that block (see StretchAudioSource::primeStandby). Tests flip it
+    /// off to compare.
+    std::atomic<bool> standbyPrimingEnabled { true };
+
+    /// How far ahead of a start the standby prime begins, in seconds.
+    static constexpr double standbyPrimeHorizonSeconds = 0.25;
+
+    /// Whether an offline render (export, stem separation) is walking the
+    /// play list and voice sources right now. The app runs those on a worker
+    /// thread behind a modal progress window whose loop keeps dispatching
+    /// timers and agent requests, so whatever would rebuild the graph - an
+    /// external reload, a hosted agent edit - checks this first and waits
+    /// for the render to end.
+    bool isOfflineRendering() const noexcept { return offlineRenders.load() > 0; }
+
+    /// Marks an offline render for its lifetime. Nests: the app takes one on
+    /// the message thread before it starts the worker, so no reload can slip
+    /// in between, and AudioExporter takes one around every bounce.
+    class ScopedOfflineRender
+    {
+    public:
+        explicit ScopedOfflineRender (PlayListScheduler& scheduler_) noexcept : scheduler (scheduler_)
+        {
+            ++scheduler.offlineRenders;
+        }
+
+        ~ScopedOfflineRender() noexcept { --scheduler.offlineRenders; }
+
+    private:
+        PlayListScheduler& scheduler;
+
+        JUCE_DECLARE_NON_COPYABLE (ScopedOfflineRender)
+    };
     
     std::function<void()> onRecordingStartedFunction;
     
@@ -182,12 +245,33 @@ private:
                  const TransportLoop::LoopResult loopResult);
     
     
+    /// A fresh clip snapshot reached a playing voice. Only the gain moved:
+    /// applied live. A RePitch clip: restarts now (cheap). A Stretch clip
+    /// with a standby lane: keeps playing its old alignment until a position
+    /// snapshotRestartDeferSeconds ahead while the lane primes for it, so
+    /// the restart there only swaps lanes instead of priming in the block.
+    void onClipSnapshotChanged(const audium::DspClip& dspClip,
+                               VoiceSource* voiceSource,
+                               const TransportLoop::LoopResult& loopResult,
+                               double transportPosition,
+                               int numSamples);
+    /// Lands a deferred restart in the block holding its position: the
+    /// voice re-seeks mid-block at exactly the primed position (like a loop
+    /// wrap), so timing jitter between blocks cannot miss the standby key.
+    void restartAtPendingPosition(const audium::DspClip& dspClip,
+                                  VoiceSource* voiceSource,
+                                  double transportPosition,
+                                  int numSamples);
+    /// How long a playing Stretch clip keeps its old alignment after its
+    /// clip changed while the standby lane primes for the restart.
+    static constexpr double snapshotRestartDeferSeconds = 0.05;
+
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
     std::shared_ptr<TempoProvider> tempoProvider;
     std::shared_ptr<LinkEngine> linkEngine;
     std::shared_ptr<AudioClipContainer> audioClipContainer;
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer;
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer;
     std::shared_ptr<Playback> playback;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     std::shared_ptr<TransportLoop> transportLoop;
@@ -199,6 +283,8 @@ private:
     std::atomic<bool> forcePosition = false;
     
     std::atomic<double> totalLengthClocks = 0.0;
+
+    std::atomic<int> offlineRenders { 0 };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListScheduler)
 };

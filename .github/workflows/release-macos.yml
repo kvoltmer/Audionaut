@@ -1,0 +1,195 @@
+name: macOS Release
+
+# Builds the Release macOS app, signs and notarizes it, packages it as a
+# disk image and attaches it to a GitHub Release. Trigger by pushing a
+# version tag:
+#   git tag v1.2.0 && git push origin v1.2.0
+# The tag must match the version in Audionaut.jucer (checked below).
+#
+# Can also be run manually from the Actions tab to exercise the build and
+# the packaging - a manual run skips the tag check and publishes nothing;
+# the image is kept as a workflow artifact instead.
+#
+# Runs alongside the Linux and Windows release workflows on the same tag;
+# all three attach their artifacts to one Release (whichever finishes first
+# creates it).
+#
+# Secrets (all optional - a missing one degrades the build rather than
+# failing it, so a fork or a dry run still produces an image):
+#   MACOS_CERTIFICATE_P12       base64 of the "Developer ID Application"
+#                               certificate + key exported as .p12
+#   MACOS_CERTIFICATE_PASSWORD  the .p12 password
+#   NOTARY_KEY_ID               App Store Connect API key id
+#   NOTARY_ISSUER_ID            App Store Connect API issuer id
+#   NOTARY_KEY_P8               the API key's .p8 contents
+#   GA4_API_SECRET              see the analytics step
+# Without the certificate the app is ad-hoc signed and not notarized:
+# fine for a dry run, unusable for a release (Gatekeeper rejects it).
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+
+    # Apple silicon runner: the app is built arm64-only (VALID_ARCHS in the
+    # .jucer), and the Essentia cache key is per runner.os/arch, so this
+    # shares the cache the macOS test workflow saves.
+    runs-on: macos-15
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    # No `git lfs pull`: the LFS files are test wavs, and this workflow runs
+    # no tests.
+
+    - name: Check tag matches .jucer version
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        JUCER_VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        echo "tag: $TAG_VERSION  .jucer: $JUCER_VERSION"
+        if [ "$TAG_VERSION" != "$JUCER_VERSION" ]; then
+          echo "::error::Tag version ($TAG_VERSION) does not match Audionaut.jucer version ($JUCER_VERSION). Bump the .jucer version (and re-save with Projucer) or fix the tag."
+          exit 1
+        fi
+
+    # A tag run can only restore caches scoped to the tag itself or to the
+    # default branch, so a release cut before the macOS test workflow has
+    # run on main builds Essentia cold here - correct, just slower.
+    - name: Build Essentia
+      uses: ./.github/actions/build-essentia
+
+    - name: Write analytics credentials
+      # the GA4 API secret is never committed; without the repository
+      # secret the release ships with analytics disabled. The check has to
+      # live in the script: the secrets context is not allowed in a step
+      # `if`, and using it there makes GitHub reject the whole workflow.
+      env:
+        GA4_API_SECRET: ${{ secrets.GA4_API_SECRET }}
+      run: |
+        if [ -z "$GA4_API_SECRET" ]; then
+          echo "GA4_API_SECRET not set - building with analytics disabled"
+          exit 0
+        fi
+        printf '#pragma once\n#define GA4_API_SECRET "%s"\n' "$GA4_API_SECRET" > Audionaut/Source/Application/AnalyticsCredentials.h
+
+    - name: Import signing certificate
+      # Into a throwaway keychain (deleted in the last step) so the runner's
+      # login keychain never sees the key. The partition list lets codesign
+      # use the key without a UI prompt. The identity's name is read back
+      # rather than hard-coded, so a renewed certificate needs no edit here.
+      id: cert
+      env:
+        MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+        MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      run: |
+        if [ -z "$MACOS_CERTIFICATE_P12" ]; then
+          echo "MACOS_CERTIFICATE_P12 not set - signing ad-hoc, skipping notarization"
+          echo "identity=-" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+        KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
+        echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+        security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+        security set-keychain-settings -lut 21600 "$KEYCHAIN"
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+        security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+        security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+        security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+        rm "$RUNNER_TEMP/certificate.p12"
+        IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')
+        if [ -z "$IDENTITY" ]; then
+          echo "::error::No 'Developer ID Application' identity in the imported certificate"
+          exit 1
+        fi
+        echo "identity: $IDENTITY"
+        echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+
+    - name: Build, sign and package
+      # package.sh compiles Release with AUDIONAUT_GITHUB_CHANNEL (update
+      # check against GitHub, not the App Store), signs with the hardened
+      # runtime and builds the disk image next to itself.
+      env:
+        SIGN_IDENTITY: ${{ steps.cert.outputs.identity }}
+      run: |
+        Audionaut/Installers/macOS/package.sh
+        ls -l Audionaut/Installers/macOS/Audionaut-*.dmg
+
+    - name: Notarize and staple
+      # Notarizing the image covers the app inside it. The stapled ticket
+      # lets Gatekeeper pass the image offline; the spctl check at the end
+      # is the same assessment a user's Mac performs on opening it.
+      env:
+        SIGN_IDENTITY: ${{ steps.cert.outputs.identity }}
+        NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+        NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+      working-directory: Audionaut/Installers/macOS
+      run: |
+        if [ "$SIGN_IDENTITY" = "-" ]; then
+          echo "ad-hoc signed - nothing to notarize"
+          exit 0
+        fi
+        if [ -z "$NOTARY_KEY_ID" ] || [ -z "$NOTARY_ISSUER_ID" ] || [ -z "$NOTARY_KEY_P8" ]; then
+          echo "::warning::NOTARY_* secrets not set - the image is signed but not notarized"
+          exit 0
+        fi
+        DMG=$(ls Audionaut-*.dmg)
+        printf '%s\n' "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary.p8"
+        if ! xcrun notarytool submit "$DMG" --key "$RUNNER_TEMP/notary.p8" \
+              --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
+              --wait --timeout 30m --output-format plist > "$RUNNER_TEMP/notary.plist"; then
+          echo "::error::notarytool submit failed"
+          exit 1
+        fi
+        STATUS=$(/usr/libexec/PlistBuddy -c 'Print :status' "$RUNNER_TEMP/notary.plist")
+        SUBMISSION=$(/usr/libexec/PlistBuddy -c 'Print :id' "$RUNNER_TEMP/notary.plist")
+        echo "notarization $SUBMISSION: $STATUS"
+        if [ "$STATUS" != "Accepted" ]; then
+          xcrun notarytool log "$SUBMISSION" --key "$RUNNER_TEMP/notary.p8" \
+            --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
+          exit 1
+        fi
+        rm "$RUNNER_TEMP/notary.p8"
+        xcrun stapler staple "$DMG"
+        spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG"
+
+    - name: Keep the image as a workflow artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-dmg
+        path: Audionaut/Installers/macOS/Audionaut-*.dmg
+        if-no-files-found: error
+
+    - name: Upload to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # The Linux and Windows release workflows run on the same tag; the
+        # `|| upload` covers losing the race to their `gh release create`.
+        ARTIFACTS=(Audionaut/Installers/macOS/Audionaut-*.dmg)
+        if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
+        else
+          gh release create "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" \
+            --title "Audionaut $GITHUB_REF_NAME" --generate-notes \
+            || gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
+        fi
+
+    - name: Remove the signing keychain
+      if: always()
+      run: |
+        KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+        if [ -f "$KEYCHAIN" ]; then
+          security delete-keychain "$KEYCHAIN"
+        fi

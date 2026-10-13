@@ -9,6 +9,7 @@
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Link/LinkEngine.hpp"
+#include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Recording/RecordingActionHandler.h"
 
@@ -234,6 +235,10 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
     addAndMakeVisible(stereoMeter.get());
+
+    // dsp load meter
+    loadMeter = std::make_unique<LoadMeter>();
+    addAndMakeVisible(loadMeter.get());
     
     // master volume
     volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
@@ -290,6 +295,8 @@ void HeaderComponent::resized()
     volumeSlider->setBounds(x, 10, 70, 20);
     x += 100;
     stereoMeter->setBounds(x, 10, 110, 20);
+    x += 116;
+    loadMeter->setBounds(x, 10, 10, 20);
 
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
 }
@@ -341,6 +348,11 @@ void HeaderComponent::timerCallback()
 
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
+
+    if (auto linkAudioDevice = audiumEngine->getLinkAudioDevice()) {
+        auto& dspLoad = linkAudioDevice->getDspLoadMeter();
+        loadMeter->setLoad(dspLoad.getLoad(), dspLoad.takePeak());
+    }
 
     playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(),
                                dontSendNotification);

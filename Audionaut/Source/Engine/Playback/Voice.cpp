@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "Voice.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
 
 
 namespace audium
@@ -14,32 +14,30 @@ namespace audium
 
 void Voice::processAudioBlock (const juce::AudioSourceChannelInfo& info)
 {
-    if (processing.load() && transportSource != nullptr) {
+    auto* source = voiceSource.load();
+    if (processing.load() && source != nullptr) {
         
         info.clearActiveBufferRegion();
-        transportSource->getNextAudioBlock(info);
+        source->getNextAudioBlock(info);
         
-        if (transportSource == nullptr ||
-            transportSource->isStopped()) {
-            
+        if (source->isStopped()) {
             processing.store(false);
-            transportSource = nullptr;
+            voiceSource.store(nullptr);
         }
     }
 }
 
-void Voice::start(std::shared_ptr<AudiumTransportSource> transportSource_)
+void Voice::start(VoiceSource* voiceSource_)
 {
-    transportSource = transportSource_;
+    voiceSource.store(voiceSource_);
     processing.store(true);
 }
 
 void Voice::stop(bool fadeOutLastBlock)
 {
-    if (transportSource != nullptr &&
-        transportSource->getAudioTransportSource()->isPlaying())
-        
-        transportSource->getAudioTransportSource()->stop(fadeOutLastBlock);
+    if (auto* source = voiceSource.load())
+        if (source->isPlaying())
+            source->stop(fadeOutLastBlock);
 }
 
 

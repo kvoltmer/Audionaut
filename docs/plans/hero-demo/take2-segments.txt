@@ -1,0 +1,23 @@
+# Take 2 (2026-09-29) cut list for make-paced-gif.sh: source start, source end, speed, beat.
+# Times are seconds into the raw screen recording. Gaps between rows are dropped
+# (e.g. 63-67: the "How is Claude doing?" survey prompt).
+10 14 2      prompt: cut clip every 16 bars
+14 55 20     agent splits
+55 63 2      cut lines appear
+67 84 5      prompt: move every 2nd clip to a new track
+84 114 7     clips move to the new track
+120 129 4    prompt: close the gaps
+129 160 7    gaps close
+160 222 25   export + import
+222 272 7    user: Auto Edit segments + Assemble
+281 297 5    prompt: increase all crossfades to 300ms
+297 330 12   agent sets crossfades
+330 340 2.5  hold on the crossfade curves
+342 396 25   export + import
+396 404 3    prompt: fade out for 5 sec
+404 436 8    fade curve appears
+436 598 40   user: stem separation
+598 660 15   stems land
+660 668 3    prompt: export and load into new track, delete the others
+668 722 15   mixdown, stems removed
+722 732 2    final mix playing

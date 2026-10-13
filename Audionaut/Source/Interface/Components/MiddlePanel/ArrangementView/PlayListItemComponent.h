@@ -20,6 +20,7 @@ class DraggerControl;
 class DraggingHandle;
 class AutoEditPreviewView;
 class AutoEditOverlayControl;
+class StretchOverlayControl;
 
 //==============================================================================
 /*
@@ -79,6 +80,9 @@ private:
     // (AnalysisProvider::getMergePreview for this clip's audio file).
     void refreshAutoEditPreview();
 
+    // Shows/hides the stretch overlay from the engine-held target.
+    void refreshStretchOverlay();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack>     audioTrack;
     std::shared_ptr<audium::PlayListItem>   playListItem;
@@ -98,6 +102,10 @@ private:
     // bend handles only make sense on a ramp wide enough to grab
     bool fadeInRampWide = false;
     bool fadeOutRampWide = false;
+
+    // Shows the fade handles for a selected clip; a minimized track has no
+    // room for them, so they hide with it.
+    void updateHandleVisibility();
 
     // Re-positions every fade handle from the item's dynamics; a fade
     // setter push can cascade across all four values.
@@ -128,6 +136,7 @@ private:
     // The pending auto edit's control (measures + Apply), shown while this
     // clip's merge preview is active.
     std::unique_ptr<AutoEditOverlayControl> autoEditOverlayControl;
+    std::unique_ptr<StretchOverlayControl> stretchOverlayControl;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlayListItemComponent)
 };

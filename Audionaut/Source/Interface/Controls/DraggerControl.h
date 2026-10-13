@@ -14,7 +14,7 @@
 #include "Interface/ColourIds.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Undo/UndoablePlayListItemAction.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/PlayList/PositionableBase.h"
@@ -119,14 +119,30 @@ public:
     
     bool keyPressed (const KeyPress& key, Component* originatingComponent) override;
 
+    /// Cmd+Alt (Ctrl+Alt on Windows/Linux) turns an edge drag into a
+    /// stretch. Plain Cmd, Shift and plain Alt are taken by selection and
+    /// drag-and-drop, and Ctrl+click is the macOS right-click emulation -
+    /// it must stay free for the clip context menu.
+    static bool isStretchModifier (const juce::ModifierKeys& mods)
+    {
+        return mods.isCommandDown() && mods.isAltDown();
+    }
+
+    /// While the stretch overlay is open on this very clip, the clip is in
+    /// stretch mode: plain edge drags stretch too, no modifiers needed.
+    bool overlayStretchActive() const;
+
     void updateMouseZone (const juce::MouseEvent& e)
     {
+        const auto stretching = isStretchModifier(e.mods) || overlayStretchActive();
         switch (getDragMode(e.getPosition().getX())) {
             case leftEdge:
-                setMouseCursor (juce::MouseCursor::LeftEdgeResizeCursor);
+                setMouseCursor (stretching ? juce::MouseCursor::LeftRightResizeCursor
+                                           : juce::MouseCursor::LeftEdgeResizeCursor);
                 break;
             case rightEdge:
-                setMouseCursor (juce::MouseCursor::RightEdgeResizeCursor);
+                setMouseCursor (stretching ? juce::MouseCursor::LeftRightResizeCursor
+                                           : juce::MouseCursor::RightEdgeResizeCursor);
                 break;
             case middleEdge:
                 setMouseCursor (juce::MouseCursor::DraggingHandCursor);
@@ -210,13 +226,22 @@ protected:
     std::shared_ptr<audium::PositionableBase> positionableObject;
     
     Edge currentDragMode = outsideEdge;
+
+    // True while an edge drag is a stretch (Ctrl+Alt): the source window
+    // stays fixed and the drag sets the clip's speed ratio instead of
+    // trimming.
+    bool stretchDrag = false;
     
     const int borderSize = 10;
     const int minimumWidth = 2;
 
     juce::Rectangle<int> originalBounds;
 
-    std::unique_ptr<audium::UndoableContainerAction> undoableContainerAction;
+    // Recorded lazily on the first commit of a drag, for the clips selected
+    // at that point; mouseUp hands it to the undo manager unless nothing
+    // moved. Clip-only on purpose: a whole-container snapshot rebuilt every
+    // clip's voice sources on replay (a DSP spike per drop).
+    std::unique_ptr<audium::UndoablePlayListItemAction> undoableAction;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggerControl)
 };

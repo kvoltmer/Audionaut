@@ -8,7 +8,6 @@
 #include <memory>
 #include <JuceHeader.h>
 
-#include "Engine/Streamable.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Export/ExportAudioConfig.h"
 
@@ -19,32 +18,31 @@ class AudioTrack;
 class PlayListContainer;
 class AudioRegionContainer;
 class AudioResourceContainer;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class PlayListScheduler;
 class LinkAudioDevice;
 class AudioBusInterface;
 class RecordingActionHandler;
+class ProjectFileStore;
+class ProjectSerializer;
 
 /**
  * @class AudiumEngine
- * @brief The core engine for managing audio tracks, resources, and playback in the Audionaut application.
+ * @brief The composition handle for the Audionaut object graph, plus the
+ *        audio device lifecycle.
  *
- * The `AudiumEngine` class provides functionality to manage audio tracks, resources, playlists,
- * and playback. It also handles project file operations, undo management, and audio device configuration.
+ * The engine owns nothing document-shaped anymore: `ProjectSerializer` turns
+ * the graph into project JSON and back (and owns the document lifecycle),
+ * `ProjectFileStore` owns how projects reach and leave disk. What remains
+ * here is the wiring the rest of the app reaches the graph through, and
+ * opening/closing the audio device.
  */
-class AudiumEngine : public audium::Streamable
+class AudiumEngine
 {
-    
+
 public:
     /**
      * @brief Constructs an `AudiumEngine` with the required dependencies.
-     * @param audioDeviceManager_ A shared pointer to the `juce::AudioDeviceManager` for audio device management.
-     * @param audioTrackContainer_ A shared pointer to the `AudioTrackContainer` for managing audio tracks.
-     * @param audioResourceContainer_ A shared pointer to the `AudioResourceContainer` for managing audio resources.
-     * @param playListScheduler_ A shared pointer to the `PlayListScheduler` for playlist scheduling.
-     * @param linkAudioDevice_ A shared pointer to the `LinkAudioDevice` for audio device linking.
-     * @param undoManager_ A shared pointer to the `juce::UndoManager` for undo/redo functionality.
-     * @param audioBusInterface_ A shared pointer to the `AudioBusInterface` for audio bus management.
      */
     AudiumEngine(std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager_,
                  std::shared_ptr<AudioTrackContainer> audioTrackContainer_,
@@ -53,7 +51,9 @@ public:
                  std::shared_ptr<LinkAudioDevice> linkAudioDevice_,
                  std::shared_ptr<juce::UndoManager> undoManager_,
                  std::shared_ptr<AudioBusInterface> audioBusInterface_,
-                 std::shared_ptr<RecordingActionHandler> recordingActionHandler_) :
+                 std::shared_ptr<RecordingActionHandler> recordingActionHandler_,
+                 std::shared_ptr<ProjectFileStore> projectFileStore_,
+                 std::shared_ptr<ProjectSerializer> projectSerializer_) :
         audioDeviceManager(audioDeviceManager_),
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
@@ -61,15 +61,18 @@ public:
         linkAudioDevice(linkAudioDevice_),
         undoManager(undoManager_),
         audioBusInterface(audioBusInterface_),
-        recordingActionHandler(recordingActionHandler_)
+        recordingActionHandler(recordingActionHandler_),
+        projectFileStore(projectFileStore_),
+        projectSerializer(projectSerializer_)
     {
     }
 
     /**
-     * @brief Destructor for `AudiumEngine`.
+     * @brief Destructor: resets the document so the persistence session is
+     *        closed at teardown.
      */
-    ~AudiumEngine() override;
-    
+    ~AudiumEngine();
+
     /**
      * @brief Initializes the engine and its components.
      */
@@ -81,88 +84,22 @@ public:
     void uninitialise();
 
     /**
-     * @brief Cleans up the engine, preparing it for shutdown.
+     * @brief Retrieves the project file store owning all persistence
+     *        (open/save/autosave/reload, paths, session state).
      */
-    void cleanup();
+    std::shared_ptr<ProjectFileStore> getProjectFileStore() const
+    {
+        return projectFileStore;
+    }
 
     /**
-     * @brief Creates a new project with default settings.
+     * @brief Retrieves the document serializer (graph <-> project JSON,
+     *        document lifecycle, UI state buffer).
      */
-    void createNewProject(const int numChannels = 2);
-
-    /**
-     * @brief Opens a project file.
-     * @param file The project file to open.
-     * @param callback A callback function to handle errors or status messages.
-     * @return True if the file was successfully opened, false otherwise.
-     */
-    bool openFile(juce::File file, std::function<void(std::string)> callback);
-
-    /**
-     * @brief Saves the current project to a file.
-     * @param file The file to save the project to.
-     * @param callback A callback function to handle errors or status messages.
-     * @return True if the file was successfully saved, false otherwise.
-     */
-    bool saveFile(const juce::File& file, std::function<void(std::string)> callback);
-
-    /**
-     * @brief Writes the engine state to a stream.
-     * @param outputStream The output stream to write to.
-     * @return True if the state was successfully written, false otherwise.
-     */
-    bool writeToStream(juce::OutputStream& outputStream) override;
-
-    /**
-     * @brief Reads the engine state from a stream.
-     * @param inputStream The input stream to read from.
-     * @param rebuild Whether to rebuild the engine state after reading.
-     * @return True if the state was successfully read, false otherwise.
-     */
-    bool readFromStream(juce::InputStream& inputStream, bool rebuild) override;
-
-    /**
-     * @brief Writes the engine state to a JSON object.
-     * @param output The JSON object to write to.
-     * @return True if the state was successfully written, false otherwise.
-     */
-    bool writeToJson(json& output) override;
-
-    /**
-     * @brief Reads the engine state from a JSON object.
-     * @param input The JSON object to read from.
-     * @param rebuild Whether to rebuild the engine state after reading.
-     * @return True if the state was successfully read, false otherwise.
-     */
-    bool readFromJson(json& input, bool rebuild) override;
-
-    /**
-     * @brief Retrieves the size of the engine state in units.
-     * @return The size of the engine state in units.
-     */
-    int getSizeInUnits() override;
-
-    /**
-     * @brief Retrieves the current project file.
-     * @return The current project file as a `juce::File`.
-     */
-    const juce::File getCurrentProjectFile() const { return currentProjectFile; }
-    
-    /**
-     * @brief Checks if a file is a valid JSON project file.
-     * @param file The file to check.
-     * @return True if the file is a valid JSON project file, false otherwise.
-     */
-    static bool isJsonProjectFile (const juce::File &file);
-    
-    /**
-     * @brief Checks if a file has a valid project structure.
-     *
-     * Valid project structure means: a document package (directory named .audium) that contains the project file.
-     * @param file The file to check.
-     * @return True if the file has a valid project structure, false otherwise.
-     */
-    static bool isValidProjectStructure(const juce::File &file);
+    std::shared_ptr<ProjectSerializer> getProjectSerializer() const
+    {
+        return projectSerializer;
+    }
 
     /**
      * @brief Retrieves the audio track container.
@@ -172,7 +109,7 @@ public:
     {
         return audioTrackContainer;
     }
-    
+
     /**
      * @brief Retrieves the audio resource container.
      * @return A shared pointer to the `AudioResourceContainer`.
@@ -181,13 +118,6 @@ public:
     {
         return audioResourceContainer;
     }
-
-    /**
-     * @brief Retrieves the playlist container for a given audio track.
-     * @param track A shared pointer to the `AudioTrack` to retrieve the playlist container for.
-     * @return A shared pointer to the `PlayListContainer`.
-     */
-    std::shared_ptr<PlayListContainer> getPlayListContainer(std::shared_ptr<AudioTrack> track) const;
 
     /**
      * @brief Retrieves the playlist scheduler.
@@ -224,96 +154,32 @@ public:
     {
         return audioBusInterface;
     }
-    
+
     std::shared_ptr<RecordingActionHandler> getRecordingActionHandler() const
     {
         return recordingActionHandler;
     }
 
     /**
-     * @brief Retrieves the UI state as a JSON object.
-     * @return A reference to the JSON object representing the UI state.
+     * @brief Retrieves the Link audio device (the audio callback).
+     * @return A shared pointer to the `LinkAudioDevice`.
      */
-    json& getUiState()
+    std::shared_ptr<LinkAudioDevice> getLinkAudioDevice() const
     {
-        return uiState;
+        return linkAudioDevice;
     }
 
-    /**
-     * @brief Sets the bypass state of the engine.
-     * @param bypass True to enable bypass, false to disable it.
-     */
-    void setBypass(bool bypass);
-    
-    /**
-     * @brief Deletes obsolete audio files from the project's audio file dir.
-     */
-    void deleteObsoleteAudioFiles();
-    
-    // static const members for project file handling
-    static const char* projectFileExtension;
-    static const char* projectFileName;
-    
-    // static helpers to get project file paths
-    static juce::File projectDirectory;
-    static juce::File tempDirectory;
-    static int recordingCounter;
-    
 private:
-    /**
-     * @brief A shared pointer to the `juce::AudioDeviceManager` for audio device management.
-     */
     std::shared_ptr<juce::AudioDeviceManager> audioDeviceManager;
-
-    /**
-     * @brief A shared pointer to the `AudioTrackContainer` for managing audio tracks.
-     */
     std::shared_ptr<AudioTrackContainer> audioTrackContainer;
-
-    /**
-     * @brief A shared pointer to the `AudioResourceContainer` for managing audio resources.
-     */
     std::shared_ptr<AudioResourceContainer> audioResourceContainer;
-
-    /**
-     * @brief A shared pointer to the `PlayListScheduler` for playlist scheduling.
-     */
     std::shared_ptr<PlayListScheduler> playListScheduler;
-
-    /**
-     * @brief A shared pointer to the `LinkAudioDevice` for audio device linking.
-     */
     std::shared_ptr<LinkAudioDevice> linkAudioDevice;
-
-    /**
-     * @brief A shared pointer to the `juce::UndoManager` for undo/redo functionality.
-     */
     std::shared_ptr<juce::UndoManager> undoManager;
-
-    /**
-     * @brief A shared pointer to the `AudioBusInterface` for audio bus management.
-     */
     std::shared_ptr<AudioBusInterface> audioBusInterface;
-    
-    /**
-     * @brief A shared pointer to the `RecordingActionHandler` for recording action management.
-     */
     std::shared_ptr<RecordingActionHandler> recordingActionHandler;
-
-    /**
-     * @brief The current project file.
-     */
-    juce::File currentProjectFile;
-    
-    /**
-     * @brief The current json object.
-     */
-    json currentJson;
-
-    /**
-     * @brief The UI state as a JSON object.
-     */
-    json uiState;
+    std::shared_ptr<ProjectFileStore> projectFileStore;
+    std::shared_ptr<ProjectSerializer> projectSerializer;
 
     //==============================================================================
     /**

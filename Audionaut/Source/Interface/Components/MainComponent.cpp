@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -71,6 +72,10 @@ MainComponent::~MainComponent()
     audiumEngine->getAudioTrackContainer()->removeActionListener(this);
     audiumEngine->getAudioResourceContainer()->removeActionListener(this);
     audiumEngine->getPlayListScheduler()->getTempoProvider()->removeActionListener(this);
+
+    // the engine - and with it the undo manager - outlives this component at
+    // shutdown: unregister, or the next undo broadcast reaches a dead listener
+    audiumEngine->getUndoManager()->removeChangeListener(this);
 }
 
 //==============================================================================
@@ -129,12 +134,23 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     {
         middlePanelComponent->updateUI();
     }
+    else if (message == audium::updateChannelsAction)
+    {
+        // mixer parameter changed (undo/redo included): only the channel
+        // strips need refreshing, the arrangement is untouched
+        middlePanelComponent->updateUI(MiddlePanelComponent::ChannelsContext);
+    }
     else if (message == audium::updateRightPanelAction)
     {
         rightPanelComponent->updateUI();
     }
     else if (message == audium::updateArrangementAction)
     {
+        middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+    }
+    else if (message == audium::tempoChanged)
+    {
+        // tempo-locked clips change their timeline extent with the tempo
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
     }
     else if (message == audium::updateSelection)
@@ -206,19 +222,21 @@ void MainComponent::updateUI()
 
 void MainComponent::updateWindowTitle()
 {
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
     if (getParentComponent() != nullptr)
     {
-        auto projectName = audiumEngine->getCurrentProjectFile().getFileName();
+        auto projectName = audiumEngine->getProjectFileStore()->getCurrentProjectFile().getFileName();
         if (projectName.isEmpty()) {
             projectName = "Untitled";
         }
         else {
-            if (AudiumEngine::isValidProjectStructure(audiumEngine->getCurrentProjectFile().getParentDirectory())) {
-                projectName = audiumEngine->getCurrentProjectFile().getParentDirectory().getFileName();
+            if (ProjectFileStore::isValidProjectStructure(audiumEngine->getProjectFileStore()->getCurrentProjectFile().getParentDirectory())) {
+                projectName = audiumEngine->getProjectFileStore()->getCurrentProjectFile().getParentDirectory().getFileName();
             }
         }
-        if (audiumEngine->getUndoManager()->canUndo())
+        if (audiumEngine->getProjectFileStore()->wasChangedExternally())
+            projectName += " - " + TRANS("Edited By Agent");
+        else if (audiumEngine->getUndoManager()->canUndo())
             projectName += " - Edited";
 
         getParentComponent()->setName(projectName);

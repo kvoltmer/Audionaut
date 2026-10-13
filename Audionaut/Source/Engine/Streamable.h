@@ -88,24 +88,6 @@ public:
      * @return True if the operation was successful, false otherwise.
      */
     virtual bool readFromJson (json& /*input*/, bool /*rebuild*/) { return false; }
-    
-    /**
-     * @brief Gets the size of the object in units.
-     *
-     * This method must be implemented by derived classes to return the size
-     * of the object in application-specific units.
-     *
-     * @return The size of the object in units.
-     */
-    virtual int getSizeInUnits() = 0;
-
-    /**
-     * @brief The file version for serialization.
-     *
-     * This constant represents the version of the file format used for
-     * serialization and deserialization.
-     */
-    const int fileVersion = 1;
 };
 
 } // namespace audium

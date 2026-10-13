@@ -106,6 +106,16 @@ public:
     }
 
     /**
+     * @brief Drops all objects without running their cleanup protocol.
+     *
+     * For an owner's destructor: cleanup() reaches into collaborators the
+     * owner does not own, which may already be gone by then.
+     */
+    void release() noexcept {
+        objects.clear();
+    }
+
+    /**
      * @brief Cleans up all objects in the container and clears the collection.
      */
     void cleanup() {

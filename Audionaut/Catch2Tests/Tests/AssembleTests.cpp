@@ -449,6 +449,54 @@ SCENARIO("Assemble rebuilds the track's playlist from its regions",
                 REQUIRE(fixture.playListRegionNames() == itemsBefore);
             }
         }
+
+        WHEN("a song is assembled with the default crossfades")
+        {
+            // long enough to repeat the material, so there are joints
+            config.mode = AssembleConfig::Mode::Sequential;
+            config.duration = 100.0;
+
+            REQUIRE(autoEdit.invokeAssemble(config, onError));
+
+            THEN("every joint crossfades over 20 ms reaching into the neighbours")
+            {
+                auto items = fixture.playListItems();
+                REQUIRE(items.size() > 1);
+
+                for (size_t i = 0; i < items.size(); ++i)
+                {
+                    auto& dynamics = items[i]->getDynamics();
+
+                    // each clip at full level across its own region
+                    REQUIRE(dynamics.getFadeIn(audium::seconds) == Catch::Approx(0.0));
+                    REQUIRE(dynamics.getFadeOut(audium::seconds) == Catch::Approx(0.0));
+
+                    REQUIRE(dynamics.getFadeInStart(audium::seconds)
+                            == Catch::Approx(i > 0 ? -0.02 : 0.0).margin(0.001));
+                    REQUIRE(dynamics.getFadeOutEnd(audium::seconds)
+                            == Catch::Approx(i < items.size() - 1 ? -0.02 : 0.0).margin(0.001));
+                }
+            }
+        }
+
+        WHEN("a song is assembled with crossfades turned off")
+        {
+            config.mode = AssembleConfig::Mode::Sequential;
+            config.duration = 100.0;
+            config.crossfades = false;
+
+            REQUIRE(autoEdit.invokeAssemble(config, onError));
+
+            THEN("the joints are hard butt joins")
+            {
+                for (const auto& item : fixture.playListItems())
+                {
+                    auto& dynamics = item->getDynamics();
+                    REQUIRE(dynamics.getFadeInStart(audium::seconds) == Catch::Approx(0.0));
+                    REQUIRE(dynamics.getFadeOutEnd(audium::seconds) == Catch::Approx(0.0));
+                }
+            }
+        }
     }
 
     DeletedAtShutdown::deleteAll();

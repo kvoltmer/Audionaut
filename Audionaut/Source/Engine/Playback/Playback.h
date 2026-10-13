@@ -43,17 +43,19 @@ public:
 
     /**
      * @brief Starts a voice for the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to start.
+     * @param source Shared pointer to the `VoiceSource` to start.
      * @return True if a voice was successfully started, false otherwise.
      */
-    bool startVoice(std::shared_ptr<AudiumTransportSource> source);
+    bool startVoice(VoiceSource* source);
 
     /**
      * @brief Stops the voice associated with the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to stop.
-     * @return True if the voice was successfully stopped, false otherwise.
+     * @param source Shared pointer to the `VoiceSource` to stop.
+     * @return True if a playing voice was stopped, false if the source was
+     *         not playing (the scheduler asks for every idle clip, every
+     *         block - that case must stay cheap).
      */
-    bool stopVoice(const std::shared_ptr<AudiumTransportSource> source,
+    bool stopVoice(VoiceSource* source,
                    bool fadeOutLastBlock);
 
     /**
@@ -63,10 +65,14 @@ public:
 
     /**
      * @brief Checks if the specified transport source is currently playing.
-     * @param source Shared pointer to the `AudiumTransportSource` to check.
+     * @param source Shared pointer to the `VoiceSource` to check.
      * @return True if the source is playing, false otherwise.
      */
-    bool isPlaying(const std::shared_ptr<AudiumTransportSource> source);
+    bool isPlaying(VoiceSource* source);
+
+    /** True while any voice still holds the source. Message-thread check
+        before a removed source may be destroyed (VoiceSourceContainer). */
+    bool isVoiceSourceActive(const VoiceSource* source) const noexcept;
 
     /**
      * @brief Process audio playback.
@@ -79,9 +85,10 @@ public:
         auto numChannels = std::min(static_cast<int>(outputBlock.getNumChannels()),
                                     MAX_AUDIO_CHANNELS);
         
-        // TODO: avoid reallocating in the audio thread
+        // allocation-free for blocks within what prepareToPlay sized
+        // (avoidReallocating keeps the larger allocation). No clear: each
+        // voice clears the block before it renders into it.
         processingBuffer.setSize(numChannels, numSamples, false, false, true);
-        processingBuffer.clear();
         
         juce::dsp::AudioBlock<float> processingBlock(processingBuffer);
         
@@ -109,10 +116,10 @@ private:
 
     /**
      * @brief Finds the voice associated with the specified transport source.
-     * @param source Shared pointer to the `AudiumTransportSource` to find.
+     * @param source Shared pointer to the `VoiceSource` to find.
      * @return Pointer to the associated `Voice`, or nullptr if not found.
      */
-    Voice* findVoice(const std::shared_ptr<AudiumTransportSource> source);
+    Voice* findVoice(const VoiceSource* source);
 
     /**
      * @brief Gets the total number of voices.

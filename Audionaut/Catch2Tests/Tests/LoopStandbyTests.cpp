@@ -1,0 +1,847 @@
+//    Audionaut - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
+
+#include <cmath>
+#include <vector>
+
+#include "Engine/AudioSources/StretchAudioSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
+#include "Engine/Core/DspClip.h"
+#include "Engine/Export/AudioExporter.h"
+#include "Engine/Factory/AudiumFactory.h"
+#include "Engine/Group/AudioTrack.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/PlayList/PlayListItem.h"
+#include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Project/ProjectFileStore.h"
+#include "Engine/Region/AudioRegion.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Resource/AudioResourceContainer.h"
+
+#include "TestUtils.h"
+
+// A Stretch-mode clip re-primes its stretcher on every seek - its start,
+// every loop wrap, play start: a window of look-ahead through Rubber Band
+// inside that one block, several callbacks' worth per voice. The standby
+// lane primes a second stretcher over the blocks before the seek (or, at
+// play start, on the message thread) and swaps it in at the seek. These
+// scenarios pin that the swapped-in lane renders what an in-block prime
+// would have, and that every kind of start goes through the standby.
+
+using namespace audium;
+
+namespace {
+
+/// A 441 Hz tone from a table: two of these started fresh are identical,
+/// so a standby fed from one matches a plain prime fed from the other.
+class TableSine : public juce::AudioSource
+{
+public:
+    void prepareToPlay (int, double) override
+    {
+        table.resize (100);
+        for (size_t i = 0; i < table.size(); ++i)
+            table[i] = static_cast<float> (std::sin (juce::MathConstants<double>::twoPi * static_cast<double> (i) / static_cast<double> (table.size())));
+    }
+
+    void releaseResources() override {}
+
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
+    {
+        for (int i = 0; i < info.numSamples; ++i)
+        {
+            const auto value = table[position];
+            position = (position + 1) % table.size();
+            for (int channel = 0; channel < info.buffer->getNumChannels(); ++channel)
+                info.buffer->setSample (channel, info.startSample + i, value);
+        }
+    }
+
+private:
+    std::vector<float> table;
+    size_t position = 0;
+};
+
+juce::AudioBuffer<float> render (StretchAudioSource& node, int numBlocks, int blockSize)
+{
+    juce::AudioBuffer<float> out (1, numBlocks * blockSize);
+    for (int block = 0; block < numBlocks; ++block)
+        node.getNextAudioBlock (juce::AudioSourceChannelInfo (&out, block * blockSize, blockSize));
+    return out;
+}
+
+float maxDifference (const juce::AudioBuffer<float>& a, const juce::AudioBuffer<float>& b,
+                     int from = 0, int to = -1)
+{
+    REQUIRE (a.getNumSamples() == b.getNumSamples());
+    if (to < 0)
+        to = a.getNumSamples();
+    auto maxDiff = 0.0f;
+    for (int i = from; i < to; ++i)
+        maxDiff = std::max (maxDiff, std::abs (a.getSample (0, i) - b.getSample (0, i)));
+    return maxDiff;
+}
+
+/// Rubber Band's real-time engine may render a stream a sample or two
+/// earlier or later depending on how its input was chunked, so two
+/// renders of the same material are compared at their best alignment
+/// within a few samples: the lag found, and the mean absolute error there.
+struct Alignment { int lag = 0; double meanError = 0.0; };
+
+Alignment align (const juce::AudioBuffer<float>& a, const juce::AudioBuffer<float>& b,
+                 int from, int to, int maxLag = 4)
+{
+    Alignment best;
+    best.meanError = 1.0e9;
+    for (int lag = -maxLag; lag <= maxLag; ++lag)
+    {
+        auto error = 0.0;
+        auto count = 0;
+        for (int i = from; i < to; ++i)
+        {
+            const auto j = i + lag;
+            if (j < 0 || j >= b.getNumSamples())
+                continue;
+            error += std::abs (a.getSample (0, i) - b.getSample (0, j));
+            ++count;
+        }
+        REQUIRE (count > 0);
+        error /= count;
+        if (error < best.meanError)
+            best = { lag, error };
+    }
+    return best;
+}
+
+const StretchAudioSource* stretchNodeOf (AudiumEngine& engine, const std::shared_ptr<PlayListItem>& item)
+{
+    auto resources = item->getRegion()->getAudioResources();
+    REQUIRE_FALSE (resources.empty());
+    auto voices = engine.getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+    REQUIRE_FALSE (voices.empty());
+    const auto* stretch = voices.front()->getClipTransportSource().getStretchSource();
+    REQUIRE (stretch != nullptr);
+    return stretch;
+}
+
+juce::AudioBuffer<float> readAudioFile (const juce::File& file)
+{
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (file));
+    REQUIRE (reader != nullptr);
+    juce::AudioBuffer<float> buffer (static_cast<int> (reader->numChannels), static_cast<int> (reader->lengthInSamples));
+    reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, true);
+    return buffer;
+}
+
+/// The slow saw of createSlowSawAudioFile (a second of silence, a second
+/// of saw, a second of silence) as a 24-bit FLAC: JUCE has no memory-mapped
+/// reader for FLAC, so a clip of it plays through a read-ahead buffer.
+juce::File createSlowSawFlacFile()
+{
+    const auto targetFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/slow-saw.flac");
+    juce::TemporaryFile tempFile (targetFile);
+
+    std::unique_ptr<juce::OutputStream> stream (tempFile.getFile().createOutputStream());
+    REQUIRE (stream != nullptr);
+
+    juce::FlacAudioFormat flac;
+    auto writer = flac.createWriterFor (stream, juce::AudioFormatWriter::Options{}
+                                                    .withSampleRate (44100.0)
+                                                    .withNumChannels (1)
+                                                    .withBitsPerSample (24));
+    REQUIRE (writer != nullptr);
+
+    constexpr int second = 44100;
+    juce::AudioBuffer<float> buffer (1, second);
+
+    buffer.clear();
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+    for (int s = 0; s < second; ++s)
+        buffer.setSample (0, s, genSaw (s, second));
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+    buffer.clear();
+    writer->writeFromAudioSampleBuffer (buffer, 0, second);
+
+    writer.reset();
+    REQUIRE (tempFile.overwriteTargetFileWithTemporary());
+    return targetFile;
+}
+
+} // namespace
+
+SCENARIO ("a standby lane renders what an in-block prime renders", "[engine][stretch][loop][standby]")
+{
+    constexpr int blockSize = 128;
+    constexpr double sampleRate = 44100.0;
+    constexpr double ratio = 1.31;
+    constexpr int compareBlocks = 40;
+
+    GIVEN ("a stretch node with a standby lane, streaming")
+    {
+        TableSine live, standby;
+        StretchAudioSource node (&live, 1);
+        node.setStandbyInput (&standby);
+        node.prepareToPlay (blockSize, sampleRate);
+        node.setEnabled (true);
+        node.setSpeedRatio (ratio);
+        REQUIRE (node.hasStandbyLane());
+
+        render (node, 10, blockSize);
+        REQUIRE (node.getPrimeCount() == 1);
+
+        WHEN ("the standby is primed over the blocks before a jump and adopted at it")
+        {
+            const juce::int64 key = 4711;
+            constexpr int horizon = 30;
+            for (int blocksLeft = horizon; blocksLeft >= 1; --blocksLeft)
+            {
+                node.primeStandby (key, ratio, blocksLeft);
+                render (node, 1, blockSize);
+            }
+            REQUIRE (node.isStandbyPrimingFor (key));
+            REQUIRE_FALSE (node.adoptStandby (key + 1));   // another position: no
+            REQUIRE (node.adoptStandby (key));
+
+            const auto out = render (node, compareBlocks, blockSize);
+
+            THEN ("no prime ran in the block, and the output matches a fresh prime of the same material")
+            {
+                REQUIRE (node.getPrimeCount() == 1);
+                REQUIRE (node.getStandbyAdoptions() == 1);
+                REQUIRE (node.getUnderruns() == 0);
+
+                TableSine referenceInput;
+                StretchAudioSource reference (&referenceInput, 1);
+                reference.prepareToPlay (blockSize, sampleRate);
+                reference.setEnabled (true);
+                reference.setSpeedRatio (ratio);
+                const auto expected = render (reference, compareBlocks, blockSize);
+
+                REQUIRE (out.getMagnitude (0, out.getNumSamples()) > 0.5f);
+                const auto alignment = align (out, expected, 0, out.getNumSamples());
+                CAPTURE (alignment.lag, alignment.meanError, maxDifference (out, expected));
+                REQUIRE (std::abs (alignment.lag) <= 2);
+                REQUIRE (alignment.meanError < 1.0e-3);
+            }
+        }
+
+        WHEN ("a prime for one position is restarted for another")
+        {
+            node.primeStandby (1, ratio, 4);
+            node.primeStandby (2, ratio, 2);
+            THEN ("only the new key is tracked and adoption needs it complete")
+            {
+                REQUIRE_FALSE (node.isStandbyPrimingFor (1));
+                REQUIRE (node.isStandbyPrimingFor (2));
+                REQUIRE_FALSE (node.adoptStandby (1));
+                node.primeStandby (2, ratio, 1);    // finishes it
+                REQUIRE (node.adoptStandby (2));
+                REQUIRE (node.getStandbyAdoptions() == 1);
+            }
+        }
+    }
+}
+
+SCENARIO ("a looped stretched clip wraps through the standby lane", "[engine][loop][stretch][standby]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    auto testFile = createSlowSawAudioFile();
+    REQUIRE (testFile.existsAsFile());
+
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/loop-standby-out.wav");
+
+    // a looped bounce of the stretched clip; returns the bounce and the
+    // clip's stretch node counters
+    struct Result { juce::AudioBuffer<float> audio; int primes = 0; int adoptions = 0; int loops = 0; };
+    const auto bounce = [&] (bool standbyEnabled, int blockSize) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (StretchMode::Stretch);
+        item->setSpeedRatio (1.31);
+        engine->getPlayListScheduler()->commitPlayListData();
+        engine->getPlayListScheduler()->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto loop = engine->getPlayListScheduler()->getTransportLoop();
+        loop->setLoopActive (true);
+        loop->setLoopPositionRange (nullptr, {1.0, 2.0}, audium::seconds);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 5.5;
+        AudioExporter (*engine, config).bounce();
+
+        Result result;
+        result.audio = readAudioFile (bounceFile);
+        result.loops = loop->getLoopCount();
+
+        const auto* stretch = stretchNodeOf (*engine, item);
+        REQUIRE (stretch->hasStandbyLane());
+        result.primes = stretch->getPrimeCount();
+        result.adoptions = stretch->getStandbyAdoptions();
+
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            const auto withStandby = bounce (true, blockSize);
+            const auto without = bounce (false, blockSize);
+
+            THEN ("play start and every wrap adopted a primed standby instead of priming in the block")
+            {
+                // the bounce starts inside the clip: that start is primed
+                // at play start, the wraps over the blocks before them
+                REQUIRE (withStandby.loops >= 3);
+                REQUIRE (withStandby.adoptions == 1 + withStandby.loops);
+                REQUIRE (withStandby.primes == 0);
+
+                REQUIRE (without.adoptions == 0);
+                REQUIRE (without.primes == 1 + without.loops);
+            }
+
+            THEN ("the bounce is the same audio either way")
+            {
+                const auto& a = withStandby.audio;
+                const auto& b = without.audio;
+                REQUIRE (a.getNumSamples() == b.getNumSamples());
+                REQUIRE (a.getMagnitude (0, a.getNumSamples()) > 0.1f);
+
+                // up to the first wrap nothing differs
+                const auto firstWrap = static_cast<int> (2.0 * 44100.0) - blockSize;
+                REQUIRE (maxDifference (a, b, 0, firstWrap) == 0.0f);
+
+                // every pass after a wrap: the same material (see align;
+                // the slow saw cannot resolve the lag, the error can)
+                for (int pass = 2; pass < 5; ++pass)
+                {
+                    const auto from = static_cast<int> (pass * 44100.0) + blockSize;
+                    const auto to = static_cast<int> ((pass + 1) * 44100.0) - blockSize;
+                    const auto alignment = align (a, b, from, to);
+                    const auto rms = b.getRMSLevel (0, from, to - from);
+                    CAPTURE (pass, alignment.lag, alignment.meanError, rms);
+                    REQUIRE (rms > 0.05f);
+                    REQUIRE (alignment.meanError < 0.01 * rms);
+                }
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a stretched clip starts through the standby lane", "[engine][stretch][standby]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    auto testFile = createSlowSawAudioFile();
+    REQUIRE (testFile.existsAsFile());
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/clip-start-standby-out.wav");
+
+    // the stretched clip placed at one second into an unlooped bounce
+    struct Result { juce::AudioBuffer<float> audio; int primes = 0; int adoptions = 0; };
+    const auto bounce = [&] (bool standbyEnabled, int blockSize) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setAbsolutePosition (1.0, audium::seconds);
+        item->setStretchMode (StretchMode::Stretch);
+        item->setSpeedRatio (1.31);
+        engine->getPlayListScheduler()->commitPlayListData();
+        engine->getPlayListScheduler()->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 3.0;
+        AudioExporter (*engine, config).bounce();
+
+        Result result;
+        result.audio = readAudioFile (bounceFile);
+        const auto* stretch = stretchNodeOf (*engine, item);
+        result.primes = stretch->getPrimeCount();
+        result.adoptions = stretch->getStandbyAdoptions();
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            const auto withStandby = bounce (true, blockSize);
+            const auto without = bounce (false, blockSize);
+
+            THEN ("the start adopted a primed standby instead of priming in the block")
+            {
+                REQUIRE (withStandby.adoptions == 1);
+                REQUIRE (withStandby.primes == 0);
+                REQUIRE (without.adoptions == 0);
+                REQUIRE (without.primes == 1);
+            }
+
+            THEN ("the clip sounds the same either way")
+            {
+                const auto& a = withStandby.audio;
+                const auto& b = without.audio;
+                REQUIRE (a.getNumSamples() == b.getNumSamples());
+                const auto from = static_cast<int> (1.0 * 44100.0) + blockSize;
+                const auto to = static_cast<int> (2.5 * 44100.0);
+                const auto alignment = align (a, b, from, to);
+                const auto rms = b.getRMSLevel (0, from, to - from);
+                CAPTURE (alignment.lag, alignment.meanError, rms);
+                REQUIRE (rms > 0.05f);
+                REQUIRE (alignment.meanError < 0.01 * rms);
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("play start inside a stretched clip primes its standby before the first block", "[engine][stretch][standby]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    auto testFile = createSlowSawAudioFile();
+    REQUIRE (testFile.existsAsFile());
+
+    GIVEN ("a stretched clip and a start position inside it")
+    {
+        constexpr int blockSize = 128;
+        constexpr double sampleRate = 44100.0;
+
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (StretchMode::Stretch);
+        item->setSpeedRatio (1.31);
+
+        auto scheduler = engine->getPlayListScheduler();
+        scheduler->prepareToPlay (blockSize, sampleRate);
+        scheduler->commitPlayListData();
+        scheduler->setAbsoluteStartPosition (1.5, audium::seconds);
+
+        const auto* stretch = stretchNodeOf (*engine, item);
+        REQUIRE_FALSE (stretch->hasReadyStandby());
+
+        WHEN ("play start primes the standby (message thread) and the first block runs")
+        {
+            scheduler->primeStandbyAtPlayStart();
+            REQUIRE (stretch->hasReadyStandby());
+            REQUIRE (stretch->getPrimeCount() == 0);
+
+            // the device callback's first block: Link maps it to the start beat
+            juce::AudioBuffer<float> in (2, blockSize), out (2, blockSize);
+            in.clear();
+            juce::dsp::AudioBlock<float> inBlock (in), outBlock (out);
+            juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
+            const auto beats = scheduler->getTempoProvider()->secondsToBeats (1.5);
+            scheduler->process (context, true, beats, blockSize);
+
+            THEN ("the voice took the standby and did not prime in the block")
+            {
+                REQUIRE (stretch->getStandbyAdoptions() == 1);
+                REQUIRE (stretch->getPrimeCount() == 0);
+                REQUIRE_FALSE (stretch->hasReadyStandby());
+            }
+        }
+
+        engine = nullptr;
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a clip that changes while it plays restarts through the standby lane", "[engine][stretch][standby][snapshot]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    auto testFile = createSlowSawAudioFile();
+    REQUIRE (testFile.existsAsFile());
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/snapshot-restart-out.wav");
+
+    // A two-second bounce of the stretched clip (it ends later: a stretched
+    // voice runs out of input ahead of its timeline end and is restarted
+    // block by block over the last tenth of a second - a separate defect
+    // that would pollute the prime counts). At 40 % `mutate` runs on the
+    // item and the scheduler recommits its clip snapshot - what a drop, an
+    // undo or a mixer edit does while the transport runs. Every audible
+    // voice used to restart on any recommit; a Stretch voice then primed
+    // its stretcher inside that block.
+    struct Result { juce::AudioBuffer<float> audio; int primes = 0; int adoptions = 0; int mutatedAtSample = -1; };
+    using Mutation = std::function<void (PlayListItem&)>;
+    const auto bounce = [&] (bool standbyEnabled, int blockSize, const Mutation& mutate, const Mutation& before = {}) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (StretchMode::Stretch);
+        item->setSpeedRatio (1.31);
+        if (before) before (*item);
+        auto scheduler = engine->getPlayListScheduler();
+        scheduler->commitPlayListData();
+        scheduler->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 2.0;
+
+        Result result;
+        const auto iterations = static_cast<int> (config->lengthSeconds * config->sampleRate) / blockSize;
+        AudioExporter (*engine, config).bounce ([&] (double progress) {
+            if (result.mutatedAtSample < 0 && progress >= 0.4)
+            {
+                // the callback runs after block i, with progress = i / iterations;
+                // the next block is the first to pull the new snapshot
+                result.mutatedAtSample = (static_cast<int> (std::llround (progress * iterations)) + 1) * blockSize;
+                mutate (*item);
+                scheduler->commitPlayListData();
+            }
+            return true;
+        });
+
+        result.audio = readAudioFile (bounceFile);
+        const auto* stretch = stretchNodeOf (*engine, item);
+        REQUIRE (stretch->hasStandbyLane());
+        result.primes = stretch->getPrimeCount();
+        result.adoptions = stretch->getStandbyAdoptions();
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    const Mutation moveClip = [] (PlayListItem& item) { item.moveAbsolutePosition (0.3, audium::seconds); };
+    const Mutation gainOnly = [] (PlayListItem& item) { item.getDynamics().setGain (0, 0.5); };
+    const Mutation nothing  = [] (PlayListItem&) {};
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            WHEN ("the clip is moved while it plays")
+            {
+                const auto withStandby = bounce (true, blockSize, moveClip);
+                const auto without = bounce (false, blockSize, moveClip);
+                REQUIRE (withStandby.mutatedAtSample == without.mutatedAtSample);
+                REQUIRE (withStandby.mutatedAtSample > 0);
+
+                THEN ("the restart adopted a primed standby instead of priming in the block")
+                {
+                    // play start and the restart
+                    REQUIRE (withStandby.adoptions == 2);
+                    REQUIRE (withStandby.primes == 0);
+
+                    REQUIRE (without.adoptions == 0);
+                    REQUIRE (without.primes == 2);
+                }
+
+                THEN ("the moved material lands where it belongs and the restart renders what an in-block prime renders")
+                {
+                    const auto& a = withStandby.audio;
+                    const auto& b = without.audio;
+                    REQUIRE (a.getNumSamples() == b.getNumSamples());
+                    const auto at = withStandby.mutatedAtSample;
+
+                    // nothing differs before the change
+                    REQUIRE (maxDifference (a, b, 0, at) == 0.0f);
+
+                    // the saw's onset after the move sits where a bounce of the
+                    // already-moved clip has it - the deferred restart re-seeks
+                    // from its own position, so nothing may slip in the meantime
+                    const auto reference = bounce (true, blockSize, nothing, moveClip);
+                    const auto onset = [] (const juce::AudioBuffer<float>& x, int from) {
+                        auto i = from;
+                        while (i < x.getNumSamples() && std::abs (x.getSample (0, i)) < 0.05f)
+                            ++i;
+                        return i;
+                    };
+                    // searched from past the deferral window, where the standby
+                    // render still carries the old alignment. Within a millisecond
+                    // or so: Rubber Band's start alignment after a prime varies
+                    // with how its input was chunked (a few dozen samples at
+                    // 128-sample blocks), and the in-block restart is no closer.
+                    const auto searchFrom = at + static_cast<int> (0.1 * 44100.0);
+                    const auto expected = onset (reference.audio, searchFrom);
+                    REQUIRE (expected < a.getNumSamples());
+                    CAPTURE (blockSize, expected, onset (a, searchFrom), onset (b, searchFrom));
+                    REQUIRE (std::abs (onset (a, searchFrom) - expected) <= 64);
+                    REQUIRE (std::abs (onset (b, searchFrom) - expected) <= 64);
+
+                    // once both restarts have settled they render the same
+                    // material (see align). A short window: Rubber Band's
+                    // real-time output count wanders by a few samples per
+                    // second, differently after every prime, so two renders
+                    // restarted at different points slide apart slowly.
+                    const auto from = at + static_cast<int> (0.35 * 44100.0);
+                    const auto to = at + static_cast<int> (0.70 * 44100.0);
+                    const auto alignment = align (a, b, from, to, 16);
+                    const auto rms = b.getRMSLevel (0, from, to - from);
+                    CAPTURE (alignment.lag, alignment.meanError, rms);
+                    REQUIRE (rms > 0.05f);
+                    REQUIRE (alignment.meanError < 0.01 * rms);
+                }
+            }
+
+            WHEN ("the snapshot is recommitted without a change to the clip")
+            {
+                const auto withStandby = bounce (true, blockSize, nothing);
+                const auto without = bounce (false, blockSize, nothing);
+
+                THEN ("the voice plays on - only play start went through a prime")
+                {
+                    REQUIRE (withStandby.adoptions == 1);
+                    REQUIRE (withStandby.primes == 0);
+                    REQUIRE (without.adoptions == 0);
+                    REQUIRE (without.primes == 1);
+                }
+            }
+
+            WHEN ("only the clip gain changes")
+            {
+                const auto withStandby = bounce (true, blockSize, gainOnly);
+                const auto without = bounce (false, blockSize, gainOnly);
+
+                THEN ("the gain is applied live, without a restart")
+                {
+                    REQUIRE (withStandby.adoptions == 1);
+                    REQUIRE (withStandby.primes == 0);
+                    REQUIRE (without.primes == 1);
+
+                    // the tail is quieter than before the change
+                    const auto& a = withStandby.audio;
+                    const auto at = withStandby.mutatedAtSample;
+                    const auto before = a.getRMSLevel (0, at - 4096, 4096);
+                    const auto after = a.getRMSLevel (0, at + 4096, 4096);
+                    CAPTURE (before, after);
+                    REQUIRE (after < before * 0.75f);
+                }
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a looped clip behind a read-ahead buffer wraps through a pre-filled lane", "[engine][loop][standby][buffered]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    // A file without a memory-mapped reader (FLAC, MP3) plays through a
+    // BufferingAudioSource that the read-ahead thread refills after every
+    // position jump. The loop wrap used to jump it inside the wrap block:
+    // the rest of that block came out of the emptied buffer as silence,
+    // and the block after it waited on the audio thread for the refill,
+    // up to two milliseconds per buffered clip. The transport now keeps a
+    // second buffer lane that the scheduler seeks to the loop start ahead
+    // of the wrap, so the wrap block only swaps lanes.
+    auto testFile = createSlowSawFlacFile();
+    REQUIRE (testFile.existsAsFile());
+    const auto bounceFile = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/loop-buffered-out.wav");
+
+    struct Result { juce::AudioBuffer<float> audio; int adoptions = 0; int loops = 0; bool buffered = false; int primes = 0; int underruns = 0; };
+    const auto bounce = [&] (bool standbyEnabled, int blockSize, StretchMode mode = StretchMode::RePitch) {
+        auto engine = AudiumFactory::createAudiumEngine();
+        REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+        auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+        REQUIRE (item != nullptr);
+        item->setStretchMode (mode);
+        if (mode == StretchMode::Stretch)
+            item->setSpeedRatio (1.31);
+        engine->getPlayListScheduler()->commitPlayListData();
+        engine->getPlayListScheduler()->standbyPrimingEnabled.store (standbyEnabled);
+
+        auto loop = engine->getPlayListScheduler()->getTransportLoop();
+        loop->setLoopActive (true);
+        loop->setLoopPositionRange (nullptr, {1.0, 2.0}, audium::seconds);
+
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = bounceFile;
+        config->sampleRate = 44100.0;
+        config->blockSize = blockSize;
+        config->numChannels = 1;
+        config->lengthSeconds = 5.5;
+        AudioExporter (*engine, config).bounce();
+
+        Result result;
+        result.audio = readAudioFile (bounceFile);
+        result.loops = loop->getLoopCount();
+
+        auto resources = item->getRegion()->getAudioResources();
+        REQUIRE_FALSE (resources.empty());
+        auto voices = engine->getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+        REQUIRE_FALSE (voices.empty());
+        const auto& transport = voices.front()->getClipTransportSource();
+        result.buffered = transport.getBufferingSource() != nullptr;
+        result.adoptions = transport.getBufferedStandbyAdoptions();
+        result.primes = transport.getStretchSource()->getPrimeCount();
+        result.underruns = transport.getStretchSource()->getUnderruns();
+
+        bounceFile.deleteFile();
+        return result;
+    };
+
+    // timeline second `pass` holds the whole saw, from its first sample
+    const auto requireSawPass = [] (const juce::AudioBuffer<float>& audio, int pass) {
+        constexpr int second = 44100;
+        auto worst = 0.0f;
+        auto worstAt = -1;
+        for (int s = 0; s < second; ++s)
+        {
+            const auto error = std::abs (audio.getSample (0, pass * second + s) - genSaw (s, second));
+            if (error > worst)
+            {
+                worst = error;
+                worstAt = s;
+            }
+        }
+        CAPTURE (pass, worstAt, worst);
+        REQUIRE (worst < 1.0e-5f);     // 24-bit quantisation
+    };
+
+    for (const auto blockSize : { 128, 512 })
+    {
+        DYNAMIC_SECTION ("block " << blockSize)
+        {
+            const auto withStandby = bounce (true, blockSize);
+            const auto without = bounce (false, blockSize);
+
+            THEN ("play start and every wrap swapped in a lane seeked ahead of time")
+            {
+                REQUIRE (withStandby.buffered);
+                REQUIRE (withStandby.loops >= 3);
+                REQUIRE (withStandby.adoptions == 1 + withStandby.loops);
+                REQUIRE (without.adoptions == 0);
+            }
+
+            THEN ("every pass after a wrap is continuous - offline, the in-block seek waits for the reader")
+            {
+                for (int pass = 1; pass < 5; ++pass)
+                {
+                    requireSawPass (withStandby.audio, pass);
+                    requireSawPass (without.audio, pass);
+                }
+            }
+
+            WHEN ("the clip is stretched")
+            {
+                // no second stretcher behind a buffer: the stretch node
+                // primes in the block, from the lane the wrap swapped in
+                const auto stretched = bounce (true, blockSize, StretchMode::Stretch);
+
+                THEN ("every wrap swapped lanes and the stretcher primed from the ready lane")
+                {
+                    REQUIRE (stretched.buffered);
+                    REQUIRE (stretched.loops >= 3);
+                    REQUIRE (stretched.adoptions == 1 + stretched.loops);
+                    REQUIRE (stretched.primes == 1 + stretched.loops);
+                    REQUIRE (stretched.underruns == 0);
+
+                    for (int pass = 2; pass < 5; ++pass)
+                    {
+                        const auto from = pass * 44100 + blockSize;
+                        const auto rms = stretched.audio.getRMSLevel (0, from, 44100 - 2 * blockSize);
+                        CAPTURE (pass, rms);
+                        REQUIRE (rms > 0.05f);
+                    }
+                }
+            }
+        }
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}
+
+SCENARIO ("a buffered voice that outlives its engine keeps the read-ahead thread", "[engine][loop][standby][buffered][lifetime]")
+{
+    juce::MessageManager::getInstance();
+    juce::MessageManagerLock mmLock (juce::Thread::getCurrentThread());
+
+    // A voice retired while a Voice still renders it - a bounce ends in a
+    // fade-out stop that no further callback drains - is released only when
+    // the VoiceSourceContainer goes, and the AudioResourceContainer co-owns
+    // that container: the voice can be the last object of an engine to go.
+    // Its read-ahead buffers unregister from the read-ahead thread on the
+    // way out, so the thread must still be there. Unregistering from a
+    // destroyed TimeSliceThread faults on Windows (a deleted critical
+    // section) and is silent luck elsewhere, hence the voice co-owns the
+    // thread. A held voice stands in for the retired one here.
+    auto testFile = createSlowSawFlacFile();
+    REQUIRE (testFile.existsAsFile());
+
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (testFile, nullptr));
+    auto item = engine->getAudioTrackContainer()->getAudioTrack (0)->getPlayListContainer()->getPlayListItem (0);
+    REQUIRE (item != nullptr);
+
+    auto resources = item->getRegion()->getAudioResources();
+    REQUIRE_FALSE (resources.empty());
+    auto voices = engine->getAudioTrackContainer()->getVoiceSourceContainer()->getVoiceSourcesForResource (*resources.front());
+    REQUIRE (voices.size() == 1);
+    auto voice = voices.front();
+    REQUIRE (voice->hasBufferedStandby());     // reads through a read-ahead buffer
+
+    std::weak_ptr<juce::TimeSliceThread> readAheadThread = engine->getAudioResourceContainer()->getReadAheadThread();
+    REQUIRE_FALSE (readAheadThread.expired());
+
+    // the engine goes while the voice is still held
+    voices.clear();
+    resources.clear();
+    item = nullptr;
+    engine = nullptr;
+
+    THEN ("the thread lives, and runs, for as long as the voice does")
+    {
+        {
+            auto thread = readAheadThread.lock();
+            REQUIRE (thread != nullptr);
+            REQUIRE (thread->isThreadRunning());
+        }
+
+        voice = nullptr;
+        REQUIRE (readAheadThread.expired());
+    }
+
+    testFile.deleteFile();
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}

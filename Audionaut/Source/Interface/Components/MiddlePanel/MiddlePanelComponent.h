@@ -62,7 +62,8 @@ public:
         EntireContext,
         VerticalScrollContext,
         ForceRebuildContext,
-        ArrangementContext
+        ArrangementContext,
+        ChannelsContext
     };
     
         void paint (juce::Graphics& g) override
@@ -111,6 +112,9 @@ public:
             else {
                 jassertfalse;
             }
+        }
+        else if (context == ChannelsContext) {
+            channelsComponent->updateUI();
         }
     }
     

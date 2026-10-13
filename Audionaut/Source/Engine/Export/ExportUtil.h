@@ -1,18 +1,14 @@
-/*
-  ==============================================================================
-
-    ExportUtil.h
-    Created: 19 Sep 2025 8:39:59am
-    Author:  Klaus Voltmer
-
-  ==============================================================================
-*/
+//    Audionaut - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #pragma once
 
 #include <JuceHeader.h>
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 
 namespace audium {
 
@@ -21,18 +17,22 @@ class ExportUtil {
     
 public:
     
-    static bool exportAudio(std::shared_ptr<juce::FileChooser> chooser,
+    /** Asks for a target file and runs the export once the chooser closes.
+        Asynchronous: this returns as soon as the chooser is up, before
+        anything is written; the outcome is not reported back to the caller,
+        a failure is shown to the user instead. The chooser must outlive the
+        dialog (the callers keep it as a member). */
+    static void exportAudio(std::shared_ptr<juce::FileChooser> chooser,
                             std::shared_ptr<audium::AudiumEngine> audiumEngine,
                             std::shared_ptr<audium::ExportAudioConfig> config,
                             std::shared_ptr<audium::AudioExportThread> exportThread)
     {
-        auto result = false;
         jassert(chooser);
         auto flags = FileBrowserComponent::saveMode
                    | FileBrowserComponent::canSelectFiles
                    | FileBrowserComponent::warnAboutOverwriting;
 
-        chooser->launchAsync (flags, [audiumEngine, config, exportThread, &result] (const FileChooser& fc) {
+        chooser->launchAsync (flags, [audiumEngine, config, exportThread] (const FileChooser& fc) {
             const auto file = fc.getResult();
             
             if (file != File{}) {
@@ -54,26 +54,28 @@ public:
                 config->fileName = file;
                 
                 
-                // start the thread
-                if (exportThread->runThread()) {
-                    // thread finished normally..
-                    result = true;
-                    
-                }
-                else {
-                    // user pressed the cancel button..
-                    result = false;
-                }
-  
-                
-#if !defined(CATCH2_TESTS)
+                // Flagged from here, on the message thread, not only from the
+                // worker: the progress window's modal loop keeps dispatching
+                // the project monitor and agent requests, and a reload that
+                // landed before the worker got going would rebuild the graph
+                // it is about to walk.
+                const audium::PlayListScheduler::ScopedOfflineRender offlineRender (*audiumEngine->getPlayListScheduler());
+
+                // runs the export with its progress window; a cancel leaves
+                // nothing to do here, anything else that kept the file from
+                // being written is reported
+                exportThread->runThread();
+
+                if (! exportThread->wasSuccessful() && ! config->userCanceled)
+                    juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                                "Error",
+                                                                "Failed to export " + file.getFullPathName() + "\n\n" + config->error);
+
+#if !defined(AUDIONAUT_HEADLESS)
                 AudiumApplication::getApp().initialSaveDirectory = file.getParentDirectory();
 #endif
-                
-
             }
         });
-        return result;
     }
 };
 

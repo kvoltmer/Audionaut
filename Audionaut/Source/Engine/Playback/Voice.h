@@ -10,14 +10,14 @@
 namespace audium
 {
 
-class AudiumTransportSource;
+class VoiceSource;
 
 /**
  * @class Voice
  * @brief Represents a voice that processes audio blocks and manages playback.
  *
  * The `Voice` class is responsible for handling audio processing and controlling
- * the playback of an associated `AudiumTransportSource`. It provides methods to
+ * the playback of an associated `VoiceSource`. It provides methods to
  * start and stop playback, as well as to process audio blocks in real-time.
  */
 class Voice
@@ -41,9 +41,9 @@ public:
 
     /**
      * @brief Starts playback using the specified transport source.
-     * @param transportSource Shared pointer to the `AudiumTransportSource` to use for playback.
+     * @param voiceSource The `VoiceSource` to render; not owned (see VoiceSourceContainer).
      */
-    void start(std::shared_ptr<AudiumTransportSource> transportSource);
+    void start(VoiceSource* voiceSource);
 
     /**
      * @brief Stops playback.
@@ -58,12 +58,15 @@ public:
 
     /**
      * @brief Gets the associated transport source.
-     * @return A shared pointer to the `AudiumTransportSource`.
+     * @return A shared pointer to the `VoiceSource`.
      */
-    const std::shared_ptr<AudiumTransportSource> getTransportSource() const { return transportSource; }
+    VoiceSource* getVoiceSource() const noexcept { return voiceSource.load(); }
 
 private:
-    std::shared_ptr<AudiumTransportSource> transportSource; ///< Shared pointer to the transport source.
+    // Not owning: VoiceSourceContainer keeps a removed source alive until no
+    // voice renders it any more, so the last reference never dies here on
+    // the audio thread. Atomic: read by the message thread (retirement).
+    std::atomic<VoiceSource*> voiceSource { nullptr };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Voice)
 };

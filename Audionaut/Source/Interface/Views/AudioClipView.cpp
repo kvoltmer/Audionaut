@@ -95,7 +95,7 @@ void AudioClipView::refreshSegments()
     if (audioResource->isRecording())
         return;
     
-    const auto audioFile = juce::File(audioResource->getFullPathName());
+    const auto audioFile = audioResource->getLocalFile();
 
     // Only display the analysis types the track is configured to show.
     constexpr audium::AnalysisType allTypes[] = { audium::AnalysisType::SBic,
@@ -131,7 +131,8 @@ void AudioClipView::refreshSegments()
         if ((visibleTypes & (1 << i)) != 0)
             segmentsByType[allTypes[i]] = analysisProvider->getSegments(allTypes[i], audioFile);
 
-    segmentationView->setSegments(std::move(segmentsByType), regionStart);
+    segmentationView->setSegments(std::move(segmentsByType), regionStart,
+                                  playListItem != nullptr ? playListItem->getSpeedRatio() : 1.0);
 }
 
 void AudioClipView::setPlayListItem(std::shared_ptr<audium::PlayListItem> item, bool volumeControlVisible)

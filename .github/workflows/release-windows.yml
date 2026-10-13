@@ -86,14 +86,39 @@ jobs:
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
+      with:
+        # setup-msbuild defaults to the x86 MSBuild. Since the runner image's
+        # MSVC 14.51 update, the x86-hosted compiler exhausts its heap on this
+        # solution ("fatal error C1002: compiler is out of heap space in
+        # pass 2" - broke the v1.4.0 release cut). Use the 64-bit chain, as
+        # windows.yml already does.
+        msbuild-architecture: x64
+
+    - name: Write analytics credentials
+      # the GA4 API secret is never committed; without the repository
+      # secret the release ships with analytics disabled. The check has to
+      # live in the script: the secrets context is not allowed in a step
+      # `if`, and using it there makes GitHub reject the whole workflow.
+      shell: pwsh
+      env:
+        GA4_API_SECRET: ${{ secrets.GA4_API_SECRET }}
+      run: |
+        if (-not $env:GA4_API_SECRET) {
+          Write-Host "GA4_API_SECRET not set - building with analytics disabled"
+          exit 0
+        }
+        "#pragma once`n#define GA4_API_SECRET `"$env:GA4_API_SECRET`"`n" | Set-Content -NoNewline -Encoding ascii Audionaut/Source/Application/AnalyticsCredentials.h
 
     - name: Build the app
       # -m builds projects in parallel; the solution only defines x64.
+      # PreferredToolArchitecture keeps cl.exe itself x64-hosted (the C1002
+      # heap ceiling is a property of the x86-hosted compiler).
       run: >
         msbuild Audionaut/Builds/VisualStudio2026/Audionaut.sln
         -m
         -p:Configuration=${{ env.BUILD_TYPE }}
         -p:Platform=x64
+        -p:PreferredToolArchitecture=x64
         -v:minimal
 
     # --- signing -------------------------------------------------------

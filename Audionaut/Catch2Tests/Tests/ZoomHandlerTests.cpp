@@ -6,6 +6,7 @@
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "TestEngine.h"
 
 using namespace Catch;
 using namespace audium;
@@ -13,10 +14,7 @@ using namespace audium;
 /// TODO: more testing 
 TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
    
-    juce::MessageManager::getInstance(); // Force the MessageManager singleton to create an instance
-    juce::MessageManagerLock mmLock(Thread::getCurrentThread());
-    
-    auto engine      = AudiumFactory::createAudiumEngine();
+    TestEngine engine;
     auto playListScheduler = engine->getPlayListScheduler();
     auto snap = std::shared_ptr<SnapToGridHandler>(new SnapToGridHandler(playListScheduler));
     auto zoomHandler = std::shared_ptr<ZoomHandler>(new ZoomHandler(engine->getPlayListScheduler(), snap));
@@ -82,11 +80,6 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     snap = nullptr;
     playListScheduler = nullptr;
     zoomHandler = nullptr;
-    engine = nullptr;
-    
-    juce::DeletedAtShutdown::deleteAll();
-    juce::MessageManager::deleteInstance();
-    
 }
 
 

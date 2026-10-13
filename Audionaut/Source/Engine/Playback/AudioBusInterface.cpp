@@ -5,7 +5,8 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "AudioBusInterface.h"
-#include "Engine/AudiumEngine.h"
+#include "Engine/Recording/Recording.h"
+#include "Engine/Core/HeadlessMode.h"
 
 namespace audium
 {
@@ -20,6 +21,11 @@ void AudioBusInterface::setNumAudioBusChannels(int numChannels)
     audioBusRenderer->setNumAudioBusChannels(numChannels);
 }
 
+int AudioBusInterface::getNumAudioBusChannels() const noexcept
+{
+    return audioBusRenderer->getNumAudioBusChannels();
+}
+
 void AudioBusInterface::setChannelData(const int channelNumber, const AudioChannelData data)
 {
     if (audioBusRenderer->getChannelData(channelNumber).record != data.record) {
@@ -31,9 +37,11 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
         ptr->setChannelData(channelNumber, data);
     });
     
-#if CATCH2_TESTS
-    lockFreeCommander->invoke();
-#endif
+    // With no audio device running there is no render callback to drain the
+    // fifo (capacity 256, drops on full) - pump it synchronously. Runtime
+    // check so the GUI binary's in-app CLI mode gets the same treatment.
+    if (pumpsCommandsSynchronously.value_or (HeadlessMode::isHeadless()))
+        lockFreeCommander->invoke();
     
 }
 
@@ -45,33 +53,24 @@ const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber
 void AudioBusInterface::setRecordEnabled(const int channelNumber,
                                          bool bEnabled)
 {
-    auto recorder = bEnabled ? std::make_shared<AudioRecorder>() : nullptr;
-    
+    // The recorder is created (arm) or stopped and retired (disarm) right
+    // here on the message thread, so record() can use it at once; the audio
+    // thread is only handed the pointer to feed - or null - and its command
+    // acknowledges the hand-over that lets Recording free retired ones.
+    auto recorder = audioBusRenderer->getRecording()->setRecordEnabled(channelNumber, bEnabled);
+
     // async!!!
     auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, bEnabled, recorder] {
-        ptr->setRecordEnabled(channelNumber, bEnabled);
-        ptr->getRecording()->setRecordEnabled(channelNumber, bEnabled, recorder);
+    lockFreeCommander->fifo.push([ptr, channelNumber, recorder] {
+        ptr->setRecordEnabled(channelNumber, recorder != nullptr);
+        ptr->getRecording()->publishRecorder(channelNumber, recorder);
     });
-    
-    // in case we record on the fly we have to wait until the recorder exists.
-    // see: synchronous call AudioBusInterface::record
-    // using a sleepCounter so we don't hang forever :D
-    if (bEnabled) {
-        auto sleepCounter = 0;
-        while (sleepCounter < 10 &&
-               audioBusRenderer->getRecording()->getAudioRecorder(channelNumber) == nullptr) {
-            juce::Thread::sleep (5);
-            sleepCounter++;
-        }
-    }
-
 }
 
 void AudioBusInterface::record(bool start, const int channelNumber, const double positionClocks)
 {
     if (start)
-        AudiumEngine::recordingCounter++;
+        Recording::recordingCounter++;
     
     audioBusRenderer->getRecording()->record(start, channelNumber, positionClocks);
 }
@@ -140,6 +139,13 @@ void AudioBusInterface::resetGains()
     lockFreeCommander->fifo.push([ptr] {
         ptr->resetGains();
     });
+}
+
+void AudioBusInterface::setStemExport(bool bStemExport)
+{
+    // direct call, not via fifo: the device callback is bypassed during export,
+    // so nothing would drain the fifo (see AudioExporter)
+    audioBusRenderer->setStemExport(bStemExport);
 }
 
 void AudioBusInterface::stopAllVoices()

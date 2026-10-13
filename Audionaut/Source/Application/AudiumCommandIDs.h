@@ -33,6 +33,7 @@ namespace CommandIDs
         
         playStop                = 0x300050,
         loopPlayList            = 0x300051,
+        loopSelection           = 0x300052,
         
         createRegion            = 0x300060,
         autoEdit                = 0x300061,
@@ -41,6 +42,8 @@ namespace CommandIDs
         splitRegion             = 0x300064,
         assembleSequential      = 0x300065,
         assembleRandom          = 0x300066,
+        separateStems           = 0x300067,
+        stretchClip             = 0x300068,
 
         enableSnapToGrid        = 0x300070,
         zoomIn                  = 0x300071,

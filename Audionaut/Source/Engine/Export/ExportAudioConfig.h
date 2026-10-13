@@ -34,6 +34,16 @@ struct ExportAudioConfig {
 
     double progress = 0.0;           ///< The progress of the export process (0.0 to 1.0).
     std::string progressMessage;     ///< A message describing the current progress state.
+
+    /** Why a bounce returned false without having been cancelled. */
+    enum class Failure {
+        none,               ///< Nothing went wrong (or the user cancelled).
+        unsupportedFormat,  ///< The writer rejects the bit depth or channel count.
+        cannotOpenOutput,   ///< The output file could not be opened for writing.
+        writeFailed         ///< Writing or finalising the file failed.
+    };
+    Failure failure = Failure::none; ///< Set by the exporter when it returns false.
+    juce::String error;              ///< Human-readable reason for the failure; empty otherwise.
 };
 
 } // namespace audium

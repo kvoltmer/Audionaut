@@ -4,7 +4,8 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "PlayListScheduler.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/PlayList/ClipSpeed.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/ActionMessages.h"
@@ -12,12 +13,14 @@
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Resource/AudioResource.h"
-#include "Engine/AudioSources/AudiumTransportSource.h"
+#include "Engine/AudioSources/VoiceSource.h"
+#include "Engine/AudioSources/StretchAudioSource.h"
+#include "Engine/AudioSources/ClipFadeSpec.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/Core/AudioClipContainer.h"
 #include "Engine/Core/DspClip.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeContainer.h"
@@ -37,29 +40,38 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
 {
     externalSampleRate = sampleRate;
     bufferSize = samplesPerBlockExpected;
-    transportSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    voiceSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
+double PlayListScheduler::restartFilePosition(const audium::DspClip &dspClip,
+                                              const ClipFadeSpec &spec,
+                                              double transportPosition)
+{
+    // the voice covers the audible span: the region window widened by the
+    // fade extensions (head clamped at the file start)
+    const auto voiceAbsStart = dspClip.getAbsolutePosition(audium::seconds) - dspClip.getHeadExtension(audium::seconds);
+    const auto offset = voiceAbsStart - transportPosition;
+
+    // the clip already started: seek the speed-scaled distance into the
+    // file - one timeline second covers speedRatio seconds of source
+    if (offset < 0.0)
+        return spec.voiceFileStart() - offset * dspClip.getSpeedRatio();
+
+    return spec.voiceFileStart();
+}
+
 bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
-                                     std::shared_ptr<AudiumTransportSource> transportSource,
+                                     VoiceSource* voiceSource,
                                      double transportPosition,
                                      int sampleOffset,
                                      int numSamples)
 {
     auto context = audium::seconds;
 
-    ClipFadeSpec spec;
-    spec.regionStart = dspClip.getRegionData(context).getStart();
-    spec.regionEnd   = dspClip.getRegionData(context).getEnd();
-    spec.fadeIn      = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInClocks);
-    spec.fadeOut     = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutClocks);
-    spec.fadeInStart = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeInStartClocks);
-    spec.fadeOutEnd  = tempoProvider->clocksToSeconds(dspClip.dspClipData.clipFadeOutEndClocks);
-    spec.fadeInCurve  = dspClip.dspClipData.clipFadeInCurve;
-    spec.fadeOutCurve = dspClip.dspClipData.clipFadeOutCurve;
+    const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
 
     // the voice covers the audible span: the region window widened by the
     // fade extensions (head clamped at the file start)
@@ -68,47 +80,64 @@ bool PlayListScheduler::scheduleClip(const audium::DspClip &dspClip,
     auto position = 0.0;
     auto startSample = 0;
 
-    if (offset < 0.0) {
-        position = spec.voiceFileStart() - offset;
+    // one timeline second covers speedRatio seconds of source material
+    const auto speedRatio = dspClip.getSpeedRatio();
 
-        // sample offset (loop)
+    // the voice's first output sample, relative to the loop offset
+    auto startSampleInRange = 0;
+
+    position = restartFilePosition(dspClip, spec, transportPosition);
+
+    if (offset < 0.0) {
+        // the clip already started - sample offset (loop)
         startSample = sampleOffset;
     }
     else {
-        position = spec.voiceFileStart();
-        startSample = static_cast<int>(std::round(offset * externalSampleRate));
-        startSample += sampleOffset;
+        startSampleInRange = static_cast<int>(std::round(offset * externalSampleRate));
+        startSample = startSampleInRange + sampleOffset;
     }
-    jassert(startSample <= numSamples);
     jassert(position >= 0.0);
 
+    // a start that rounds onto the next block boundary (the range test
+    // passed on float noise) belongs to the next block, where it lands
+    // on sample 0 - starting the voice now would play a block early
+    if (startSample >= numSamples)
+        return false;
+
+    // source seconds left to play; the voice renders them in
+    // duration / speedRatio timeline seconds
     auto duration = spec.voiceFileEnd() - position;
     jassert(duration >= 0.0);
 
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     jassert(context == audium::seconds);
-    if (duration < secondsThisBuffer) {
-        std::cout << "duration samples " << int(duration * externalSampleRate) << " too small." << std::endl;
+    if (duration / speedRatio < secondsThisBuffer) {
+        DBG("PlayListScheduler: duration samples " << int(duration / speedRatio * externalSampleRate) << " too small");
         return false;
     }
 
-    transportSource->schedulePosition(position, startSample);
-    transportSource->scheduleDuration(duration, externalSampleRate);
+    // the voice ends on the output sample the clip's absolute end maps
+    // to - derived from the end position, not from a truncated length,
+    // so adjacent clips meet without a gap and the last sample survives
+    const auto voiceAbsEnd = voiceAbsStart + (spec.voiceFileEnd() - spec.voiceFileStart()) / speedRatio;
+    const auto endSampleInRange = static_cast<int>(std::round((voiceAbsEnd - transportPosition) * externalSampleRate));
+    const auto durationSamples = std::max(0, endSampleInRange - startSampleInRange);
 
-    configureClipFades(*transportSource->getAudioTransportSource(), spec, position, true);
+    voiceSource->setSpeedRatio(speedRatio);
+    voiceSource->setStretchMode(spec.stretchMode);
+    voiceSource->schedulePosition(position, startSample);
+    voiceSource->scheduleDurationSamples(durationSamples);
 
-    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
-    transportSource->getAudioTransportSource()->resetClipGain();
-    
-    
-//    std::cout << "transport-pos: " << transportPosition << " ";
-//    std::cout << "clip-pos: " <<  absolute << " ";
-//    std::cout << "offset: " << offset << " ";
-//    std::cout << "file-pos: " << position << " ";
-//    std::cout << "duration: " << duration << " ";
-//    std::cout << "gain: " << dspClip.dspClipData.clipGain << " ";
-//    std::cout << std::endl;
-    
+    voiceSource->configureClipFades(spec, position, true);
+
+    voiceSource->setGain(dspClip.dspClipData.clipGain);
+    voiceSource->resetClipGain();
+
+    // a snapshot change compares against this; any schedule supersedes a
+    // deferred restart (the loop wrap, a clip start, the restart itself)
+    voiceSource->setScheduledClipData(dspClip.dspClipData);
+    voiceSource->clearPendingRestart();
+
     return true;
 }
 
@@ -129,35 +158,44 @@ void PlayListScheduler::process(double transportPositionClocks,
     const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
     auto transportRange = juce::Range<double> (transportPosition, transportPosition + secondsThisBuffer);
     
+    // voices first: the clip snapshot's voiceSourceIndex values refer to the
+    // voice generation committed right before it (commitPlayListData)
+    voiceSourceContainer->pull();
     auto clipsChanged = audioClipContainer->pull();
-    auto dspClips = audioClipContainer->getConsumerObjects();
+    // a reference: the copy this used to make was a heap allocation per
+    // audio callback
+    const auto& dspClips = audioClipContainer->getConsumerObjects();
     
-    for (auto clipData : dspClips) {
+    for (const auto& clipData : dspClips) {
         
-        const audium::DspClip dspClip(getTempoProvider(), clipData);
+        const audium::DspClip dspClip(*tempoProvider, clipData);
         
         if (dspClip.getRegionData(audium::seconds).isEmpty())
             continue;
         
-        const auto transportSource = transportSourceContainer->getTransportSourceAtIndex(dspClip.dspClipData.transportSourceIndex);
-        if (transportSource == nullptr)
+        auto* voiceSource = voiceSourceContainer->getVoiceSourceAtIndex(dspClip.dspClipData.voiceSourceIndex);
+        if (voiceSource == nullptr)
             continue;
         
+        primeStandbyForUpcomingStart(dspClip, voiceSource, transportPosition, loopResult, numSamples);
+
         // the audible range includes the fade extensions - a head extension
         // must start the voice early, a tail extension must not be stopped
         // at the region end by the else branch below
         if (dspClip.getAudibleRange(audium::seconds).intersects(transportRange)) {
             
             
-            if (clipsChanged &&
-                transportSource->getAudioTransportSource()->isPlaying()) {
-                transportSource->getAudioTransportSource()->stop(true);
-            }
-            
+            if (clipsChanged && voiceSource->isPlaying())
+                onClipSnapshotChanged(dspClip, voiceSource, loopResult, transportPosition, numSamples);
+
+            // a deferred restart lands in the block holding its position
+            if (voiceSource->getPendingRestartAt() >= 0.0 && voiceSource->isPlaying() && ! loopResult.loopEvent)
+                restartAtPendingPosition(dspClip, voiceSource, transportPosition, numSamples);
+
             if (loopResult.loopEvent) {
                 // re-schedule clip
                 if (not scheduleClip(dspClip,
-                                     transportSource,
+                                     voiceSource,
                                      transportPosition,
                                      loopResult.numSamplesUntilLoop,
                                      numSamples)) {
@@ -165,16 +203,34 @@ void PlayListScheduler::process(double transportPositionClocks,
                 }
                 
                 // clip might start at loop start
-                if (!transportSource->getAudioTransportSource()->isPlaying()) {
-                    transportSource->getAudioTransportSource()->start();
-                    playback->startVoice(transportSource);
+                if (!voiceSource->isPlaying()) {
+                    voiceSource->start();
+                    playback->startVoice(voiceSource);
                 }
             }
             
-            if (not transportSource->getAudioTransportSource()->isPlaying()) {
+            // a tempo-locked clip follows the tempo while it plays: the
+            // ratio glides (both modes take it per block) and the scheduled
+            // end moves with it - no restart. Skipped at the clamp bounds,
+            // where the timeline extent and the voice would disagree anyway;
+            // the range check below then ends the voice.
+            if (voiceSource->isPlaying() && clipData.clipTempoLocked) {
+                const auto wanted  = dspClip.getSpeedRatio();
+                const auto current = voiceSource->getSpeedRatio();
+                const auto atBound = [] (double ratio) {
+                    return ratio <= ClipSpeed::minSpeedRatio || ratio >= ClipSpeed::maxSpeedRatio;
+                };
+
+                if (wanted != current && current > 0.0 && ! atBound (wanted) && ! atBound (current)) {
+                    voiceSource->setSpeedRatio(wanted);
+                    voiceSource->rescaleRemainingDuration(current / wanted);
+                }
+            }
+
+            if (not voiceSource->isPlaying()) {
                 
                 if (not scheduleClip(dspClip,
-                                     transportSource,
+                                     voiceSource,
                                      transportPosition,
                                      0,
                                      numSamples)) {
@@ -183,15 +239,212 @@ void PlayListScheduler::process(double transportPositionClocks,
                 
                 // TODO: why? please investigate
                 if (not loopResult.loopEvent) {
-                    transportSource->getAudioTransportSource()->setGain(dspClip.dspClipData.clipGain);
+                    voiceSource->setGain(dspClip.dspClipData.clipGain);
                 }
                 
-                transportSource->getAudioTransportSource()->start();
-                playback->startVoice(transportSource);
+                voiceSource->start();
+                playback->startVoice(voiceSource);
             }
         }
         else {
-            playback->stopVoice(transportSource, false);
+            playback->stopVoice(voiceSource, false);
+        }
+    }
+}
+
+void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspClip,
+                                                     VoiceSource* voiceSource,
+                                                     double transportPosition,
+                                                     const TransportLoop::LoopResult &loopResult,
+                                                     int numSamples)
+{
+    // A stretched voice re-primes its stretcher on every position jump:
+    // its clip's start, and the loop wrap, which jumps every audible clip
+    // at once - several callbacks' worth of Rubber Band work inside one
+    // block. Both are known ahead, so over the last quarter second before
+    // the nearer one the voice primes a standby lane for the exact restart
+    // position, one slice per block, and the block itself only swaps lanes.
+    // A voice reading through a read-ahead buffer (no memory-mapped
+    // reader: FLAC, MP3) has the same problem in either mode - the jump
+    // empties its buffer and the block waits for the reader - and gets its
+    // lane pre-seeked the same way.
+    if (! standbyPrimingEnabled.load() || loopResult.loopEvent)
+        return;
+
+    if (dspClip.dspClipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
+        return;
+
+    const auto audible = dspClip.getAudibleRange(audium::seconds);
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    const auto insideLoop = loopResult.numSamplesUntilLoopEnd >= 0;
+
+    // the clip's own start, if it lies ahead (a start inside this block is
+    // being scheduled right now) and, inside the loop, before the wrap
+    auto samplesUntilStart = -1;
+    auto restartAt = 0.0;
+    if (! voiceSource->isPlaying() && audible.getStart() >= transportPosition + secondsThisBuffer) {
+        const auto samples = static_cast<int>(std::round((audible.getStart() - transportPosition) * externalSampleRate));
+        if (! insideLoop || samples < loopResult.numSamplesUntilLoopEnd) {
+            samplesUntilStart = samples;
+            restartAt = audible.getStart();
+        }
+    }
+
+    // a deferred restart (see onClipSnapshotChanged): the voice plays on to
+    // the position it was aimed at, which is primed like a clip start
+    const auto pendingRestartAt = voiceSource->getPendingRestartAt();
+    if (samplesUntilStart < 0 && voiceSource->isPlaying()
+        && pendingRestartAt >= transportPosition + secondsThisBuffer) {
+        const auto samples = static_cast<int>(std::round((pendingRestartAt - transportPosition) * externalSampleRate));
+        if (! insideLoop || samples < loopResult.numSamplesUntilLoopEnd) {
+            samplesUntilStart = samples;
+            restartAt = pendingRestartAt;
+        }
+    }
+
+    // the loop wrap, if the wrap block will schedule this clip (it is
+    // audible in the wrap block's first block) and nothing comes sooner
+    if (insideLoop && samplesUntilStart < 0) {
+        const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
+        if (audible.intersects({loopStart, loopStart + secondsThisBuffer})) {
+            samplesUntilStart = loopResult.numSamplesUntilLoopEnd;
+            restartAt = loopStart;
+        }
+    }
+
+    if (samplesUntilStart < 0)
+        return;
+
+    const auto blocksUntilStart = std::max(1, samplesUntilStart / numSamples);
+    const auto horizonBlocks = std::max(1, static_cast<int>(standbyPrimeHorizonSeconds * externalSampleRate / numSamples));
+    if (blocksUntilStart > horizonBlocks)
+        return;
+
+    const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
+    voiceSource->primeStandby(restartFilePosition(dspClip, spec, restartAt),
+                              dspClip.getSpeedRatio(),
+                              blocksUntilStart);
+}
+
+namespace {
+
+// Whether a clip snapshot change has to re-seek the voice: everything but
+// the gain (applied live) and the bookkeeping fields.
+bool restartNeeded(const audium::DspClipData& scheduled, const audium::DspClipData& current) noexcept
+{
+    return scheduled.clipData.absolutePositionClocks != current.clipData.absolutePositionClocks
+        || scheduled.clipData.regionData != current.clipData.regionData
+        || scheduled.clipFadeInClocks != current.clipFadeInClocks
+        || scheduled.clipFadeOutClocks != current.clipFadeOutClocks
+        || scheduled.clipFadeInStartClocks != current.clipFadeInStartClocks
+        || scheduled.clipFadeOutEndClocks != current.clipFadeOutEndClocks
+        || scheduled.clipFadeInCurve != current.clipFadeInCurve
+        || scheduled.clipFadeOutCurve != current.clipFadeOutCurve
+        || scheduled.clipSpeedRatio != current.clipSpeedRatio
+        || scheduled.clipStretchMode != current.clipStretchMode
+        || scheduled.clipTempoLocked != current.clipTempoLocked
+        || scheduled.clipTempo != current.clipTempo;
+}
+
+} // namespace
+
+void PlayListScheduler::onClipSnapshotChanged(const audium::DspClip& dspClip,
+                                              VoiceSource* voiceSource,
+                                              const TransportLoop::LoopResult& loopResult,
+                                              double transportPosition,
+                                              int numSamples)
+{
+    const auto& current = dspClip.dspClipData;
+    const auto& scheduled = voiceSource->getScheduledClipData();
+
+    // every snapshot change used to restart every audible voice - another
+    // clip's edit re-primed this one's stretcher for nothing
+    if (! restartNeeded(scheduled, current)) {
+        if (current.clipGain != scheduled.clipGain) {
+            voiceSource->setGain(current.clipGain);
+            voiceSource->setScheduledClipData(current);
+        }
+        return;
+    }
+
+    const auto* stretch = voiceSource->getClipTransportSource().getStretchSource();
+    const auto canDefer = standbyPrimingEnabled.load()
+                       && ! loopResult.loopEvent
+                       && current.clipStretchMode == StretchMode::Stretch
+                       && stretch != nullptr && stretch->hasStandbyLane();
+
+    if (! canDefer) {
+        // the restart below seeks in this block: free for RePitch, the
+        // in-block prime for a Stretch clip without a standby lane
+        voiceSource->stop(true);
+        return;
+    }
+
+    // aim at a block boundary a few blocks out (at least two: this block
+    // sets it up, the next primes) and keep playing until then - the old
+    // alignment for a few dozen milliseconds beats a prime inside one block
+    const auto secondsThisBuffer = static_cast<double>(numSamples) / externalSampleRate;
+    const auto blocks = std::max<juce::int64>(2, std::llround(snapshotRestartDeferSeconds / secondsThisBuffer));
+    voiceSource->deferRestart(transportPosition + static_cast<double>(blocks) * secondsThisBuffer);
+}
+
+void PlayListScheduler::restartAtPendingPosition(const audium::DspClip& dspClip,
+                                                 VoiceSource* voiceSource,
+                                                 double transportPosition,
+                                                 int numSamples)
+{
+    const auto pendingRestartAt = voiceSource->getPendingRestartAt();
+    const auto sampleOffset = static_cast<int>(std::llround((pendingRestartAt - transportPosition) * externalSampleRate));
+
+    // a later block
+    if (sampleOffset >= numSamples)
+        return;
+
+    voiceSource->clearPendingRestart();
+
+    // scheduled from the primed position itself, mid-block like a loop
+    // wrap: the seek hits the standby's key and adopts the lane. A block
+    // that slipped past the position (jitter) or a refused schedule falls
+    // back to a plain restart from this block's position below.
+    if (sampleOffset < 0 || ! scheduleClip(dspClip, voiceSource, pendingRestartAt, sampleOffset, numSamples))
+        voiceSource->stop(true);
+}
+
+void PlayListScheduler::primeStandbyAtPlayStart()
+{
+    // Play starts inside stretched clips prime them all in the first
+    // block. The transport is stopped here, so the primes can run now,
+    // whole, on this thread; the first block then finds its standbys
+    // ready. Its position is the start position exactly (the Link engine
+    // maps that callback's buffer start to the start beat), which is what
+    // scheduleClip will seek from.
+    if (! standbyPrimingEnabled.load() || externalSampleRate <= 0.0 || bufferSize <= 0)
+        return;
+
+    const auto startPosition = tempoProvider->clocksToSeconds(data.startPositionClocks);
+    const auto secondsFirstBlock = static_cast<double>(bufferSize) / externalSampleRate;
+    const juce::Range<double> firstBlock(startPosition, startPosition + secondsFirstBlock);
+
+    for (auto track : audioTrackContainer->getAudioTracks()) {
+        for (const auto& clipData : track->getDspClipVector()) {
+            const audium::DspClip dspClip(*tempoProvider, clipData);
+            if (dspClip.getRegionData(audium::seconds).isEmpty()
+                || ! dspClip.getAudibleRange(audium::seconds).intersects(firstBlock))
+                continue;
+
+            auto* voiceSource = voiceSourceContainer->getOwnedVoiceSourceAtIndex(clipData.voiceSourceIndex);
+            if (voiceSource == nullptr)
+                continue;
+
+            // stretched voices, and buffered ones in either mode (see
+            // primeStandbyForUpcomingStart)
+            if (clipData.clipStretchMode != StretchMode::Stretch && ! voiceSource->hasBufferedStandby())
+                continue;
+
+            const auto spec = ClipFadeSpec::fromDspClip(dspClip, *tempoProvider);
+            voiceSource->primeStandby(restartFilePosition(dspClip, spec, startPosition),
+                                      dspClip.getSpeedRatio(),
+                                      1);
         }
     }
 }
@@ -219,7 +472,8 @@ void PlayListScheduler::startPlaying()
 {
     if (linkEngine != nullptr) {
         commitPlayListData();
-        linkEngine->setStartPlayingTime(getTempoProvider()->clocksToBeats(data.startPositionClocks));
+        primeStandbyAtPlayStart();
+        linkEngine->setStartPlayingTime(tempoProvider->clocksToBeats(data.startPositionClocks));
         linkEngine->startPlaying();
         transportLoop->reset();
         transportLoop->setAbsoluteStartPosition(data.startPositionClocks, audium::clocks);
@@ -255,7 +509,7 @@ double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) c
         return data.transportPositionClocks;
     }
     else if (context == audium::seconds) {
-        return getTempoProvider()->clocksToSeconds(data.transportPositionClocks);
+        return tempoProvider->clocksToSeconds(data.transportPositionClocks);
     }
     
     jassertfalse;
@@ -272,7 +526,7 @@ void PlayListScheduler::setAbsoluteStartPosition(double newPosition, audium::Tim
         positionClocks = newPosition;
     }
     else if (context == audium::seconds) {
-        positionClocks = getTempoProvider()->secondsToClocks(newPosition);
+        positionClocks = tempoProvider->secondsToClocks(newPosition);
     }
     
     data.startPositionClocks = positionClocks;
@@ -290,7 +544,7 @@ double PlayListScheduler::getAbsoluteStartPosition(audium::TimeContextType conte
         return data.startPositionClocks;
     
     if (context == audium::seconds)
-        return getTempoProvider()->clocksToSeconds(data.startPositionClocks);
+        return tempoProvider->clocksToSeconds(data.startPositionClocks);
     
     return 0.0;
 }
@@ -331,13 +585,17 @@ double PlayListScheduler::getPlayListItemProgress(std::shared_ptr<AudioTrack> tr
     return 0.0;
 }
 
-void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
                                            std::shared_ptr<ExportAudioConfig> config,
                                            std::function<void ()> callback)
 {
     jassert(config->playListItem != nullptr);
     jassert((int)config->sampleRate == (int)externalSampleRate);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     config->numChannels = config->playListItem->getPlayListContainer().getAudioTrack().getNumAudioTrackChannels();
     std::cout << "bounce channels: " << config->numChannels << std::endl;
     
@@ -346,19 +604,12 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     // the exported span is the audible length: region window plus the fade
     // extensions; the portion of a head extension before the source file's
     // first sample is written as leading silence
-    ClipFadeSpec spec;
-    auto regionSeconds = item->getRegionData(audium::seconds);
-    spec.regionStart = regionSeconds.getStart();
-    spec.regionEnd   = regionSeconds.getEnd();
-    spec.fadeIn      = item->getDynamics().getFadeIn(audium::seconds);
-    spec.fadeOut     = item->getDynamics().getFadeOut(audium::seconds);
-    spec.fadeInStart = item->getDynamics().getFadeInStart(audium::seconds);
-    spec.fadeOutEnd  = item->getDynamics().getFadeOutEnd(audium::seconds);
-    spec.fadeInCurve  = item->getDynamics().getFadeInCurve();
-    spec.fadeOutCurve = item->getDynamics().getFadeOutCurve();
+    const auto spec = ClipFadeSpec::fromPlayListItem(*item);
 
-    auto totalSamples          = static_cast<int64>(spec.audibleLength() * externalSampleRate);
-    auto leadingSilenceSamples = static_cast<int64>(spec.preFileSilence() * externalSampleRate);
+    // audibleLength/preFileSilence are source seconds; the render happens at
+    // the clip's speed
+    auto totalSamples          = static_cast<int64>(std::round(spec.audibleLength() / spec.speedRatio * externalSampleRate));
+    auto leadingSilenceSamples = static_cast<int64>(std::round(spec.preFileSilence() / spec.speedRatio * externalSampleRate));
     auto voiceSamples          = totalSamples - leadingSilenceSamples;
     auto iterations            = voiceSamples / config->blockSize;
     auto remainder             = voiceSamples - (iterations * config->blockSize);
@@ -370,26 +621,29 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     AudioBuffer<float> audioBusBuffer(config->numChannels, config->blockSize);
     juce::AudioSourceChannelInfo audioBusInfo (&audioBusBuffer, info.startSample, info.numSamples);
 
-    for (auto source : config->playListItem->getTransportSources()) {
+    for (auto source : config->playListItem->getVoiceSources()) {
         source->prepareToPlay(config->blockSize, config->sampleRate);
+        source->setSpeedRatio(spec.speedRatio);
+        source->setStretchMode(spec.stretchMode);
         source->schedulePosition(spec.voiceFileStart(), 0);
-        source->scheduleDuration(spec.voiceFileEnd() - spec.voiceFileStart(), config->sampleRate);
-        source->configureDynamics(config->playListItem, tempoProvider);
+        source->scheduleDurationSamples(static_cast<int>(voiceSamples));
+        source->configureDynamics(config->playListItem);
         // snap the gain smoother - otherwise the export starts with a
         // 10 ms gain swell (the live scheduler does the same)
-        source->getAudioTransportSource()->resetClipGain();
+        source->resetClipGain();
         source->applyChannelMapping(false);
-        source->getAudioTransportSource()->start();
+        source->start();
     }
 
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
 
     // leading silence for the pre-file part of a head extension
     buffer.clear();
     auto silenceRemaining = leadingSilenceSamples;
     while (silenceRemaining > 0 && !config->userCanceled) {
         auto numSilence = static_cast<int>(juce::jmin(silenceRemaining, static_cast<int64>(config->blockSize)));
-        writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
+        written &= writer->writeFromAudioSampleBuffer(buffer, 0, numSilence);
         samplesWritten += numSilence;
         silenceRemaining -= numSilence;
     }
@@ -397,14 +651,14 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
     for (auto i = 0; i < iterations; ++i) {
         info.clearActiveBufferRegion();
         audioBusInfo.clearActiveBufferRegion();
-        for (auto source : config->playListItem->getTransportSources()) {
+        for (auto source : config->playListItem->getVoiceSources()) {
             source->getNextAudioBlock(audioBusInfo);
             for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
                 info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
             }
         }
     
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -427,32 +681,41 @@ void PlayListScheduler::bouncePlayListItem(juce::AudioFormatWriter* writer,
             
             audioBusInfo.numSamples = static_cast<int>(remainder);
             audioBusInfo.clearActiveBufferRegion();
-            for (auto source : config->playListItem->getTransportSources()) {
+            for (auto source : config->playListItem->getVoiceSources()) {
                 source->getNextAudioBlock(audioBusInfo);
                 for (auto c = 0; c < info.buffer->getNumChannels(); c++) {
                     info.buffer->addFrom(c, info.startSample, audioBusBuffer.getReadPointer(c), info.numSamples);
                 }
             }
             
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
         jassert(samplesWritten == totalSamples);
     }
-    
+
+    return written;
 }
 
-void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
+bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
                                      std::shared_ptr<ExportAudioConfig> config,
                                      std::function<void ()> callback)
 {
     jassert(config->playListItem == nullptr);
-    
+
+    // same guard as the live callback: the offline render runs the same
+    // voices, whose fades and filters decay into denormal territory
+    juce::ScopedNoDenormals noDenormals;
+
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);
     setAbsoluteStartPosition(config->positionSeconds, audium::seconds);
-    
+
+    // multichannel bounce wants one file channel per bus channel, not the live
+    // output routing; mono/stereo bounce renders the routed mix as heard live
+    audioBusInterface->setStemExport(config->numChannels > 2);
+
     startPlaying();
     
     jassert((int)config->sampleRate == (int)externalSampleRate);
@@ -474,8 +737,9 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     juce::dsp::AudioBlock<float> inBlock (inBuffer);
     
     int64 samplesWritten = 0;
+    bool written = true; // stays true only while every write succeeds
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(config->blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
         juce::dsp::ProcessContextNonReplacing<float> context (inBlock, outBlock);
@@ -484,7 +748,7 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         process(context, true, positionBeats, config->blockSize);
         positionBeats += beatsThisBuffer;
         
-        writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+        written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
         
         samplesWritten += info.numSamples;
         
@@ -506,15 +770,19 @@ void PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
             juce::dsp::ProcessContextReplacing<float> context (outBlock);
             
             process(context, true, positionBeats, info.numSamples);
-            writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
+            written &= writer->writeFromAudioSampleBuffer(*info.buffer, info.startSample, info.numSamples);
             samplesWritten += info.numSamples;
         }
         
         jassert(samplesWritten == totalSamples);
     }
     
+    audioBusInterface->setStemExport(false);
+
     setAbsoluteStartPosition(lastPosition, audium::seconds);
     stopPlaying();
+
+    return written;
 }
 
 std::vector<std::shared_ptr<PlayListItem>> PlayListScheduler::getPlayListItems(bool excludeSelectedItems) const
@@ -543,11 +811,13 @@ void PlayListScheduler::commitPlayListData()
         }
     }
     
-    // commit data
+    // commit data: voices before clips so the indices above resolve against
+    // the same generation on the audio thread (which pulls in this order too)
+    voiceSourceContainer->commit();
     audioClipContainer->commit();
     
     // update channel mapping
-    transportSourceContainer->applyChannelMapping();
+    voiceSourceContainer->applyChannelMapping();
     
     // calc total length
     double totalLength = 0.0;
@@ -664,7 +934,7 @@ void PlayListScheduler::recordFromAudioBuffer(const AudioBuffer<float> &inputBuf
     
     int64 samplesProcessed = 0;
     for (auto i = 0; i < iterations; ++i) {
-        const auto clocksThisBuffer = getTempoProvider()->secondsToClocks(static_cast<double>(blockSize) / externalSampleRate);
+        const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(blockSize) / externalSampleRate);
         const auto beatsThisBuffer = TempoProvider::clocksToBeats(clocksThisBuffer);
         
         

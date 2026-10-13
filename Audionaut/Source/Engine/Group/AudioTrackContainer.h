@@ -11,6 +11,7 @@
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/Selection/ClipOverlayTarget.h"
 
 namespace audium {
 
@@ -20,7 +21,7 @@ class AudioRegionContainer;
 class AudiumEngine;
 class TempoProvider;
 class AudioRegion;
-class TransportSourceContainer;
+class VoiceSourceContainer;
 class AudioResourceContainer;
 class AudioBusInterface;
 class TransportLoop;
@@ -42,7 +43,7 @@ public:
      * @param undoManager_ Shared pointer to the undo manager.
      * @param tempoProvider_ Shared pointer to the tempo provider.
      * @param audioResourceContainer_ Shared pointer to the audio resource container.
-     * @param transportSourceContainer_ Shared pointer to the transport source container.
+     * @param voiceSourceContainer_ Shared pointer to the voice source container.
      * @param selectionManager_ Shared pointer to the selection manager.
      * @param audioBusInterface_ Shared pointer to the audio bus interface.
      * @param transportLoop_ Shared pointer to the transport loop.
@@ -50,7 +51,7 @@ public:
     AudioTrackContainer(std::shared_ptr<juce::UndoManager> undoManager_,
                         std::shared_ptr<TempoProvider> tempoProvider_,
                         std::shared_ptr<AudioResourceContainer> audioResourceContainer_,
-                        std::shared_ptr<TransportSourceContainer> transportSourceContainer_,
+                        std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                         std::shared_ptr<SelectionManager> selectionManager_,
                         std::shared_ptr<AudioBusInterface> audioBusInterface_,
                         std::shared_ptr<TransportLoop> transportLoop_,
@@ -59,7 +60,7 @@ public:
         undoManager(undoManager_),
         tempoProvider(tempoProvider_),
         audioResourceContainer(audioResourceContainer_),
-        transportSourceContainer(transportSourceContainer_),
+        voiceSourceContainer(voiceSourceContainer_),
         selectionManager(selectionManager_),
         transportLoop(transportLoop_),
         analysisProvider(analysisProvider_),
@@ -158,10 +159,14 @@ public:
     bool readFromJson(json& input, bool rebuild) override;
 
     /**
-     * @brief Gets the size of the container in units.
-     * @return The size of the container in units.
+     * @brief Whether the last readFromJson() replaced tracks or channels
+     * instead of reading them in place.
+     *
+     * The UI keys its track and channel components on those objects, so a
+     * read that replaced them needs a rebuild (rebuildAll); a read that kept
+     * them only needs a refresh (updateAll).
      */
-    int getSizeInUnits() override;
+    bool didLastReadRebuildStructure() const { return lastReadRebuiltStructure; }
 
     /**
      * @brief Gets the currently selected audio track.
@@ -183,10 +188,15 @@ public:
     
     std::shared_ptr<TempoProvider> getTempoProvider() const noexcept { return tempoProvider; }
     std::shared_ptr<juce::UndoManager> getUndoManager() const noexcept { return undoManager; }
-    std::shared_ptr<TransportSourceContainer> getTransportSourceContainer() const noexcept { return transportSourceContainer; }
+    std::shared_ptr<VoiceSourceContainer> getVoiceSourceContainer() const noexcept { return voiceSourceContainer; }
     std::shared_ptr<SelectionManager> getSelectionManager() const noexcept { return selectionManager; }
     std::shared_ptr<TransportLoop> getTransportLoop() const noexcept { return transportLoop; }
     std::shared_ptr<AnalysisProvider> getAnalysisProvider() const noexcept { return analysisProvider; }
+
+    /// Which clip currently shows an in-arrangement overlay editor (the
+    /// stretch overlay). Session state with its own broadcaster - see
+    /// ClipOverlayTarget.
+    std::shared_ptr<ClipOverlayTarget> getClipOverlayTarget() const noexcept { return clipOverlayTarget; }
     
     AudioRegionAdapter &getAudioRegionAdapter() { return audioRegionAdapter; }
     
@@ -195,6 +205,30 @@ public:
      * @return The number of audio track channels.
      */
     int getNumAudioTrackChannels() const;
+
+    /**
+     * @brief The channel count as published to the audio thread.
+     *
+     * getNumAudioTrackChannels() walks the track and channel vectors, which
+     * the message thread grows and shrinks (add/remove track or channel,
+     * undo replay, project reload) - the audio callback must never iterate
+     * them. It reads this atomic instead, which every channel-count change
+     * republishes (see publishNumAudioTrackChannels). Any thread, lock-free.
+     */
+    int getPublishedNumAudioTrackChannels() const noexcept
+    {
+        return publishedNumAudioTrackChannels.load(std::memory_order_acquire);
+    }
+
+    /**
+     * @brief Republishes getNumAudioTrackChannels() for the audio thread.
+     *
+     * Message thread. Called by every path that changes a track's channel
+     * count (AudioTrack::addChannel/deleteChannel/cleanup, track removal,
+     * cleanup); a missed call only leaves the bus one block stale, never
+     * outside [0, MAX_AUDIO_CHANNELS].
+     */
+    void publishNumAudioTrackChannels() noexcept;
 
     /**
      * @brief Checks if any channel in the container is soloed.
@@ -227,19 +261,23 @@ public:
                        bool undo);
     
     std::shared_ptr<AudioBusInterface> audioBusInterface; ///< Shared pointer to the audio bus interface.
+    std::shared_ptr<ClipOverlayTarget> clipOverlayTarget = std::make_shared<ClipOverlayTarget>();
+
     std::vector<std::shared_ptr<AudioTrack>> audioTracks; ///< Vector of shared pointers to audio tracks.
     
 private:
     std::shared_ptr<juce::UndoManager> undoManager; ///< Shared pointer to the undo manager.
     std::shared_ptr<TempoProvider> tempoProvider; ///< Shared pointer to the tempo provider.
     std::shared_ptr<AudioResourceContainer> audioResourceContainer; ///< Shared pointer to the audio resource container.
-    std::shared_ptr<TransportSourceContainer> transportSourceContainer; ///< Shared pointer to the transport source container.
+    std::shared_ptr<VoiceSourceContainer> voiceSourceContainer; ///< Shared pointer to the voice source container.
     std::shared_ptr<SelectionManager> selectionManager; ///< Shared pointer to the selection manager.
     std::shared_ptr<TransportLoop> transportLoop; ///< Shared pointer to the transport loop.
     std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).
 
     std::size_t selectedGroup = 0; ///< Index of the currently selected group.
     float masterGain = 1.f; ///< Master gain value.
+    std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
+    bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 
     AudioRegionAdapter audioRegionAdapter; ///< Audio region adapter for managing regions.
 

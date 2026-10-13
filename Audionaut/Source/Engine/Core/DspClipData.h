@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Engine/Group/AudioClipData.h"
+#include "Engine/PlayList/StretchMode.h"
 
 namespace audium {
 
@@ -82,12 +83,29 @@ struct DspClipData
     double clipFadeOutCurve = 0.5;
 
     /**
+     * @brief The clip's playback speed (re-pitch/varispeed).
+     *
+     * 2.0 plays the source at double speed, one octave up, on half the
+     * timeline. 1.0 = unchanged.
+     */
+    double clipSpeedRatio = 1.0;
+    StretchMode clipStretchMode = StretchMode::RePitch;
+
+    /**
+     * @brief Tempo lock: the clip's speed is project tempo / clipTempo,
+     *        derived live on the audio thread (see DspClip::getSpeedRatio),
+     *        so clipSpeedRatio is ignored while locked.
+     */
+    bool clipTempoLocked = false;
+    double clipTempo = 0.0;
+
+    /**
      * @brief The transport source index for the clip.
      *
      * An integer representing the index of the transport source associated
      * with the clip. Default is -1 (no source assigned).
      */
-    int transportSourceIndex = -1;
+    int voiceSourceIndex = -1;
 };
 
 } // namespace audium

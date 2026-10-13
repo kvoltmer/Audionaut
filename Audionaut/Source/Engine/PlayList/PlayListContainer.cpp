@@ -110,7 +110,8 @@ std::shared_ptr<PlayListItem> PlayListContainer::clonePlayListItem(std::shared_p
 
     auto newItem = createPlayListItemAtPositionUI(newRegion, item->getAbsolutePosition(context), context);
     if (newItem != nullptr) {
-        newItem->getDynamics().copyGainsFrom(item->getDynamics());
+        newItem->getDynamics().copyFrom(item->getDynamics());
+        newItem->copySpeedFrom(*item);
     }
     return newItem;
 }
@@ -274,12 +275,20 @@ bool PlayListContainer::readFromJson (json& input, bool rebuild)
                                                                            selectionManager));
     }
     
-    for (auto i = 0; i < playListItems.size(); ++i) {
-        auto &jsonElement = jsonPlayListItems[i];
-        if ( !playListItems.getObjects()[i]->readFromJson(jsonElement, rebuild)) {
-            std::cout << "error: could not load play list item:" << std::endl;
-            std::cout << jsonElement.dump(4) << std::endl;
+    // an item whose region can't be resolved (dangling region_id) is
+    // dropped - keeping it would leave a clip with a null region behind.
+    // The rest of the play list (and project) still loads, so this is
+    // not reported as a failure: that would abort loading every track.
+    for (auto i = 0; i < static_cast<int>(playListItems.size()); ) {
+        auto &jsonElement = jsonPlayListItems[static_cast<size_t>(i)];
+        if (playListItems.getObjects()[static_cast<size_t>(i)]->readFromJson(jsonElement, rebuild)) {
+            ++i;
+            continue;
         }
+        std::cout << "error: could not load play list item, dropping it:" << std::endl;
+        std::cout << jsonElement.dump(4) << std::endl;
+        playListItems.objects.erase(playListItems.objects.begin() + i);
+        jsonPlayListItems.erase(static_cast<size_t>(i));
     }
     
     jassert(sortedByPosition());
@@ -387,12 +396,6 @@ std::shared_ptr<PlayListItem> PlayListContainer::createPlayListItemFromJson (jso
     
     return playListItem;
 }
-
-int PlayListContainer::getSizeInUnits()
-{
-    return getNumItems() * 2;
-}
-
 
 double PlayListContainer::getAbsolueStartTimeByOrder(const PlayListItem* playListItem, audium::TimeContextType context) const
 {

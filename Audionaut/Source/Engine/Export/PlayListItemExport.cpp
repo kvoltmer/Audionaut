@@ -9,6 +9,7 @@
 */
 
 #include "Engine/Export/PlayListItemExport.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 #include "Application/AudiumApplication.h"
 #include "Engine/Export/ExportUtil.h"
@@ -25,9 +26,10 @@ bool PlayListItemExport::exportItem()
                                                                           audioRegion,
                                                                           audioRegion->getAudioTrack()->getSelectionManager()));
 
-    // the export must sound like the clip: carry gains, fades and the fade
-    // extensions over to the fresh export item
+    // the export must sound like the clip: carry gains, fades, the fade
+    // extensions and the playback speed over to the fresh export item
     config->playListItem->getDynamics().copyFrom(playListItem->getDynamics());
+    config->playListItem->copySpeedFrom(*playListItem);
 
     // the number of audio channels
     config->numChannels = audioRegion->getAudioTrack()->getNumAudioTrackChannels();
@@ -43,30 +45,33 @@ bool PlayListItemExport::exportItem()
     if (useFileChooser) {
         
         String defaultFileName;
-#if !defined(CATCH2_TESTS)
+#if !defined(AUDIONAUT_HEADLESS)
         defaultFileName = AudiumApplication::getApp().initialSaveDirectory.getFullPathName();
         defaultFileName += File::getSeparatorString() + audioRegion->getName() + ".wav";
         
 #endif
         juce::File dir(defaultFileName);
         chooser = std::make_shared<FileChooser> (("Export as WAV file. Choose a filename..."), dir, "*.wav");
-        return ExportUtil::exportAudio(chooser,
-                                       audiumEngine,
-                                       config,
-                                       exportThread);
+        // asynchronous: the export runs when the chooser closes, so there
+        // is no result to report yet
+        ExportUtil::exportAudio(chooser,
+                                audiumEngine,
+                                config,
+                                exportThread);
+        return false;
     }
     else {
-        config->fileName = File(AudiumEngine::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
+        config->fileName = File(ProjectFileStore::tempDirectory.getFullPathName() + File::getSeparatorString() + audioRegion->getName() + ".wav");
         // create the thread
         
         
         // start the thread
-        if (exportThread->runThread()) {
-            // thread finished normally..
+        if (exportThread->runThread() && exportThread->wasSuccessful()) {
+            // thread finished normally and the file was written..
             return true;
         }
         else {
-            // user pressed the cancel button..
+            // user pressed the cancel button, or nothing was written..
             return false;
         }
     }

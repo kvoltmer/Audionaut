@@ -39,7 +39,9 @@ void Preferences::init(const std::string& product, const std::string& manufactur
 
     impl->propertiesFile = std::make_unique<juce::PropertiesFile>(options);
 
-    std::cout << "settings: " << impl->propertiesFile->getFile().getFullPathName() << std::endl;
+    // Not std::cout: preferences load before the in-app CLI runs, and a line
+    // on stdout ahead of the --json envelope breaks every agent call.
+    DBG ("settings: " << impl->propertiesFile->getFile().getFullPathName());
 }
 
 void Preferences::synchronize()
@@ -50,7 +52,7 @@ void Preferences::synchronize()
 std::string Preferences::getValue(const std::string& key,
                                   const std::string& defaultValue)
 {
-    return impl->propertiesFile->getValue(juce::StringRef(key)).toStdString();
+    return impl->propertiesFile->getValue(juce::StringRef(key), juce::String(defaultValue)).toStdString();
 }
 
 bool Preferences::setValue(const std::string& key,

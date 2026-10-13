@@ -115,7 +115,7 @@ public:
      * @param rangeInSeconds The range in seconds.
      * @return The equivalent range in clocks.
      */
-    juce::Range<double> secondsToClocks(juce::Range<double> rangeInSeconds)
+    juce::Range<double> secondsToClocks(juce::Range<double> rangeInSeconds) const
     {
         const auto start = secondsToClocks(rangeInSeconds.getStart());
         const auto end = secondsToClocks(rangeInSeconds.getEnd());
@@ -127,7 +127,7 @@ public:
      * @param rangeInClocks The range in clocks.
      * @return The equivalent range in seconds.
      */
-    juce::Range<double> clocksToSeconds(juce::Range<double> rangeInClocks)
+    juce::Range<double> clocksToSeconds(juce::Range<double> rangeInClocks) const
     {
         const auto start = clocksToSeconds(rangeInClocks.getStart());
         const auto end = clocksToSeconds(rangeInClocks.getEnd());
@@ -271,8 +271,10 @@ private:
     /// A shared pointer to the `LinkEngine`.
     std::shared_ptr<audium::LinkEngine> linkEngine;
 
-    /// The current tempo in beats per minute (BPM).
-    double tempoBPM = 120.0;
+    /// The current tempo in beats per minute (BPM). Written from the
+    /// message thread and Link's callback thread, read every block on the
+    /// audio thread (tempo-locked clips derive their speed from it).
+    std::atomic<double> tempoBPM { 120.0 };
     
 };
 

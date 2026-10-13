@@ -1,0 +1,164 @@
+//    Audionaut - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
+
+#include "VoiceSource.h"
+#include "Engine/AudioSources/ClipFadeSpec.h"
+#include "Engine/AudioSources/RenderTiming.h"
+#include "Engine/Resource/AudioResource.h"
+#include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Resource/ChannelMapping.h"
+
+namespace audium {
+
+VoiceSource::VoiceSource(AudioResource& audioResource_,
+                                             std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
+audioResource(audioResource_),
+audioFormatReader(audioResource_.audioFormatReader),
+audioFormatReaderSource(std::move(audioFormatReaderSource_)),
+clipTransportSource(std::make_shared<ClipTransportSource>())
+{
+    const auto* reader = audioFormatReaderSource->getAudioFormatReader();
+
+    // memory-mapped readers need neither buffering nor a read-ahead thread
+    auto readAheadBufferSize = 48000;
+    if (dynamic_cast<const MemoryMappedAudioFormatReader*>(reader) != nullptr)
+        readAheadBufferSize = 0;
+    else
+        readAheadThread = audioResource.getContainer().getReadAheadThread();
+
+    clipTransportSource->setSource (audioFormatReaderSource.get(),
+                                     readAheadBufferSize,
+                                     readAheadThread.get(),
+                                     reader->sampleRate,
+                                     static_cast<int>(reader->numChannels));
+
+    // a second cursor on the reader for the transport's standby lane, which
+    // takes a known jump - the loop wrap, a clip start - ahead of time: on a
+    // memory-mapped reader (stateless per read, so the cursor costs nothing)
+    // it primes the stretcher; on a buffered reader it fills a second
+    // read-ahead. Both cursors read on the read-ahead thread only
+    standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
+    clipTransportSource->setStandbySource(standbyReaderSource.get());
+
+    channelRemapping = std::make_unique<juce::ChannelRemappingAudioSource>(clipTransportSource.get(), false);
+}
+
+void VoiceSource::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
+{
+    channelRemapping->prepareToPlay(samplesPerBlockExpected, sampleRate);
+}
+
+void VoiceSource::waitForReadAhead (const juce::AudioSourceChannelInfo& info)
+{
+    // A buffered chain plays silence for whatever its read-ahead does not
+    // hold yet. Known jumps arrive through a lane filled ahead of time and
+    // pass here at once; an unplanned one (a user seek, an edit restart)
+    // gets the reader a moment - live the same bounded moment for every
+    // buffered voice, offline as long as it takes, see RenderTiming.
+    if (auto* buffering = clipTransportSource->getBufferingSource())
+        if (! buffering->waitForNextAudioBlockReady(info, RenderTiming::inputReadinessTimeoutMs()))
+            DBG("VoiceSource: buffering source not ready");
+}
+
+void VoiceSource::getNextAudioBlock (const juce::AudioSourceChannelInfo& info)
+{
+    waitForReadAhead(info);
+
+    const auto startSample = scheduledStartSample.load();
+
+    if (startSample == 0) {
+        auto samplesUntilStop = 0;
+        if (durationTimer.process(info.numSamples, samplesUntilStop)) {
+
+            AudioSourceChannelInfo infoStop1 (info);
+            infoStop1.numSamples = samplesUntilStop;
+            if (infoStop1.numSamples > 0)
+                channelRemapping->getNextAudioBlock(infoStop1);
+
+            // reached end of clip -> apply stop
+            clipTransportSource->stop(false);
+
+            // the clip has ended: the remainder of the buffer must stay
+            // silent instead of bleeding audio from beyond the clip end
+            AudioSourceChannelInfo infoStop2 (info);
+            infoStop2.startSample = samplesUntilStop;
+            infoStop2.numSamples = info.numSamples - samplesUntilStop;
+            if (infoStop2.numSamples > 0)
+                infoStop2.clearActiveBufferRegion();
+        }
+        else {
+            channelRemapping->getNextAudioBlock(info);
+        }
+    }
+    else if (startSample >= info.numSamples) {
+        scheduledStartSample.store(startSample - info.numSamples);
+        channelRemapping->getNextAudioBlock(info);
+    }
+    else
+    {
+        scheduledStartSample.store(0);
+
+        if (reScheduled) {
+            // process 1st part (until start sample, in case we are already playing -> loop)
+            AudioSourceChannelInfo infoPart1 (info.buffer, 0, startSample);
+            channelRemapping->getNextAudioBlock(infoPart1);
+            reScheduled = false;
+        }
+
+        clipTransportSource->setPosition(scheduledPosition.load());
+
+        // process 2nd part - from the read-ahead the jump landed in
+        AudioSourceChannelInfo infoPart2 (info.buffer, startSample, info.numSamples - startSample);
+        waitForReadAhead(infoPart2);
+        channelRemapping->getNextAudioBlock(infoPart2);
+
+        auto offset = 0;
+        if (durationTimer.process(infoPart2.numSamples, offset))
+        {
+            DBG("VoiceSource: stop right after scheduled start");
+            clipTransportSource->stop(false);
+        }
+    }
+}
+
+void VoiceSource::applyChannelMapping(bool withChannelOffset)
+{
+    const auto audioFileChannels = static_cast<int>(audioResource.getNumAudioFileChannels());
+    const auto totalChannels = std::max(audioResource.getAudioTrack()->getAudioTrackContainer().getNumAudioTrackChannels(),
+                                        audioFileChannels);
+
+    channelRemapping->setNumberOfChannelsToProduce(totalChannels);
+    channelRemapping->clearAllMappings();
+
+    const auto& channelMapping = audioResource.getChannelMapping();
+    const auto channelOffset = withChannelOffset ? audioResource.getAudioTrack()->getChannelOffset() : 0;
+    const auto srcChannel = channelMapping.getSourceChannel();
+    const auto dstChannel = channelMapping.getDestinationChannel();
+    jassert(srcChannel < audioFileChannels);
+    jassert(dstChannel + channelOffset < totalChannels);
+    channelRemapping->setOutputChannelMapping(srcChannel,
+                                              dstChannel + channelOffset);
+}
+
+
+void VoiceSource::configureClipFades(const ClipFadeSpec& spec, double filePositionSeconds, bool reset)
+{
+    audium::configureClipFades(*clipTransportSource, spec, filePositionSeconds, reset);
+}
+
+void VoiceSource::configureDynamics(std::shared_ptr<PlayListItem> item)
+{
+    // Gain:
+    auto channel    = audioResource.getChannelMapping().getDestinationChannel();
+    auto gain       = item->getDynamics().getGain(channel);
+    clipTransportSource->setGain(static_cast<float>(gain));
+
+    // Fades: same shared configuration the scheduler uses, for a voice
+    // scheduled at the audible start (see bouncePlayListItem)
+    const auto spec = ClipFadeSpec::fromPlayListItem(*item);
+    configureClipFades(spec, spec.voiceFileStart(), true);
+}
+
+} // namespace audium

@@ -41,10 +41,24 @@ jobs:
       # equivs builds the .deb from Audionaut/Builds/Debian.
       run: |
         sudo apt-get update
-        sudo apt-get install -y libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev equivs
+        sudo apt-get install -y libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev libxi-dev libegl-dev equivs
 
     - name: Build Essentia
       uses: ./.github/actions/build-essentia
+
+    - name: Write analytics credentials
+      # the GA4 API secret is never committed; without the repository
+      # secret the release ships with analytics disabled. The check has to
+      # live in the script: the secrets context is not allowed in a step
+      # `if`, and using it there makes GitHub reject the whole workflow.
+      env:
+        GA4_API_SECRET: ${{ secrets.GA4_API_SECRET }}
+      run: |
+        if [ -z "$GA4_API_SECRET" ]; then
+          echo "GA4_API_SECRET not set - building with analytics disabled"
+          exit 0
+        fi
+        printf '#pragma once\n#define GA4_API_SECRET "%s"\n' "$GA4_API_SECRET" > Audionaut/Source/Application/AnalyticsCredentials.h
 
     - name: Compile (Release)
       run: make -C Audionaut/Builds/LinuxMakefile/ CONFIG=Release -j$(nproc)

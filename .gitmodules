@@ -16,3 +16,9 @@
 [submodule "Submodules/essentia"]
 	path = Submodules/essentia
 	url = https://github.com/MTG/essentia.git
+[submodule "Submodules/demucs.cpp"]
+	path = Submodules/demucs.cpp
+	url = https://github.com/sevagh/demucs.cpp
+[submodule "Submodules/rubberband"]
+	path = Submodules/rubberband
+	url = https://github.com/breakfastquay/rubberband.git

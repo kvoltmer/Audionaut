@@ -36,6 +36,7 @@ const char* const updateSelection = "update selection";
  * @brief Action message to update the middle panel of the user interface.
  */
 const char* const updateMiddlePanelAction = "update middle panel";
+const char* const updateChannelsAction = "update channels";
 
 /**
  * @brief Action message to update the right panel of the user interface.

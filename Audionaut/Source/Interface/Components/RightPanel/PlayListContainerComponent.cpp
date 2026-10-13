@@ -10,7 +10,6 @@
 #include "Interface/ColourIds.h"
 #include "Engine/Provider/TempoProvider.h"
 #include "Engine/Group/AudioTrackContainer.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 //==============================================================================

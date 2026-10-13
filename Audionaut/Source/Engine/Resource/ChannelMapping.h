@@ -107,8 +107,9 @@ public:
     /**
      * @brief Deserializes the channel mapping from a JSON object.
      * @param input The JSON object to read from.
-     * @param rebuild Whether to rebuild the mapping after reading.
-     * @return True if the deserialization was successful, false otherwise.
+     * @param rebuild Unused; a mapping is always read in place.
+     * @return True if the input holds a mapping in the current or the legacy
+     *         format, false if the mapping is missing or malformed.
      */
     bool readFromJson(json& input, bool rebuild);
 

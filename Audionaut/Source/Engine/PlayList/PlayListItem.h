@@ -14,16 +14,20 @@ using json = nlohmann::json;
 
 #include "Engine/TimeContext.h"
 #include "Engine/PlayList/ClipDynamics.h"
+#include "Engine/PlayList/ClipSpeed.h"
+#include "Engine/PlayList/StretchMode.h"
 #include "Engine/PlayList/PositionableBase.h"
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 
+namespace audium { struct UndoablePlayListItemAction; }
+
 namespace audium {
 
 class AudioRegion;
 class PlayListContainer;
-class AudiumTransportSource;
+class VoiceSource;
 
 /**
  * \class PlayListItem
@@ -55,7 +59,47 @@ public:
     juce::Range<double> getRegionData(audium::TimeContextType context) const override;
     void setRegionData(juce::Range<double> newRegionData, audium::TimeContextType context) override;
     
+    /// The clip's timeline duration: source length / speed ratio.
     double getDurationTime(audium::TimeContextType context) const;
+
+    /**
+     * The clip's playback speed (re-pitch/varispeed): 2.0 plays double
+     * speed one octave up on half the timeline. Clamped to
+     * [minSpeedRatio, maxSpeedRatio]; ignored while the clip is recording.
+     *
+     * A tempo-locked clip derives it instead: project tempo / clip tempo,
+     * read live, so the clip stays on the grid when the tempo changes.
+     * setSpeedRatio is ignored while locked.
+     */
+    double getSpeedRatio() const override;
+    void setSpeedRatio(double newRatio);
+
+    StretchMode getStretchMode() const { return stretchMode; }
+
+    /// How the speed ratio is realised (varispeed vs pitch-preserving).
+    /// No-op while the clip is recording, like setSpeedRatio.
+    void setStretchMode(StretchMode newMode);
+
+    /**
+     * Tempo lock: the clip follows the project tempo (see getSpeedRatio).
+     * Unlocking bakes the derived ratio into the plain speed so the clip
+     * does not jump. No-op while recording.
+     */
+    bool isTempoLocked() const { return tempoLocked; }
+    void setTempoLocked(bool shouldLock);
+
+    /// The clip's native tempo in BPM (0 = unknown), clamped to
+    /// [ClipSpeed::minClipTempo, maxClipTempo]. Only matters while locked.
+    double getClipTempo() const { return clipTempo; }
+    void setClipTempo(double bpm);
+
+    /// Speed ratio, stretch mode, tempo lock and clip tempo together - for
+    /// every place that derives a new item from an existing one (clone,
+    /// split, drop, export items).
+    void copySpeedFrom(const PlayListItem& other);
+
+    static constexpr double minSpeedRatio = ClipSpeed::minSpeedRatio;
+    static constexpr double maxSpeedRatio = ClipSpeed::maxSpeedRatio;
     
     double getAbsolutePosition(audium::TimeContextType context) const override;
 
@@ -71,10 +115,18 @@ public:
     
     bool validateData();
     
-    const std::vector<std::shared_ptr<AudiumTransportSource>> &getTransportSources() const { return transportSources; }
+    const std::vector<std::shared_ptr<VoiceSource>> &getVoiceSources() const { return voiceSources; }
     
     void onDragStart();
-    void onDragEnd();
+
+    /// Commits the drag/session as one undo transaction. Safe with no
+    /// preceding onDragStart (then it is a no-op).
+    void onDragEnd(const juce::String& transactionName = "Set Clip Gain");
+
+    /// Rolls the pending drag/session back to the state onDragStart
+    /// captured, leaving no undo entry. Safe with no preceding
+    /// onDragStart (then it is a no-op).
+    void onDragCancel();
 
     ClipDynamics& getDynamics() { return dynamics; }
     const ClipDynamics& getDynamics() const { return dynamics; }
@@ -95,12 +147,24 @@ public:
 private:
     PlayListContainer &owner;
     std::shared_ptr<AudioRegion> audioRegion;
-    std::vector<std::shared_ptr<AudiumTransportSource>> transportSources;
+    std::vector<std::shared_ptr<VoiceSource>> voiceSources;
     
-    std::unique_ptr<audium::UndoableContainerAction> undoableAction;
+    // The open drag or overlay session (see onDragStart): clip-only, so a
+    // replay neither rebuilds voice sources nor restarts other clips
+    std::unique_ptr<audium::UndoablePlayListItemAction> undoableAction;
     
     // The absolute transport position
     double absolutePositionClocks = 0.0;
+
+    // Playback speed (see getSpeedRatio) and how it is realised.
+    double speedRatio = 1.0;
+
+    StretchMode stretchMode = StretchMode::RePitch;
+
+    // Tempo lock (see setTempoLocked): while locked the ratio is derived
+    // from clipTempo and the project tempo, and speedRatio is dormant.
+    bool tempoLocked = false;
+    double clipTempo = 0.0;
 
     ClipDynamics dynamics{*this};
 

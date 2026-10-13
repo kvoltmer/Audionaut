@@ -41,7 +41,6 @@ public:
     void startPlaying();
     void stopPlaying();
     bool isPlaying() const;
-    double beatTime() const;
     void setTempo(double tempo);
     double quantum() const;
     void setQuantum(double quantum);
@@ -63,12 +62,8 @@ public:
         double beatAtStartPlayingTime = 0.0;
     };
 
-    void setBufferSize(std::size_t size);
     void setSampleRate(double sampleRate);
     EngineData pullEngineData();
-    void renderMetronomeIntoBuffer(double quantum,
-                                   std::chrono::microseconds beginHostTime,
-                                   std::size_t numSamples);
     
     double beatAtTime(std::chrono::microseconds time,
                       double quantum) const;
@@ -78,20 +73,20 @@ public:
     
     double mSampleRate;
     std::atomic<std::chrono::microseconds> mOutputLatency;
-    std::vector<double> mBuffer;
     EngineData mSharedEngineData;
     EngineData mLockfreeEngineData;
-    std::chrono::microseconds mTimeAtLastClick;
     bool mIsPlaying;
     std::mutex mEngineDataGuard;
 
     static constexpr double beat_length = 1.;
     
 private:
-    
-    std::unique_ptr<ableton::Link::SessionState> sessionState;
-    
-    std::unique_ptr<ableton::Link> mLink;
+    std::unique_ptr<ableton::Link> mLink;   // before sessionState: it seeds it
+
+    /// Re-captured at the start of every audio callback; a plain value
+    /// (seeded in the constructor), since a fresh heap allocation per
+    /// callback is not real-time safe. Audio thread only.
+    ableton::Link::SessionState sessionState;
   
 };
 

@@ -8,10 +8,11 @@
 #include "AudiumCommandIDs.h"
 #include "Util/EngineAccess.h"
 #include "Util/Preferences.h"
-#include "Engine/AudioSources/TransportSourceContainer.h"
+#include "Engine/AudioSources/VoiceSourceContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Selection/SelectionManager.h"
+#include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Region/AudioRegion.h"
@@ -22,6 +23,8 @@
 #include "Interface/Dialogs/ExportAudioDialog.h"
 #include "Interface/Dialogs/NewAudioTrackDialog.h"
 #include "Interface/Dialogs/AssembleDialog.h"
+#include "Interface/Dialogs/StemSeparationDialog.h"
+#include "Engine/Separation/DemucsConfig.h"
 #include "Interface/Dialogs/AnalysisSettingsComponent.h"
 
 using namespace audium;
@@ -142,12 +145,15 @@ void AudiumMainWindow::getAllCommands (Array <CommandID>& commands)
     {
         CommandIDs::playStop,
         CommandIDs::loopPlayList,
+        CommandIDs::loopSelection,
         CommandIDs::createRegion,
         CommandIDs::splitRegion,
         CommandIDs::cleanupRegions,
         CommandIDs::autoEdit,
         CommandIDs::assembleSequential,
         CommandIDs::assembleRandom,
+        CommandIDs::separateStems,
+        CommandIDs::stretchClip,
         CommandIDs::bounceProject,
         CommandIDs::duplicate,
         
@@ -186,7 +192,11 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             break;
         case CommandIDs::loopPlayList:
             result.setInfo ("Loop Playlist", "Loop Playlist On/Off", CommandCategories::transport, 0);
-            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::ctrlModifier, 0));
+            break;
+        case CommandIDs::loopSelection:
+            result.setInfo ("Loop Selection", "Sets the loop range to the selected range and turns the loop on", CommandCategories::transport, 0);
+            result.setActive (getEngine()->getAudioTrackContainer()->getAudioRegionAdapter().anyRangeSelected());
+            result.defaultKeypresses.add (KeyPress ('l', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::createRegion:
             result.setInfo ("Create Region...", "Creates a new region", CommandCategories::create, 0);
@@ -225,6 +235,15 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
             result.setInfo ("Random...", "Assembles a new sequence from the track's regions, shuffled", CommandCategories::editing, 0);
             result.setActive (canAssemble());
             result.defaultKeypresses.add (KeyPress ('3', ModifierKeys::commandModifier, 0));
+            break;
+        case CommandIDs::separateStems:
+            result.setInfo ("Separate Stems...", "Splits the selected clip into Drums, Bass, Other and Vocals tracks", CommandCategories::editing, 0);
+            result.setActive (canSeparateStems());
+            break;
+        case CommandIDs::stretchClip:
+            result.setInfo ("Stretch Clip...", "Adjusts the selected clip's playback speed (re-pitch)", CommandCategories::editing, 0);
+            result.setActive (canToggleStretchOverlay());
+            result.defaultKeypresses.add (KeyPress ('t', ModifierKeys::commandModifier, 0));
             break;
         case CommandIDs::bounceProject:
             result.setInfo ("Export Audio...", "Export current project as audio file", CommandCategories::general, 0);
@@ -327,6 +346,9 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
         case CommandIDs::loopPlayList:
             notImplemented();
             break;
+        case CommandIDs::loopSelection:
+            loopSelectedRange();
+            break;
         case CommandIDs::createRegion:
             if (newRegionDialog == nullptr)
                 newRegionDialog = std::make_unique<NewRegionDialog>();
@@ -349,6 +371,12 @@ bool AudiumMainWindow::perform (const InvocationInfo& info)
             break;
         case CommandIDs::assembleRandom:
             invokeAssemble(audium::AssembleConfig::Mode::Random);
+            break;
+        case CommandIDs::separateStems:
+            invokeSeparateStems();
+            break;
+        case CommandIDs::stretchClip:
+            toggleStretchOverlay();
             break;
         case CommandIDs::bounceProject:
             if (exportAudioDialog == nullptr)
@@ -513,4 +541,83 @@ void AudiumMainWindow::invokeAssemble(audium::AssembleConfig::Mode mode)
         assembleDialog = std::make_unique<AssembleDialog>();
 
     assembleDialog->assemble(getEngine(), mode);
+}
+
+bool AudiumMainWindow::canSeparateStems()
+{
+#if ! DEMUCS_ENABLED
+    return false;
+#else
+    if (getEngine()->getPlayListScheduler()->isPlaying())
+        return false;
+
+    auto selectedClips = 0;
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+        if (dynamic_cast<audium::PlayListItem*>(object.get()) != nullptr)
+            ++selectedClips;
+
+    return selectedClips == 1;
+#endif
+}
+
+void AudiumMainWindow::invokeSeparateStems()
+{
+    if (stemSeparationDialog == nullptr)
+        stemSeparationDialog = std::make_unique<StemSeparationDialog>();
+
+    stemSeparationDialog->separate(getEngine(), mainComponent.get());
+}
+
+bool AudiumMainWindow::canToggleStretchOverlay()
+{
+    auto target = getEngine()->getAudioTrackContainer()->getClipOverlayTarget();
+
+    // an open overlay can always be dismissed
+    if (target->isActive())
+        return true;
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+        if (auto* item = dynamic_cast<audium::PlayListItem*>(object.get()))
+            return ! item->isRecording();
+
+    return false;
+}
+
+void AudiumMainWindow::loopSelectedRange()
+{
+    auto container = getEngine()->getAudioTrackContainer();
+    auto range = container->getAudioRegionAdapter().getSelectedRange(audium::clocks);
+    if (range.isEmpty())
+        return;
+
+    auto transportLoop = getEngine()->getPlayListScheduler()->getTransportLoop();
+    transportLoop->setLoopPositionRange(container, range, audium::clocks);
+    transportLoop->setLoopActive(true);
+
+    // same refresh the header's loop button triggers
+    container->sendActionMessage(audium::updateArrangementAction);
+    mainComponent->updateUI();
+}
+
+void AudiumMainWindow::toggleStretchOverlay()
+{
+    auto target = getEngine()->getAudioTrackContainer()->getClipOverlayTarget();
+
+    if (target->isActive())
+    {
+        // dismissing commits the overlay's pending edit (see
+        // StretchOverlayControl::visibilityChanged)
+        target->clear();
+        return;
+    }
+
+    for (const auto& object : getEngine()->getAudioTrackContainer()->getSelectionManager()->getSelectedObjects())
+    {
+        if (auto* item = dynamic_cast<audium::PlayListItem*>(object.get()))
+        {
+            target->set(item->getRegion()->getAudioTrack()->getId(), item->getId());
+            return;
+        }
+    }
 }

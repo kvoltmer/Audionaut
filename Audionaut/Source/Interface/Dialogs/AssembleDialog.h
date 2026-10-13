@@ -11,16 +11,20 @@
 #include "Engine/AutoEdit/AutoEdit.h"
 #include "Application/AudiumApplication.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Interface/Controls/ClipOverlayBase.h"
+#include "Interface/Dialogs/AutoEditSettingsComponent.h"
 #include "Util/Preferences.h"
 
 using namespace juce;
 
 /**
  * Asks for the length of the sequence to assemble - a minutes and a seconds
- * field, defaulting to two minutes - then rebuilds the track's playlist
- * through AutoEdit::invokeAssemble in the given mode. The mode is picked in
- * the Assemble sub menu; the last-used length is remembered in the
- * preferences.
+ * field, defaulting to two minutes - and whether to crossfade its joints,
+ * then rebuilds the track's playlist through AutoEdit::invokeAssemble in the
+ * given mode. The mode is picked in the Assemble sub menu; the last-used
+ * length is remembered in the preferences. The Xfade toggle works like the
+ * Auto Edit overlay's: it starts from the Settings dialog's Auto Edit tab,
+ * which also sets the crossfade length and curve.
  */
 class AssembleDialog
 {
@@ -37,7 +41,8 @@ private:
 
     /**
      * The message naming the affected track in bold, the length as a minutes
-     * field above a seconds field, and a short mode explanation underneath.
+     * field above a seconds field, the Xfade toggle, and a short mode
+     * explanation underneath.
      * Each value is a horizontal bar handled like the channel's pan slider -
      * click or drag to the wanted position. The message lives here rather
      * than in the AlertWindow because the window's message text cannot mix
@@ -46,7 +51,7 @@ private:
     class LengthComponent : public Component
     {
     public:
-        LengthComponent(int lengthSeconds, const String& message,
+        LengthComponent(int lengthSeconds, bool crossfades, const String& message,
                         const String& trackName, Colour trackColour,
                         const String& description) :
             message (message),
@@ -61,15 +66,27 @@ private:
             minutesSlider.setValue (lengthSeconds / 60, dontSendNotification);
             secondsSlider.setValue (lengthSeconds % 60, dontSendNotification);
 
+            // the Auto Edit overlay's Xfade toggle, down to the accent colour
+            xfadeButton = ClipOverlayBase::makeIconButton (TRANS ("Xfade"), ClipOverlayBase::xfadeIconPath());
+            xfadeButton->setClickingTogglesState (true);
+            xfadeButton->setToggleState (crossfades, dontSendNotification);
+            xfadeButton->setColour (TextButton::buttonOnColourId, Colour (ClipOverlayBase::toggledOnColour));
+            addAndMakeVisible (xfadeButton.get());
+
+            addAndMakeVisible (xfadeLabel);
+            xfadeLabel.setText (TRANS ("Crossfade the joints"), dontSendNotification);
+            xfadeLabel.setJustificationType (Justification::centredLeft);
+            xfadeLabel.setColour (Label::textColourId, Colours::white.withAlpha (0.6f));
+
             addAndMakeVisible (descriptionLabel);
             descriptionLabel.setText (description, dontSendNotification);
             descriptionLabel.setJustificationType (Justification::topLeft);
             descriptionLabel.setColour (Label::textColourId, Colours::white.withAlpha (0.6f));
 
             // The message on top, then minutes above seconds - each bar keeps
-            // the header's 20 pixel slider height - and the explanation
-            // underneath.
-            setSize (280, 132);
+            // the header's 20 pixel slider height - the Xfade row, and the
+            // explanation underneath.
+            setSize (280, 164);
         }
 
         void paint (Graphics& g) override
@@ -102,6 +119,11 @@ private:
             minutesSlider.setBounds (area.removeFromTop (20).reduced (2, 0));
             area.removeFromTop (4);
             secondsSlider.setBounds (area.removeFromTop (20).reduced (2, 0));
+            area.removeFromTop (6);
+            auto xfadeRow = area.removeFromTop (26).reduced (2, 0);
+            xfadeButton->setBounds (xfadeRow.removeFromLeft (36));
+            xfadeRow.removeFromLeft (6);
+            xfadeLabel.setBounds (xfadeRow);
             area.removeFromTop (4);
             descriptionLabel.setBounds (area);
         }
@@ -109,6 +131,11 @@ private:
         int getLengthSeconds() const
         {
             return (int) minutesSlider.getValue() * 60 + (int) secondsSlider.getValue();
+        }
+
+        bool getCrossfades() const
+        {
+            return xfadeButton->getToggleState();
         }
 
     private:
@@ -130,6 +157,8 @@ private:
 
         Slider minutesSlider;
         Slider secondsSlider;
+        std::unique_ptr<DrawableButton> xfadeButton;
+        Label xfadeLabel;
         Label descriptionLabel;
     };
 
@@ -173,7 +202,9 @@ private:
 
         // The window does not own custom components, so the row outlives it as
         // a member - recreated here after the old window is gone.
-        lengthComponent = std::make_unique<LengthComponent> (minutes * 60 + seconds, message, trackName, trackColour, description);
+        lengthComponent = std::make_unique<LengthComponent> (minutes * 60 + seconds,
+                                                             AutoEditSettingsComponent::readCrossfadesEnabled (preferences),
+                                                             message, trackName, trackColour, description);
         asyncAlertWindow->addCustomComponent (lengthComponent.get());
 
         asyncAlertWindow->addButton (TRANS ("Assemble"), 1, KeyPress (KeyPress::returnKey));
@@ -201,7 +232,7 @@ private:
                 preferences.setValue(audium::PreferenceKeys::assembleMinutes, String(lengthSeconds / 60).toStdString());
                 preferences.setValue(audium::PreferenceKeys::assembleSeconds, String(lengthSeconds % 60).toStdString());
 
-                safeThis->assembleTrack(duration);
+                safeThis->assembleTrack(duration, safeThis->lengthComponent->getCrossfades());
                 return;
             }
 
@@ -211,13 +242,20 @@ private:
         asyncAlertWindow->enterModalState (true, ModalCallbackFunction::create (std::move (resultCallback)), false);
     }
 
-    void assembleTrack(double durationSeconds)
+    void assembleTrack(double durationSeconds, bool crossfades)
     {
         audium::AutoEdit autoEdit(audiumEngine);
 
         audium::AssembleConfig config;
         config.mode = mode;
         config.duration = durationSeconds;
+
+        // length and curve come from the Settings dialog's Auto Edit tab,
+        // shared with the Auto Edit overlay
+        auto& preferences = AudiumApplication::getPreferences();
+        config.crossfades = crossfades;
+        config.crossfadeSeconds = AutoEditSettingsComponent::readCrossfadeSeconds(preferences);
+        config.crossfadeCurve = AutoEditSettingsComponent::readCrossfadeCurve(preferences);
 
         // A fresh seed per invocation, so re-running the command arranges the
         // material anew rather than repeating the same song.

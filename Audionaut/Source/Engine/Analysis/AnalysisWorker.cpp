@@ -55,8 +55,19 @@ void AnalysisWorker::setDefaultAnalysisTypes(const std::vector<AnalysisType>& ty
 
 AnalysisWorker::~AnalysisWorker()
 {
-    // Detach before stopping so removeTimeSliceClient() waits for any analysis
-    // currently in useTimeSlice() to finish, then tear the thread down.
+    // Abandon the work rather than finish it: the queue is dropped and the
+    // analysis running right now (if any) is told to give up at its next
+    // stage, so the wait below is bounded by a single Essentia stage instead
+    // of the rest of the file. The Essentia calls themselves cannot be
+    // interrupted, so the thread is never killed - a thread killed inside
+    // Essentia or the allocator would leave locks held that the exiting main
+    // thread then blocks on, which is worse than the wait.
+    abortRequested = true;
+    cancelAll();
+    thread.signalThreadShouldExit();
+
+    // Detach before stopping so removeTimeSliceClient() waits for a
+    // useTimeSlice() still in progress to return, then tear the thread down.
     thread.removeTimeSliceClient(this);
     thread.stopThread(-1);
 }
@@ -118,26 +129,30 @@ int AnalysisWorker::useTimeSlice()
 {
     Job job;
     {
+        // Claiming the job and marking it running happen in one critical
+        // section, so the remaining counts never miss a job that has been
+        // popped but not yet flagged as running.
         std::lock_guard<std::mutex> lock(mutex);
         if (jobs.empty())
             return 500; // idle: poll again in half a second
 
         job = jobs.front();
         jobs.pop_front();
+
+        currentFileName = job.file.getFileName();
+        currentFile = job.file;
+        currentAnalysisType = job.type;
+        busy = true;
     }
+
+    if (analysisProvider != nullptr && ! abortRequested.load())
+        analysisProvider->analyzeFile(job.file, job.type, &abortRequested);
 
     {
         std::lock_guard<std::mutex> lock(mutex);
-        currentFileName = job.file.getFileName();
-        currentAnalysisType = job.type;
-    }
-    busy = true;
-    if (analysisProvider != nullptr)
-        analysisProvider->analyzeFile(job.file, job.type);
-    busy = false;
-    {
-        std::lock_guard<std::mutex> lock(mutex);
+        busy = false;
         currentFileName = {};
+        currentFile = juce::File();
         currentAnalysisType = std::nullopt;
     }
 
@@ -156,6 +171,19 @@ int AnalysisWorker::getRemainingCount() const
 {
     std::lock_guard<std::mutex> lock(mutex);
     return static_cast<int>(jobs.size()) + (busy ? 1 : 0);
+}
+
+int AnalysisWorker::getRemainingCount(const juce::File& audioFile) const
+{
+    std::lock_guard<std::mutex> lock(mutex);
+
+    auto count = static_cast<int>(std::count_if(jobs.begin(), jobs.end(),
+        [&audioFile] (const Job& job) { return job.file == audioFile; }));
+
+    if (currentFile == audioFile && currentFile != juce::File())
+        ++count;
+
+    return count;
 }
 
 juce::String AnalysisWorker::getCurrentFileName() const
