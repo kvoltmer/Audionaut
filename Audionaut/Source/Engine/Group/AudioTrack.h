@@ -157,7 +157,9 @@ public:
     
     // drag & drop:
     void dropSelectedAudioRegions(int insertIndex);
-    void dropSelectedAudioRegions(double pos, TimeContextType context);
+    /// Places the selected regions at `pos`, one after the other; false
+    /// (and nothing placed) when no region is selected.
+    bool dropSelectedAudioRegions(double pos, TimeContextType context);
     void dropPlayListItem(std::shared_ptr<PlayListItem> item,
                           double pos,
                           TimeContextType context,
@@ -195,7 +197,8 @@ public:
     
     std::vector<std::shared_ptr<AudioResource>> addAudioFile (std::shared_ptr<ResourceGroup> resourceGroup,
                                                               const juce::File filename,
-                                                              int &destChannel);
+                                                              int &destChannel,
+                                                              juce::String& error);
     
     std::shared_ptr<PlayListItem> createDefaultPlayListItem(std::shared_ptr<AudioResource> audioResource,
                                    std::shared_ptr<ResourceGroup> resourceGroup,

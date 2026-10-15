@@ -475,3 +475,61 @@ SCENARIO("an external change waits for a running render", "[engine][reload][rend
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();
 }
+
+SCENARIO("discarding an unsaved agent edit keeps the saved project's audio", "[engine][reload][trash]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+    auto engine = AudiumFactory::createAudiumEngine();
+    auto store = engine->getProjectFileStore();
+
+    auto outProject = File(reloadTestFilesDirectory + "Sessions/reload-trash-test.audium/" + ProjectFileStore::projectFileName);
+    auto audioFile = File(reloadTestFilesDirectory + "120-funk-1-sec.wav");
+    REQUIRE(audioFile.existsAsFile());
+
+    GIVEN("a saved project with a clip track") {
+        engine->getProjectSerializer()->createNewProject();
+        auto tracks = engine->getAudioTrackContainer();
+        REQUIRE(tracks->addAudioFiles({ audioFile.getFullPathName() }, 0.0, nullptr, false));
+        REQUIRE(store->save(outProject, nullptr));
+
+        const auto packagedAudio = AudioResourceContainer::getAudioFileDirectory(outProject.getParentDirectory())
+                                       .getChildFile(audioFile.getFileName());
+        REQUIRE(packagedAudio.existsAsFile());
+        REQUIRE(store->findObsoleteAudioFiles().empty());
+
+        WHEN("an agent removes the clip track in memory, without saving") {
+            json afterState;
+            engine->getProjectSerializer()->writeToJson(afterState);
+            auto& tracksJson = afterState["audium"]["audio_tracks"];
+            for (auto it = tracksJson.begin(); it != tracksJson.end(); ++it) {
+                if (it->contains("resource_groups")) {
+                    tracksJson.erase(it);
+                    break;
+                }
+            }
+            REQUIRE(tracksJson.size() == static_cast<size_t>(tracks->getNumItems() - 1));
+            REQUIRE(store->applyStateAsUndoableReload(afterState, true, true, "Agent: remove track", nullptr));
+
+            THEN("the audio the saved project still uses is not obsolete") {
+                // a discard compares against the saved Project.json, not the
+                // unsaved state the agent applied
+                REQUIRE(store->findObsoleteAudioFiles().empty());
+
+                AND_THEN("it becomes obsolete once that state is saved") {
+                    REQUIRE(store->save(outProject, nullptr));
+                    const auto obsolete = store->findObsoleteAudioFiles();
+                    REQUIRE(obsolete.size() == 1);
+                    REQUIRE(obsolete.front() == packagedAudio);
+                }
+            }
+        }
+    }
+
+    // cleanup ... comment out in case you need to isolate an issue
+    outProject.getParentDirectory().deleteRecursively();
+
+    engine = nullptr;
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}

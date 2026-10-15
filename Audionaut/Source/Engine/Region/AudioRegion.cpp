@@ -87,6 +87,11 @@ bool AudioRegion::validateData(AudioRegionData::tRange& newData, audium::TimeCon
         newData = newData.movedToEndAt(resourceGroup->getMaxLength(context));
         result |= true;
     }
+
+    // a range longer than the source was pushed below zero by the move above
+    if (newData.getStart() < 0.0)
+        newData.setStart(0.0);
+
     return result;
 }
 

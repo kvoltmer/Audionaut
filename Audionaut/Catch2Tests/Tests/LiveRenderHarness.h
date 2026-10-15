@@ -12,6 +12,9 @@
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Export/AudioExporter.h"
@@ -19,6 +22,7 @@
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Link/LinkEngine.hpp"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Provider/TempoProvider.h"
 
 // The live audio path, driven by hand.
@@ -91,6 +95,79 @@ private:
 };
 
 /**
+ * What the driver saw in each device callback - kept so that a failed
+ * comparison can say what the transport did around the first mismatch.
+ * Recording it costs a push_back per block on the test thread.
+ */
+struct LiveTrace
+{
+    struct Block
+    {
+        juce::uint64 sampleTime = 0;  ///< driver sample time of the block's first sample
+        int numSamples = 0;
+        double beats = 0.0;           ///< what Link reported for the block
+        bool isPlaying = false;
+        int loopCount = 0;            ///< the transport loop's count after the block
+        double wallMs = 0.0;          ///< wall clock at the block's start, since the driver started
+        double blockWallMs = 0.0;     ///< how long the callback took
+    };
+
+    std::vector<Block> blocks;
+    juce::uint64 renderStart = 0;     ///< driver sample time of the last render()'s first sample
+
+    /// The recorded blocks within `radius` of the one holding `renderSample`
+    /// (an index into the last render()'s output), one per line.
+    std::string around (int renderSample, int radius = 3) const
+    {
+        const auto target = renderStart + static_cast<juce::uint64> (std::max (0, renderSample));
+        auto hit = -1;
+        for (auto i = 0; i < static_cast<int> (blocks.size()); ++i)
+            if (blocks[(size_t) i].sampleTime <= target
+                && target < blocks[(size_t) i].sampleTime + static_cast<juce::uint64> (blocks[(size_t) i].numSamples))
+                hit = i;
+
+        std::ostringstream out;
+        if (hit < 0)
+        {
+            out << "  (no traced block holds render sample " << renderSample << ")\n";
+            return out.str();
+        }
+
+        for (auto i = std::max (0, hit - radius); i <= std::min (static_cast<int> (blocks.size()) - 1, hit + radius); ++i)
+        {
+            const auto& b = blocks[(size_t) i];
+            const auto first = static_cast<long long> (b.sampleTime) - static_cast<long long> (renderStart);
+            out << (i == hit ? "> " : "  ")
+                << "callback " << i << " render samples [" << first << ", " << first + b.numSamples << ")"
+                << " beats=" << b.beats << " playing=" << b.isPlaying << " loops=" << b.loopCount
+                << " wall=" << b.wallMs << " ms (callback " << b.blockWallMs << " ms)\n";
+        }
+        return out.str();
+    }
+
+    /// The blocks where playing or the loop count changed - the transport's
+    /// story in a few lines.
+    std::string transitions() const
+    {
+        std::ostringstream out;
+        for (auto i = 0; i < static_cast<int> (blocks.size()); ++i)
+        {
+            const auto& b = blocks[(size_t) i];
+            const auto changed = i == 0 || b.isPlaying != blocks[(size_t) i - 1].isPlaying
+                                        || b.loopCount != blocks[(size_t) i - 1].loopCount;
+            if (changed)
+                out << "  callback " << i << " at render sample "
+                    << static_cast<long long> (b.sampleTime) - static_cast<long long> (renderStart)
+                    << ": playing=" << b.isPlaying << " loops=" << b.loopCount << " beats=" << b.beats
+                    << " wall=" << b.wallMs << " ms\n";
+        }
+        if (! blocks.empty())
+            out << "  " << blocks.size() << " callbacks, the last at wall " << blocks.back().wallMs << " ms\n";
+        return out.str();
+    }
+};
+
+/**
  * Drives an engine's live render path block by block, as the device would.
  *
  * Construction runs the device's audioDeviceAboutToStart (Link sample rate,
@@ -128,6 +205,7 @@ public:
         output (device_.numOutputs, device_.blockSize)
     {
         input.clear();
+        wallStartMs = juce::Time::getMillisecondCounterHiRes();
         // near "now", like the real callback's host times; Link's timeline
         // arithmetic works on absolute microseconds
         hostTimeOrigin = ableton::link::platform::Clock{}.micros();
@@ -177,6 +255,7 @@ public:
 
         juce::AudioBuffer<float> captured (device.numOutputs, numBlocks * device.blockSize);
         captured.clear();
+        trace.renderStart = sampleTime;
 
         for (auto block = 0; block < numBlocks; ++block)
         {
@@ -219,10 +298,15 @@ public:
     /// How often the message thread runs between blocks; 0 = only after render().
     int pumpEveryBlocks = 8;
 
+    /// Every device callback so far (see LiveTrace).
+    LiveTrace trace;
+
 private:
     void renderBlock (int numSamples)
     {
         using namespace std::chrono;
+        const auto blockWallStart = juce::Time::getMillisecondCounterHiRes();
+        const auto blockSampleTime = sampleTime;
 
         // the host time a jitter-free device reports for this block's first sample
         const auto hostTime = hostTimeOrigin
@@ -246,6 +330,11 @@ private:
 
         sampleTime += static_cast<juce::uint64> (numSamples);
         ++blockCount;
+
+        const auto now = juce::Time::getMillisecondCounterHiRes();
+        trace.blocks.push_back ({ blockSampleTime, numSamples, beats, isPlaying,
+                                  scheduler->getTransportLoop()->getLoopCount(),
+                                  blockWallStart - wallStartMs, now - blockWallStart });
     }
 
     static void pumpMessageThread()
@@ -264,6 +353,7 @@ private:
     juce::AudioBuffer<float> output;
 
     std::chrono::microseconds hostTimeOrigin { 0 };
+    double wallStartMs = 0.0;
     juce::uint64 sampleTime = 0;
     double beats = 0.0;
     bool isPlaying = false;
@@ -341,6 +431,102 @@ inline BufferDifference compareBuffers (const juce::AudioBuffer<float>& live,
         }
     }
     return result;
+}
+
+/// For a failed comparison over [from, to) (to < 0: the whole buffer, as
+/// compareBuffers): what kind of divergence it is. Where the first mismatch
+/// falls (block, offset), how far the renders stay apart, the block peaks
+/// on both sides, whether the live render is silent there or exactly the
+/// reference shifted by some samples, and - with a trace - what the
+/// transport did around it.
+inline std::string describeDivergence (const juce::AudioBuffer<float>& live,
+                                       const juce::AudioBuffer<float>& reference,
+                                       const BufferDifference& diff,
+                                       float tolerance, int blockSize,
+                                       const LiveTrace* trace = nullptr,
+                                       int to = -1)
+{
+    const auto first = diff.firstOverTolerance;
+    if (first < 0 || live.getNumSamples() != reference.getNumSamples() || blockSize <= 0)
+        return "no sample over the tolerance";
+
+    const auto numSamples = to < 0 ? live.getNumSamples() : std::min (to, live.getNumSamples());
+    const auto numChannels = std::min (live.getNumChannels(), reference.getNumChannels());
+
+    auto over = 0, last = first;
+    for (auto i = first; i < numSamples; ++i)
+        for (auto c = 0; c < numChannels; ++c)
+            if (std::abs (live.getSample (c, i) - reference.getSample (c, i)) > tolerance)
+            {
+                ++over;
+                last = i;
+                break;
+            }
+
+    const auto blockStart = (first / blockSize) * blockSize;
+    const auto blockLength = std::min (blockSize, numSamples - blockStart);
+    auto livePeak = 0.0f, referencePeak = 0.0f;
+    for (auto c = 0; c < numChannels; ++c)
+    {
+        livePeak = std::max (livePeak, live.getMagnitude (c, blockStart, blockLength));
+        referencePeak = std::max (referencePeak, reference.getMagnitude (c, blockStart, blockLength));
+    }
+
+    auto silentRun = 0;
+    for (auto i = first; i < numSamples; ++i)
+    {
+        auto silent = true;
+        for (auto c = 0; c < numChannels; ++c)
+            silent = silent && live.getSample (c, i) == 0.0f;
+        if (! silent)
+            break;
+        ++silentRun;
+    }
+
+    // live[i] against reference[i + lag] over the samples after the first mismatch
+    constexpr int maxLag = 1024, window = 2048;
+    const auto from = first;
+    const auto end = std::min (numSamples, first + window);
+    auto residualAt = [&] (int lag)
+    {
+        double e = 0.0;
+        for (auto c = 0; c < numChannels; ++c)
+            for (auto i = from; i < end; ++i)
+            {
+                const auto j = i + lag;
+                const auto r = (j >= 0 && j < reference.getNumSamples()) ? reference.getSample (c, j) : 0.0f;
+                const auto d = static_cast<double> (live.getSample (c, i)) - r;
+                e += d * d;
+            }
+        return e;
+    };
+    auto bestLag = 0;
+    auto best = residualAt (0);
+    const auto unshifted = best;
+    for (auto lag = -maxLag; lag <= maxLag; ++lag)
+        if (const auto e = residualAt (lag); e < best)
+        {
+            best = e;
+            bestLag = lag;
+        }
+
+    std::ostringstream out;
+    out << "first mismatch at sample " << first << " (render block " << first / blockSize << ", sample " << first - blockStart << " of it)"
+        << ", last at " << last << ", " << over << " samples over " << tolerance << "\n"
+        << "that block's peak: live " << livePeak << ", reference " << referencePeak << "\n"
+        << "live is silent for " << silentRun << " samples from the first mismatch\n"
+        << "over [" << from << ", " << end << "): ";
+    // exact up to the tolerance on every compared sample
+    const auto exactBound = static_cast<double> (tolerance) * tolerance * numChannels * (end - from);
+    if (bestLag != 0 && best <= exactBound)
+        out << "live is the reference shifted: live[i] = reference[i + " << bestLag << "]\n";
+    else
+        out << "not a pure shift (best lag " << bestLag << " leaves squared error " << best
+            << ", unshifted " << unshifted << ")\n";
+    if (trace != nullptr)
+        out << "live callbacks around it (> holds the first mismatch):\n" << trace->around (first)
+            << "transport:\n" << trace->transitions();
+    return out.str();
 }
 
 } // namespace audium::test

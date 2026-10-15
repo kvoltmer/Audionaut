@@ -36,6 +36,7 @@ class CliContext {
 public:
     bool json = false;  ///< Emit a machine-readable envelope on stdout.
     bool quiet = false; ///< Suppress log output.
+    bool progressJson = false; ///< Progress as one JSON object per stderr line; not silenced by quiet.
 
     /** The GUI app's live preferences in in-app CLI mode; null in the
         standalone binary, which opens its own instance when it needs one. */
@@ -50,6 +51,7 @@ public:
      */
     std::function<void (const nlohmann::json& envelope)> envelopeSink;
     std::function<void (const juce::String& line)> logSink;
+    std::function<void (double fraction, const juce::String& message)> progressSink;
 
     /** Emits a success envelope (or nothing in human mode) and returns exitOk. */
     int ok (const nlohmann::json& result)
@@ -94,6 +96,33 @@ public:
             std::cerr << message << std::endl;
     }
 
+    /**
+     * How far a long verb has got, @p fraction in [0, 1]. Verbs throttle their
+     * own calls; this only picks the rendering.
+     *
+     * With --progress-json the line is `{"progress":0.35,"message":"..."}` on
+     * stderr - stdout stays the envelope alone - and it is written even with
+     * --quiet, which is how a wrapper asks for progress without the chatter.
+     * Other stderr lines may sit between them, so readers must skip anything
+     * that is not such an object.
+     */
+    void progress (double fraction, const juce::String& message)
+    {
+        if (progressSink) {
+            progressSink (fraction, message);
+            return;
+        }
+
+        if (progressJson) {
+            std::cerr << nlohmann::json ({ { "progress", fraction },
+                                           { "message", message.toStdString() } }).dump()
+                      << std::endl;
+            return;
+        }
+
+        log (message + " " + juce::String (static_cast<int> (fraction * 100.0)) + "%");
+    }
+
 private:
     /**
      * The envelope always goes to the *real* stdout, whose buffer is captured
@@ -104,6 +133,34 @@ private:
     std::ostream& resultStream() { return resultOut; }
 
     std::ostream resultOut { std::cout.rdbuf() };
+};
+
+/**
+ * @class ProgressSteps
+ * @brief Forwards a verb's progress to CliContext::progress() once per 5% step.
+ *
+ * Engine callbacks fire many times a second for minutes; a wrapper wants a
+ * tick it can show, strictly increasing (MCP progress requires that), starting
+ * with 0%. A report that does not reach a new step - a repeat, or a callback
+ * running backwards - is dropped.
+ */
+class ProgressSteps {
+public:
+    explicit ProgressSteps (CliContext& context_) : context (context_) {}
+
+    void operator() (double fraction, const juce::String& message)
+    {
+        const auto step = static_cast<int> (juce::jlimit (0.0, 1.0, fraction) * 100.0) / 5;
+
+        if (step > lastStep) {
+            lastStep = step;
+            context.progress (fraction, message);
+        }
+    }
+
+private:
+    CliContext& context;
+    int lastStep = -1;
 };
 
 /**

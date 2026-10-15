@@ -125,6 +125,12 @@ int runCreateRegion (const juce::ArgumentList& args, CliContext& context)
     if (endClocks <= startClocks)
         return context.fail (exitUsage, "usage", "--end must be after --start");
 
+    // Region names address regions in every other verb, so a duplicate would
+    // be ambiguous - and the baseline diff below could not see it as new.
+    if (! findRegionsByName (*session->getAudioTrackContainer(), name).empty())
+        return context.fail (exitFailure, "name_taken",
+                             "a region named \"" + name.toStdString() + "\" already exists");
+
     auto& adapter = session->getAudioTrackContainer()->getAudioRegionAdapter();
     adapter.setSelectedRange ({ startClocks, endClocks }, audium::clocks);
 

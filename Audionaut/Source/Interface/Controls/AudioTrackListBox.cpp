@@ -175,10 +175,12 @@ void AudioTrackListBox::itemDropped (const SourceDetails &dragSourceDetails)
     bool success = false;
     
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
-        auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
-        setNewGroupColour(audioTrack);
-        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
-        success = true;
+        // no new, empty track when there is nothing to put on it
+        if (! audiumEngine->getAudioTrackContainer()->getAudioRegionAdapter().getSelectedAudioRegions().empty()) {
+            auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());
+            setNewGroupColour(audioTrack);
+            success = audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
+        }
     }
     else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
         auto audioTrack = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(juce::String());

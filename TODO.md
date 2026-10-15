@@ -202,6 +202,24 @@ the one-gesture crossfade UX on top:
   position). Needs a paired undo action (one gesture = one transaction across
   two items) and the lane `ClipFadeOverlay` already draws both sides.
 
+## Arrangement editing
+
+- [ ] **Trimming a clip whose region is used elsewhere should edit a copy,
+  not the shared region.** A `PlayListItem` holds a
+  `std::shared_ptr<AudioRegion>`, so changing a clip's start/end/length on
+  the timeline mutates the region every other clip referencing it plays —
+  trimming one instance silently reshapes the others. When a trim gesture
+  begins **on drag start** (`DraggerControl::mouseDown` /
+  `DraggingHandle`), check whether the item's region is referenced by any
+  other `PlayListItem` on the arrangement; if so, clone it first
+  (`AudioRegionContainer::createRegion`) and point this item at the copy,
+  so the whole gesture — including live preview while dragging — edits
+  the private copy. On drag start specifically, not on mouse-up: the
+  shared region must never be touched mid-gesture. The clone wants to be
+  part of the same undo transaction as the trim (one gesture = one undo
+  step), and naming should follow the existing duplicate convention in
+  the Regions list.
+
 ## Playback / time stretch — follow-ups (found 2026-09-21 in PR #105)
 
 - [ ] **End-of-clip re-priming of stretched clips (DSP spike at every

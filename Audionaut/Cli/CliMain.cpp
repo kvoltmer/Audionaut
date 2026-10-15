@@ -18,6 +18,9 @@
 // Global flags (any command):
 //   --json    machine-readable result envelope on stdout, logs on stderr
 //   --quiet   suppress log output
+//   --progress-json
+//             progress of long verbs (separate) as {"progress":F,"message":S}
+//             lines on stderr, kept even with --quiet
 //
 // Exit codes: 0 success, 1 operation failed, 2 usage error, 3 feature
 // unavailable in this build.
@@ -30,6 +33,7 @@ int main (int argc, char* argv[])
     audium::cli::CliContext context;
     context.json = argumentList.removeOptionIfFound ("--json");
     context.quiet = argumentList.removeOptionIfFound ("--quiet");
+    context.progressJson = argumentList.removeOptionIfFound ("--progress-json");
 
     // The verbs dispatch directly (same path as the GUI's in-app CLI mode) -
     // NOT through ConsoleApplication::findAndRunCommand: its short-option

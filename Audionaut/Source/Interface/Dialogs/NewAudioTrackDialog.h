@@ -93,19 +93,27 @@ private:
     
     void create(String name, int numChannels)
     {
+        // check up front: past MAX_AUDIO_CHANNELS the track would be created
+        // with fewer channels than asked for, or none at all
+        auto numTotalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
+        if (numTotalChannels + numChannels > MAX_AUDIO_CHANNELS) {
+            auto channelsLeft = juce::jmax(0, MAX_AUDIO_CHANNELS - numTotalChannels);
+            juce::String message = "The project already uses " + juce::String(numTotalChannels)
+                                 + " of at most " + juce::String(MAX_AUDIO_CHANNELS) + " audio channels, so a track with "
+                                 + juce::String(numChannels) + " channels does not fit.";
+            message += channelsLeft > 0 ? " At most " + juce::String(channelsLeft) + " channel(s) are left."
+                                        : " Remove channels or tracks first.";
+            juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+                                                        "Channel Limit Reached", message);
+            return;
+        }
+
         auto action = std::make_unique<audium::UndoableContainerAction>(*audiumEngine->getAudioTrackContainer());
-        
+
         auto track = audiumEngine->getAudioTrackContainer()->createNewAudioTrack(name);
         track->getViewState().setColour(audiumEngine->getAudioTrackContainer()->getNewAudioTrackColour());
         track->ensureNumChannels(numChannels);
-        auto numTotalChannels = audiumEngine->getAudioTrackContainer()->getNumAudioTrackChannels();
-        if (numTotalChannels >= MAX_AUDIO_CHANNELS) {
-            juce::String message = "Maximum number of ";
-            message += juce::String(numTotalChannels);
-            message += " audio channels reached.";
-            juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "Error", message);
-        }
-        
+
         action->storeNewState();
         auto undoManager = audiumEngine->getAudioTrackContainer()->getUndoManager();
         undoManager->perform(action.release(), "create track");

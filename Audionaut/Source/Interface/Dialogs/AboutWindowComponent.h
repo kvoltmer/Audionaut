@@ -11,6 +11,8 @@
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/Separation/DemucsConfig.h"
 
+#include <lame.h>   // get_lame_version(), for the credits
+
 using json = nlohmann::json;
 
 // See SBicSegmenter.cpp for the rationale: Essentia is a prebuilt library that
@@ -80,6 +82,8 @@ public:
                    "https://github.com/facebookresearch/demucs");
 #endif
         addCredit ("Rubber Band Library (Particular Programs, GPL)", "https://breakfastquay.com/rubberband/");
+        addCredit ("LAME " + String (get_lame_version()) + " MP3 encoder (The LAME Project, LGPL)",
+                   "https://lame.sourceforge.io");
 
         // Copyright
         addAndMakeVisible (copyrightLabel);

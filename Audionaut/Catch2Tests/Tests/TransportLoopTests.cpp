@@ -15,6 +15,10 @@
 
 #include "TestUtils.h"
 
+#include <algorithm>
+#include <atomic>
+#include <thread>
+
 using namespace audium;
 using namespace juce;
 
@@ -318,3 +322,83 @@ SCENARIO("bounce loop scenario", "[engine][bounce][transport][loop]")
     juce::MessageManager::deleteInstance();
 }
 
+
+// The message thread changes the loop range (loop selection, a range
+// drag, project load, undo) while processLoop() reads it on the audio
+// thread once per block. The range has to arrive there as one value: a
+// block that sees the new start with the old end wraps or seeks at a
+// place nobody chose. This drives the two threads against each other and
+// checks that every range the audio thread applied is one that was set.
+SCENARIO("loop range changes reach the audio thread whole", "[engine][transport][loop][realtime]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock(Thread::getCurrentThread());
+
+    GIVEN("a TransportLoop whose range another thread keeps changing")
+    {
+        auto tempoProvider = std::make_shared<TempoProvider>(nullptr);
+        auto transportLoop = std::make_unique<audium::TransportLoop>(nullptr,
+                                                                     tempoProvider);
+        transportLoop->setLoopActive(true);
+        transportLoop->prepareToPlay(512, 44100.0);
+
+        // in clocks, so no tempo conversion sits between set and get
+        const std::vector<juce::Range<double>> published {
+            { 96.0, 288.0 }, { 1000.0, 1500.0 }, { 5000.0, 9000.0 }, { 12.0, 20000.0 }
+        };
+        transportLoop->setLoopPositionRange(nullptr, published.front(), audium::clocks);
+
+        std::atomic<bool> stopWriting { false };
+        std::atomic<int> writes { 0 };
+        std::thread writer ([&] {
+            size_t i = 1;
+            while (! stopWriting.load()) {
+                transportLoop->setLoopPositionRange(nullptr,
+                                                    published[i++ % published.size()],
+                                                    audium::clocks);
+                writes.fetch_add(1);
+            }
+        });
+
+        WHEN("the audio thread processes a few thousand blocks meanwhile")
+        {
+            const auto samples = 512;
+            const auto blockClocks = tempoProvider->secondsToClocks(samples / 44100.0);
+            auto transportPos = 0.0;
+            auto torn = 0;
+            juce::Range<double> firstTorn;
+
+            for (auto block = 0; block < 20000; ++block) {
+                transportLoop->processLoop(transportPos, samples, audium::clocks);
+
+                const auto applied = transportLoop->getProcessedLoopPositionRange(audium::clocks);
+                if (std::find(published.begin(), published.end(), applied) == published.end()) {
+                    if (torn == 0)
+                        firstTorn = applied;
+                    ++torn;
+                }
+
+                transportPos += blockClocks;
+            }
+
+            stopWriting = true;
+            writer.join();
+            INFO("writes " << writes.load() << ", first torn range "
+                 << firstTorn.getStart() << " - " << firstTorn.getEnd());
+
+            THEN("every range it applied is one that was published")
+            {
+                REQUIRE(writes.load() > 0);
+                REQUIRE(torn == 0);
+            }
+        }
+
+        stopWriting = true;
+        if (writer.joinable())
+            writer.join();
+        transportLoop = nullptr;
+    }
+
+    juce::DeletedAtShutdown::deleteAll();
+    juce::MessageManager::deleteInstance();
+}

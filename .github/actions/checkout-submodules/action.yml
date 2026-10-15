@@ -1,0 +1,30 @@
+name: Checkout submodules
+description: >
+  Initialize all submodules recursively, retrying on failure. Replaces
+  `submodules: 'recursive'` on actions/checkout, which has no retry: the
+  nested demucs.cpp/vendor/eigen submodule lives on gitlab.com, which
+  intermittently refuses clones ("GitLab is currently unable to handle this
+  request due to load") and would otherwise fail the whole run.
+
+runs:
+  using: composite
+  steps:
+    - name: Update submodules (with retry)
+      shell: bash
+      # actions/checkout skips LFS smudge by default; keep that, or the
+      # essentia/test/models submodule fails (its LFS is disabled upstream).
+      # Our own LFS test wavs come from the workflows' `git lfs pull` step.
+      env:
+        GIT_LFS_SKIP_SMUDGE: "1"
+      run: |
+        # Submodules that already cloned are skipped on the next attempt, so
+        # a retry only re-fetches what failed.
+        for attempt in 1 2 3 4; do
+          git submodule update --init --recursive && exit 0
+          [ "$attempt" = 4 ] && break
+          delay=$((attempt * 30))
+          echo "::warning::submodule update failed (attempt $attempt), retrying in ${delay}s"
+          sleep "$delay"
+        done
+        echo "::error::submodule update failed after 4 attempts"
+        exit 1

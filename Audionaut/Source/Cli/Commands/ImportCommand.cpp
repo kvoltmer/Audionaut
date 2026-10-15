@@ -7,10 +7,8 @@
 #include "Engine/Project/ProjectFileStore.h"
 #include "Cli/CommandSession.h"
 
-#include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Provider/TempoProvider.h"
-#include "Engine/Resource/AudioResourceContainer.h"
 
 namespace audium {
 namespace cli {
@@ -41,14 +39,10 @@ int runImport (const juce::ArgumentList& args, CliContext& context)
 
     ScopedCoutToStderr guard (context.json);
     int openFailure = exitFailure;
-    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure,
-                                       [] (AudiumEngine& engine) {
-        // Imports normally auto-enqueue background analysis; a
-        // run-to-completion CLI wants deterministic output, so analysis stays
-        // an explicit `analyze`. This has to be in place before the open,
-        // which would otherwise queue every file already in the project.
-        engine.getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
-    });
+    // Imports in the app queue background analysis; the CLI's engine has it
+    // switched off (HeadlessEngineSession), so analysis stays an explicit
+    // `analyze`.
+    auto session = openProjectSession (projectFile, CommandAccess::mutating, context, openFailure);
     if (! session)
         return openFailure;
 

@@ -1,8 +1,8 @@
 {
   "name": "audionaut-mcp",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "mcpName": "io.github.kvoltmer/audionaut",
-  "description": "MCP server for the Audionaut multitrack audio editor - lets Claude and other agents edit .audium projects",
+  "description": "MCP server for the Audionaut multitrack audio editor - lets Claude and other agents edit .audium projects. Requires the Audionaut app (Mac App Store / GitHub Releases)",
   "type": "module",
   "bin": {
     "audionaut-mcp": "index.js"

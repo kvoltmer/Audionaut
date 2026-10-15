@@ -10,6 +10,7 @@
 
 #include "Engine/TimeContext.h"
 #include "Engine/Export/ExportAudioConfig.h"
+#include "Engine/Core/UserPrompter.h"
 
 namespace audium {
 
@@ -53,7 +54,8 @@ public:
                  std::shared_ptr<AudioBusInterface> audioBusInterface_,
                  std::shared_ptr<RecordingActionHandler> recordingActionHandler_,
                  std::shared_ptr<ProjectFileStore> projectFileStore_,
-                 std::shared_ptr<ProjectSerializer> projectSerializer_) :
+                 std::shared_ptr<ProjectSerializer> projectSerializer_,
+                 std::shared_ptr<UserPrompter> userPrompter_) :
         audioDeviceManager(audioDeviceManager_),
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
@@ -63,8 +65,10 @@ public:
         audioBusInterface(audioBusInterface_),
         recordingActionHandler(recordingActionHandler_),
         projectFileStore(projectFileStore_),
-        projectSerializer(projectSerializer_)
+        projectSerializer(projectSerializer_),
+        userPrompter(userPrompter_)
     {
+        jassert(userPrompter != nullptr);
     }
 
     /**
@@ -74,14 +78,30 @@ public:
     ~AudiumEngine();
 
     /**
-     * @brief Initializes the engine and its components.
+     * @brief Opens the audio device and starts the engine's components.
+     *
+     * @param savedAudioDeviceState  The device set-up to restore (what
+     *        `getAudioDeviceManager()->createStateXml()` gave the host
+     *        last time), or nullptr for the default devices. Where it is
+     *        kept between runs is the host's business.
      */
-    void initialise();
+    void initialise(const juce::XmlElement* savedAudioDeviceState = nullptr);
 
     /**
      * @brief Uninitializes the engine and releases resources.
+     *
+     * A host that wants the device set-up back next time reads
+     * `createStateXml()` before calling this.
      */
     void uninitialise();
+
+    /**
+     * @brief The channel to the user the host installed (see UserPrompter).
+     */
+    std::shared_ptr<UserPrompter> getUserPrompter() const
+    {
+        return userPrompter;
+    }
 
     /**
      * @brief Retrieves the project file store owning all persistence
@@ -180,6 +200,7 @@ private:
     std::shared_ptr<RecordingActionHandler> recordingActionHandler;
     std::shared_ptr<ProjectFileStore> projectFileStore;
     std::shared_ptr<ProjectSerializer> projectSerializer;
+    std::shared_ptr<UserPrompter> userPrompter;
 
     //==============================================================================
     /**

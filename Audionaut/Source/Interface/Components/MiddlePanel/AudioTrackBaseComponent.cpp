@@ -17,6 +17,8 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
+#include "Interface/Dialogs/ImportOptionsComponent.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 AudioTrackBaseComponent::AudioTrackBaseComponent (std::shared_ptr<audium::AudioTrack> track,
                                         std::shared_ptr<audium::AudiumEngine> audiumEngine,
@@ -66,6 +68,24 @@ void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, double
     repaint();
 }
 
+void AudioTrackBaseComponent::showContextMenu (int x)
+{
+    // files land where the click was, snapped like a drop
+    auto position = zoomHandler->xToClocks (x);
+    zoomHandler->snapToGrid (position);
+
+    PopupMenu m;
+    m.setLookAndFeel (&getLookAndFeel());
+    m.addItem (TRANS ("Import Audio..."), [safeThis = Component::SafePointer<AudioTrackBaseComponent> (this), position]
+    {
+        if (safeThis == nullptr)
+            return;
+        if (auto* importer = dynamic_cast<AudioImporter*> (juce::JUCEApplication::getInstance()))
+            importer->askUserToImportAudio (safeThis->audioTrack, position);
+    });
+    m.showMenuAsync (PopupMenu::Options().withStandardItemHeight (AudiumLookAndFeel::popupMenuItemHeight));
+}
+
 void AudioTrackBaseComponent::filesDropped (const StringArray& filenames, int x, int y)
 {
     auto position = zoomHandler->xToClocks(x);
@@ -99,6 +119,12 @@ void AudioTrackBaseComponent::fileDragExit (const juce::StringArray& files)
 
 void AudioTrackBaseComponent::mouseDown (const MouseEvent& e)
 {
+    // clips bring their own menu, and a region selection its loop menu
+    const auto onSelection = regionSelector != nullptr && regionSelector->isShowing()
+                             && regionSelector->getScreenBounds().contains (e.getScreenPosition());
+    if (e.mods.isPopupMenu() && ! onSelection)
+        showContextMenu (e.x);
+
     bool isSelected = audioTrack->isSelected();
     
     if (!e.mods.isAnyModifierKeyDown() && !isSelected) {

@@ -89,12 +89,26 @@ bool routingDisabled();
 /** @brief The greeting a host sends as soon as a client connects. */
 json makeHello (const juce::File& project, int hostPid);
 
-/** @brief A verb and the client's working directory, for the host to run. */
+/**
+ * @brief A verb and the client's working directory, for the host to run.
+ *
+ * `stream` asks the host to send the verb's log lines and progress as they
+ * happen (makeLog / makeProgress) instead of collecting the log into the
+ * result. A host that predates streaming ignores the field and batches, and a
+ * client that predates it ignores the extra kinds - so neither end needs a
+ * protocol bump to talk to the other.
+ */
 json makeCommand (const juce::File& project, const juce::File& workingDirectory,
-                  const juce::StringArray& argv);
+                  const juce::StringArray& argv, bool stream = true);
 
 /** @brief A finished verb: its exit code, its result envelope and its log. */
 json makeResult (int exitCode, const json& envelope, const juce::StringArray& log);
+
+/** @brief One log line of a running verb, for a client that asked to stream. */
+json makeLog (const juce::String& line);
+
+/** @brief How far a running verb has got, for a client that asked to stream. */
+json makeProgress (double fraction, const juce::String& message);
 
 /**
  * @brief Whether `hello` came from a host of ours serving `project`.

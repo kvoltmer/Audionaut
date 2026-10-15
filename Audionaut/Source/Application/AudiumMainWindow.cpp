@@ -315,6 +315,9 @@ void AudiumMainWindow::getCommandInfo (const CommandID commandID, ApplicationCom
         case StandardApplicationCommandIDs::del:
             result.setInfo (TRANS ("Delete"), String(), "Editing", 0);
             result.defaultKeypresses.add (KeyPress (KeyPress::deleteKey, ModifierKeys::noModifiers, 0));
+            // the Mac "delete" key: reaches the command whenever the focused
+            // component (a clip body, an overlay, ...) doesn't handle it itself
+            result.defaultKeypresses.add (KeyPress (KeyPress::backspaceKey, ModifierKeys::noModifiers, 0));
             result.setActive (anythingSelected());
             break;
 

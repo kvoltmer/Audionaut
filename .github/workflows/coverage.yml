@@ -18,8 +18,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+
+    - name: Checkout submodules
+      uses: ./.github/actions/checkout-submodules
 
     # Some test wavs (see .gitattributes) live in Git LFS; without this the
     # tests get pointer stubs and fail loading them. A separate step rather

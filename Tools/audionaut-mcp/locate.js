@@ -193,6 +193,24 @@ export function outsideMusicFolder(paths, { home = homedir() } = {}) {
 // The reply is one JSON envelope on stdout. Audionaut 1.6.2 on Linux prints
 // a "settings: <path>" line ahead of it, so fall back to the envelope that
 // starts on a later line rather than failing every call.
+// One `--progress-json` line from the CLI's stderr: {"progress":0.35,
+// "message":"Separating stems"}. Everything else on stderr - the app's banner,
+// engine chatter - comes back null.
+export function parseProgressLine(line) {
+  const text = String(line ?? "").trim();
+  if (!text.startsWith("{")) return null;
+  try {
+    const value = JSON.parse(text);
+    if (typeof value?.progress !== "number" || !Number.isFinite(value.progress)) return null;
+    return {
+      fraction: Math.min(1, Math.max(0, value.progress)),
+      message: typeof value.message === "string" ? value.message : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function parseEnvelope(stdout) {
   const text = String(stdout ?? "");
   try {

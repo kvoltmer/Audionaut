@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Audionaut social preview card (1280x640): GitHub repository social preview
+  and the website's og:image. Built only from files in this repository.
+
+  Render from the repository root:
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+      --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
+      --window-size=1280,640 --screenshot="$PWD/docs/media/social-preview.png" \
+      "file://$PWD/docs/media/social-preview.html"
+
+  Upload: GitHub Settings > General > Social preview. Copy it to the website
+  repo as docs/img/audionaut-social.png.
+-->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:Inter;src:url(../../Audionaut/Resources/Fonts/Inter-Regular.ttf);font-weight:400}
+@font-face{font-family:Inter;src:url(../../Audionaut/Resources/Fonts/Inter-Bold.ttf);font-weight:700}
+html,body{margin:0;width:1280px;height:640px;overflow:hidden;background:#000;font-family:Inter,sans-serif;color:#fff}
+/* the manual's screenshot is 3100x1872 with a black margin around the window
+   (2874x1646 at 113,77); scaled to 820 px wide and cropped to the window */
+.shot{position:absolute;left:640px;top:92px;width:820px;height:470px;overflow:hidden;border-radius:12px;
+      box-shadow:0 0 0 1px #333,0 30px 80px rgba(79,195,247,.18)}
+.shot img{position:absolute;width:884.5px;left:-32.2px;top:-22px}
+.fade{position:absolute;left:600px;top:0;width:200px;height:640px;background:linear-gradient(90deg,#000 15%,rgba(0,0,0,0))}
+.left{position:absolute;left:72px;top:0;height:640px;width:520px;display:flex;flex-direction:column;justify-content:center}
+.logo{width:120px;height:120px;margin-left:-14px}
+h1{font-size:76px;margin:14px 0 18px;letter-spacing:-1.5px}
+.tag{font-size:28px;max-width:500px;line-height:1.3;color:#e6e6e6;margin:0}
+.bar{height:5px;width:220px;border-radius:3px;margin:30px 0 26px;background:linear-gradient(90deg,#7fd3ff,#c86bfa,#ff6fa5,#ff9f5a,#ffe066)}
+.meta{font-size:21px;color:#9a9a9a;letter-spacing:.3px}
+</style></head><body>
+<div class="shot"><img src="../manual/img/main-window.png" alt=""></div>
+<div class="fade"></div>
+<div class="left">
+ <img class="logo" src="../../Audionaut/Resources/audionaut_logo_512x512.png" alt="">
+ <h1>Audionaut</h1>
+ <p class="tag">Open-source multitrack audio editor that AI agents can drive</p>
+ <div class="bar"></div>
+ <div class="meta">macOS · Windows · Linux &nbsp;·&nbsp; GPLv3 &nbsp;·&nbsp; MCP</div>
+</div></body></html>

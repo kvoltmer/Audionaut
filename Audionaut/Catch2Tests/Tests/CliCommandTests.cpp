@@ -2,11 +2,14 @@
 #include <catch2/catch_approx.hpp>
 
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 #include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Playback/PlaybackDefines.h"
 
 using namespace audium;
 
@@ -33,8 +36,8 @@ juce::File makeWorkDirectory()
 
 const auto testFilesDir = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/";
 
-// Parses a saved Project.json (tolerating the writer's trailing NUL, which
-// strict parsers reject).
+// Parses a saved Project.json (tolerating the trailing NUL that versions
+// before 1.6.6 wrote, which strict parsers reject).
 nlohmann::json readProjectJson (const juce::File& project)
 {
     auto text = project.getChildFile ("Project.json").loadFileAsString().toStdString();
@@ -126,6 +129,22 @@ SCENARIO ("cli create and info", "[cli]")
 
         WHEN ("info runs on it") {
             REQUIRE (cli::runInfo (makeArgs ("info " + project.getFullPathName()), context) == cli::exitOk);
+        }
+
+        THEN ("Project.json is plain JSON without a trailing NUL (#84)") {
+            auto text = project.getChildFile ("Project.json").loadFileAsString().toStdString();
+            REQUIRE_FALSE (text.empty());
+            REQUIRE (text.back() == '}');
+            REQUIRE_NOTHROW (nlohmann::json::parse (text));
+        }
+
+        WHEN ("Project.json ends with the NUL terminator older versions wrote") {
+            auto projectJson = project.getChildFile ("Project.json");
+            REQUIRE (projectJson.appendData ("", 1));
+
+            THEN ("it still loads") {
+                REQUIRE (cli::runInfo (makeArgs ("info " + project.getFullPathName()), context) == cli::exitOk);
+            }
         }
 
         WHEN ("create runs again on the same path") {
@@ -222,11 +241,47 @@ SCENARIO ("cli split and create-region", "[cli][region]")
             }
         }
 
+        WHEN ("create-region is given the name of an existing region") {
+            THEN ("it fails as name_taken with nothing created (#186)") {
+                nlohmann::json envelope;
+                cli::CliContext capturing;
+                capturing.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+                REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                         + " --name sine-0dB --start 0.25 --end 0.75 --unit seconds"),
+                                               capturing)
+                         == cli::exitFailure);
+                REQUIRE (envelope["error"]["code"] == "name_taken");
+                auto names = allRegionNames (readProjectJson (project));
+                REQUIRE (std::count (names.begin(), names.end(), "sine-0dB") == 1);
+            }
+        }
+
         WHEN ("create-region's range reaches beyond the clip") {
             REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
                                                      + " --name tail --start 0.5 --end 2.0 --unit seconds"),
                                            context)
                      == cli::exitFailure);
+        }
+
+        WHEN ("create-region covers a late clip exactly, up to just inside its end (#186)") {
+            // the reported case: a short clip far into the timeline, range from
+            // its start to one microsecond before its end
+            REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                               + audioFile.getFullPathName()
+                                               + " --position 950.4206349206352"),
+                                     context)
+                     == cli::exitOk);
+            REQUIRE (cli::runCreateRegion (makeArgs ("create-region " + project.getFullPathName()
+                                                     + " --name late --start 950.4206349206352"
+                                                     + " --end 951.4206339206352 --unit seconds"),
+                                           context)
+                     == cli::exitOk);
+
+            THEN ("the region exists") {
+                auto names = allRegionNames (readProjectJson (project));
+                REQUIRE (std::count (names.begin(), names.end(), "late") == 1);
+            }
         }
 
         WHEN ("create-region is missing its name or range") {
@@ -428,6 +483,20 @@ SCENARIO ("cli clip editing and set-region", "[cli][region]")
 
             THEN ("the range is clamped to the one-second source") {
                 auto range = regionRangeSeconds (readProjectJson (project), "sine-0dB");
+                REQUIRE (range.first == 0.0);
+                REQUIRE (range.second == 1.0);
+            }
+        }
+
+        WHEN ("a retrim from the start asks for more than the source holds (#189)") {
+            REQUIRE (cli::runSetRegion (makeArgs ("set-region " + projectArg
+                                                  + " --region sine-0dB --start 0 --length 1.5 --unit seconds"),
+                                        context)
+                     == cli::exitOk);
+
+            THEN ("the region is the whole source and never starts below zero") {
+                auto range = regionRangeSeconds (readProjectJson (project), "sine-0dB");
+                REQUIRE (range.first == 0.0);
                 REQUIRE (range.second == 1.0);
             }
         }
@@ -634,6 +703,227 @@ SCENARIO ("cli import and export round trip", "[cli]")
     workDir.deleteRecursively();
 }
 
+SCENARIO ("cli export picks the format from the output extension", "[cli][export][flac]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("formats.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    auto readerFor = [] (const juce::File& file) {
+        juce::AudioFormatManager formatManager;
+        formatManager.registerBasicFormats();
+        return std::unique_ptr<juce::AudioFormatReader> (formatManager.createReaderFor (file));
+    };
+
+    GIVEN ("a project with a 32-bit float file imported") {
+        // one second of a quiet constant, written as 32-bit float
+        auto source = workDir.getChildFile ("float-source.wav");
+        {
+            std::unique_ptr<juce::OutputStream> stream (source.createOutputStream());
+            REQUIRE (stream != nullptr);
+            juce::WavAudioFormat wav;
+            auto writer = wav.createWriterFor (stream, juce::AudioFormatWriter::Options{}
+                                                           .withSampleRate (44100.0)
+                                                           .withNumChannels (1)
+                                                           .withBitsPerSample (32)
+                                                           .withSampleFormat (juce::AudioFormatWriterOptions::SampleFormat::floatingPoint));
+            REQUIRE (writer != nullptr);
+            juce::AudioBuffer<float> buffer (1, 44100);
+            for (auto s = 0; s < buffer.getNumSamples(); s++)
+                buffer.setSample (0, s, 0.25f);
+            REQUIRE (writer->writeFromAudioSampleBuffer (buffer, 0, buffer.getNumSamples()));
+        }
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " " + source.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        auto regionName = source.getFileNameWithoutExtension();
+
+        WHEN ("the project is exported to a .flac file") {
+            auto output = workDir.getChildFile ("mix.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("a FLAC file is written and the result says so") {
+                REQUIRE (envelope["result"]["format"] == "flac");
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->getFormatName() == "FLAC file");
+                REQUIRE (reader->lengthInSamples > 0);
+            }
+        }
+
+        WHEN ("the float region is exported to FLAC without a bit depth") {
+            auto output = workDir.getChildFile ("region.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --region " + regionName),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("it is written as deep as FLAC goes: 24 bits") {
+                REQUIRE (envelope["result"]["bitDepth"] == 24);
+                auto reader = readerFor (output);
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->bitsPerSample == 24);
+            }
+        }
+
+        WHEN ("a 32-bit FLAC is asked for explicitly") {
+            auto output = workDir.getChildFile ("deep.flac");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName() + " --channels 1 --bit-depth 32"),
+                                            context);
+
+            THEN ("the verb refuses instead of quietly writing 24 bits") {
+                REQUIRE (exitCode == cli::exitUsage);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported multi-mono to FLAC") {
+            auto output = workDir.getChildFile ("stems.flac");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + output.getFullPathName() + " --multi-mono"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result names the first FLAC mono file") {
+                auto first = workDir.getChildFile ("stems-01.flac");
+                REQUIRE (envelope["result"]["outputFile"] == first.getFullPathName().toStdString());
+                REQUIRE (first.existsAsFile());
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported to .aiff and to .ogg") {
+            auto aiff = workDir.getChildFile ("mix.aiff");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + aiff.getFullPathName() + " --channels 1 --bit-depth 16"),
+                                     context)
+                     == cli::exitOk);
+            auto aiffResult = envelope["result"];
+
+            auto ogg = workDir.getChildFile ("mix.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1"),
+                                     context)
+                     == cli::exitOk);
+            auto oggResult = envelope["result"];
+
+            THEN ("each is written in its format; the Ogg reports its bit rate instead of a bit depth") {
+                REQUIRE (aiffResult["format"] == "aiff");
+                REQUIRE (aiffResult["bitDepth"] == 16);
+                REQUIRE (readerFor (aiff)->getFormatName() == "AIFF file");
+
+                REQUIRE (oggResult["format"] == "ogg");
+                REQUIRE (oggResult["bitrateKbps"] == 192);
+                REQUIRE_FALSE (oggResult.contains ("bitDepth"));
+                REQUIRE (readerFor (ogg)->getFormatName() == "Ogg-Vorbis file");
+            }
+        }
+
+        WHEN ("an Ogg export is given a bit rate") {
+            auto ogg = workDir.getChildFile ("small.ogg");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + ogg.getFullPathName() + " --channels 1 --bitrate 96"),
+                                     context)
+                     == cli::exitOk);
+
+            THEN ("the result reports it") {
+                REQUIRE (envelope["result"]["bitrateKbps"] == 96);
+                REQUIRE (ogg.existsAsFile());
+            }
+        }
+
+        WHEN ("bit rate and bit depth are given to the wrong kind of format") {
+            auto depthForOgg = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                         + workDir.getChildFile ("a.ogg").getFullPathName()
+                                                         + " --bit-depth 24"),
+                                               context);
+            auto depthMessage = envelope["error"]["message"].get<std::string>();
+            auto bitRateForWav = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                           + workDir.getChildFile ("b.wav").getFullPathName()
+                                                           + " --bitrate 192"),
+                                                 context);
+            auto bitRateOffScale = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                             + workDir.getChildFile ("c.ogg").getFullPathName()
+                                                             + " --bitrate 100"),
+                                                   context);
+
+            THEN ("each is a usage error and nothing is written") {
+                REQUIRE (depthForOgg == cli::exitUsage);
+                REQUIRE (depthMessage.find ("--bitrate") != std::string::npos);
+                REQUIRE (bitRateForWav == cli::exitUsage);
+                REQUIRE (bitRateOffScale == cli::exitUsage);
+                for (auto name : { "a.ogg", "b.wav", "c.ogg" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
+        WHEN ("the project is exported to .mp3") {
+            auto mp3 = workDir.getChildFile ("mix.mp3");
+            REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                               + mp3.getFullPathName() + " --channels 1 --bitrate 320"),
+                                     context)
+                     == cli::exitOk);
+            auto result = envelope["result"];
+
+            auto offered = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                     + workDir.getChildFile ("d.mp3").getFullPathName()
+                                                     + " --bitrate 500"),
+                                           context);
+            auto offeredMessage = envelope["error"]["message"].get<std::string>();
+            auto wide = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                  + workDir.getChildFile ("e.mp3").getFullPathName()
+                                                  + " --channels 3"),
+                                        context);
+
+            THEN ("an MP3 is written at the asked bit rate; other rates and channel counts are refused") {
+                REQUIRE (result["format"] == "mp3");
+                REQUIRE (result["bitrateKbps"] == 320);
+                REQUIRE_FALSE (result.contains ("bitDepth"));
+                juce::MP3AudioFormat decoder;
+                std::unique_ptr<juce::AudioFormatReader> reader (decoder.createReaderFor (mp3.createInputStream().release(), true));
+                REQUIRE (reader != nullptr);
+                REQUIRE (reader->lengthInSamples > 0);
+
+                // 500 kbps is an Ogg rate, not an MP3 one; the message lists MP3's
+                REQUIRE (offered == cli::exitUsage);
+                REQUIRE (offeredMessage.find ("320") != std::string::npos);
+                REQUIRE (wide == cli::exitUsage);
+                for (auto name : { "d.mp3", "e.mp3" })
+                    REQUIRE_FALSE (workDir.getChildFile (name).existsAsFile());
+            }
+        }
+
+        WHEN ("the output has an extension no export writes") {
+            auto output = workDir.getChildFile ("mix.wma");
+            auto exitCode = cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                                      + output.getFullPathName()),
+                                            context);
+
+            THEN ("it is a usage error naming the formats") {
+                REQUIRE (exitCode == cli::exitUsage);
+                auto message = envelope["error"]["message"].get<std::string>();
+                REQUIRE (message.find (".flac") != std::string::npos);
+                REQUIRE_FALSE (output.existsAsFile());
+            }
+        }
+
+    }
+
+    context.envelopeSink = nullptr;
+    workDir.deleteRecursively();
+}
+
 SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][separation]")
 {
     auto workDir = makeWorkDirectory();
@@ -702,6 +992,133 @@ SCENARIO ("cli separate adds four stem tracks with the fake backend", "[cli][sep
                 REQUIRE ((result == cli::exitFailure || result == cli::exitUnavailable));
                 REQUIRE (readProjectJson (project)["audium"]["audio_tracks"].size() == tracksBefore);
             }
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli progress reaches a wrapper as JSON lines on stderr", "[cli][progress]")
+{
+    // Swap stderr for a buffer for the scope of one THEN.
+    struct CapturedStderr
+    {
+        CapturedStderr() : saved (std::cerr.rdbuf (buffer.rdbuf())) {}
+        ~CapturedStderr() { std::cerr.rdbuf (saved); }
+        std::vector<std::string> lines()
+        {
+            std::vector<std::string> result;
+            std::istringstream in (buffer.str());
+            for (std::string line; std::getline (in, line);)
+                result.push_back (line);
+            return result;
+        }
+        std::ostringstream buffer;
+        std::streambuf* saved;
+    };
+
+    GIVEN ("a quiet --json run that asked for --progress-json") {
+        cli::CliContext context;
+        context.json = true;
+        context.quiet = true;
+        context.progressJson = true;
+
+        THEN ("progress is one parseable object per line, and plain logs stay quiet") {
+            CapturedStderr captured;
+            context.log ("chatter");
+            context.progress (0.35, "Separating stems");
+
+            const auto lines = captured.lines();
+            REQUIRE (lines.size() == 1);
+
+            const auto parsed = nlohmann::json::parse (lines[0]);
+            REQUIRE (parsed["progress"].get<double>() == Catch::Approx (0.35));
+            REQUIRE (parsed["message"] == "Separating stems");
+        }
+    }
+
+    GIVEN ("a human run") {
+        cli::CliContext context;
+
+        THEN ("progress is the familiar percentage line") {
+            CapturedStderr captured;
+            context.progress (0.35, "Separating stems");
+            REQUIRE (captured.lines() == std::vector<std::string> { "Separating stems 35%" });
+        }
+    }
+}
+
+SCENARIO ("cli progress steps", "[cli][progress]")
+{
+    cli::CliContext context;
+    std::vector<double> fractions;
+    context.progressSink = [&fractions] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+
+    cli::ProgressSteps steps (context);
+
+    WHEN ("a callback reports finely, repeats itself and runs backwards") {
+        for (auto fraction : { 0.0, 0.01, 0.049, 0.05, 0.05, 0.12, 0.08, 0.5, 1.0, 1.0 })
+            steps (fraction, "Working");
+
+        THEN ("one report per new 5% step reaches the context, starting at 0") {
+            REQUIRE (fractions == std::vector<double> { 0.0, 0.05, 0.12, 0.5, 1.0 });
+        }
+    }
+}
+
+SCENARIO ("cli long verbs report progress from 0 to 1, once per 5% step", "[cli][progress]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("progress.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 1"), context)
+             == cli::exitOk);
+    REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                       + juce::File (testFilesDir + "sine-0dB.wav").getFullPathName()),
+                             context)
+             == cli::exitOk);
+
+    std::vector<double> fractions;
+    context.progressSink = [&fractions] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+
+    auto requireSteppedFromZeroToOne = [&fractions]
+    {
+        REQUIRE_FALSE (fractions.empty());
+        REQUIRE (fractions.front() == Catch::Approx (0.0));
+        REQUIRE (fractions.back() == Catch::Approx (1.0));
+
+        for (size_t index = 1; index < fractions.size(); ++index)
+            REQUIRE (static_cast<int> (fractions[index] * 100.0) / 5
+                     > static_cast<int> (fractions[index - 1] * 100.0) / 5);
+    };
+
+    WHEN ("a clip is separated") {
+        REQUIRE (cli::runSeparate (makeArgs ("separate " + project.getFullPathName()
+                                             + " --track 1 --backend fake --threads 1"),
+                                   context)
+                 == cli::exitOk);
+        requireSteppedFromZeroToOne();
+    }
+
+    WHEN ("the project is exported") {
+        REQUIRE (cli::runExport (makeArgs ("export " + project.getFullPathName() + " -o "
+                                           + workDir.getChildFile ("mix.wav").getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        requireSteppedFromZeroToOne();
+    }
+
+    WHEN ("the project is analyzed") {
+        const auto exitCode = cli::runAnalyze (makeArgs ("analyze " + project.getFullPathName() + " --types sbic"),
+                                               context);
+
+        // builds without Essentia have nothing to report
+        if (exitCode != cli::exitUnavailable) {
+            REQUIRE (exitCode == cli::exitOk);
+            requireSteppedFromZeroToOne();
         }
     }
 
@@ -1067,6 +1484,80 @@ SCENARIO ("cli rejects out-of-range numeric options", "[cli][validation]")
             THEN ("it renders") {
                 REQUIRE (envelope["ok"] == true);
                 REQUIRE (outputFile.existsAsFile());
+            }
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli import stops at the project's channel limit", "[cli][channels]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("channel-limit.audium");
+    auto stereoFile = juce::File (testFilesDir + "120-funk-1-sec.wav");
+    REQUIRE (stereoFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+
+    const auto projectArg = project.getFullPathName();
+    auto totalChannels = [] (const nlohmann::json& projectJson) {
+        std::size_t total = 0;
+        for (auto& track : projectJson["audium"]["audio_tracks"])
+            total += track.value ("channels", nlohmann::json::array()).size();
+        return total;
+    };
+
+    GIVEN ("a mono project that stereo imports fill up to one channel below the limit") {
+        REQUIRE (cli::runCreate (makeArgs ("create " + projectArg + " --channels 1"), context) == cli::exitOk);
+
+        const int fitting = (MAX_AUDIO_CHANNELS - 1) / 2;
+        for (int i = 0; i < fitting; ++i)
+            REQUIRE (cli::runImport (makeArgs ("import " + projectArg + " " + stereoFile.getFullPathName()),
+                                     context)
+                     == cli::exitOk);
+
+        const auto before = readProjectJson (project);
+        REQUIRE (totalChannels (before) == static_cast<std::size_t> (MAX_AUDIO_CHANNELS - 1));
+
+        WHEN ("one more stereo file is imported (#190)") {
+            nlohmann::json envelope;
+            cli::CliContext capturing;
+            capturing.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+            THEN ("the import fails and adds no track without channels") {
+                REQUIRE (cli::runImport (makeArgs ("import " + projectArg + " " + stereoFile.getFullPathName()),
+                                         capturing)
+                         == cli::exitFailure);
+                REQUIRE (envelope["error"]["code"] == "import_failed");
+                REQUIRE (envelope["error"]["message"].get<std::string>().find ("channel") != std::string::npos);
+
+                auto after = readProjectJson (project);
+                REQUIRE (after["audium"]["audio_tracks"].size() == before["audium"]["audio_tracks"].size());
+                for (auto& track : after["audium"]["audio_tracks"])
+                    REQUIRE_FALSE (track.value ("channels", nlohmann::json::array()).empty());
+            }
+        }
+
+        WHEN ("a project from before the check has a track without channels") {
+            // what older versions left behind once the limit was hit
+            auto projectJson = readProjectJson (project);
+            auto& tracks = projectJson["audium"]["audio_tracks"];
+            const auto lastTrack = static_cast<int> (tracks.size()) - 1;
+            tracks[static_cast<std::size_t> (lastTrack)].erase ("channels");
+            REQUIRE (project.getChildFile ("Project.json").replaceWithText (projectJson.dump (2)));
+
+            THEN ("clip-gain on its clip fails instead of reporting an empty success") {
+                nlohmann::json envelope;
+                cli::CliContext capturing;
+                capturing.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+                REQUIRE (cli::runClipGain (makeArgs ("clip-gain " + projectArg + " --at 0.5 --unit seconds"
+                                                     + " --track " + juce::String (lastTrack) + " --gain -6 --db"),
+                                           capturing)
+                         == cli::exitFailure);
+                REQUIRE (envelope["error"]["code"] == "no_channels");
             }
         }
     }

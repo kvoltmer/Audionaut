@@ -88,13 +88,22 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
 
     auto provider = session->getAudioTrackContainer()->getAnalysisProvider();
 
+    // Essentia runs each analysis in one go, so progress counts finished
+    // (file, type) runs - coarse for one long file, but never silent between
+    // them.
+    ProgressSteps steps (context);
+    const auto totalRuns = static_cast<double> (audioFiles.size() * types.size());
+    auto finishedRuns = 0;
+
     auto files = nlohmann::json::array();
     for (auto& file : audioFiles) {
 
         nlohmann::json analyses;
         for (auto type : types) {
-            context.log ("analyzing " + file.getFileName() + " (" + analysisTypeToString (type) + ")");
+            steps (finishedRuns / totalRuns,
+                   "Analyzing " + file.getFileName() + " (" + analysisTypeToString (type) + ")");
             auto segments = provider->analyzeFile (file, type);
+            ++finishedRuns;
 
             nlohmann::json entry;
             entry["segments"] = segments;
@@ -112,6 +121,8 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
     // reuse the results without re-analysing.
     if (projectFile != juce::File())
         provider->getCache()->saveToFolder (projectFile.getParentDirectory());
+
+    steps (1.0, "Analysis done");
 
     nlohmann::json result = { { "files", files } };
     if (context.json)

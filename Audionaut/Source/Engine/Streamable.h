@@ -41,7 +41,7 @@ public:
     {
         json jout;
         auto result = writeToJson(jout);
-        outputStream.writeString(jout.dump(2));
+        writeJsonText(outputStream, jout);
         return result;
     }
 
@@ -58,12 +58,38 @@ public:
      */
     virtual bool readFromStream(juce::InputStream& inputStream, bool rebuild = true)
     {
-        auto inputString = inputStream.readString().toStdString();
+        auto inputString = readJsonText(inputStream);
         if (inputString.empty())
             throw std::runtime_error("empty input string");
-    
+
         auto json = json::parse(inputString);
         return readFromJson(json, rebuild);
+    }
+
+    /**
+     * @brief Writes `content` as plain JSON text: no length prefix, no
+     *        terminator, so the file parses with any JSON parser.
+     */
+    static bool writeJsonText(juce::OutputStream& outputStream, const json& content)
+    {
+        const auto text = content.dump(2);
+        return outputStream.write(text.data(), text.size());
+    }
+
+    /**
+     * @brief Reads the rest of the stream as JSON text. Files written before
+     *        1.6.6 end with the NUL terminator of juce::OutputStream::writeString;
+     *        it is dropped so they still load.
+     */
+    static std::string readJsonText(juce::InputStream& inputStream)
+    {
+        juce::MemoryBlock block;
+        if (inputStream.readIntoMemoryBlock(block) == 0)
+            return {};
+        std::string text(static_cast<const char*>(block.getData()), block.getSize());
+        while (! text.empty() && text.back() == '\0')
+            text.pop_back();
+        return text;
     }
 
     /**

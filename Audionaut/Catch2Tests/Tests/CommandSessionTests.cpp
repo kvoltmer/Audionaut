@@ -4,6 +4,9 @@
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Analysis/AnalysisCache.h"
+#include "Engine/Analysis/AnalysisWorker.h"
+#include "Engine/Resource/AudioResourceContainer.h"
 
 using namespace audium;
 
@@ -107,6 +110,40 @@ SCENARIO("a command session hands a verb an engine and owns the lifecycle",
             std::string error;
             REQUIRE_FALSE (session.commit (error));
         }
+    }
+
+    workDir.deleteRecursively();
+}
+
+// Opening a project normally queues background analysis for every file the
+// cache lacks. A CLI engine lives for one verb: the queue only made it wait at
+// exit (seconds per file) for results a read-only verb never saves, and a
+// mutating one saved whatever happened to be done by its commit.
+SCENARIO("a command session does not queue background analysis",
+         "[cli][session][analysis]")
+{
+    auto workDir = makeSessionWorkDirectory();
+    auto project = workDir.getChildFile ("no-analysis.audium");
+    cli::CliContext context;
+    context.quiet = true;
+
+    REQUIRE (cli::runCreate (juce::ArgumentList ("audionaut-cli", "create " + project.getFullPathName()),
+                             context) == cli::exitOk);
+    const auto audio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/120-funk-1-sec.wav";
+    REQUIRE (cli::runImport (juce::ArgumentList ("audionaut-cli", "import " + project.getFullPathName() + " " + audio),
+                             context) == cli::exitOk);
+    REQUIRE_FALSE (project.getChildFile (AnalysisCache::fileName).existsAsFile());
+
+    const auto projectJson = project.getChildFile (ProjectFileStore::projectFileName);
+
+    for (auto access : { cli::CommandAccess::readOnly, cli::CommandAccess::mutating }) {
+        int failure = cli::exitFailure;
+        auto session = cli::openProjectSession (projectJson, access, context, failure);
+        REQUIRE (static_cast<bool> (session));
+
+        auto worker = session->getAudioResourceContainer()->getAnalysisWorker();
+        REQUIRE_FALSE (worker->isAutoAnalysisEnabled());
+        REQUIRE (worker->getRemainingCount() == 0);
     }
 
     workDir.deleteRecursively();

@@ -4,7 +4,7 @@ A free, open-source multitrack audio editor that AI agents can drive over MCP.
 
 <img alt="Audionaut demo: Claude cuts a song every 16 bars, splits the clips across two tracks and closes the gaps, then sets crossfades and a fade-out, while the user runs Auto Edit and stem separation in the app" src="docs/media/hero.gif" width="1000" />
 
-**[audionaut.app](https://audionaut.app)** · [Discussions](https://github.com/kvoltmer/Audionaut/discussions) · [Sponsor](https://github.com/sponsors/kvoltmer)
+**[audionaut.app](https://audionaut.app)** · [Features](docs/features.md) · [Discussions](https://github.com/kvoltmer/Audionaut/discussions) · [Sponsor](https://github.com/sponsors/kvoltmer)
 
 Audionaut is a free, open-source desktop application for effortless audio editing and recording. Whether you're working on music, podcasts, or multitrack recordings, it gives you precise cutting, per-track playlists, flexible multi-channel support, and clean exports — without the weight and complexity of a full DAW. Audionaut is written in modern C++ on the [JUCE](https://juce.com) framework and runs natively on Windows, macOS, and Linux.
 
@@ -12,6 +12,12 @@ Audionaut is a free, open-source desktop application for effortless audio editin
 [![macOS tests](https://github.com/kvoltmer/Audionaut/actions/workflows/cmake-single-platform.yml/badge.svg)](https://github.com/kvoltmer/Audionaut/actions/workflows/cmake-single-platform.yml)
 [![Linux build](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml/badge.svg)](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ff69b4)](https://github.com/sponsors/kvoltmer)
+
+### Install
+
+- **macOS** — installer on [GitHub Releases](https://github.com/kvoltmer/Audionaut/releases/latest) or [Mac App Store](https://apps.apple.com/app/id6743627933)
+- **Windows** — installer on [GitHub Releases](https://github.com/kvoltmer/Audionaut/releases/latest)
+- **Linux** — `.deb`, AppImage and Flatpak bundle on [GitHub Releases](https://github.com/kvoltmer/Audionaut/releases/latest), or install and update the Flatpak through [FlatPark](https://flatpark.org/apps/app.audionaut.Audionaut)
 
 ### Use with Claude
 

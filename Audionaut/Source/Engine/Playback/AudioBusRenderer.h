@@ -199,26 +199,38 @@ public:
         if (channelNumber >= 0 && channelNumber < MAX_AUDIO_CHANNELS) {
             //std::cout << "setSolo " << channelNumber << " " << bSolo << std::endl;
             audioChannelData[channelNumber].solo = bSolo;
+            applyMuteAndSoloGains();
+        }
+    }
 
-            auto anySolo = false;
-            for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
-                if (audioChannelData[c].solo) {
-                    anySolo = true;
-                    break;
-                }
+    /**
+     * Sets every channel's gain from its mute and solo state: with any bus
+     * channel soloed only the soloed ones play, otherwise the unmuted ones.
+     * Solo is looked for among the channels the bus renders, so this runs
+     * again whenever that count changes (setNumAudioBusChannels) - a solo
+     * applied before the bus has grown to its channel, as on project load,
+     * takes effect once it has.
+     */
+    void applyMuteAndSoloGains()
+    {
+        auto anySolo = false;
+        for (auto c = 0; c < audioBus.getNumChannels(); ++c) {
+            if (audioChannelData[c].solo) {
+                anySolo = true;
+                break;
             }
-            
-            for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
-                if (anySolo) {
-                    if (audioChannelData[c].solo)
-                        gains[c].setGainLinear(audioChannelData[c].gain);
-                    else
-                        gains[c].setGainLinear(0.f);
-                }
-                else {
-                    // mute stats apply
-                    gains[c].setGainLinear(audioChannelData[c].mute ? 0.f : audioChannelData[c].gain);
-                }
+        }
+
+        for (auto c = 0; c < MAX_AUDIO_CHANNELS; ++c) {
+            if (anySolo) {
+                if (audioChannelData[c].solo)
+                    gains[c].setGainLinear(audioChannelData[c].gain);
+                else
+                    gains[c].setGainLinear(0.f);
+            }
+            else {
+                // mute stats apply
+                gains[c].setGainLinear(audioChannelData[c].mute ? 0.f : audioChannelData[c].gain);
             }
         }
     }

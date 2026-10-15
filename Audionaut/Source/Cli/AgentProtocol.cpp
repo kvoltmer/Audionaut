@@ -126,7 +126,7 @@ json makeHello (const juce::File& project, int hostPid)
 }
 
 json makeCommand (const juce::File& project, const juce::File& workingDirectory,
-                  const juce::StringArray& argv)
+                  const juce::StringArray& argv, bool stream)
 {
     auto arguments = json::array();
     for (auto& argument : argv)
@@ -136,7 +136,8 @@ json makeCommand (const juce::File& project, const juce::File& workingDirectory,
              { "kind",     "command" },
              { "project",  canonicalKey (project).toStdString() },
              { "cwd",      workingDirectory.getFullPathName().toStdString() },
-             { "argv",     arguments } };
+             { "argv",     arguments },
+             { "stream",   stream } };
 }
 
 json makeResult (int exitCode, const json& envelope, const juce::StringArray& log)
@@ -150,6 +151,21 @@ json makeResult (int exitCode, const json& envelope, const juce::StringArray& lo
              { "exitCode", exitCode },
              { "envelope", envelope },
              { "log",      lines } };
+}
+
+json makeLog (const juce::String& line)
+{
+    return { { "protocol", protocolVersion },
+             { "kind",     "log" },
+             { "line",     line.toStdString() } };
+}
+
+json makeProgress (double fraction, const juce::String& message)
+{
+    return { { "protocol", protocolVersion },
+             { "kind",     "progress" },
+             { "fraction", fraction },
+             { "message",  message.toStdString() } };
 }
 
 bool helloMatches (const json& hello, const juce::File& project)

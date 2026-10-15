@@ -33,15 +33,15 @@ public:
 
     /** Exports the item. Without the file chooser the export runs to
         completion here and the result says whether the file was written;
-        with it the export runs asynchronously after the chooser closes and
-        this returns false right away. */
+        with it the user is asked where to save (through the engine's
+        UserPrompter), the export runs asynchronously once they have chosen,
+        and this returns false right away. */
     bool exportItem();
-    
+
 private:
 
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<PlayListItem> playListItem;
-    std::shared_ptr<juce::FileChooser> chooser;
     std::shared_ptr<audium::AudioExportThread> exportThread;
     bool useFileChooser;
     

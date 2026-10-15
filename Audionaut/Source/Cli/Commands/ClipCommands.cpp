@@ -437,6 +437,13 @@ int runClipGain (const juce::ArgumentList& args, CliContext& context)
     auto& dynamics = match.item->getDynamics();
     auto numChannels = static_cast<int> (match.track->audioChannelContainer->objects.size());
 
+    // projects saved before the import channel check could hold tracks past
+    // the project's channel limit with no channels: there is nothing to set
+    if (numChannels == 0)
+        return context.fail (exitFailure, "no_channels",
+                             "the clip's track has no audio channels (the project reached its channel "
+                             "limit when it was created); move the clip to a track with channels");
+
     if (channelValue.isNotEmpty()) {
         auto channel = channelValue.getIntValue();
         if (channel < 0 || channel >= numChannels)

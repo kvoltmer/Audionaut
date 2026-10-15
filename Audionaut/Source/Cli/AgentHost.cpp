@@ -112,7 +112,7 @@ public:
             return;
         }
 
-        run (argv, workingDirectory);
+        run (argv, workingDirectory, request.value ("stream", false));
         host.busy = false;
     }
 
@@ -127,7 +127,7 @@ private:
         sendMessage (toBlock (makeResult (exitCode, envelope, log)));
     }
 
-    void run (const juce::StringArray& argv, const juce::File& workingDirectory)
+    void run (const juce::StringArray& argv, const juce::File& workingDirectory, bool stream)
     {
         json envelope;
         juce::StringArray log;
@@ -161,7 +161,23 @@ private:
             // the client re-renders it for whoever actually asked.
             context.json = true;
             context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
-            context.logSink      = [&log] (const juce::String& line)  { log.add (line); };
+
+            if (stream) {
+                // A separation runs for minutes; the client hears about it
+                // as it goes rather than all at once at the end.
+                context.logSink      = [this] (const juce::String& line) { sendMessage (toBlock (makeLog (line))); };
+                context.progressSink = [this] (double fraction, const juce::String& message) {
+                    sendMessage (toBlock (makeProgress (fraction, message)));
+                };
+            }
+            else {
+                // An older client only reads the log in the result; give it
+                // progress the way a local run of its own version printed it.
+                context.logSink      = [&log] (const juce::String& line) { log.add (line); };
+                context.progressSink = [&log] (double fraction, const juce::String& message) {
+                    log.add (message + " " + juce::String (static_cast<int> (fraction * 100.0)) + "%");
+                };
+            }
 
             const ScopedWorkingDirectory workingDirectoryScope (workingDirectory);
             const HostedSessionScope hostedScope (host.engine, host.projectFile, liveState);

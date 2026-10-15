@@ -18,6 +18,8 @@ namespace CommandIDs
         saveProject             = 0x300005,
         saveProjectAs           = 0x300006,
         bounceProject           = 0x300007,
+        revertProject           = 0x300008,
+        importAudio             = 0x300009,
 
         showAboutWindow         = 0x300024,
         checkForNewVersion      = 0x300025,

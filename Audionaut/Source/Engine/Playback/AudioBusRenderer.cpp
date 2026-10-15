@@ -16,6 +16,9 @@ void AudioBusRenderer<SampleType>::setNumAudioBusChannels(int numChannels)
     // the MAX_AUDIO_CHANNELS allocation prepareToPlay made (avoidReallocating)
     if (numChannels != audioBus.getNumChannels()) {
         audioBus.setSize(numChannels, audioBus.getNumSamples(), false, false, true);
+
+        // whether any channel is soloed depends on which channels the bus renders
+        applyMuteAndSoloGains();
     }
 }
 

@@ -54,12 +54,20 @@ public:
             messageManagerLock = std::make_unique<juce::MessageManagerLock> (juce::Thread::getCurrentThread());
         }
         engine = AudiumFactory::createAudiumEngine();
+
+        // Opening a project queues background analysis for every file the
+        // cache lacks. This engine lives for one verb, so that only made it
+        // wait at exit - seconds per file - for results a read-only verb never
+        // saves, and a mutating one saved whatever happened to be done by its
+        // commit. Analysis stays the explicit `analyze`; enqueues with an
+        // explicit type list still run.
+        engine->getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
     }
 
     ~HeadlessEngineSession()
     {
-        // A file import may have auto-enqueued background analysis; the worker
-        // thread must drain before the object graph goes away underneath it.
+        // A verb may have queued analysis explicitly; the worker thread must
+        // drain before the object graph goes away underneath it.
         if (auto worker = engine->getAudioResourceContainer()->getAnalysisWorker())
             while (worker->isBusy())
                 juce::Thread::sleep (50);

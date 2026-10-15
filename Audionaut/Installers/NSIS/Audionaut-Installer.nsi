@@ -135,12 +135,15 @@ FunctionEnd
 !define MUI_FINISHPAGE_RUN_TEXT "Launch Audionaut.exe"
 !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
 
-;License.txt is a plain-text rendering of the repo-root LICENSE.md - the
-;license page feeds a RichEdit control, which shows markdown headings and
-;link syntax as literal noise. Keep the two in step when the license changes;
-;.gitattributes pins this one to CRLF, without which the control runs the
-;lines together.
+;License.txt is plain text, not markdown - the license page feeds a RichEdit
+;control, which shows markdown headings and link syntax as literal noise.
+;.gitattributes pins it to CRLF, without which the control runs the lines
+;together.
 !insertmacro MUI_PAGE_WELCOME
+; GPL needs no acceptance, so the license page is informational: Next, not "I Agree"
+!define MUI_LICENSEPAGE_TEXT_TOP "Audionaut is free software under the GNU GPL v3 or later."
+!define MUI_LICENSEPAGE_TEXT_BOTTOM "You do not have to accept this license to install Audionaut. Click Next to continue."
+!define MUI_LICENSEPAGE_BUTTON "&Next >"
 !insertmacro MUI_PAGE_LICENSE "License.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -156,6 +159,7 @@ SetOutPath "$INSTDIR"
 WriteUninstaller "$INSTDIR\Uninstall.exe"
 ;Install your files with the File command
 File "..\..\Builds\VisualStudio2026\x64\Release\App\${Name}.exe"
+File "License.txt"
 CreateShortCut "$SMPROGRAMS\${Name}.lnk" "$INSTDIR\${Name}.exe"
 
 ;Installers up to v1.2.2 ran in the 32-bit registry view and keyed the entry
@@ -189,6 +193,7 @@ Section "Uninstall"
 Call un.AbortIfRunning
 ;Delete your files
 Delete "$INSTDIR\${Name}.exe"
+Delete "$INSTDIR\License.txt"
 Delete "$SMPROGRAMS\${Name}.lnk"
 DeleteRegKey HKLM "${UninstKey}"
 Delete "$INSTDIR\Uninstall.exe"

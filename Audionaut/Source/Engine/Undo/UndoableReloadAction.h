@@ -22,15 +22,15 @@ namespace audium
  * direction touches the file on disk - undoing a reload leaves the external
  * writer's version in the project package.
  *
- * The store's external-change marker and authoritative `currentJson` follow
- * the applied state through perform/undo/redo.
+ * The store's external-change marker follows the applied state through
+ * perform/undo/redo.
  */
 struct UndoableReloadAction final : public juce::UndoableAction
 {
     /**
      * @brief Constructs an `UndoableReloadAction`.
      * @param serializer_ The document serializer to apply states through.
-     * @param store_ The store owning the session state (marker, currentJson).
+     * @param store_ The store owning the session state (external-change marker).
      * @param beforeState_ Full project JSON of the pre-reload in-memory state.
      * @param afterState_ Full project JSON of the state to apply.
      * @param preserveUiState_ True to keep the in-memory UI state in both
@@ -68,7 +68,6 @@ struct UndoableReloadAction final : public juce::UndoableAction
         try {
             const auto ok = serializer.applyProjectJson(afterState, preserveUiState);
             if (ok) {
-                store.setCurrentJson(afterState);
                 if (marksExternalChange)
                     store.setChangedExternally(true);
             }
@@ -94,8 +93,6 @@ struct UndoableReloadAction final : public juce::UndoableAction
             const auto ok = serializer.applyProjectJson(beforeState, preserveUiState);
 
             if (ok) {
-                store.setCurrentJson(beforeState);
-
                 // the before-state may itself stem from an earlier external
                 // reload - restore the marker's prior value, don't force it off
                 if (marksExternalChange)
@@ -120,8 +117,7 @@ struct UndoableReloadAction final : public juce::UndoableAction
     void rollBackTo (json& state)
     {
         try {
-            if (serializer.applyProjectJson(state, preserveUiState))
-                store.setCurrentJson(state);
+            serializer.applyProjectJson(state, preserveUiState);
         }
         catch (std::exception &e) {
             std::cout << "UndoableReloadAction: rollback failed -> " << e.what() << std::endl;

@@ -125,26 +125,33 @@ const std::vector<Case>& cases()
 }
 
 /// Play, render, Stop - and check the render did what the case says it does.
-juce::AudioBuffer<float> renderLive (AudiumEngine& engine, const Case& c, int blockSize)
+/// `trace` receives what the driver saw, for describing a failed comparison.
+juce::AudioBuffer<float> renderLive (AudiumEngine& engine, const Case& c, int blockSize,
+                                     LiveTrace* trace = nullptr)
 {
     FakeAudioIODevice device (kSampleRate, blockSize, 2, kNumChannels);
     LiveBlockDriver driver (engine, device);
     driver.play (c.startSeconds);
     auto audio = driver.render (c.lengthSeconds);
+    INFO ("transport:\n" << driver.trace.transitions());
     REQUIRE (driver.lastIsPlaying());
     // the loop cases really wrapped (a transport that ran past the loop end
     // would still match a bounce that did the same)
     REQUIRE (engine.getPlayListScheduler()->getTransportLoop()->getLoopCount() >= c.minLoopWraps);
     driver.stop();
     REQUIRE_FALSE (driver.lastIsPlaying());
+    if (trace != nullptr)
+        *trace = driver.trace;
     return audio;
 }
 
 void requireEquivalent (const juce::AudioBuffer<float>& live, const juce::AudioBuffer<float>& bounce,
-                        float tolerance = kTolerance)
+                        int blockSize, const LiveTrace* trace = nullptr, float tolerance = kTolerance)
 {
     const auto diff = compareBuffers (live, bounce, tolerance);
     CAPTURE (diff.maxAbs, diff.atSample, diff.atChannel, diff.firstOverTolerance, diff.referenceMagnitude);
+    // only built into the message of a failure that has a mismatch
+    INFO ((diff.maxAbs > tolerance ? describeDivergence (live, bounce, diff, tolerance, blockSize, trace) : std::string()));
     REQUIRE (diff.referenceMagnitude > 0.1f);   // the compared span carries audio
     REQUIRE (diff.maxAbs <= tolerance);
 }
@@ -172,24 +179,26 @@ SCENARIO ("the live callback renders what the bounce renders", "[engine][live][e
                 WHEN ("the same span plays through the device callback at the same block size")
                 {
                     auto liveEngine = openSession (c.session, c.decorate);
-                    const auto live = renderLive (*liveEngine, c, blockSize);
+                    LiveTrace trace;
+                    const auto live = renderLive (*liveEngine, c, blockSize, &trace);
                     liveEngine = nullptr;
 
                     THEN ("every sample matches")
                     {
-                        requireEquivalent (live, bounce);
+                        requireEquivalent (live, bounce, blockSize, &trace);
                     }
                 }
 
                 WHEN ("it plays at the smaller block size of a typical device")
                 {
                     auto liveEngine = openSession (c.session, c.decorate);
-                    const auto live = renderLive (*liveEngine, c, 256);
+                    LiveTrace trace;
+                    const auto live = renderLive (*liveEngine, c, 256, &trace);
                     liveEngine = nullptr;
 
                     THEN ("the block size does not change what is heard")
                     {
-                        requireEquivalent (live, bounce);
+                        requireEquivalent (live, bounce, 256, &trace);
                     }
                 }
             }
@@ -223,14 +232,15 @@ SCENARIO ("bouncing and then playing on one engine renders the same audio", "[en
                 {
                     const auto firstBounce = bounceProject (*engine, c.startSeconds, c.lengthSeconds,
                                                             blockSize, kSampleRate, kNumChannels);
-                    const auto live = renderLive (*engine, c, blockSize);
+                    LiveTrace trace;
+                    const auto live = renderLive (*engine, c, blockSize, &trace);
                     const auto secondBounce = bounceProject (*engine, c.startSeconds, c.lengthSeconds,
                                                              blockSize, kSampleRate, kNumChannels);
 
                     THEN ("all three renders match")
                     {
-                        requireEquivalent (live, firstBounce);
-                        requireEquivalent (live, secondBounce);
+                        requireEquivalent (live, firstBounce, blockSize, &trace);
+                        requireEquivalent (live, secondBounce, blockSize, &trace);
                     }
                 }
 
@@ -281,7 +291,7 @@ SCENARIO ("the first device callback after Play renders the bounce's first block
                 for (auto ch = 0; ch < kNumChannels; ++ch)
                     firstBounceBlock.copyFrom (ch, 0, bounce, ch, 0, blockSize);
 
-                requireEquivalent (block, firstBounceBlock);
+                requireEquivalent (block, firstBounceBlock, blockSize);
             }
 
             engine = nullptr;
@@ -317,7 +327,8 @@ SCENARIO ("the comparison tells a live render that left the loop from the bounce
             engine->getPlayListScheduler()->getTransportLoop()->setLoopActive (false);
             Case straight = c;
             straight.minLoopWraps = 0;
-            const auto live = renderLive (*engine, straight, blockSize);
+            LiveTrace trace;
+            const auto live = renderLive (*engine, straight, blockSize, &trace);
             engine = nullptr;
 
             THEN ("the renders agree up to the first wrap and diverge there")
@@ -327,6 +338,8 @@ SCENARIO ("the comparison tells a live render that left the loop from the bounce
 
                 const auto before = compareBuffers (live, bounce, kTolerance, 0, firstWrap);
                 CAPTURE (before.maxAbs, before.atSample, before.referenceMagnitude);
+                INFO ((before.maxAbs > kTolerance ? describeDivergence (live, bounce, before, kTolerance, blockSize, &trace, firstWrap)
+                                                  : std::string()));
                 REQUIRE (before.referenceMagnitude > 0.9f);
                 REQUIRE (before.maxAbs <= kTolerance);
 

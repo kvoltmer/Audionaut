@@ -303,9 +303,11 @@ void PlayListScheduler::primeStandbyForUpcomingStart(const audium::DspClip &dspC
     }
 
     // the loop wrap, if the wrap block will schedule this clip (it is
-    // audible in the wrap block's first block) and nothing comes sooner
+    // audible in the wrap block's first block) and nothing comes sooner.
+    // The range this block's loop result was computed with, not the one
+    // the message thread may be changing right now.
     if (insideLoop && samplesUntilStart < 0) {
-        const auto loopStart = transportLoop->getLoopPositionRange(audium::seconds).getStart();
+        const auto loopStart = transportLoop->getProcessedLoopPositionRange(audium::seconds).getStart();
         if (audible.intersects({loopStart, loopStart + secondsThisBuffer})) {
             samplesUntilStart = loopResult.numSamplesUntilLoopEnd;
             restartAt = loopStart;
@@ -707,6 +709,14 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // same guard as the live callback: the offline render runs the same
     // voices, whose fades and filters decay into denormal territory
     juce::ScopedNoDenormals noDenormals;
+
+    // Run the commands still queued for the audio thread before any voice
+    // starts: a stopAllVoices from the previous bounce (or from stopping the
+    // transport just before exporting) would otherwise run inside the first
+    // rendered block - after process() has started the voices - and fade it
+    // out to silence. Safe here: the exporter bypasses the device callback,
+    // so this thread is the only one draining the queue.
+    audioBusInterface->invokeCommands();
 
     // remember last position
     auto lastPosition = getAbsolutePosition(audium::seconds);

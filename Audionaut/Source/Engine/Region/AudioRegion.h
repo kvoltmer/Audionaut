@@ -130,10 +130,12 @@ public:
     void setRegionData(const AudioRegionData::tRange newRegionData, audium::TimeContextType context);
 
     /**
-     * @brief Validates the region data for a specific time context.
+     * @brief Clamps a range to the source audio: moves it inside, keeping its
+     *        length where it fits, and cuts it to the whole source where it
+     *        is longer. The start never ends up negative.
      * @param data The region data to validate.
      * @param context The time context type.
-     * @return True if the data is valid, false otherwise.
+     * @return True if the range had to be moved.
      */
     bool validateData(AudioRegionData::tRange& data, audium::TimeContextType context);
 

@@ -44,8 +44,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+
+    - name: Checkout submodules
+      uses: ./.github/actions/checkout-submodules
 
     # No `git lfs pull`: the LFS files are test wavs, and this workflow runs
     # no tests.

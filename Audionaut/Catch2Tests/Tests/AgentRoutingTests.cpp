@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 
 #include "Cli/AgentClient.h"
@@ -405,6 +406,124 @@ SCENARIO("a hosted verb waits for the app's render to finish",
         host.setProject (juce::File());
     }
 
+    engine = nullptr;
+    workDir.deleteRecursively();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+// A separation runs for minutes. An agent waiting on it must hear progress as
+// it happens, not one batch at the end - and an older client that cannot read
+// streamed messages must still get the log it always got.
+SCENARIO("a hosted verb streams its progress to the client",
+         "[cli][agent][routing][progress]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    auto workDir = makeRoutingWorkDirectory();
+    auto package = workDir.getChildFile ("progress.audium");
+    auto projectJson = package.getChildFile (ProjectFileStore::projectFileName);
+
+    CliContext setup;
+    setup.quiet = true;
+
+    REQUIRE (runCreate (argsFor ("create " + package.getFullPathName() + " --channels 1"), setup) == exitOk);
+    const auto sourceAudio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/sine-0dB.wav";
+    REQUIRE (runImport (argsFor ("import " + package.getFullPathName() + " " + sourceAudio), setup) == exitOk);
+
+    auto engine = AudiumFactory::createAudiumEngine();
+    REQUIRE (engine->getProjectFileStore()->open (projectJson, nullptr));
+
+    agent::AgentHost host (engine, inlineExecutor());
+    host.setProject (projectJson);
+    REQUIRE (host.isHosting());
+
+    const auto separate = "separate " + package.getFullPathName() + " --track 1 --backend fake --threads 1";
+
+    GIVEN("a client that streams") {
+        CliContext context;
+        context.json = true;
+
+        json envelope;
+        std::vector<double> fractions;
+        juce::StringArray logLines;
+        context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
+        context.progressSink = [&fractions] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+        context.logSink      = [&logLines] (const juce::String& line) { logLines.add (line); };
+
+        WHEN("an agent separates a clip") {
+            auto outcome = agent::routeCommand (argsFor (separate), "separate",
+                                                agent::isHostableVerb ("separate"), context);
+
+            THEN("each step arrives as progress, in order, before the result") {
+                REQUIRE (outcome.handled);
+                REQUIRE (outcome.exitCode == exitOk);
+                REQUIRE (envelope.value ("ok", false));
+
+                REQUIRE (fractions.size() > 2);
+                REQUIRE (fractions.front() == Catch::Approx (0.0));
+                REQUIRE (fractions.back() == Catch::Approx (1.0));
+                REQUIRE (std::is_sorted (fractions.begin(), fractions.end()));
+
+                // ...and none of it is folded into the log as text
+                for (auto& line : logLines)
+                    REQUIRE_FALSE (line.endsWith ("%"));
+                REQUIRE (logLines.contains ("stems added"));
+            }
+        }
+    }
+
+    GIVEN("a client that predates streaming") {
+        // Speak the protocol by hand, as an old binary would: no "stream".
+        struct OldClient final : juce::InterprocessConnection
+        {
+            OldClient() : juce::InterprocessConnection (false) {}
+            ~OldClient() override { disconnect(); }
+            void connectionMade() override {}
+            void connectionLost() override { done.signal(); }
+            void messageReceived (const juce::MemoryBlock& block) override
+            {
+                json message;
+                if (! agent::decode (block, message))
+                    return;
+                kinds.add (message.value ("kind", std::string()));
+                if (kinds.getReference (kinds.size() - 1) == "result") {
+                    result = message;
+                    done.signal();
+                }
+            }
+            juce::StringArray kinds;
+            json result;
+            juce::WaitableEvent done;
+        };
+
+        OldClient client;
+        REQUIRE (client.connectToSocket ("127.0.0.1", host.boundPort(), 2000));
+
+        juce::StringArray argv;
+        for (auto& argument : argsFor (separate).arguments)
+            argv.add (argument.text);
+
+        auto command = agent::makeCommand (projectJson, juce::File::getCurrentWorkingDirectory(), argv);
+        command.erase ("stream");
+        REQUIRE (client.sendMessage (agent::toBlock (command)));
+        REQUIRE (client.done.wait (30000));
+
+        THEN("only hello and result come back, with progress as log lines") {
+            REQUIRE (client.kinds == juce::StringArray ({ "hello", "result" }));
+            REQUIRE (client.result.value ("exitCode", exitFailure) == exitOk);
+
+            juce::StringArray log;
+            for (auto& line : client.result.value ("log", json::array()))
+                log.add (juce::String (line.get<std::string>()));
+
+            REQUIRE (log.contains ("Rendering clip 0%"));
+            REQUIRE (log.contains ("stems added"));
+        }
+    }
+
+    host.setProject (juce::File());
     engine = nullptr;
     workDir.deleteRecursively();
     DeletedAtShutdown::deleteAll();

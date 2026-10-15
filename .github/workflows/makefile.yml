@@ -13,8 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+
+    - name: Checkout submodules
+      uses: ./.github/actions/checkout-submodules
 
     - name: Install dependencies
       # apt update first: the runner image's package index goes stale and

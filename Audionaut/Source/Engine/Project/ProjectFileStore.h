@@ -29,7 +29,7 @@ class ProjectSerializer;
  * `ProjectSerializer` owns what the document JSON contains and how it is
  * applied to the graph; this class owns everything about how and what reaches
  * disk, plus the persistence session state (currentProjectFile, the
- * authoritative currentJson, the external-change marker, the path statics).
+ * external-change marker, the path statics).
  *
  * Wired in `AudiumFactory`: constructed with the graph collaborators, then
  * given the serializer via `setSerializer()` (the serializer holds this store
@@ -108,17 +108,16 @@ public:
     static bool isValidProjectStructure(const juce::File& file);
 
     /**
-     * @brief Reads a project JSON file. The file is framed by
-     *        juce::OutputStream::writeString (see Streamable), so it is read
-     *        back the same way before parsing.
+     * @brief Reads a project JSON file (Streamable::readJsonText, so files
+     *        from before 1.6.6 with a trailing NUL still load).
      * @throws std::runtime_error when the file can't be opened, is empty, or
      *         doesn't parse.
      */
     static json readProjectJson(const juce::File& file);
 
     /**
-     * @brief Writes JSON to `target` atomically (temp file + rename) with the
-     *        writeString framing.
+     * @brief Writes JSON to `target` atomically (temp file + rename) as plain
+     *        JSON text (Streamable::writeJsonText).
      */
     bool writeJsonAtomically(const juce::File& target, const json& content, std::string& error);
 
@@ -240,16 +239,16 @@ public:
      */
     void setChangedExternally(bool changed) { changedExternally = changed; }
 
-    /**
-     * @brief Sets the authoritative applied state; used by
-     *        `UndoableReloadAction` after a successful apply. Only
-     *        open/save/apply update this - snapshots never do.
-     */
-    void setCurrentJson(json state) { currentJson = std::move(state); }
 
     /**
-     * @brief Deletes audio files in the package that the authoritative
-     *        state no longer references (with a confirmation prompt).
+     * @brief The audio files in the package that the saved project file
+     *        doesn't reference; empty before the first save.
+     */
+    std::vector<juce::File> findObsoleteAudioFiles() const;
+
+    /**
+     * @brief Deletes audio files in the package that the saved project file
+     *        no longer references (with a confirmation prompt).
      */
     void deleteObsoleteAudioFiles();
 
@@ -292,9 +291,8 @@ public:
 private:
     /**
      * @brief Serializes the engine and writes it to `target` atomically.
-     * @param serializedOut Receives the serialized JSON on success (optional).
      */
-    bool writeJsonToFile(const juce::File& target, std::string& error, json* serializedOut = nullptr);
+    bool writeJsonToFile(const juce::File& target, std::string& error);
 
     /**
      * @brief Reads `sourceFile` and applies it to the engine via an
@@ -322,11 +320,6 @@ private:
      */
     juce::File currentProjectFile;
 
-    /**
-     * @brief The last authoritative applied/saved state; its file references
-     *        drive obsolete-file cleanup.
-     */
-    json currentJson;
 
     /**
      * @brief See `wasChangedExternally()`.

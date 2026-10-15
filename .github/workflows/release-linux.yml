@@ -1,11 +1,12 @@
 name: Linux Release
 
-# Builds the Release Linux binary, packages it as an AppImage and a .deb, and
-# attaches both to a GitHub Release. Trigger by pushing a version tag:
+# Builds the Release Linux binary, packages it as an AppImage, a .deb and a
+# Flatpak bundle, and attaches all three to a GitHub Release. Trigger by
+# pushing a version tag:
 #   git tag v1.2.0 && git push origin v1.2.0
 # The tag must match the version in Audionaut.jucer (checked below).
 #
-# Can also be run manually from the Actions tab to exercise the build and both
+# Can also be run manually from the Actions tab to exercise the build and the
 # packaging paths - a manual run skips the tag check and publishes nothing.
 
 on:
@@ -23,8 +24,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+
+    - name: Checkout submodules
+      uses: ./.github/actions/checkout-submodules
 
     - name: Check tag matches .jucer version
       if: startsWith(github.ref, 'refs/tags/')
@@ -106,3 +108,115 @@ jobs:
           gh release create "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" \
             --title "Audionaut $GITHUB_REF_NAME" --generate-notes
         fi
+
+  flatpak:
+    # Builds the Flatpak bundle from Audionaut/Builds/Flatpak. Independent of
+    # the package job: flatpak-builder compiles everything itself inside the
+    # GNOME SDK, fetching sources from the manifest (sync-pins.py first points
+    # the manifest's git pins at the ref being built, so the committed pins
+    # never go stale in a release).
+    #
+    # ubuntu-24.04 for flatpak-builder 1.4.x: 22.04's 1.2.x cannot clone
+    # nested submodule mirrors pinned behind branch heads and still invokes
+    # the legacy appstream-compose, which the GNOME 48 SDK no longer ships.
+    # Unlike the package job, nothing here links against the runner's glibc
+    # (the whole build happens inside the SDK), so the newer runner is safe.
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check tag matches .jucer version
+      # Same check as the package job; jobs are independent so each guards
+      # its own upload.
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        JUCER_VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        echo "tag: $TAG_VERSION  .jucer: $JUCER_VERSION"
+        if [ "$TAG_VERSION" != "$JUCER_VERSION" ]; then
+          echo "::error::Tag version ($TAG_VERSION) does not match Audionaut.jucer version ($JUCER_VERSION). Bump the .jucer version (and re-save with Projucer) or fix the tag."
+          exit 1
+        fi
+
+    - name: Install flatpak-builder
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y flatpak flatpak-builder
+        flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+        flatpak install --user -y flathub org.gnome.Platform//51 org.gnome.Sdk//51
+
+    - name: Point the manifest at this ref
+      # sync-pins.py rewrites the manifest's app tag/commit to the ref being
+      # built and refreshes the submodule pins from this checkout's gitlinks.
+      # Only link and demucs.cpp need initializing - they contain the two
+      # nested pins (asio-standalone, eigen); the top-level pins are read
+      # straight from the tree.
+      run: |
+        git submodule update --init Submodules/link Submodules/demucs.cpp
+        REF_TYPE=branch
+        [ "$GITHUB_REF_TYPE" = "tag" ] && REF_TYPE=tag
+        python3 Audionaut/Builds/Flatpak/sync-pins.py \
+          --url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" \
+          --ref "$GITHUB_REF_NAME" --ref-type "$REF_TYPE" --commit "$GITHUB_SHA"
+
+    - name: Restore flatpak-builder cache
+      # Source downloads (git mirrors, tarballs) plus ccache; cuts a full
+      # rebuild from ~45 to a few minutes when the manifest barely changed.
+      uses: actions/cache@v4
+      with:
+        path: .flatpak-builder
+        key: flatpak-builder-${{ hashFiles('Audionaut/Builds/Flatpak/app.audionaut.Audionaut.yml') }}
+        restore-keys: flatpak-builder-
+
+    - name: Build Flatpak
+      run: |
+        flatpak-builder --user --force-clean --ccache --repo=flatpak-repo \
+          build-dir Audionaut/Builds/Flatpak/app.audionaut.Audionaut.yml
+
+    - name: Bundle
+      # Same VERSION-from-.jucer convention as the AppImage step.
+      run: |
+        VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
+        flatpak build-bundle flatpak-repo "Audionaut-$VERSION-x86_64.flatpak" \
+          app.audionaut.Audionaut master
+        ls -l *.flatpak
+
+    - name: Upload to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # The package job usually creates the release well before this job
+        # finishes; create it here too in case this one wins the race.
+        if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+          gh release upload "$GITHUB_REF_NAME" Audionaut-*.flatpak --clobber
+        else
+          gh release create "$GITHUB_REF_NAME" Audionaut-*.flatpak \
+            --title "Audionaut $GITHUB_REF_NAME" --generate-notes
+        fi
+
+  flatpark:
+    # Tells FlatPark (flatpark.org, a Flatpak repository for apps outside
+    # Flathub) that the release is live, so its app.audionaut.Audionaut
+    # package picks up the new .deb within minutes instead of at its daily
+    # poll. FlatPark repacks the release .deb unchanged. Same request as
+    # flatpark/publish-action, inlined so no third-party code runs in the
+    # release workflow; no token needed, the webhook checks the tag against
+    # this repository's published releases. Lives here rather than in an
+    # `on: release` workflow: releases created with GITHUB_TOKEN don't
+    # trigger other workflows.
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions: {}
+    # A FlatPark hiccup must never fail the release.
+    continue-on-error: true
+    steps:
+    - name: Notify FlatPark
+      run: |
+        payload=$(jq -n --arg a app.audionaut.Audionaut --arg t "$GITHUB_REF_NAME" --arg r "$GITHUB_REPOSITORY" \
+          '{app_id: $a, tag: $t, repository: $r}')
+        curl -sS --fail-with-body --retry 5 --max-time 30 \
+          -H 'content-type: application/json' \
+          -d "$payload" https://hooks.flatpark.org/release

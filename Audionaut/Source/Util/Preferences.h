@@ -52,6 +52,8 @@ namespace PreferenceKeys
     static const char* const openLastProjectOnLaunch = "OpenLastProjectOnLaunch";
     static const char* const initialOpenDirectory   = "InitialOpenDirectory";
     static const char* const initialSaveDirectory   = "InitialSaveDirectory";
+    static const char* const importPlacement        = "ImportPlacement";
+    static const char* const trackImportPlacement   = "TrackImportPlacement";
     static const char* const recentFiles            = "RecentProjectFiles";
     static const char* const audioDeviceSettings    = "AudioDeviceSettings";
     static const char* const mainWindowState        = "MainWindowState";

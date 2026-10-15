@@ -223,8 +223,7 @@ void AudioTrackComponent::itemDropped (const SourceDetails &dragSourceDetails)
     
     bool success = false;
     if (dynamic_cast<RegionLabel*>(dragSourceDetails.sourceComponent.get()) != nullptr) {
-        audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
-        success = true;
+        success = audioTrack->dropSelectedAudioRegions(pos, audium::clocks);
     }
     else if (auto playListItemComponent = dynamic_cast<PlayListItemComponent*>(dragSourceDetails.sourceComponent.get())) {
         audioTrack->dropPlayListItem(playListItemComponent->getPlayListItem(), pos, audium::clocks);
