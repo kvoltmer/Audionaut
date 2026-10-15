@@ -6,7 +6,9 @@ name: Windows Release
 # The tag must match the version in Audionaut.jucer (checked below).
 #
 # Can also be run manually from the Actions tab to exercise the build and the
-# packaging - a manual run skips the tag check and publishes nothing.
+# packaging - a manual run skips the tag check and publishes nothing. Tick
+# "check_signing_tools" on a manual run to also run the signing-tool discovery
+# step, which otherwise only ever runs on a release tag.
 #
 # Runs alongside the Linux release workflow on the same tag; both attach
 # their artifacts to one Release (whichever finishes first creates it).
@@ -15,6 +17,11 @@ on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      check_signing_tools:
+        description: Locate signtool, the Artifact Signing dlib and .NET 8 without signing anything
+        type: boolean
+        default: false
 
 permissions:
   # Workflow-level `permissions:` REPLACES the whole default set, so both must
@@ -138,13 +145,25 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Set up signing tools
-      if: env.SIGN == 'true'
+      if: env.SIGN == 'true' || inputs.check_signing_tools
       shell: pwsh
       # Discovers rather than hardcodes the two paths sign.cmd needs, because
       # both move with SDK and client-package versions. Fails loudly with a
-      # directory listing rather than silently leaving them unset.
+      # directory listing rather than silently leaving them unset. Needs no
+      # Azure credentials, so a manual run can exercise it on its own (see
+      # check_signing_tools above) - the later signing steps stay gated on SIGN.
+      # The package was renamed from Microsoft.Trusted.Signing.Client; the dll
+      # inside kept its Azure.CodeSigning name.
       run: |
-        nuget install Microsoft.Trusted.Signing.Client -OutputDirectory "$env:RUNNER_TEMP\signclient" -ExcludeVersion
+        # The dlib is a .NET 8 component that signtool loads in-process; on an
+        # image without the runtime, signing fails with an opaque SignerSign()
+        # error rather than a missing-runtime message.
+        if (-not (dotnet --list-runtimes | Select-String '^Microsoft\.NETCore\.App 8\.')) {
+          dotnet --list-runtimes
+          throw ".NET 8 runtime not found - the Artifact Signing dlib needs it"
+        }
+
+        nuget install Microsoft.ArtifactSigning.Client -OutputDirectory "$env:RUNNER_TEMP\signclient" -ExcludeVersion
         $dlib = Get-ChildItem "$env:RUNNER_TEMP\signclient" -Recurse -Filter Azure.CodeSigning.Dlib.dll |
                 Where-Object FullName -match 'x64' | Select-Object -First 1
         if (-not $dlib) {
