@@ -84,10 +84,11 @@ monitoring. Each take becomes a region and a single undo step.
 ([The command line and AI agents](manual/11-cli-and-agents.md))
 
 - **MCP server** (`audionaut-mcp` on npm, also in the official MCP
-  registry) with 22 tools: create a project, import, analyse, auto edit,
+  registry) with 23 tools: create a project, import, analyse, auto edit,
   assemble, split, create, retrim and clean up regions, place, move and
-  remove clips, clip gain, fades, speed and stretch, stem separation, remove tracks and channels, export, project
-  info, and `request_feature` / `report_bug`, which file GitHub issues.
+  remove clips, clip gain, fades, speed and stretch, stem separation,
+  remove tracks and channels, track pan, export, project info, and
+  `request_feature` / `report_bug`, which file GitHub issues.
   Setup for Claude Code, with the app and Node.js 18+ installed:
   `claude mcp add audionaut -- npx -y audionaut-mcp`
 - **Edits land in the open document.** If the project is open in the app,
