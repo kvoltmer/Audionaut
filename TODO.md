@@ -308,6 +308,50 @@ the one-gesture crossfade UX on top:
     cheaper per-track configuration of the stretcher.
   Then re-run the bench, refresh the page's numbers and "Last run" line,
   and publish.
+  Re-run 2026-10-25 on the 1.7.0 release build (M5, idle): plain stereo
+  tracks at 128 samples 8 → 0.4, 16 → 0.7, 32 → 1.5, 64 → 3.0 % (linear,
+  no overruns at any buffer size); time-stretched 7–8 % per track, same
+  bursty shape (4 tracks: 264 overruns at 128 samples; 8 tracks: 7 at
+  512). The page is refreshed with these numbers (still uncommitted).
+  Decision 2026-10-25: not published - eight time-stretched stereo tracks
+  hitting 100 % of the callback is not a result to publish. Gated on the
+  next item.
+- [ ] **Profiling and optimisation round on time-stretched playback.**
+  Goal: eight stretched stereo tracks (Rubber Band R3, ×0.9) stay under
+  budget at 128 samples, including the 99th percentile, so the Performance
+  page can go live. Today (1.7.0, M5, 128 samples) 8 tracks = 56 % mean,
+  225 % p99, 3446 overruns in 20 s; 4 tracks = 27 % mean, 111 % p99, 264
+  overruns. The mean is what R3 costs per track (7–8 % each, flat across
+  buffer sizes), the p99 is the hop structure: the stretcher produces
+  output in hops of its window size, so one callback pays for a whole hop
+  while its neighbours pay nothing, and at ≤ 128 samples a hop is several
+  callbacks' worth of budget. Steps:
+  - Profile one stretched voice in the bench harness (Instruments, Time
+    Profiler on the callback thread): how much is R3 itself, how much is
+    `StretchAudioSource` / `ClipResamplingSource` / dynamics around it, and
+    whether anything allocates or locks on the way (the standby lane and
+    the prime path were the last offenders).
+  - Flatten the bursts: render each stretched voice ahead on a worker
+    thread into a FIFO the callback only drains (clip positions are known,
+    so the lookahead can be a few hundred ms; seek, loop wrap and the
+    clip-end re-prime - the item above - need a flush-and-refill path), or
+    at least drive R3 in constant small chunks instead of letting it hop.
+  - Halve the mean structurally: a voice is one channel, but its
+    `ClipTransportSource` builds the `StretchAudioSource` with the file's
+    channel count (`VoiceSource.cpp` passes `reader->numChannels`), so a
+    stereo clip on a stereo track runs two R3 instances of two channels
+    each - four channel-stretches for two output channels, and the same
+    again for the resampler. One stretcher per clip shared by its voices
+    (or a voice that stretches only its own channel) removes half the
+    work, and more for multichannel files.
+  - Lower the mean further with R3's cheaper options, measured against
+    the stretch quality tests: `OptionWindowShort`, `OptionPitchHighSpeed`,
+    `OptionChannelsTogether` once a stretcher sees both channels, and
+    `OptionEngineFaster` (R2) as the fallback for many tracks. Today the
+    backend sets `OptionEngineFiner | OptionProcessRealTime |
+    OptionThreadingNever`.
+  - Re-run `[playback][bench]` after each step, keep the before/after table
+    in the PR, then refresh and publish the Performance page.
 
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
