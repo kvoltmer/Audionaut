@@ -20,7 +20,7 @@ sees all lanes of a track at once) and **send effects** (per-lane aux sends into
 that return to the main mix), in phases, and a **multithreaded renderer** that runs tracks and
 aux buses in parallel inside the audio callback without adding latency (2.9). The renderer comes
 first: it needs no effect code, fixes the stretched-track overruns on its own, and leaves the
-renderer in the job form the effect phases build on.
+renderer in the job form the effect phases and track-to-track recording (2.10) build on.
 
 Decisions taken (2026-10-25):
 
@@ -467,8 +467,9 @@ stage C, audio thread, serial:
   can only drop. Priority inversion through `BufferingAudioSource`'s lock, held briefly by the
   normal-priority read-ahead thread, also exists today on the audio thread; not made worse,
   listed for completeness.
-- Not parallelised: the schedule pass, the input/recorder pass, stage C, and anything with a
-  single job. One heavy track still has to fit the budget alone.
+- Not parallelised: the schedule pass, stage C, and anything with a single job. One heavy track
+  still has to fit the budget alone. (The per-lane input monitor and recorder calls move into
+  the track job, see 2.10.)
 
 **Render-ahead, a later option.** Because a track job is self-contained, a track with no
 monitored or record-armed lane could be rendered k blocks early on the workers *between*
@@ -478,6 +479,50 @@ take effect k blocks later (k = 2 at 128 samples = 5 ms, inaudible), and seeks, 
 and tempo changes flush the FIFO. This is the "stretched render-ahead" item from the performance
 notes and becomes "run track jobs early" on this infrastructure. It stays out of this plan's
 phases: the fork-join renderer lands first and may make it unnecessary.
+
+### 2.10 Track-to-track recording, prepared by phase 1
+
+A lane of track B can take its input from track A instead of a device channel, and record or
+monitor it. The per-track job already produces the signal (A's post-gain lane buffers and its
+panned `trackOut[A]`); what is missing is a way to name a track as a lane input and a guarantee
+that A's job has finished before B's job reads it.
+
+- **Input source model.** Today a lane's input is one int, `inputChannel`, resolved against the
+  device input block
+  ([`AudioBusRenderer.h:76`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L76),
+  [`effectiveInputChannel`](../../../Audionaut/Source/Engine/Channel/AudioChannelData.h#L42)).
+  `AudioChannelData` gains a source kind: device channel, or track output (track id plus lane
+  index for a mono lane-to-lane patch, or L/R of the track's stereo output). The struct stays
+  scalar, so JSON (two optional keys), `commitChannelData`, `UndoableChannelAction` and the
+  strip's input selector extend without new mechanisms. Removing a track resets lanes that point
+  at it, inside the same container snapshot.
+- **Dependency ordering in stage A.** The per-block job table gets a level: tracks without track
+  inputs are level 0, a track whose sources are all level 0 is level 1, and so on. Stage A runs
+  as one fork-join sub-stage per level: one extra barrier per level, nothing when the feature is
+  unused. Levels come from the lane data in O(tracks × depth) on the audio thread,
+  allocation-free, with a depth cap. A cycle (A records B while B records A) leaves a track
+  unassigned: its track inputs read silence and an atomic flag lets the UI show the conflict.
+  Determinism and the serial path are unchanged, the sums still run in track order.
+- **Phase 1 preparation.** The monitor add and the recorder call are per lane, read only the
+  device input block and touch only that lane's recorder, so phase 1 moves them from the serial
+  input pass into `renderTrack`, and the stage dispatcher takes a level count. A track-sourced
+  lane is then a source switch: read from A's post-gain lane buffer or `trackOut[A]` instead of
+  the input block. The recorder, its disk thread and the take-to-region step do not change.
+- **Placement.** A device take is placed by the block's output time and, from phase 4, corrected
+  for the device round trip. A track-sourced take must not get that correction, because the
+  source was generated inside the same block for the block's timeline position; with PDC it is
+  offset by the source track's pre-fader delay instead. The recorder subtracts a per-source
+  latency, not a global one.
+- **Double hearing.** If A still feeds the main mix, the user hears A and B's monitor of A at
+  once. A gets an "internal only" output option next to main and direct out, so it plays only
+  into tracks that record it. Mute would not do: mute silences the job's output and the recording
+  with it.
+- **Surface.** CLI `track-input --track B --channel 0 --from-track A [--from-channel 0 | --left |
+  --right]`, MCP tool, `info`; a Tracks submenu in the strip's input menu and a routing
+  indicator on the strip.
+- **Later on the same mechanism.** Recording an aux bus output is a sub-stage after stage B.
+  Recording the main mix is a bounce-in-place that needs B excluded from the mix it records;
+  export covers that.
 
 ## 3. Implementation plan (one PR per phase, into develop)
 
@@ -495,7 +540,8 @@ renderer in job form for the effect phases.
    `Playback::processVoice(index, scratch)`); `renderTrack(t, workerId)` (voices of the track,
    gain + meter, pan into `trackOut[t]`), `renderMaster()` (ordered sum, master gain, direct
    outs, stems); stages A and C from 2.9, stage B arrives with the aux buses; `trackOut` sized
-   to the lane maximum at prepare.
+   to the lane maximum at prepare. Preparation for 2.10: the per-lane monitor add and recorder
+   call move into `renderTrack`, and the dispatcher runs stage A per level (one level today).
 3. `LinkAudioDevice::audioDeviceAboutToStart`: workgroup to the pool;
    `PlayListScheduler::prepareToPlay` sizes the pool for the live device only; `bounceProject`
    and clip bounce stay serial; `DspLoadMeter`
@@ -609,6 +655,23 @@ Build order:
   change, `getStateInformation` base64 in the slot JSON, missing-plugin placeholder.
 - Editor window (`createEditorIfNeeded`) in Interface; settings page for scan paths and rescan;
   CLI `scan-plugins`; hosted plugins process headless.
+
+### Phase 8: Track-to-track recording
+
+Can land any time after phase 1.
+
+1. `AudioChannelData`: `inputSource` kind + `inputTrackId` + `inputLane` scalars, optional JSON
+   keys, `effectiveInput()` replaces `effectiveInputChannel`; `AudioTrackContainer::removeTrack`
+   resets dependents in the snapshot.
+2. `AudioBusRenderer`: levels in the job table, stage A per level, source switch in
+   `renderTrack` (device block, A's post-gain lane, `trackOut[A]` L/R), cycle flag; "internal
+   only" output value for `outputChannel`.
+3. `Recording`: per-source placement latency (device round trip vs. source pre-fader delay).
+4. CLI `track-input`, MCP tool, `info`, undo via `UndoableChannelAction`; strip input menu
+   Tracks ▸, routing indicator, cycle warning.
+5. Tests `TrackInputTests.cpp`: recording A's clip onto B yields A's samples at the same timeline
+   position (pool 0 and 3); A → B → C chain; cycle detected and silent; after phase 2, B's take
+   includes A's inserts; "internal only" keeps A out of the main mix; undo restores routing.
 
 ## 4. Verification (every phase)
 
