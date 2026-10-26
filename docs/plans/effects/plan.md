@@ -18,7 +18,9 @@ lambdas.
 This plan adds **insert effects** (per lane, console style, plus an optional per-track block that
 sees all lanes of a track at once) and **send effects** (per-lane aux sends into dedicated FX buses
 that return to the main mix), in phases, and a **multithreaded renderer** that runs tracks and
-aux buses in parallel inside the audio callback without adding latency (2.9).
+aux buses in parallel inside the audio callback without adding latency (2.9). The renderer comes
+first: it needs no effect code, fixes the stretched-track overruns on its own, and leaves the
+renderer in the job form the effect phases build on.
 
 Decisions taken (2026-10-25):
 
@@ -302,8 +304,8 @@ runtime trigger a rebuild.
 - [`Playback::processingBuffer`](../../../Audionaut/Source/Engine/Playback/Playback.h#L127) is
   one scratch buffer shared by all voices, and `stereoBuffer`/`mainMixBuffer`
   ([`AudioBusRenderer.h:290`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L290))
-  are shared accumulators; phase 1 replaces them with per-worker scratch and per-track partials
-  so phase 2 can run track jobs concurrently (2.9).
+  are shared accumulators; phase 1 replaces them with per-worker scratch and per-track partials,
+  which is what makes the track jobs independent (2.9).
 - `AudioTrackContainer`'s constructor already takes 8 dependencies; the planner needs the
   container, so it is wired after construction with a setter (like
   `projectFileStore->setSerializer`).
@@ -380,8 +382,12 @@ stage C, audio thread, serial:
 
 - Voice bucketing: after the schedule pass the audio thread walks `voices[MAX_VOICES]` once,
   reads each active voice's lane (`VoiceSource::getDestinationChannel`) and counting-sorts the
-  voice indices by `plan.laneToTrack[lane]` into a fixed `voiceOrder[MAX_VOICES]` with per-track
-  begin/count. O(voices), no allocation; `Voice` and `VoiceSource` stay as they are.
+  voice indices by the lane's track into a fixed `voiceOrder[MAX_VOICES]` with per-track
+  begin/count. O(voices), no allocation; `Voice` and `VoiceSource` stay as they are. The job
+  table itself needs no plan: lanes of a track are contiguous and carry
+  `AudioChannelData::trackId`, so runs of equal `trackId` over the renderer's lane data are the
+  tracks (built per block, O(lanes)); once the `MixPlan` exists it supplies the table with the
+  chains attached.
 - Each worker owns one mono scratch block: `processingBuffer` becomes `scratch[workerId]`. A
   voice's chain (`ClipTransportSource` → `StretchAudioSource` → `ClipResamplingSource` → reader)
   is per voice and only ever touched by the one job that owns its track, so its per-instance
@@ -391,8 +397,9 @@ stage C, audio thread, serial:
   owned by exactly one job. A job writes only its track's lanes, its partial buffers and its own
   effects.
 - Partial buffers replace today's shared `stereoBuffer`/`mainMixBuffer` adds: `trackOut`
-  (numTracks × 2 × maxBlock) plus one stereo block per existing (track, aux) send pair,
-  allocated at plan build, so memory follows what the project uses, not `MAX_AUDIO_CHANNELS`.
+  (tracks × 2 × maxBlock, sized to the lane maximum at prepare, 512 KB in Release) plus, from
+  the sends phase, one stereo block per existing (track, aux) send pair allocated at plan
+  build, so send memory follows what the project uses.
 - **Determinism**: all sums run in track order on one thread, so the output is bit-identical for
   any worker count, including 0. A bounce with 0 workers and a live render with 7 produce the
   same samples; the tests rely on this.
@@ -412,10 +419,11 @@ stage C, audio thread, serial:
   overlaps with the audio thread's own first job. If the bench at 32/64 samples shows the wake
   dominating, a "spin while playing" option is added; Tracktion ships six pool strategies for
   this reason, and this design starts with the one that burns no idle CPU.
-- Jobs run longest-first (LPT): each job's cost is an exponential average of its measured ticks,
-  kept in a per-track runtime atomic carried over by track id like the PDC delays; the planner
-  sorts `order[]` at build and republishes a plan (no re-prepare, same slots) when the measured
-  order changes materially, checked from its 50 ms timer at most once per second.
+- Jobs run longest-first (LPT): each job's cost is an exponential average of its measured ticks
+  in a per-job runtime array; the audio thread insertion-sorts the job table by it every block
+  (at most `MAX_AUDIO_CHANNELS` entries, allocation-free, a few µs), so a track that turns heavy
+  (a clip switched to Stretch mode) moves to the front within a block, with no planner
+  involvement.
 - Memory model: a worker's writes happen-before the audio thread's `remaining.load(acquire)`
   through `fetch_sub(release)`; the stage publish is release/acquire the other way. Effect state
   is touched by whichever thread runs the job in a block, serialized by the barriers; for hosted
@@ -473,7 +481,34 @@ phases: the fork-join renderer lands first and may make it unnecessary.
 
 ## 3. Implementation plan (one PR per phase, into develop)
 
-### Phase 1: Effect interface, built-ins, inserts (lane, track, master), MixPlan
+### Phase 1: Parallel track rendering (`RenderThreadPool`)
+
+Independent of effects: fixes the eight-stretched-tracks overrun on its own and leaves the
+renderer in job form for the effect phases.
+
+1. `Playback/RenderThreadPool.h/.cpp`: workers, counting semaphore, `Stage` dispatch with
+   `next`/`remaining`, audio-thread participation + spin-wait, `startRealtimeThread` options,
+   `WorkgroupToken` per worker, MMCSS call on Windows, stall counter.
+2. `AudioBusRenderer`: sub-block fix; job table per block from runs of equal
+   `AudioChannelData::trackId` over the lanes, insertion-sorted by the per-job cost EMA;
+   voice bucketing; per-worker scratch (`Playback::process` becomes
+   `Playback::processVoice(index, scratch)`); `renderTrack(t, workerId)` (voices of the track,
+   gain + meter, pan into `trackOut[t]`), `renderMaster()` (ordered sum, master gain, direct
+   outs, stems); stages A and C from 2.9, stage B arrives with the aux buses; `trackOut` sized
+   to the lane maximum at prepare.
+3. `LinkAudioDevice::audioDeviceAboutToStart`: workgroup to the pool;
+   `PlayListScheduler::prepareToPlay` sizes the pool for the live device only; `bounceProject`
+   and clip bounce stay serial; `DspLoadMeter`
+   gains the stall count, header tooltip shows it.
+4. `Preferences` key `processingThreads`, Settings → Audio control; CLI engines and the scratch
+   engine never start a pool; tests default 0.
+5. Jucer entries + resave; tests `ParallelRenderTests.cpp`: pool 0 / 1 / 3 bit-identical to
+   each other and to `bounceProject` on a 16-track project with stretched and plain clips, pan,
+   mute/solo and direct outs; add/remove track while playing; device restart restarts the pool;
+   stall count stays 0. Bench case: 8 stretched tracks at 0 / 1 / 3 / 7 workers (the website
+   performance page blocker).
+
+### Phase 2: Effect interface, built-ins, inserts (lane, track, master), MixPlan
 
 Build order:
 
@@ -491,11 +526,10 @@ Build order:
    write in `writeChannelToJson`, read in `readFromJson` and `mergeChannelFromJson`.
 7. `AudioTrackContainer.h/.cpp`: `masterInserts`, `"master_inserts"`, planner setter,
    `requestRebuild()` in `publishNumAudioTrackChannels`.
-8. `AudioBusRenderer.h/.cpp`: pull plan, sub-block fix, clamping, and the renderer written in
-   job form from the start (2.9): `renderTrack(t, workerId)` (voices of the track from the
-   bucketed order, lane inserts, track inserts, gain, pan into `trackOut[t]`), `renderMaster()`
-   (ordered sum, master inserts before `masterGain.process`), all still called serially;
-   `Playback::process` becomes `Playback::processVoice(index, scratch)`.
+8. `AudioBusRenderer.h/.cpp`: pull plan, clamping; the phase-1 `renderTrack` gains lane inserts
+   and track inserts, `renderMaster` gains master inserts before `masterGain.process`; the job
+   table and `laneToTrack` come from the plan from now on (built at rebuild instead of per
+   block), the per-block cost sort stays.
 9. `PlayListScheduler.cpp`: `planner.prepare()` before the bus in `prepareToPlay`; flush pending
    rebuild in `bounceProject`.
 10. `AudiumFactory.cpp`: registry, planner, plan container wiring.
@@ -510,28 +544,8 @@ Build order:
     track insert sees both lanes; master insert affects main only, not direct outs; add/remove
     insert while playing stays click-free, `compareBuffers` vs bounce; undo/redo restores JSON and
     keeps effect instances; save/reopen; legacy project loads with empty chains; headless
-    add-insert then export applies the insert; CLI envelope test).
-
-### Phase 2: Parallel track rendering (`RenderThreadPool`)
-
-1. `Playback/RenderThreadPool.h/.cpp`: workers, counting semaphore, `Stage` dispatch with
-   `next`/`remaining`, audio-thread participation + spin-wait, `startRealtimeThread` options,
-   `WorkgroupToken` per worker, MMCSS call on Windows, stall counter.
-2. `AudioBusRenderer`: stage A/B/C from 2.9 over the phase-1 job functions; voice bucketing by
-   `plan.laneToTrack`; per-worker scratch; `renderAux` stub until phase 3 (stage B skipped with
-   no auxes).
-3. `MixPlan`/`MixerPlanner`: `laneToTrack`, `order[]` by cost EMA, per-track cost atomics
-   carried over by id, partial buffers sized at build.
-4. `LinkAudioDevice::audioDeviceAboutToStart`: workgroup to the pool;
-   `PlayListScheduler::prepareToPlay` sizes the pool for the live device only; `bounceProject`
-   and clip bounce stay serial; `DspLoadMeter`
-   gains the stall count, header tooltip shows it.
-5. `Preferences` key `processingThreads`, Settings → Audio control; CLI engines and the scratch
-   engine never start a pool; tests default 0.
-6. Tests `ParallelRenderTests.cpp`: pool 0 / 1 / 3 bit-identical to each other and to
-   `bounceProject` on a 16-track project with inserts; add/remove track while playing; plan swap
-   mid-run; device restart restarts the pool; stall count stays 0. Bench cases: 8 stretched
-   tracks and 64 lanes EQ + compressor at 0 / 1 / 3 / 7 workers.
+    add-insert then export applies the insert; CLI envelope test; pool 0 / 3 bit-identical with
+    inserts). Bench case: 64 lanes EQ + compressor at 0 / 1 / 3 / 7 workers.
 
 ### Phase 3: Sends and aux buses
 
