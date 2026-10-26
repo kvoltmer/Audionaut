@@ -215,11 +215,28 @@ The topology has exactly three summing points, so the delays are computed arithm
 | Main mix + aux returns | dry main vs. each aux chain | `mainDryDelay = Laux = max auxLat[a]`, `returnDelay[a] = Laux − auxLat[a]` |
 | Device output | main path vs. direct outs | direct outs delayed by `Laux + Lmaster` |
 
-Total output latency `Lpre + Laux + Lmaster` is reported to the scheduler (playhead display offset)
-and to the export: a bounce renders `totalSamples + L` and drops the first `L` samples so the file
-lines up with the timeline, and appends the longest `getTailSeconds()` when "include effect tails"
-is set (config flag, default on for project bounces). Delay lines carry over between plans by
-lane/aux id. Hosted plugins that change latency at runtime trigger a rebuild.
+Total output latency `L = Lpre + Laux + Lmaster` is published by the planner as an atomic sample
+count and consumed in three places:
+
+- **Link sync.** The device callback already asks Link for the beat at the moment the buffer
+  reaches the speaker (`hostTime + mOutputLatency`,
+  [`LinkAudioDevice.cpp:55`](../../../Audionaut/Source/Engine/Link/LinkAudioDevice.cpp#L55)) and
+  passes the same timestamp to `LinkEngine::audioCallback` for the start/stop/tempo stamps. PDC
+  makes the whole mix `L` samples later, so the term becomes
+  `hostTime + deviceOutputLatency + pdcLatency`. Without it Audionaut plays `L` behind every Link
+  peer. Transport position, loop boundaries and the playhead display all derive from this
+  compensated beat, so no separate display offset is needed.
+- **Recording placement.** The recorder stamps a take with the beat computed for the block's
+  *output* time; with PDC that is `L` later than when the input actually arrived. Phase 3
+  subtracts `L` from the recording start position. Device round-trip latency (input + output) is
+  not compensated today either; fix it in the same place.
+- **Export.** Link is bypassed during a bounce. The bounce renders `totalSamples + L` and drops
+  the first `L` samples so the file lines up with the timeline, and appends the longest
+  `getTailSeconds()` when "include effect tails" is set (config flag, default on for project
+  bounces).
+
+Delay lines carry over between plans by lane/aux id. Hosted plugins that change latency at
+runtime trigger a rebuild.
 
 ### 2.5 Persistence, undo, agents
 
@@ -374,11 +391,15 @@ Build order:
 - `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per lane/aux/main/direct;
   arithmetic from 2.4 in `MixerPlanner::build`; delay state carried over by id; bypass delay in
   the slot.
-- Scheduler reports `totalLatency` (playhead display offset); `bounceProject` pre-rolls by `L`
-  and drops `L` samples, optional tail extension.
+- Planner publishes `totalLatency` (atomic samples). `LinkAudioDevice` adds it to the output-time
+  term that feeds `beatAtTime` and `LinkEngine::audioCallback`; `Recording` subtracts it (plus
+  device round-trip latency) from the take's start position; `bounceProject` pre-rolls by `L` and
+  drops `L` samples, optional tail extension.
 - Test-only `LatencyTestEffect(N)` registry entry: a click on lane A with latency 512 and lane B
   without lands on the same sample in the bounce; aux chain latency keeps dry/wet aligned; bypass
-  toggle keeps alignment.
+  toggle keeps alignment; with the fake device and a 480-sample insert, a click scheduled at beat
+  1 leaves the output at the same device sample as without the insert (Link compensation); a
+  recorded click lands at the position it was played.
 
 ### Phase 4: Channel view UI
 
