@@ -438,9 +438,13 @@ stage C, audio thread, serial:
   limits), otherwise normal priority, with a manual note.
 - Default worker count: physical cores − 1 (`SystemStats::getNumPhysicalCpus()`, as the
   separation code does), capped at 8, leaving a core for the UI and the read-ahead thread.
-  Settings → Audio gets "Processing threads: Auto / 1 … N" (1 = serial) in `Preferences`. CLI
-  engines use the same default, so `export` speeds up for free (`--threads` override). The
+  Settings → Audio gets "Processing threads: Auto / 1 … N" (1 = serial) in `Preferences`. The
   scratch engine and tests default to 0.
+- **Offline rendering stays single-threaded** (decision 2026-10-26): `bounceProject`, CLI
+  `export` and clip bounce run every stage serially on the calling thread, the `N = 0` path.
+  An export has no deadline, the result is the same samples by construction, and the serial
+  path is the reference the live tests compare against. The pool serves the device callback
+  only; `AudioExporter` never starts it.
 
 **Failure modes, stated.**
 
@@ -519,10 +523,11 @@ Build order:
 3. `MixPlan`/`MixerPlanner`: `laneToTrack`, `order[]` by cost EMA, per-track cost atomics
    carried over by id, partial buffers sized at build.
 4. `LinkAudioDevice::audioDeviceAboutToStart`: workgroup to the pool;
-   `PlayListScheduler::prepareToPlay` sizes the pool; `bounceProject` uses it; `DspLoadMeter`
+   `PlayListScheduler::prepareToPlay` sizes the pool for the live device only; `bounceProject`
+   and clip bounce stay serial; `DspLoadMeter`
    gains the stall count, header tooltip shows it.
-5. `Preferences` key `processingThreads`, Settings → Audio control, CLI `--threads` on `export`;
-   scratch engine/tests default 0.
+5. `Preferences` key `processingThreads`, Settings → Audio control; CLI engines and the scratch
+   engine never start a pool; tests default 0.
 6. Tests `ParallelRenderTests.cpp`: pool 0 / 1 / 3 bit-identical to each other and to
    `bounceProject` on a 16-track project with inserts; add/remove track while playing; plan swap
    mid-run; device restart restarts the pool; stall count stays 0. Bench cases: 8 stretched
