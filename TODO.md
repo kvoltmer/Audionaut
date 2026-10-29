@@ -353,6 +353,61 @@ the one-gesture crossfade UX on top:
   - Re-run `[playback][bench]` after each step, keep the before/after table
     in the PR, then refresh and publish the Performance page.
 
+- [ ] **Double-precision mixing as an engine preference.** The renderer is
+  a template and `AudioBusRenderer<double>` is instantiated (kept in the
+  parallel-rendering branch as a compile check: the voice add and the
+  recorder call convert under `if constexpr`), but nothing constructs it;
+  the factory, `AudioBusInterface` and the tests all use the float
+  variant. To offer it: a `Preferences` key ("Processing precision",
+  Settings → Audio, next to the thread count) read by `AudiumFactory`,
+  which builds the float or the double renderer; `AudioBusInterface`
+  holds the renderer behind a sample-type-agnostic interface (or becomes
+  a template itself) so `PlayListScheduler`, the exporter and the strips
+  do not care; the device callback stays float, so the bus converts the
+  input block on entry and the output block on exit (bus channels, partials,
+  gain, pan and the master sum are then double); voices and the recorder
+  stay float, the conversions are already in `renderTrack`. Effects
+  (`docs/plans/effects/plan.md`) would need `process` for both sample
+  types, which juce_dsp provides. Test: the same session rendered float
+  and double matches within float precision, bit-identical for any worker
+  count within one precision; bench the cost (memory doubles for the bus
+  buffers, SIMD width halves).
+
+- [ ] **Record another track's output (track-to-track recording).** Phase 8
+  of `docs/plans/effects/plan.md` (section 1.10); the parallel renderer did
+  the groundwork: every track is a job, and after its job the post-gain
+  signal is in its bus channels and the panned stereo partial in
+  `trackOutput`, both readable by another job behind a barrier. Missing:
+  - an input source on `AudioChannelData` next to `inputChannel`: device
+    channel, or a track's channel, or the L/R of a track's stereo output
+    (scalars, two optional JSON keys; `commitChannelData`, the channel undo
+    action and the strip's input selector extend as they are; removing a
+    track resets the channels that point at it in the same snapshot);
+  - job levels in `buildJobTable`: no track input = level 0, fed only by
+    level 0 = level 1, ...; stage A runs one fork-join per level (an extra
+    barrier only when used), the cost sort stays within a level; a cycle
+    leaves a track unassigned, it reads silence and sets a flag for the UI;
+  - the source switch in `renderInput`: the source track's bus channel
+    (post-gain, pre-pan) for a mono patch, its partial for a stereo tap,
+    instead of the device block; recorder, disk thread and take placement
+    unchanged;
+  - placement: a track-sourced take is generated in the same block for the
+    block's position, so it lands exactly; a device take is late by the
+    round trip (uncompensated today). Give the recorder a per-source offset
+    now, so phase 4 (PDC) can subtract the source's pre-fader delay instead;
+  - "internal only" as a third output next to main and direct out, so a
+    source track feeds only the tracks that record it (mute would silence
+    the recording too);
+  - strip input menu Tracks >, routing indicator, cycle warning; CLI
+    `track-input --track B --channel 0 --from-track A [--from-channel 0 |
+    --left | --right]`, MCP tool, `info`;
+  - tests: A's clip recorded onto B equals A's samples at the same position
+    (0 and 3 workers); A -> B -> C chain; cycle silent and flagged;
+    internal-only keeps A out of the mix; undo restores the routing. The
+    serial bounce runs the levels in order, nothing new there.
+  Engine side ~1 day, surfaces and tests 1-2 more; own branch after
+  feature/parallel-rendering, independent of the effect phases.
+
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
 - [ ] **Each undo step keeps two container snapshots.** An

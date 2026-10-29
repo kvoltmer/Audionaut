@@ -48,6 +48,13 @@ public:
         rebuild the project). Call from any thread but the audio thread.
     */
     void setBypass(bool isByPass);
+
+    /**
+        Restarts the render thread pool with the bus interface's current
+        worker count, for the device this callback runs with. A no-op while
+        no device has started. Message thread.
+    */
+    void restartRenderThreads();
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
 
@@ -62,6 +69,10 @@ private:
     std::uint64_t sample_time = 0;
     double sampleRate = 0.0;
     int bufferSize = 0;
+    juce::AudioWorkgroup workgroup;      // the started device's, for the render workers
+
+    void startRenderThreads();
+    void stopRenderThreads();
     std::atomic<bool> byPass { false };
     std::atomic<bool> inCallback { false };   // the render path is running
     DspLoadMeter dspLoadMeter;

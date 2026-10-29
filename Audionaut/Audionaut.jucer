@@ -389,6 +389,12 @@
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.h"/>
+          <FILE id="RLdMtH" name="RenderLoadMeter.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderLoadMeter.h"/>
+          <FILE id="RThPlC" name="RenderThreadPool.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/RenderThreadPool.cpp"/>
+          <FILE id="RThPlH" name="RenderThreadPool.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderThreadPool.h"/>
           <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
           <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
           <FILE id="jQYb2Z" name="PlaybackDefines.h" compile="0" resource="0"
@@ -541,6 +547,12 @@
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
           <FILE id="DlgMdt" name="ModelDownloadThread.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ModelDownloadThread.h"/>
+          <FILE id="DlgPrS" name="ProcessingSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ProcessingSettingsComponent.h"/>
+          <FILE id="DlgLSm" name="LoadSimulatorComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/LoadSimulatorComponent.h"/>
+          <FILE id="DlgPLd" name="ProcessingLoadComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ProcessingLoadComponent.h"/>
           <FILE id="DlgSsc" name="SeparationSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SeparationSettingsComponent.h"/>
           <FILE id="DlgSsd" name="StemSeparationDialog.h" compile="0" resource="0"

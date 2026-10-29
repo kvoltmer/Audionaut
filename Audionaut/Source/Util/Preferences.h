@@ -66,8 +66,11 @@ namespace PreferenceKeys
     static const char* const trackImportPlacement   = "TrackImportPlacement";
     static const char* const recentFiles            = "RecentProjectFiles";
     static const char* const audioDeviceSettings    = "AudioDeviceSettings";
+    static const char* const processingThreads      = "ProcessingThreads";   // "auto" or a thread count incl. the audio thread
     static const char* const mainWindowState        = "MainWindowState";
     static const char* const browserWindowState     = "BrowserWindowState";
+    static const char* const loadWindowState        = "LoadWindowState";
+    static const char* const loadSimulatorWindowState = "LoadSimulatorWindowState";
     static const char* const autoEditWindowState    = "AutoEditWindowState";
     static const char* const browserWindowOpen      = "BrowserWindowOpen";
     static const char* const fileTreeState          = "FileTreeState";

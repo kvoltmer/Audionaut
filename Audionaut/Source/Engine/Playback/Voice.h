@@ -53,6 +53,14 @@ public:
     void stop(bool fadeOutLastBlock);
 
     /**
+     * @brief Audio thread: completes a stop without a render, for a voice
+     *        whose bus channel the bus no longer has. A normal stop ends in
+     *        the next processAudioBlock (the last block fades out); with no
+     *        channel to fade into there is nothing to render.
+     */
+    void stopNow() noexcept;
+
+    /**
      * @brief Checks if the voice is currently processing audio.
      * @return True if the voice is processing, false otherwise.
      */

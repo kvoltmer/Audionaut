@@ -50,6 +50,8 @@ namespace CommandIDs
         toggleFullScreen        = 0x300077,
         pageLeft                = 0x300078,
         pageRight               = 0x300079,
+        showProcessingLoad      = 0x30007a,
+        showLoadSimulator       = 0x30007b,   // debug builds only
         
         createAudioTrack     = 0x300085,
 

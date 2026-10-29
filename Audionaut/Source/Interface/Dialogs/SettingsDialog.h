@@ -13,6 +13,7 @@
 #include "Interface/Dialogs/AutoEditSettingsComponent.h"
 #include "Interface/Dialogs/ProjectSettingsComponent.h"
 #include "Interface/Dialogs/PrivacySettingsComponent.h"
+#include "Interface/Dialogs/ProcessingSettingsComponent.h"
 #include "Interface/Dialogs/SeparationSettingsComponent.h"
 
 using namespace juce;
@@ -35,6 +36,7 @@ public:
                                                                          false); // hide advanced options
         audioDevSelComp->setSize(500, 300);
 
+        processingComp = std::make_unique<ProcessingSettingsComponent>(engine, AudiumApplication::getPreferences());
         projectComp = std::make_unique<ProjectSettingsComponent>(AudiumApplication::getPreferences());
         analysisComp = std::make_unique<AnalysisSettingsComponent>(engine, AudiumApplication::getPreferences());
         autoEditComp = std::make_unique<AutoEditSettingsComponent>(AudiumApplication::getPreferences());
@@ -48,6 +50,7 @@ public:
         tabbedComp = std::make_unique<TabbedComponent>(TabbedButtonBar::TabsAtTop);
         tabbedComp->setOutline(0);
         tabbedComp->addTab(TRANS ("Audio"), tabColour, audioDevSelComp.get(), false);
+        tabbedComp->addTab(TRANS ("Processing"), tabColour, processingComp.get(), false);
         tabbedComp->addTab(TRANS ("Project"), tabColour, projectComp.get(), false);
         tabbedComp->addTab(TRANS ("Analysis"), tabColour, analysisComp.get(), false);
         tabbedComp->addTab(TRANS ("Auto Edit"), tabColour, autoEditComp.get(), false);
@@ -71,6 +74,7 @@ private:
         asyncAlertWindow = std::make_unique<AlertWindow> (TRANS ("Settings"),
                                                           "",
                                                           MessageBoxIconType::NoIcon, mainComponent);
+        processingComp->refreshFromPreferences();
         projectComp->refreshFromPreferences();
         analysisComp->refreshFromPreferences();
         autoEditComp->refreshFromPreferences();
@@ -103,6 +107,7 @@ private:
     // ahead of it: members destruct in reverse order, and the tabbed component
     // must let go of the pages before they are destroyed.
     std::unique_ptr<juce::AudioDeviceSelectorComponent> audioDevSelComp;
+    std::unique_ptr<ProcessingSettingsComponent> processingComp;
     std::unique_ptr<ProjectSettingsComponent> projectComp;
     std::unique_ptr<AnalysisSettingsComponent> analysisComp;
     std::unique_ptr<AutoEditSettingsComponent> autoEditComp;

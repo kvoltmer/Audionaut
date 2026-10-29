@@ -316,6 +316,7 @@
     <ClCompile Include="..\..\Source\Engine\Link\LinkEngine.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusInterface.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusRenderer.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Playback\RenderThreadPool.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Playback.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Playback\Voice.cpp"/>
     <ClCompile Include="..\..\Source\Engine\PlayList\TransportLoop.cpp"/>
@@ -3556,6 +3557,8 @@
     <ClInclude Include="..\..\Source\Engine\Link\LinkEngine.hpp"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusInterface.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusRenderer.h"/>
+    <ClInclude Include="..\..\Source\Engine\Playback\RenderLoadMeter.h"/>
+    <ClInclude Include="..\..\Source\Engine\Playback\RenderThreadPool.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\PlaybackDefines.h"/>
     <ClInclude Include="..\..\Source\Engine\Playback\Voice.h"/>
@@ -3605,6 +3608,9 @@
     <ClInclude Include="..\..\Source\Interface\UIContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AnalysisSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ModelDownloadThread.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingSettingsComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\LoadSimulatorComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingLoadComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>

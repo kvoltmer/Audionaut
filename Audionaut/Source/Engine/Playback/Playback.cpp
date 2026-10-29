@@ -21,11 +21,25 @@ Playback::Playback()
 void Playback::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     DBG("Playback::prepareToPlay " << samplesPerBlockExpected << " " << sampleRate);
+    // the output buffer a voice renders into belongs to the caller (AudioBusRenderer)
+    juce::ignoreUnused (samplesPerBlockExpected, sampleRate);
+}
 
-    // the voice buffer is sized here, once; process() then only shrinks the
-    // view (avoidReallocating) and never allocates for blocks up to this size.
-    // One channel: a voice renders one channel (VoiceSource::getNextAudioBlock)
-    processingBuffer.setSize(1, samplesPerBlockExpected);
+int Playback::getActiveVoiceChannel (int voiceIndex) const noexcept
+{
+    if (voiceIndex < 0 || voiceIndex >= MAX_VOICES || ! voices[voiceIndex].processing.load())
+        return -1;
+
+    if (auto* source = voices[voiceIndex].getVoiceSource())
+        return source->getDestinationChannel();
+
+    return -1;
+}
+
+void Playback::stopVoiceNow (int voiceIndex) noexcept
+{
+    if (voiceIndex >= 0 && voiceIndex < MAX_VOICES)
+        voices[voiceIndex].stopNow();
 }
 
 bool Playback::startVoice(VoiceSource* voiceSource)
