@@ -12,6 +12,10 @@
  #include <immintrin.h>
 #endif
 
+#if JUCE_WINDOWS
+ #include <windows.h> // HANDLE, DWORD, WINAPI for the avrt call below
+#endif
+
 namespace audium
 {
 
