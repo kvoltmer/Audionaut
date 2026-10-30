@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include "TestUtils.h"
+
 #include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Factory/AudiumFactory.h"
@@ -285,10 +287,8 @@ SCENARIO ("the render pool follows the device and the session", "[engine][playba
                 // periods for a worker would mean the hand-over lost one.
                 // (A lost wake-up proper hangs the drain, so the render
                 // above completing is the stronger check.) The count is
-                // only meaningful where every thread slot has a core of
-                // its own; on a two-core CI runner a spinning worker is
-                // pre-empted for longer than that.
-                if (juce::SystemStats::getNumCpus() >= pool.getNumThreadSlots())
+                // only meaningful where the pool's timing is, see TestUtils.
+                if (everyThreadSlotHasACore (pool))
                     REQUIRE (pool.getStallCount() == 0);
             }
         }

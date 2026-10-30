@@ -72,9 +72,18 @@ public:
 
         joinProAudioClass();
 
+        // the floating-point state is per thread: the same flush-to-zero
+        // the callback runs with, so a job computes the same on any thread
+        juce::ScopedNoDenormals noDenormals;
+
+        // wait() returns once the counter differs from the value it was
+        // given, so a wake sent before the wait is reached is never lost
+        auto seen = wake.load (std::memory_order_acquire);
+
         for (;;)
         {
-            wake.wait (-1);
+            wake.wait (seen, std::memory_order_acquire);
+            seen = wake.load (std::memory_order_acquire);
 
             if (threadShouldExit())
                 return;
@@ -83,11 +92,17 @@ public:
         }
     }
 
-    juce::WaitableEvent wake;
+    /// Bumped and notified for every stage this worker takes part in, and to stop.
+    void signal() noexcept
+    {
+        wake.fetch_add (1, std::memory_order_release);
+        wake.notify_one();
+    }
 
 private:
     RenderThreadPool& pool;
     const int workerId;
+    std::atomic<std::uint32_t> wake { 0 };   // a counter, waited on with atomic::wait: no mutex on the signal path
 };
 
 //==============================================================================
@@ -132,14 +147,18 @@ void RenderThreadPool::start (int numWorkers, int blockSize, double sampleRate, 
 
         workers.push_back (std::move (worker));
     }
+
+    running.store (true, std::memory_order_release);
 }
 
 void RenderThreadPool::stop()
 {
+    running.store (false, std::memory_order_release);
+
     for (auto& worker : workers)
     {
         worker->signalThreadShouldExit();
-        worker->wake.signal();
+        worker->signal();
     }
 
     for (auto& worker : workers)
@@ -182,7 +201,7 @@ void RenderThreadPool::publishStage (int numJobs, JobFunction fn, void* context)
 void RenderThreadPool::wakeWorkers (int count) noexcept
 {
     for (auto i = 0; i < count; ++i)
-        workers[static_cast<size_t> (i)]->wake.signal();
+        workers[static_cast<size_t> (i)]->signal();
 }
 
 void RenderThreadPool::takeJobs (int workerId) noexcept

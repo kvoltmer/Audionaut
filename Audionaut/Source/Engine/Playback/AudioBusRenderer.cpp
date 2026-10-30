@@ -97,6 +97,10 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
 
     BlockContext ctx;
     ctx.input = context.getInputBlock();
+    ctx.audioBus = audioBusBlock;
+    ctx.trackOutput = AudioBlock<SampleType> (trackOutput).getSubBlock (0, static_cast<size_t> (numSamples));
+    ctx.panOutput = AudioBlock<SampleType> (panOutput).getSubBlock (0, static_cast<size_t> (numSamples));
+    ctx.voiceOutput = AudioBlock<float> (voiceOutput).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.numSamples = numSamples;
     ctx.stereoMain = outputChannels >= 2 && ! stemExport.load();
 
@@ -106,6 +110,7 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
     if (ctx.blockTicks > 0 && trackJobSharesEnabled.load (std::memory_order_relaxed))
     {
         ctx.shareTable = 1 - publishedShareTable.load (std::memory_order_relaxed);
+        jobShareTables[ctx.shareTable].sequence.fetch_add (1, std::memory_order_relaxed);   // odd: being filled
         for (auto& slot : jobShareTables[ctx.shareTable].share)
             for (auto j = 0; j < numJobs; ++j)
                 slot[j].store (0.0f, std::memory_order_relaxed);
@@ -133,6 +138,7 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
     if (ctx.shareTable >= 0)
     {
         jobShareTables[ctx.shareTable].numJobs.store (numJobs, std::memory_order_relaxed);
+        jobShareTables[ctx.shareTable].sequence.fetch_add (1, std::memory_order_release);   // even: complete
         publishedShareTable.store (ctx.shareTable, std::memory_order_release);
     }
     else
@@ -147,15 +153,27 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
 template <class SampleType>
 int AudioBusRenderer<SampleType>::readTrackJobShares (TrackJobShare* out, int capacity) const noexcept
 {
-    const auto& table = jobShareTables[publishedShareTable.load (std::memory_order_acquire)];
-    const auto count = std::min (table.numJobs.load (std::memory_order_relaxed), capacity);
-    for (auto j = 0; j < count; ++j)
+    for (auto attempt = 0; attempt < 4; ++attempt)
     {
-        out[j].trackId = table.trackId[j].load (std::memory_order_relaxed);
-        for (auto slot = 0; slot < RenderLoadMeter::maxThreadSlots; ++slot)
-            out[j].share[slot] = table.share[slot][j].load (std::memory_order_relaxed);
+        const auto& table = jobShareTables[publishedShareTable.load (std::memory_order_acquire)];
+        const auto sequence = table.sequence.load (std::memory_order_acquire);
+        if (sequence & 1u)
+            continue;   // the audio thread came back to it: the other one is published by now
+
+        const auto count = std::min (table.numJobs.load (std::memory_order_relaxed), capacity);
+        for (auto j = 0; j < count; ++j)
+        {
+            out[j].trackId = table.trackId[j].load (std::memory_order_relaxed);
+            for (auto slot = 0; slot < RenderLoadMeter::maxThreadSlots; ++slot)
+                out[j].share[slot] = table.share[slot][j].load (std::memory_order_relaxed);
+        }
+
+        std::atomic_thread_fence (std::memory_order_acquire);
+        if (table.sequence.load (std::memory_order_relaxed) == sequence)
+            return count;
     }
-    return count;
+
+    return 0;
 }
 
 template <class SampleType>
@@ -332,7 +350,6 @@ void AudioBusRenderer<SampleType>::bucketVoices (int audioBusChannels) noexcept
     // Each voice's channel is read once: the message thread may move a
     // voice to another channel (VoiceSource::applyChannelMapping) at any
     // time, and the fill pass must count the voice where the count pass did.
-    int voiceChannel[MAX_VOICES];
     int count[MAX_AUDIO_CHANNELS] = {};   // per job
 
     for (auto v = 0; v < MAX_VOICES; ++v)
@@ -382,18 +399,18 @@ template <class SampleType>
 void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx) noexcept
 {
     const auto startTicks = juce::Time::getHighResolutionTicks();
-    auto audioBusBlock = AudioBlock<SampleType> (audioBus).getSubBlock (0, static_cast<size_t> (ctx.numSamples));
+    auto audioBusBlock = ctx.audioBus;
     const auto channelEnd = job.firstChannel + job.numChannels;
 
     renderInput (job, workerId, ctx, audioBusBlock);
 
     // the track's voices, each into the worker's voice output row, added to its bus channel
-    auto* output = voiceOutput.getWritePointer (workerId);
+    auto* output = ctx.voiceOutput.getChannelPointer (static_cast<size_t> (workerId));
     for (auto i = 0; i < job.voiceCount; ++i)
     {
         const auto busChannel = playback->renderVoice (voiceOrder[job.voiceBegin + i], output, ctx.numSamples);
         if (busChannel >= job.firstChannel && busChannel < channelEnd)
-            addVoiceOutput (audioBus.getWritePointer (busChannel), output, ctx.numSamples);
+            addVoiceOutput (audioBusBlock.getChannelPointer (static_cast<size_t> (busChannel)), output, ctx.numSamples);
     }
 
     // gain and metering per channel
@@ -455,7 +472,7 @@ void AudioBusRenderer<SampleType>::renderInput (const TrackJob& job, int workerI
                 else {
                     // the recorder writes float: convert into the worker's
                     // voice output row, which the voices use only after this
-                    auto* recorderInput = voiceOutput.getWritePointer (workerId);
+                    auto* recorderInput = ctx.voiceOutput.getChannelPointer (static_cast<size_t> (workerId));
                     const auto* src = input.getChannelPointer (0);
                     for (auto s = 0; s < ctx.numSamples; ++s)
                         recorderInput[s] = static_cast<float> (src[s]);
@@ -472,14 +489,11 @@ void AudioBusRenderer<SampleType>::renderInput (const TrackJob& job, int workerI
 template <class SampleType>
 void AudioBusRenderer<SampleType>::panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, AudioBlock<SampleType>& audioBusBlock) noexcept
 {
-    const auto numSamples = static_cast<size_t> (ctx.numSamples);
     const auto channelEnd = job.firstChannel + job.numChannels;
 
-    auto partial = AudioBlock<SampleType> (trackOutput).getSubsetChannelBlock (static_cast<size_t> (2 * jobIndex), 2)
-                                                        .getSubBlock (0, numSamples);
+    auto partial = ctx.trackOutput.getSubsetChannelBlock (static_cast<size_t> (2 * jobIndex), 2);
     partial.clear();
-    auto panned = AudioBlock<SampleType> (panOutput).getSubsetChannelBlock (static_cast<size_t> (2 * workerId), 2)
-                                                     .getSubBlock (0, numSamples);
+    auto panned = ctx.panOutput.getSubsetChannelBlock (static_cast<size_t> (2 * workerId), 2);
 
     for (auto k = job.firstChannel; k < channelEnd; ++k) {
         if (audioChannelData[k].outputChannel >= 0)

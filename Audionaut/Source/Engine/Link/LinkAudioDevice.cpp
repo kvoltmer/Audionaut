@@ -107,6 +107,12 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
 void LinkAudioDevice::audioDeviceStopped()
 {
     stopRenderThreads();
+
+    // nothing to restart until the next start: a Processing setting changed
+    // while the device is stopped waits for it, and the workgroup is the
+    // stopped device's
+    bufferSize = 0;
+    workgroup.reset();
 }
 
 void LinkAudioDevice::startRenderThreads()

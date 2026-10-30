@@ -1482,7 +1482,7 @@ void AudiumApplication::showProcessingLoadWindow()
         new FloatingToolWindow ("Processing Load", audium::PreferenceKeys::loadWindowState,
                                 new ProcessingLoadComponent (audiumEngine),
                                 processingLoadView, true,
-                                420, 260, 260, 180, 1600, 1000);
+                                ProcessingLoadComponent::minimumWidth, 260, ProcessingLoadComponent::minimumWidth, 180, 1600, 1000);
 }
 
 #if JUCE_DEBUG

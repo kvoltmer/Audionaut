@@ -35,6 +35,9 @@ class ProcessingLoadComponent : public juce::Component,
                                 private juce::Timer
 {
 public:
+    /// The narrowest window that holds the two readout columns side by side.
+    static constexpr int minimumWidth = 2 * (116 + 76) + 16 + 2 * 12;   // nameWidth, valueWidth, columnGap, the margins
+
     explicit ProcessingLoadComponent (std::shared_ptr<audium::AudiumEngine> engine_) :
         engine (std::move (engine_))
     {
@@ -102,12 +105,17 @@ public:
         // the readouts sit under the bars in two narrow columns of three, the
         // callback's figures on the left, the pool's on the right, each a
         // label and a right-aligned value of fixed width; the left column
-        // starts at the first bar's left edge, the right one ends at the last
-        // bar's right edge
+        // starts at the first bar's left edge and the right one ends at the
+        // last bar's right edge where the bars are far enough apart, and
+        // otherwise the columns keep a gap between them inside the window
+        // (the window's minimum width holds both, see showProcessingLoadWindow)
+        const auto columnWidth = nameWidth + valueWidth;
         const auto firstBarLeft = bars.getX() + barInset;
         const auto lastBarRight = bars.getX() + (numBars - 1) * column + barInset + barWidth;
-        auto left = readouts.withX (firstBarLeft).withWidth (nameWidth + valueWidth);
-        auto right = readouts.withX (lastBarRight - nameWidth - valueWidth).withWidth (nameWidth + valueWidth);
+        const auto leftX = juce::jmax (readouts.getX(), juce::jmin (firstBarLeft, readouts.getRight() - 2 * columnWidth - columnGap));
+        const auto rightX = juce::jmin (readouts.getRight() - columnWidth, juce::jmax (lastBarRight - columnWidth, leftX + columnWidth + columnGap));
+        auto left = readouts.withX (leftX).withWidth (columnWidth);
+        auto right = readouts.withX (rightX).withWidth (columnWidth);
         for (auto* columnArea : { &left, &right })
         {
             auto* rows = columnArea == &left ? leftColumn : rightColumn;
@@ -124,6 +132,9 @@ private:
     static constexpr int rowHeight = 20;
     static constexpr int nameWidth = 116;
     static constexpr int valueWidth = 76;
+    static constexpr int columnGap = 16;
+    static_assert (minimumWidth == 2 * (nameWidth + valueWidth) + columnGap + 2 * 12);
+
 
     void timerCallback() override
     {
@@ -146,7 +157,7 @@ private:
         // is what the header meter and the overrun flash need; here they are
         // smoothed again over a few hundred milliseconds so that stretch
         // bursts read as a level, not a flicker. The peak is not smoothed.
-        const auto peakNow = dspLoad.takePeak();
+        const auto peakNow = dspLoad.takePeak (audium::DspLoadMeter::loadWindow);
         shownCallback = smooth (shownCallback, dspLoad.getLoad());
         shownSpin = smooth (shownSpin, pool.getSpinLoad());
         const auto audioThread = juce::jmax (0.0f, shownCallback - shownSpin);

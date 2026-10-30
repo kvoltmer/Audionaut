@@ -29,13 +29,15 @@ namespace audium
  *  - the calling thread takes jobs itself (as worker 0), the workers take
  *    the rest, so with no workers the pool is the serial path through the
  *    same code
- *  - workers sleep on an event between stages
+ *  - workers sleep between stages on an atomic counter (std::atomic::wait),
+ *    woken by a notify: a futex or ulock call, no mutex on the audio thread
  *
  * Nothing in run() allocates or blocks on a lock. Jobs are handed out by one
  * atomic ticket counter, completion is counted down by another, and the
  * calling thread spins for the last jobs. The workers start as real-time
  * threads inside the device's audio workgroup, so the scheduler treats them
- * as part of the audio deadline.
+ * as part of the audio deadline, and with the callback's flush-to-zero
+ * floating-point state, so a job computes the same on any thread.
  *
  * How a stage is handed out, and why it is safe:
  *  1. A ticket names its stage: it is (generation, job index), drawn with one
@@ -93,7 +95,8 @@ public:
     /// Joins the workers. Same conditions as start().
     void stop();
 
-    bool isRunning() const noexcept { return ! workers.empty(); }
+    /// Between start() and stop(), with or without workers (a pool of none is the serial path, still running).
+    bool isRunning() const noexcept { return running.load (std::memory_order_acquire); }
     int getNumWorkers() const noexcept { return static_cast<int> (workers.size()); }
 
     /**
@@ -171,6 +174,7 @@ private:
     std::uint32_t generation = 0;   // audio thread only
 
     std::vector<std::unique_ptr<Worker>> workers;
+    std::atomic<bool> running { false };
     juce::AudioWorkgroup workgroup;
     juce::int64 stallTicks = 0;
     std::atomic<std::uint32_t> stalls { 0 };

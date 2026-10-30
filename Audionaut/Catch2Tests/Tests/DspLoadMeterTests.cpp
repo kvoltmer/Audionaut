@@ -37,6 +37,13 @@ SCENARIO("dsp load meter scenario", "[engine][load-meter]")
                 REQUIRE(meter.takePeak() == 0.0f);
             }
 
+            THEN("each reader has a peak of its own: one taking it leaves the other's")
+            {
+                REQUIRE(meter.takePeak(DspLoadMeter::headerMeter) == Approx(0.5f));
+                REQUIRE(meter.takePeak(DspLoadMeter::loadWindow) == Approx(0.5f));
+                REQUIRE(meter.takePeak(DspLoadMeter::loadWindow) == 0.0f);
+            }
+
             THEN("nothing counts as an overrun")
             {
                 REQUIRE(meter.getOverrunCount() == 0);

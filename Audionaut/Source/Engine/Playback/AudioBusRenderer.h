@@ -143,8 +143,9 @@ public:
     /**
      * Message thread: copies the last block's job shares into `out`, at most
      * `capacity` of them, and returns how many jobs the block had. Zero
-     * while recording is off. Values of one block, not smoothed, and a job
-     * may move to another slot in the next.
+     * while recording is off, or when the table was refilled under the copy
+     * every time it looked (it tries a few times). Values of one block, not
+     * smoothed, and a job may move to another slot in the next.
      */
     int readTrackJobShares (TrackJobShare* out, int capacity) const noexcept;
 
@@ -175,10 +176,19 @@ private:
         int voiceCount = 0;
     };
 
-    /// What every job of a block shares, read-only.
+    /**
+     * What every job of a block shares. The buffer views are built once on
+     * the calling thread: a job writes only its own channels through them,
+     * and never touches the AudioBuffers themselves (a writable accessor
+     * clears the buffer's non-atomic "is clear" flag, a race between jobs).
+     */
     struct BlockContext
     {
         AudioBlock<const SampleType> input;
+        AudioBlock<SampleType> audioBus;       ///< the bus channels, the block's length
+        AudioBlock<SampleType> trackOutput;    ///< the stereo partials, one pair per job
+        AudioBlock<SampleType> panOutput;      ///< one stereo pair per worker slot
+        AudioBlock<float> voiceOutput;         ///< one mono row per worker slot
         int numSamples = 0;
         bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export)
         juce::int64 blockTicks = 0;   ///< the block period in high-resolution ticks
@@ -249,14 +259,19 @@ private:
     int jobOrder[MAX_AUDIO_CHANNELS] = {};       ///< job indices, heaviest first
     int channelToJob[MAX_AUDIO_CHANNELS] = {};
     int voiceOrder[MAX_VOICES] = {};             ///< voice indices grouped by job
+    int voiceChannel[MAX_VOICES] = {};           ///< each voice's bus channel as bucketVoices read it, -1 = none
     std::atomic<float> jobCost[MAX_AUDIO_CHANNELS];   ///< ticks per block, by the job's first channel
 
     // The per-slot job shares the Processing Load window reads, written by
     // whichever thread ran the job. Two tables: a block clears and fills the
     // one that is not published and publishes it when its jobs are done, so
-    // a reader never sees a block half filled.
+    // a reader never sees a block half filled. The sequence is odd while the
+    // table is being filled: a reader that was held up long enough for the
+    // audio thread to come back to the table it is copying sees it change
+    // and tries again.
     struct JobShareTable
     {
+        std::atomic<std::uint32_t> sequence { 0 };
         std::atomic<int> numJobs { 0 };
         std::atomic<int> trackId[MAX_AUDIO_CHANNELS] = {};
         std::atomic<float> share[RenderLoadMeter::maxThreadSlots][MAX_AUDIO_CHANNELS] = {};
