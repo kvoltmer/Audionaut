@@ -12,12 +12,14 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Channel/AudioChannelData.h"
 #include "Engine/Recording/Recording.h"
+#include "Engine/Effects/MixPlan.h"
 
 using namespace juce::dsp;
 
 namespace audium
 {
 class AudioThumbnail;
+class MixPlanContainer;
 
 /**
  * One track job's share of the last block, per render thread slot (0 = the
@@ -65,7 +67,8 @@ public:
      */
     AudioBusRenderer(std::shared_ptr<audium::Playback> playback_,
                      std::shared_ptr<Recording> recording_,
-                     std::shared_ptr<RenderThreadPool> renderThreadPool_);
+                     std::shared_ptr<RenderThreadPool> renderThreadPool_,
+                     std::shared_ptr<MixPlanContainer> mixPlans_ = nullptr);
 
     ~AudioBusRenderer() = default;
 
@@ -193,6 +196,7 @@ private:
         bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export)
         juce::int64 blockTicks = 0;   ///< the block period in high-resolution ticks
         int shareTable = -1;          ///< the job share table this block fills, -1 = not recording
+        const MixPlan* plan = nullptr;   ///< the inserts to run, nullptr = none (no plan, or one of another format)
     };
 
     /**
@@ -247,6 +251,7 @@ private:
     std::shared_ptr<Recording> recording;
 
     std::shared_ptr<RenderThreadPool> renderThreadPool;
+    std::shared_ptr<MixPlanContainer> mixPlans;   ///< where the planner publishes; pulled once per block
 
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> mainMixBuffer;

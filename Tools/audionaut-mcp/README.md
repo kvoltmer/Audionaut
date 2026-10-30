@@ -111,6 +111,10 @@ read or edit them.
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
 | `track_pan` | `track-pan` | Pan a track's channel strips, -1 left to 1 right (all strips or one) |
+| `list_effects` | `list-effects` | The effect types (Trim, EQ, Compressor) and their parameters |
+| `add_insert` | `add-insert` | Insert an effect into a channel strip's, a track's or the master's chain |
+| `remove_insert` | `remove-insert` | Remove an insert from a chain |
+| `set_insert` | `set-insert` | Set an insert's parameter, or enable / disable it |
 | `request_feature` | — | Send a feature request to the maintainer (see below) |
 | `report_bug` | — | Send a bug report to the maintainer (see below) |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |

@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
+#include "Engine/Effects/InsertChain.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
@@ -35,6 +36,8 @@ class AnalysisProvider;
  * interacting with audio tracks. It supports undo/redo operations, selection management,
  * serialization, and broadcasting changes to listeners.
  */
+class MixerPlanner;
+
 class AudioTrackContainer : public juce::ActionBroadcaster, public juce::ChangeBroadcaster, public Streamable
 {
 public:
@@ -77,6 +80,16 @@ public:
      * @brief Sets the master gain for the container.
      * @param newGain The new master gain value.
      */
+    /**
+     * The planner that builds the mix plan from this container; wired by the
+     * factory right after construction (the constructor has enough
+     * collaborators). The chains of the tracks, channels and the master
+     * create their effects through it and ask it for a plan when they change.
+     */
+    void setMixerPlanner(std::shared_ptr<MixerPlanner> planner);
+    MixerPlanner* getMixerPlanner() const noexcept { return mixerPlanner.get(); }
+    /** The inserts on the main mix, before master gain (JSON key "master_inserts"). */
+    InsertChain& getMasterInserts() noexcept { return masterInserts; }
     void setMasterGain(const float newGain);
 
     /**
@@ -297,6 +310,8 @@ private:
     std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).
 
     float masterGain = 1.f; ///< Master gain value.
+    std::shared_ptr<MixerPlanner> mixerPlanner; ///< Builds and publishes the mix plan; see setMixerPlanner().
+    InsertChain masterInserts; ///< The main mix's insert effects.
     std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
     bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 

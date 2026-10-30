@@ -19,13 +19,24 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Group/WaveFormColours.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 namespace audium {
 
 AudioTrackContainer::~AudioTrackContainer()
 {
+    if (mixerPlanner != nullptr)
+        mixerPlanner->setSource(nullptr);
     undoManager = nullptr;
     jassert(audioTracks.empty());
+}
+
+void AudioTrackContainer::setMixerPlanner(std::shared_ptr<MixerPlanner> planner)
+{
+    mixerPlanner = std::move(planner);
+    masterInserts.setPlanner(mixerPlanner.get());
+    if (mixerPlanner != nullptr)
+        mixerPlanner->setSource(this);
 }
 
 void AudioTrackContainer::setMasterGain(const float newGain)
@@ -193,7 +204,7 @@ bool AudioTrackContainer::writeToJson (json& output)
         output["audio_tracks"] += j;
     }
     output["master_gain"] = getMasterGain();
-    
+    masterInserts.writeToJson(output, "master_inserts");
     output["loop_data"] = transportLoop->getLoopData();
     
     return true;
@@ -226,7 +237,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     else {
         setMasterGain(1.f);
     }
-    
+    masterInserts.readFromJson(input, "master_inserts");
     
     int count = 0;
     for (auto& jsonElement : jsonTracks) {
@@ -311,6 +322,11 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
 void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
 {
     publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
+
+    // every path that adds or removes a channel or a track comes through
+    // here: the plan's channel and track lists follow
+    if (mixerPlanner != nullptr)
+        mixerPlanner->requestRebuild();
 }
 
 void AudioTrackContainer::commitChannelLayout(std::size_t firstTrack, int previousNumChannels)

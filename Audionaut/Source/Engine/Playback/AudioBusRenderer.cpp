@@ -7,6 +7,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Recording/AudioRecorder.h"
 #include "Engine/AudioSources/RenderTiming.h"
+#include "Engine/Effects/MixPlanContainer.h"
 
 namespace audium
 {
@@ -14,10 +15,12 @@ namespace audium
 template <class SampleType>
 AudioBusRenderer<SampleType>::AudioBusRenderer(std::shared_ptr<audium::Playback> playback_,
                                                std::shared_ptr<Recording> recording_,
-                                               std::shared_ptr<RenderThreadPool> renderThreadPool_) :
+                                               std::shared_ptr<RenderThreadPool> renderThreadPool_,
+                                               std::shared_ptr<MixPlanContainer> mixPlans_) :
     playback(playback_),
     recording(recording_),
-    renderThreadPool(std::move(renderThreadPool_))
+    renderThreadPool(std::move(renderThreadPool_)),
+    mixPlans(std::move(mixPlans_))
 {
     setMasterGain(1.f);
     for (auto& cost : jobCost)
@@ -97,6 +100,18 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
 
     BlockContext ctx;
     ctx.input = context.getInputBlock();
+
+    // the latest plan, if its slots were prepared for this format; effects
+    // are float only, so the double instantiation runs none
+    if constexpr (std::is_same_v<SampleType, float>)
+    {
+        if (mixPlans != nullptr)
+        {
+            const auto* plan = mixPlans->pull();
+            if (plan != nullptr && plan->hasInserts() && plan->sampleRate == sampleRate && numSamples <= plan->maxBlockSize)
+                ctx.plan = plan;
+        }
+    }
     ctx.audioBus = audioBusBlock;
     ctx.trackOutput = AudioBlock<SampleType> (trackOutput).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.panOutput = AudioBlock<SampleType> (panOutput).getSubBlock (0, static_cast<size_t> (numSamples));
@@ -414,6 +429,28 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
             addVoiceOutput (audioBusBlock.getChannelPointer (static_cast<size_t> (busChannel)), output, ctx.numSamples);
     }
 
+    // the inserts: each bus channel's own, then the track's over all of its channels
+    if constexpr (std::is_same_v<SampleType, float>)
+    {
+        if (const auto* plan = ctx.plan)
+        {
+            for (auto k = job.firstChannel; k < channelEnd && k < static_cast<int> (plan->channels.size()); ++k)
+            {
+                auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
+                for (auto* slot : plan->channels[static_cast<size_t> (k)].inserts)
+                    slot->process (channelBlock);
+            }
+
+            const auto trackIndex = plan->trackAtChannel[static_cast<size_t> (job.firstChannel)];
+            if (trackIndex >= 0 && plan->tracks[static_cast<size_t> (trackIndex)].numChannels == job.numChannels)
+            {
+                auto trackBlock = audioBusBlock.getSubsetChannelBlock (static_cast<size_t> (job.firstChannel), static_cast<size_t> (job.numChannels));
+                for (auto* slot : plan->tracks[static_cast<size_t> (trackIndex)].inserts)
+                    slot->process (trackBlock);
+            }
+        }
+    }
+
     // gain and metering per channel
     for (auto k = job.firstChannel; k < channelEnd; ++k) {
         auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
@@ -570,7 +607,12 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
     }
 
     if (ctx.stereoMain) {
-        // master gain + level metering apply to the main mix only
+        // the master inserts, then master gain + level metering, apply to the main mix only
+        if constexpr (std::is_same_v<SampleType, float>)
+            if (ctx.plan != nullptr)
+                for (auto* slot : ctx.plan->master)
+                    slot->process (mainMixBlock);
+
         ProcessContextReplacing<SampleType> gainContext(mainMixBlock);
         masterGain.process(gainContext);
 

@@ -15,6 +15,9 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Playback/RenderThreadPool.h"
+#include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/MixPlanContainer.h"
+#include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
@@ -81,7 +84,15 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
     // interface starts and stops it with the device
     auto renderThreadPool           = std::make_shared<RenderThreadPool>();
 
-    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording, renderThreadPool);
+    // the effects this engine can create, and the mix plan that tells the
+    // renderer which ones run where: built by the planner from the track
+    // container, which gets the planner right after its construction
+    auto effectRegistry             = std::make_shared<EffectRegistry>();
+    effectRegistry->addBuiltInEffects();
+    auto mixPlans                   = std::make_shared<MixPlanContainer>();
+    auto mixerPlanner               = std::make_shared<MixerPlanner>(effectRegistry, mixPlans);
+
+    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording, renderThreadPool, mixPlans);
 
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     
@@ -99,6 +110,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                             transportLoop,
                                                                             analysisProvider);
     
+    audioTrackContainer->setMixerPlanner(mixerPlanner);
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,

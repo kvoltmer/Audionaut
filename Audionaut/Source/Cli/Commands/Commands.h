@@ -89,6 +89,14 @@ int runRemoveChannel (const juce::ArgumentList& args, CliContext& context);
 
 /** `track-pan <project> --track N --pan P [--channel C]` - pan a track's channel strips. */
 int runTrackPan (const juce::ArgumentList& args, CliContext& context);
+/** `add-insert <project> (--track N [--channel C | --all-channels] | --master) --type T [--at I]` - insert an effect. */
+int runAddInsert (const juce::ArgumentList& args, CliContext& context);
+/** `remove-insert <project> (--track N [--channel C] | --master) --index I` - remove an insert. */
+int runRemoveInsert (const juce::ArgumentList& args, CliContext& context);
+/** `set-insert <project> (--track N [--channel C] | --master) --index I [--param ID --value V] [--enabled on|off]` */
+int runSetInsert (const juce::ArgumentList& args, CliContext& context);
+/** `list-effects` - the effect types with their parameters. */
+int runListEffects (const juce::ArgumentList& args, CliContext& context);
 
 /** `clip-speed <project> (--at P | --region N) (--ratio R | --semitones N | --length L)` - re-pitch a clip. */
 int runClipSpeed (const juce::ArgumentList& args, CliContext& context);

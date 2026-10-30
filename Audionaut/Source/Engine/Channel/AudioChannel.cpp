@@ -8,8 +8,20 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
 #include "Engine/Core/LockFreeCommander.h"
+#include "Engine/Group/AudioTrackContainer.h"
 
 namespace audium {
+
+// Out of line: the chain takes the container's planner, which the header only knows by name.
+AudioChannel::AudioChannel(AudioTrack &audioTrack_,
+                           std::shared_ptr<SelectionManager> selectionManager_,
+                           std::shared_ptr<AudioBusInterface> audioBusInterface_) :
+    Selectable(selectionManager_),
+    inserts(audioTrack_.getAudioTrackContainer().getMixerPlanner()),
+    audioTrack(audioTrack_),
+    audioBusInterface(audioBusInterface_)
+{
+}
 
 int AudioChannel::getChannelHeight() const noexcept {
     if (audioTrack.getViewState().getMinimized())

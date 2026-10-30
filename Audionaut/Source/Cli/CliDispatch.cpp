@@ -283,6 +283,40 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "at -1 and 1. Playback and export both follow it.",
           runTrackPan },
 
+        { "add-insert",
+          "add-insert <project.audium> (--track N [--channel C | --all-channels] | --master) --type T [--at I] [--json]",
+          "Adds an insert effect to a channel strip, a track or the master.",
+          "Inserts an effect of type T (an id from list-effects, e.g. builtin:eq3) at the end of a "
+          "chain, or at position I with --at. --track N --channel C is one channel strip's chain, "
+          "--track N alone the track's own chain (it processes all the track's channels together, "
+          "after the strips' chains), --master the main mix's chain before master gain; "
+          "--all-channels adds one to every strip of the track. Parameters start at their "
+          "defaults: set them with set-insert. Playback and export both run the inserts.",
+          runAddInsert },
+
+        { "remove-insert",
+          "remove-insert <project.audium> (--track N [--channel C] | --master) --index I [--json]",
+          "Removes an insert effect from a chain.",
+          "Removes the insert at index I (0-based, as info and add-insert list them) from the "
+          "chain named like add-insert names it. The inserts after it move up.",
+          runRemoveInsert },
+
+        { "set-insert",
+          "set-insert <project.audium> (--track N [--channel C] | --master) --index I\n"
+          "                            [--param ID --value V] [--enabled on|off] [--json]",
+          "Sets an insert's parameter, or enables / disables it.",
+          "Sets parameter ID (an id from list-effects, e.g. gain_db) of the insert at index I to V, "
+          "clamped to the parameter's range, and/or switches the insert on or off. A disabled insert "
+          "passes the signal through unchanged.",
+          runSetInsert },
+
+        { "list-effects",
+          "list-effects [--json]",
+          "Lists the effect types and their parameters.",
+          "The effect types add-insert can create, each with its parameters: id, name, unit, "
+          "range and default. Needs no project.",
+          runListEffects },
+
         { "separate",
           "separate <project.audium> [--track N] [--clip N] [--threads N] [--model PATH]\n"
           "                          [--no-mute-source] [--backend demucs|fake] [--json]",

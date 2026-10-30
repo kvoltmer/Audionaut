@@ -53,6 +53,12 @@
     <Filter Include="Audionaut\Source\Engine\Selection">
       <UniqueIdentifier>{D2016120-F9C6-E02F-2F1D-88DEB1BCFBCE}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Engine\Effects\BuiltIn">
+      <UniqueIdentifier>{217F8248-F4E8-B449-51DF-BD7D48706997}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\Effects">
+      <UniqueIdentifier>{3562C836-C892-3161-7F96-9F62EAF3F02A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Engine\Core">
       <UniqueIdentifier>{DC3409D1-42B7-B7AD-1F77-7C9D4DF8543C}</UniqueIdentifier>
     </Filter>
@@ -1135,6 +1141,9 @@
     <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\EffectCommands.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClCompile>
@@ -1278,6 +1287,18 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\InsertChain.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\MixPlanContainer.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\MixerPlanner.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp">
       <Filter>Audionaut\Source\Engine\Core</Filter>
@@ -5004,6 +5025,36 @@
     <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\TrimEffect.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Effect.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\EffectRegistry.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\EffectSlot.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\InsertChain.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\MixPlan.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\MixPlanContainer.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\MixerPlanner.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeCommander.h">
       <Filter>Audionaut\Source\Engine\Core</Filter>
     </ClInclude>
@@ -5200,6 +5251,9 @@
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableChannelAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableEffectParameterAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h">
