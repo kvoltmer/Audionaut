@@ -33,6 +33,14 @@ inputs:
       without a display to measure.
     required: false
     default: ""
+  timeout:
+    description: >
+      Seconds ctest gives the suite before it kills it and reports its
+      output so far. The suite takes 15 to 35 minutes on the runners; a
+      hang would otherwise sit until the job's six-hour limit, with nothing
+      to show for it.
+    required: false
+    default: "3600"
 
 runs:
   using: composite
@@ -80,11 +88,12 @@ runs:
       env:
         CONFIG: ${{ inputs.config }}
         WRAPPER: ${{ inputs.wrapper }}
+        TIMEOUT: ${{ inputs.timeout }}
       # --no-tests=error: ctest passes by default when it finds no tests,
       # which is how a missing enable_testing() once made this step a silent
       # no-op. Fail loudly instead.
       run: |
-        args=(--output-on-failure --no-tests=error)
+        args=(--output-on-failure --no-tests=error --timeout "$TIMEOUT")
         if [ -n "$CONFIG" ]; then args+=(-C "$CONFIG"); fi
         # WRAPPER unquoted on purpose: a command plus its options
         $WRAPPER ctest "${args[@]}"
