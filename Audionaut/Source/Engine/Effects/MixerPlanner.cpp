@@ -27,8 +27,8 @@ MixerPlanner::~MixerPlanner()
 
 void MixerPlanner::setSource (AudioTrackContainer* container) noexcept
 {
-    source = container;
-    if (source == nullptr)
+    audioTrackContainer = container;
+    if (audioTrackContainer == nullptr)
         cancelPendingUpdate();
 }
 
@@ -42,7 +42,7 @@ std::shared_ptr<EffectSlot> MixerPlanner::createSlot (const std::string& typeId)
 
 void MixerPlanner::requestRebuild()
 {
-    if (source == nullptr)
+    if (audioTrackContainer == nullptr)
         return;
 
     if (rebuildsInline())
@@ -86,7 +86,7 @@ void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
 void MixerPlanner::rebuildNow()
 {
     cancelPendingUpdate();
-    if (source == nullptr)
+    if (audioTrackContainer == nullptr)
         return;
 
     auto plan = std::make_unique<MixPlan>();
@@ -94,7 +94,7 @@ void MixerPlanner::rebuildNow()
     plan->maxBlockSize = maxBlockSize;
 
     auto busChannel = 0;
-    for (const auto& track : source->getAudioTracks())
+    for (const auto& track : audioTrackContainer->getAudioTracks())
     {
         const auto numChannels = track->getNumAudioTrackChannels();
 
@@ -119,7 +119,7 @@ void MixerPlanner::rebuildNow()
         }
     }
 
-    collect (source->getMasterInserts(), 2, plan->master, *plan);
+    collect (audioTrackContainer->getMasterInserts(), 2, plan->master, *plan);
 
     for (auto& slot : plan->keepAlive)
         slot->markPublished();

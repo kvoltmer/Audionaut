@@ -88,7 +88,7 @@ private:
 
     std::shared_ptr<EffectRegistry> registry;
     std::shared_ptr<MixPlanContainer> plans;
-    AudioTrackContainer* source = nullptr;
+    AudioTrackContainer* audioTrackContainer = nullptr;
 
     double sampleRate = 0.0;
     int maxBlockSize = 0;
