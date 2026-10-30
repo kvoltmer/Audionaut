@@ -104,6 +104,20 @@ public:
 
         for (;;)
         {
+            // The exit flag is checked between reading the counter and
+            // waiting on it, in the opposite order to stop(), which sets
+            // the flag and then bumps the counter: a stop that landed
+            // before this read has set the flag by now, and one landing
+            // after it bumps the counter past `seen`, so the wait returns
+            // at once. Without the check, a stop before a worker's first
+            // wait (the device stopped right after it started, as the
+            // tests do) was absorbed into `seen`, the worker slept on a
+            // counter that never changed again, and stop() hung in the
+            // join - which it did on Windows CI, where a thread is slow
+            // to start.
+            if (threadShouldExit())
+                return;
+
             wake.wait (seen, std::memory_order_acquire);
             seen = wake.load (std::memory_order_acquire);
 

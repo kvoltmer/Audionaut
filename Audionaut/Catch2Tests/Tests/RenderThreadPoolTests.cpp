@@ -146,3 +146,35 @@ SCENARIO ("the render pool measures each thread's share of the block", "[engine]
         }
     }
 }
+
+SCENARIO ("the render pool stops before its workers have woken up", "[engine][playback][parallel]")
+{
+    // stop() sets each worker's exit flag and bumps its wake counter. A
+    // worker that had not reached its first wait when that happened must
+    // not read the bumped counter as the value to wait for: it would then
+    // sleep on a counter nobody bumps again, and stop() would hang in the
+    // join. The device stopping right after it started is exactly this
+    // (ParallelRenderTests does it on purpose), and Windows CI hung there.
+    // How often the race is hit depends on how fast a thread starts, so
+    // this goes round a number of times.
+    GIVEN ("a pool started and stopped again at once, many times over")
+    {
+        RenderThreadPool pool;
+        const auto startMs = juce::Time::getMillisecondCounterHiRes();
+
+        for (auto round = 0; round < 50; ++round)
+        {
+            pool.start (3, kBlockSize, kSampleRate);
+            pool.stop();
+        }
+
+        THEN ("every stop joins its workers")
+        {
+            REQUIRE_FALSE (pool.isRunning());
+            REQUIRE (pool.getNumWorkers() == 0);
+            // the rounds end: 50 thread start-ups and joins take well under
+            // a second, a lost exit signal takes forever
+            REQUIRE (juce::Time::getMillisecondCounterHiRes() - startMs < 30000.0);
+        }
+    }
+}
