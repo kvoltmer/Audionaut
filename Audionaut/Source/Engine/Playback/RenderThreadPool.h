@@ -75,7 +75,11 @@ public:
     RenderThreadPool();
     ~RenderThreadPool();
 
-    /// Physical cores minus one for the message thread and disk reads, at most maxWorkers.
+    /**
+     * Workers for this machine: the physical cores less one for the audio
+     * thread, which takes jobs itself, and one for the message thread and
+     * disk reads; at most maxWorkers, 0 on a machine with two cores.
+     */
     static int defaultNumWorkers();
 
     /**

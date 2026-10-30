@@ -100,7 +100,7 @@ RenderThreadPool::~RenderThreadPool()
 
 int RenderThreadPool::defaultNumWorkers()
 {
-    return juce::jlimit (0, maxWorkers, juce::SystemStats::getNumPhysicalCpus() - 1);
+    return juce::jlimit (0, maxWorkers, juce::SystemStats::getNumPhysicalCpus() - 2);
 }
 
 void RenderThreadPool::start (int numWorkers, int blockSize, double sampleRate, juce::AudioWorkgroup workgroup_)

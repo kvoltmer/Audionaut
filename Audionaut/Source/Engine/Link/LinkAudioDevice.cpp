@@ -129,11 +129,13 @@ void LinkAudioDevice::restartRenderThreads()
     if (bufferSize <= 0)
         return;
 
-    // the callback must not be inside run() while the workers go away
+    // the callback must not be inside run() while the workers go away;
+    // a bypass someone else holds (an export in progress) stays in place
+    const auto wasBypassed = byPass.load();
     setBypass (true);
     stopRenderThreads();
     startRenderThreads();
-    setBypass (false);
+    setBypass (wasBypassed);
 }
 
 void LinkAudioDevice::startPlaying()

@@ -329,21 +329,25 @@ void AudioBusRenderer<SampleType>::buildJobTable (int audioBusChannels) noexcept
 template <class SampleType>
 void AudioBusRenderer<SampleType>::bucketVoices (int audioBusChannels) noexcept
 {
+    // Each voice's channel is read once: the message thread may move a
+    // voice to another channel (VoiceSource::applyChannelMapping) at any
+    // time, and the fill pass must count the voice where the count pass did.
+    int voiceChannel[MAX_VOICES];
     int count[MAX_AUDIO_CHANNELS] = {};   // per job
 
     for (auto v = 0; v < MAX_VOICES; ++v)
     {
-        const auto busChannel = playback->getActiveVoiceChannel (v);
-        if (busChannel < 0)
-            continue;
+        auto busChannel = playback->getActiveVoiceChannel (v);
 
         if (busChannel >= audioBusChannels)
         {
             playback->stopVoiceNow (v);   // see the declaration
-            continue;
+            busChannel = -1;
         }
 
-        ++count[channelToJob[busChannel]];
+        voiceChannel[v] = busChannel;
+        if (busChannel >= 0)
+            ++count[channelToJob[busChannel]];
     }
 
     auto begin = 0;
@@ -356,11 +360,10 @@ void AudioBusRenderer<SampleType>::bucketVoices (int audioBusChannels) noexcept
 
     for (auto v = 0; v < MAX_VOICES; ++v)
     {
-        const auto busChannel = playback->getActiveVoiceChannel (v);
-        if (busChannel < 0 || busChannel >= audioBusChannels)
+        if (voiceChannel[v] < 0)
             continue;
 
-        auto& job = jobs[channelToJob[busChannel]];
+        auto& job = jobs[channelToJob[voiceChannel[v]]];
         voiceOrder[job.voiceBegin + job.voiceCount++] = v;
     }
 }

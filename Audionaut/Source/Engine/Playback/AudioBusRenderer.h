@@ -193,12 +193,15 @@ private:
     void buildJobTable (int audioBusChannels) noexcept;
 
     /**
-     * Counting sort of the active voices by job, into voiceOrder. A voice
-     * whose channel the bus does not render this block is stopped without
-     * a render: either its track was just removed (the stop requested on
-     * the message thread completes here, there is no channel to fade into)
-     * or its track's channels are not published yet (the scheduler starts
-     * it again next block, from the right position).
+     * Groups the active voices by the track job that will render them, so
+     * each job knows which voices are its own. It runs once per block on
+     * the audio thread, before the jobs are dispatched: a counting sort of
+     * the voices by job, into voiceOrder. A voice whose channel the bus
+     * does not render this block is stopped without a render: either its
+     * track was just removed (the stop requested on the message thread
+     * completes here, there is no channel to fade into) or its track's
+     * channels are not published yet (the scheduler starts it again next
+     * block, from the right position).
      */
     void bucketVoices (int audioBusChannels) noexcept;
 

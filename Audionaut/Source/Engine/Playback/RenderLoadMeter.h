@@ -27,6 +27,8 @@ namespace audium
 class RenderLoadMeter
 {
 public:
+    RenderLoadMeter() = default;
+
     /// The calling thread and up to eight workers.
     static constexpr int maxThreadSlots = 9;
 
@@ -96,6 +98,8 @@ private:
     std::atomic<juce::int64> stageBusyTicks[maxThreadSlots] = {};
     std::atomic<float> threadLoad[maxThreadSlots] = {};
     std::atomic<float> spinLoad { 0.0f };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RenderLoadMeter)
 };
 
 } // namespace audium

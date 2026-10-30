@@ -42,6 +42,18 @@ namespace
             sum += pool.getThreadLoad (slot);
         return sum;
     }
+
+    /**
+     * The jobs burn wall time, so a thread pre-empted inside a job reads a
+     * longer busy time than the job's own. Lower bounds hold on any
+     * machine; the upper bounds, which say that the pool adds little on top
+     * of the jobs, hold only where every thread slot has a core to itself
+     * (CI runners have two to four).
+     */
+    bool everySlotHasACore (const RenderThreadPool& pool)
+    {
+        return juce::SystemStats::getNumCpus() >= pool.getNumThreadSlots();
+    }
 }
 
 SCENARIO ("the render pool measures each thread's share of the block", "[engine][playback][parallel][load-meter]")
@@ -76,21 +88,32 @@ SCENARIO ("the render pool measures each thread's share of the block", "[engine]
                 // the jobs' own time is the floor; scheduling may stretch it
                 const auto sum = sumThreadLoad (pool);
                 REQUIRE (sum >= expectedWork * 0.95f);
-                REQUIRE (sum <= expectedWork * 2.5f);
 
                 for (auto slot = 0; slot < 4; ++slot)
-                {
                     REQUIRE (pool.getThreadLoad (slot) >= 0.0f);
-                    REQUIRE (pool.getThreadLoad (slot) <= 1.0f);
-                }
                 REQUIRE (pool.getThreadLoad (RenderThreadPool::maxThreadSlots) == 0.0f);
+
+                if (everySlotHasACore (pool))
+                {
+                    REQUIRE (sum <= expectedWork * 2.5f);
+                    for (auto slot = 0; slot < 4; ++slot)
+                        REQUIRE (pool.getThreadLoad (slot) <= 1.0f);
+                }
             }
 
             THEN ("the calling thread's wait never counts as its own work")
             {
                 REQUIRE (pool.getSpinLoad() >= 0.0f);
-                REQUIRE (pool.getSpinLoad() <= 1.0f);
-                REQUIRE (pool.getThreadLoad (0) + pool.getSpinLoad() <= 1.0f);
+
+                // the wait is measured apart from the jobs: the sum of the
+                // thread loads is the work alone, whatever the wait was
+                REQUIRE (sumThreadLoad (pool) >= expectedWork * 0.95f);
+
+                if (everySlotHasACore (pool))
+                {
+                    REQUIRE (pool.getSpinLoad() <= 1.0f);
+                    REQUIRE (pool.getThreadLoad (0) + pool.getSpinLoad() <= 1.0f);
+                }
             }
 
             pool.stop();
@@ -109,9 +132,11 @@ SCENARIO ("the render pool measures each thread's share of the block", "[engine]
             {
                 REQUIRE (jobs.slotsUsed[0].load() == 240);
                 REQUIRE (pool.getThreadLoad (0) >= expectedWork * 0.95f);
-                REQUIRE (pool.getThreadLoad (0) <= expectedWork * 2.5f);
                 REQUIRE (pool.getThreadLoad (1) == 0.0f);
                 REQUIRE (pool.getSpinLoad() == 0.0f);
+
+                if (everySlotHasACore (pool))
+                    REQUIRE (pool.getThreadLoad (0) <= expectedWork * 2.5f);
             }
         }
 
