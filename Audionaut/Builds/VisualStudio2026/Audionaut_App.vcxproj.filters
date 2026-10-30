@@ -1324,6 +1324,9 @@
     <ClCompile Include="..\..\Source\Engine\Playback\AudioBusRenderer.cpp">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Playback\RenderThreadPool.cpp">
+      <Filter>Audionaut\Source\Engine\Playback</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Playback\Playback.cpp">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClCompile>
@@ -5082,6 +5085,12 @@
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusRenderer.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Playback\RenderLoadMeter.h">
+      <Filter>Audionaut\Source\Engine\Playback</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Playback\RenderThreadPool.h">
+      <Filter>Audionaut\Source\Engine\Playback</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Playback\Playback.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>
@@ -5227,6 +5236,15 @@
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ModelDownloadThread.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingSettingsComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\LoadSimulatorComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingLoadComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h">

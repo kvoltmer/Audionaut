@@ -80,7 +80,29 @@ void LoadMeter::paint (Graphics& g)
     else if (levels.isValid())
     {
         const int h = roundToInt (static_cast<float> (bar.getHeight()) * jlimit (0.0f, 1.0f, displayLoad));
-        if (h > 0)
+        if (h > 0 && ! segments.empty())
+        {
+            // the segments at their own height, bottom-up; whatever of the
+            // load they do not account for (time outside jobs) keeps the zones
+            auto y = bar.getBottom();
+            const auto top = bar.getBottom() - h;
+            for (const auto& segment : segments)
+            {
+                const auto segmentHeight = jmin (y - top, roundToInt (static_cast<float> (bar.getHeight()) * segment.share));
+                if (segmentHeight <= 0)
+                    continue;
+                g.setColour (segment.colour);
+                g.fillRect (bar.getX(), y - segmentHeight, bar.getWidth(), segmentHeight);
+                y -= segmentHeight;
+            }
+
+            if (y > top)
+            {
+                auto area = levels.getBounds().withHeight (y - top).withY (top - bar.getY());
+                g.drawImageAt (levels.getClippedImage (area), bar.getX(), top);
+            }
+        }
+        else if (h > 0)
         {
             auto area = levels.getBounds().withHeight (h).withY (bar.getHeight() - h);
             g.drawImageAt (levels.getClippedImage (area), bar.getX(), bar.getY() + area.getY());
@@ -106,7 +128,7 @@ void LoadMeter::setLoad (float load, float peak)
     peak = jmax (0.0f, peak);
 
     // rise instantly, fall slowly - same feel as LevelMeter's dB decrement
-    if (load > displayLoad)
+    if (load > displayLoad || fallsInstantly)
         displayLoad = load;
     else
         displayLoad = jmax (load, displayLoad - decrementPerFrame);
@@ -130,5 +152,11 @@ void LoadMeter::setLoad (float load, float peak)
     else if (spikeHold > 0)
         --spikeHold;
 
+    repaint();
+}
+
+void LoadMeter::setSegments (const Segment* newSegments, int count)
+{
+    segments.assign (newSegments, newSegments + jmax (0, count));
     repaint();
 }

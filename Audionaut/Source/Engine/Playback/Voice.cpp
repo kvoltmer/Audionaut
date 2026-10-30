@@ -43,6 +43,15 @@ void Voice::stop(bool fadeOutLastBlock)
             source->stop(fadeOutLastBlock);
 }
 
+void Voice::stopNow() noexcept
+{
+    if (auto* source = voiceSource.load())
+        source->stop(false);
+
+    processing.store(false);
+    voiceSource.store(nullptr);
+}
+
 
 } // namespace audium
 

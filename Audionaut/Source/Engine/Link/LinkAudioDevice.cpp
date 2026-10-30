@@ -97,10 +97,51 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     using namespace std::chrono;
     const double latency = static_cast<double>(deviceLatency) / linkEngine->mSampleRate;
     linkEngine->mOutputLatency.store(duration_cast<microseconds>(duration<double>{latency}));
+
+    // the render workers join the device's audio workgroup (CoreAudio; empty
+    // elsewhere), so the scheduler runs them as part of the audio deadline
+    workgroup = device->getWorkgroup();
+    startRenderThreads();
 }
 
 void LinkAudioDevice::audioDeviceStopped()
 {
+    stopRenderThreads();
+
+    // nothing to restart until the next start: a Processing setting changed
+    // while the device is stopped waits for it, and the workgroup is the
+    // stopped device's
+    bufferSize = 0;
+    workgroup.reset();
+}
+
+void LinkAudioDevice::startRenderThreads()
+{
+    if (playListScheduler == nullptr || bufferSize <= 0)
+        return;
+
+    auto bus = playListScheduler->getAudioBusInterface();
+    bus->getRenderThreadPool().start (bus->resolveNumRenderThreads(), bufferSize, sampleRate, workgroup);
+}
+
+void LinkAudioDevice::stopRenderThreads()
+{
+    if (playListScheduler != nullptr)
+        playListScheduler->getAudioBusInterface()->getRenderThreadPool().stop();
+}
+
+void LinkAudioDevice::restartRenderThreads()
+{
+    if (bufferSize <= 0)
+        return;
+
+    // the callback must not be inside run() while the workers go away;
+    // a bypass someone else holds (an export in progress) stays in place
+    const auto wasBypassed = byPass.load();
+    setBypass (true);
+    stopRenderThreads();
+    startRenderThreads();
+    setBypass (wasBypassed);
 }
 
 void LinkAudioDevice::startPlaying()

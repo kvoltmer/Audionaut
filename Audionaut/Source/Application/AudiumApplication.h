@@ -135,6 +135,10 @@ private:
     std::unique_ptr<juce::Component> aboutComponent;
     std::unique_ptr<AboutSplashScreen> splashScreen;
     std::unique_ptr<juce::Component> fileBrowserView;
+    std::unique_ptr<juce::Component> processingLoadView;   // the Processing Load tool window, while open
+   #if JUCE_DEBUG
+    std::unique_ptr<juce::Component> loadSimulatorView;    // debug builds: the Load Simulator tool window, while open
+   #endif
     std::shared_ptr<SettingsDialog> settingsDialog;
     
     juce::RecentlyOpenedFilesList recentFiles;
@@ -173,6 +177,10 @@ private:
 
     void showAboutWindow();
     void showFileBrowserWindow();
+    void showProcessingLoadWindow();
+   #if JUCE_DEBUG
+    void showLoadSimulatorWindow();
+   #endif
     void showSettingsDialog();
     
     void clearRecentFiles();

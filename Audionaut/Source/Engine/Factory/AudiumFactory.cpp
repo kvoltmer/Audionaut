@@ -14,6 +14,7 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Playback/RenderThreadPool.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
@@ -76,11 +77,15 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
     // takes go where the resource container puts imports
     auto recording                  = std::make_shared<audium::Recording>(audioResourceContainer);
 
-    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
+    // one pool per engine: the renderer runs its track jobs on it, the bus
+    // interface starts and stops it with the device
+    auto renderThreadPool           = std::make_shared<RenderThreadPool>();
+
+    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording, renderThreadPool);
 
     auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
     
-    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
+    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer, renderThreadPool);
     
     auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
                                                                       tempoProvider);

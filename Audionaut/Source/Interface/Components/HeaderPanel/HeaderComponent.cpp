@@ -311,7 +311,7 @@ void HeaderComponent::timerCallback()
 
     if (auto linkAudioDevice = audiumEngine->getLinkAudioDevice()) {
         auto& dspLoad = linkAudioDevice->getDspLoadMeter();
-        loadMeter->setLoad(dspLoad.getLoad(), dspLoad.takePeak());
+        loadMeter->setLoad(dspLoad.getLoad(), dspLoad.takePeak(audium::DspLoadMeter::headerMeter));
     }
 
     playButton->setToggleState(audiumEngine->getPlayListScheduler()->isPlaying(),

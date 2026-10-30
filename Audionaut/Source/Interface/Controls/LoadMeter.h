@@ -30,6 +30,22 @@ public:
 
     bool isSpiking() const { return spikeHold > 0; }
 
+    /** Makes the bar follow the load down as fast as up, for a caller that
+        smooths the value itself; by default it falls slowly, like LevelMeter. */
+    void setFallsInstantly (bool shouldFallInstantly) { fallsInstantly = shouldFallInstantly; }
+
+    /** A share of the bar in a colour of its own: what the thread carried. */
+    struct Segment
+    {
+        float share = 0.0f;
+        juce::Colour colour;
+    };
+
+    /** Colours the bar by its segments, stacked bottom-up at their own
+        height; the load above them keeps the zone colours. An empty list
+        restores the zones throughout. */
+    void setSegments (const Segment* segments, int count);
+
 private:
     void redrawLevels();
     juce::Rectangle<int> getBarBounds() const;
@@ -39,12 +55,14 @@ private:
     static constexpr int spikeHoldDuration = 60;        // UI frames (~1s at 60Hz)
     static constexpr float decrementPerFrame = 0.015f;
 
+    bool fallsInstantly = false;
     float displayLoad = 0.0f;
     float peakLoad = 0.0f;
     int peakHold = 0;
     int spikeHold = 0;
 
     juce::Image levels;   // pre-rendered colour zones for the full bar
+    std::vector<Segment> segments;   // empty = colour zones
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LoadMeter)
 };

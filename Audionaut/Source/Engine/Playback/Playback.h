@@ -75,35 +75,34 @@ public:
     bool isVoiceSourceActive(const VoiceSource* source) const noexcept;
 
     /**
-     * @brief Process audio playback.
+     * @brief Renders one voice's block into `output` (one channel, cleared first).
+     *
+     * Audio thread, or a render worker that owns the voice's track: a voice
+     * is rendered by one thread per block, and the caller adds the result
+     * to the voice's bus channel. Voices are independent of each other, so
+     * different voices may render concurrently.
+     *
+     * @return The bus channel the rendered audio belongs to, -1 if the voice is
+     *         idle or rendered nothing.
      */
-    template <typename ProcessContext>
-    void process (const ProcessContext& context) noexcept
+    int renderVoice (int voiceIndex, float* output, int numSamples) noexcept
     {
-        auto& outputBlock = context.getOutputBlock();
-        auto numSamples = static_cast<int>(outputBlock.getNumSamples());
-        auto numChannels = std::min(static_cast<int>(outputBlock.getNumChannels()),
-                                    MAX_AUDIO_CHANNELS);
-        
-        // allocation-free for blocks within what prepareToPlay sized
-        // (avoidReallocating keeps the larger allocation). No clear: each
-        // voice clears the block before it renders into it.
-        processingBuffer.setSize(1, numSamples, false, false, true);
+        if (voiceIndex < 0 || voiceIndex >= MAX_VOICES || ! voices[voiceIndex].processing.load())
+            return -1;
 
-        // a voice renders its one channel into channel 0: add that to the
-        // voice's bus channel, not the whole bus width (O(voices x channels))
-        for (auto i = 0; i < MAX_VOICES; ++i) {
-            if (voices[i].processing.load()) {
-                juce::AudioSourceChannelInfo info (&processingBuffer, 0, numSamples);
-                const auto channel = voices[i].processAudioBlock(info);
-                if (channel >= 0 && channel < numChannels)
-                    juce::FloatVectorOperations::add (outputBlock.getChannelPointer(static_cast<size_t>(channel)),
-                                                      processingBuffer.getReadPointer(0),
-                                                      numSamples);
-            }
-        }
+        // a buffer view over the caller's memory: no allocation
+        float* channels[1] = { output };
+        juce::AudioBuffer<float> view (channels, 1, numSamples);
+        juce::AudioSourceChannelInfo info (&view, 0, numSamples);
+        return voices[voiceIndex].processAudioBlock (info);
     }
-        
+
+    /// The bus channel an active voice renders into, -1 for an idle voice (audio thread).
+    int getActiveVoiceChannel (int voiceIndex) const noexcept;
+
+    /// Audio thread: Voice::stopNow for an active voice the bus cannot render.
+    void stopVoiceNow (int voiceIndex) noexcept;
+
     /**
      * @brief Gets the number of available voices.
      * @return The number of voices.
@@ -123,8 +122,6 @@ private:
      * @return Pointer to the associated `Voice`, or nullptr if not found.
      */
     Voice* findVoice(const VoiceSource* source);
-
-    juce::AudioBuffer<float> processingBuffer; ///< Buffer for audio bus processing.
 
     Voice voices[MAX_VOICES]; ///< Array of voices for playback.
 
