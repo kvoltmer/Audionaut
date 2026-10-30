@@ -334,8 +334,11 @@ target_link_libraries(${APP_NAME}
     PRIVATE
         Catch2::Catch2WithMain)
 
+# --durations: every section ends with a line naming it. ctest shows the
+# output only when the run fails, and when a test hangs and ctest kills the
+# run at its timeout, the last such line says where the suite stopped.
 add_test(NAME ${APP_NAME}
-         COMMAND ${APP_NAME})
+         COMMAND ${APP_NAME} --durations yes)
 
 # ---------------------------------------------------------------------------
 # audionaut-cli target
