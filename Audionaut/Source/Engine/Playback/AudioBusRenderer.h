@@ -228,10 +228,10 @@ private:
     void renderTrack (TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx) noexcept;
 
     /// The job's channels' input: monitored input added to the bus, armed channels metered and recorded.
-    void renderInput (const TrackJob& job, int workerId, const BlockContext& ctx, AudioBlock<SampleType>& audioBusBlock) noexcept;
+    void renderInput (const TrackJob& job, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept;
 
     /// The job's main-mix channels panned and summed into the track's stereo partial.
-    void panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, AudioBlock<SampleType>& audioBusBlock) noexcept;
+    void panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept;
 
     /**
      * Stage C: the partials summed in track order into the main mix, the

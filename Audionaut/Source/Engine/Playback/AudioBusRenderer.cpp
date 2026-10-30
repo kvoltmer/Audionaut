@@ -111,6 +111,7 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
     {
         ctx.shareTable = 1 - publishedShareTable.load (std::memory_order_relaxed);
         jobShareTables[ctx.shareTable].sequence.fetch_add (1, std::memory_order_relaxed);   // odd: being filled
+        std::atomic_thread_fence (std::memory_order_release);   // ... and visibly so before any store into it
         for (auto& slot : jobShareTables[ctx.shareTable].share)
             for (auto j = 0; j < numJobs; ++j)
                 slot[j].store (0.0f, std::memory_order_relaxed);
@@ -399,7 +400,7 @@ template <class SampleType>
 void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx) noexcept
 {
     const auto startTicks = juce::Time::getHighResolutionTicks();
-    auto audioBusBlock = ctx.audioBus;
+    const auto& audioBusBlock = ctx.audioBus;
     const auto channelEnd = job.firstChannel + job.numChannels;
 
     renderInput (job, workerId, ctx, audioBusBlock);
@@ -443,7 +444,7 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
 }
 
 template <class SampleType>
-void AudioBusRenderer<SampleType>::renderInput (const TrackJob& job, int workerId, const BlockContext& ctx, AudioBlock<SampleType>& audioBusBlock) noexcept
+void AudioBusRenderer<SampleType>::renderInput (const TrackJob& job, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept
 {
     const auto inputChannels = static_cast<int> (ctx.input.getNumChannels());
     const auto channelEnd = job.firstChannel + job.numChannels;
@@ -487,7 +488,7 @@ void AudioBusRenderer<SampleType>::renderInput (const TrackJob& job, int workerI
 }
 
 template <class SampleType>
-void AudioBusRenderer<SampleType>::panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, AudioBlock<SampleType>& audioBusBlock) noexcept
+void AudioBusRenderer<SampleType>::panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept
 {
     const auto channelEnd = job.firstChannel + job.numChannels;
 
@@ -533,8 +534,8 @@ template <class SampleType>
 void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputBlock, int outputChannels, const BlockContext& ctx) noexcept
 {
     const auto numSamples = static_cast<size_t> (ctx.numSamples);
-    const auto audioBusChannels = audioBus.getNumChannels();
-    auto audioBusBlock = AudioBlock<SampleType> (audioBus).getSubBlock (0, numSamples);
+    const auto audioBusChannels = static_cast<int> (ctx.audioBus.getNumChannels());
+    const auto& audioBusBlock = ctx.audioBus;
 
     if (stemExport.load()) {
         // offline bounce: identity copy, one output channel per bus channel
@@ -548,8 +549,7 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
     if (ctx.stereoMain) {
         mainMixBlock.clear();
         for (auto j = 0; j < numJobs; ++j)
-            mainMixBlock.add (AudioBlock<SampleType> (trackOutput).getSubsetChannelBlock (static_cast<size_t> (2 * j), 2)
-                                                               .getSubBlock (0, numSamples));
+            mainMixBlock.add (ctx.trackOutput.getSubsetChannelBlock (static_cast<size_t> (2 * j), 2));
     }
 
     for (auto i = 0; i < audioBusChannels; i++) {

@@ -65,7 +65,7 @@ public:
             return -1;
 
         const auto threads = juce::String (stored).getIntValue();
-        return juce::jlimit (0, audium::RenderThreadPool::maxWorkers, threads - 1);
+        return juce::jlimit (0, maxThreads() - 1, threads - 1);
     }
 
     void refreshFromPreferences()
@@ -94,7 +94,8 @@ public:
 private:
     static constexpr int defaultItemId = 1;
     static int threadsItemId (int threads) { return threads + 1; }
-    static int maxThreads() { return audium::RenderThreadPool::maxWorkers + 1; }
+    /// The most threads offered: one per physical core, at most the pool's limit (a persisted higher value is clamped on read).
+    static int maxThreads() { return juce::jlimit (1, audium::RenderThreadPool::maxWorkers + 1, juce::SystemStats::getNumPhysicalCpus()); }
 
     void applyAndStore()
     {

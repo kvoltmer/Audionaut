@@ -71,7 +71,8 @@ private:
 
     struct Row
     {
-        int trackId = -1;
+        const audium::AudioTrack* track = nullptr;   ///< the row's track, stable across index changes
+        int trackId = -1;                            ///< its index, which the engine's load table uses
         juce::Label name;
         juce::Slider share;
         juce::ToggleButton bursty;
@@ -96,10 +97,16 @@ private:
 
     void rebuildRows()
     {
-        // keep what a track had set, by id, across a rebuild
-        std::map<int, std::pair<double, bool>> kept;
+        // keep what a track had set across a rebuild, by the track: its
+        // index may have changed. The engine's table is by index, so every
+        // old entry is cleared and the rows set theirs again below.
+        std::map<const audium::AudioTrack*, std::pair<double, bool>> kept;
         for (auto& row : rowList)
-            kept[row->trackId] = { row->share.getValue(), row->bursty.getToggleState() };
+        {
+            kept[row->track] = { row->share.getValue(), row->bursty.getToggleState() };
+            if (auto bus = engine->getAudioBusInterface())
+                bus->setSimulatedTrackLoad (row->trackId, 0.0f, false);
+        }
 
         rowList.clear();
         rowsSignature = signature();
@@ -115,6 +122,7 @@ private:
                 continue;
 
             auto row = std::make_unique<Row>();
+            row->track = track.get();
             row->trackId = i;
 
             row->name.setText (track->getAudioTrackName(), juce::dontSendNotification);
@@ -136,7 +144,7 @@ private:
             row->share.onValueChange = [this, rowPtr] { apply (*rowPtr); };
             row->bursty.onClick = [this, rowPtr] { apply (*rowPtr); };
 
-            if (auto it = kept.find (i); it != kept.end())
+            if (auto it = kept.find (track.get()); it != kept.end())
             {
                 row->share.setValue (it->second.first, juce::dontSendNotification);
                 row->bursty.setToggleState (it->second.second, juce::dontSendNotification);
@@ -145,12 +153,6 @@ private:
 
             rowList.push_back (std::move (row));
         }
-
-        // a track that disappeared takes its load with it
-        for (const auto& [id, state] : kept)
-            if (id >= tracks->getNumItems())
-                if (auto bus = engine->getAudioBusInterface())
-                    bus->setSimulatedTrackLoad (id, 0.0f, false);
 
         layoutRows();
     }

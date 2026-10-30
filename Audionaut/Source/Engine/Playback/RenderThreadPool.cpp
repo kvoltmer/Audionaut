@@ -35,20 +35,42 @@ namespace
        #endif
     }
 
-    /// Puts the calling thread into the MMCSS class the WASAPI device thread runs in; no-op elsewhere.
-    inline void joinProAudioClass()
+    /**
+     * The calling thread's membership of the MMCSS class the WASAPI device
+     * thread runs in (juce::Thread's realtime start only raises the Win32
+     * priority), for as long as the object lives: the library stays loaded
+     * while the thread is registered, and the registration is reverted when
+     * the thread leaves. Nothing on the other platforms.
+     */
+    struct ProAudioClassMembership
     {
-       #if JUCE_WINDOWS
-        // juce::Thread's realtime start only raises the Win32 priority
-        juce::DynamicLibrary avrt ("avrt.dll");
-        using SetCharacteristics = HANDLE (WINAPI*) (LPCWSTR, LPDWORD);
-        if (auto setCharacteristics = (SetCharacteristics) avrt.getFunction ("AvSetMmThreadCharacteristicsW"))
+        ProAudioClassMembership()
         {
-            DWORD taskIndex = 0;
-            setCharacteristics (L"Pro Audio", &taskIndex);
+           #if JUCE_WINDOWS
+            using SetCharacteristics = HANDLE (WINAPI*) (LPCWSTR, LPDWORD);
+            if (auto setCharacteristics = (SetCharacteristics) avrt.getFunction ("AvSetMmThreadCharacteristicsW"))
+            {
+                DWORD taskIndex = 0;
+                task = setCharacteristics (L"Pro Audio", &taskIndex);
+            }
+           #endif
         }
+
+        ~ProAudioClassMembership()
+        {
+           #if JUCE_WINDOWS
+            using RevertCharacteristics = BOOL (WINAPI*) (HANDLE);
+            if (task != nullptr)
+                if (auto revertCharacteristics = (RevertCharacteristics) avrt.getFunction ("AvRevertMmThreadCharacteristics"))
+                    revertCharacteristics (task);
+           #endif
+        }
+
+       #if JUCE_WINDOWS
+        juce::DynamicLibrary avrt { "avrt.dll" };
+        HANDLE task = nullptr;
        #endif
-    }
+    };
 }
 
 //==============================================================================
@@ -70,7 +92,7 @@ public:
         if (pool.workgroup)
             pool.workgroup.join (token);
 
-        joinProAudioClass();
+        const ProAudioClassMembership proAudioClass;
 
         // the floating-point state is per thread: the same flush-to-zero
         // the callback runs with, so a job computes the same on any thread
@@ -251,9 +273,18 @@ juce::int64 RenderThreadPool::waitForStageToDrain() noexcept
 
     while (! drained())
     {
+        if (stalled)
+        {
+            // a worker is held up (a lock, a starved core): spinning on at
+            // real-time priority could keep it from the core it needs, so
+            // from here on this thread gives its core away each turn
+            std::this_thread::yield();
+            continue;
+        }
+
         cpuRelax();
 
-        if (! stalled && juce::Time::getHighResolutionTicks() - waitStart > stallTicks)
+        if (juce::Time::getHighResolutionTicks() - waitStart > stallTicks)
         {
             stalled = true;
             stalls.fetch_add (1, std::memory_order_relaxed);
