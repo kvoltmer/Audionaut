@@ -6,7 +6,9 @@ name: Windows Release
 # The tag must match the version in Audionaut.jucer (checked below).
 #
 # Can also be run manually from the Actions tab to exercise the build and the
-# packaging - a manual run skips the tag check and publishes nothing.
+# packaging - a manual run skips the tag check and publishes nothing. The
+# optional `ref` input builds another commit or tag with this workflow file,
+# e.g. to rebuild a shipped release for its PDB (see "Keep the PDB" below).
 #
 # Runs alongside the Linux release workflow on the same tag; both attach
 # their artifacts to one Release (whichever finishes first creates it).
@@ -15,6 +17,11 @@ on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit or tag to build (default: the branch this run is started from)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -32,6 +39,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
 
     - name: Checkout submodules
       uses: ./.github/actions/checkout-submodules
@@ -108,6 +117,28 @@ jobs:
         VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' ../../Audionaut.jucer | head -1 | cut -d'"' -f2)
         mv "Audionaut Setup.exe" "Audionaut-$VERSION-Setup.exe"
         ls -l Audionaut-*-Setup.exe
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+    - name: Keep the PDB
+      # The crash reporter (Source/Application/CrashReporter.cpp) writes
+      # module+offset backtraces, and only the PDB of the exact build turns
+      # those into source lines. Zip it next to the exe it belongs to; the
+      # exe is what a rebuilt PDB is checked against (same code bytes) when
+      # the shipped build's PDB is no longer around.
+      shell: bash
+      run: |
+        mkdir -p symbols
+        cp Audionaut/Builds/VisualStudio2026/x64/Release/App/Audionaut.pdb symbols/
+        cp Audionaut/Builds/VisualStudio2026/x64/Release/App/Audionaut.exe symbols/
+        7z a -tzip "Audionaut-$VERSION-windows-x64-symbols.zip" ./symbols/*
+        ls -l Audionaut-*-symbols.zip
+
+    - name: Upload the PDB as a workflow artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Audionaut-${{ env.VERSION }}-windows-x64-symbols
+        path: Audionaut-*-windows-x64-symbols.zip
+        if-no-files-found: error
 
     - name: Upload to GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
@@ -117,7 +148,8 @@ jobs:
       run: |
         # The Linux release workflow runs on the same tag; the `|| upload`
         # covers losing the race to its `gh release create`.
-        ARTIFACTS=(Audionaut/Installers/NSIS/Audionaut-*-Setup.exe)
+        ARTIFACTS=(Audionaut/Installers/NSIS/Audionaut-*-Setup.exe
+                   Audionaut-*-windows-x64-symbols.zip)
         if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
           gh release upload "$GITHUB_REF_NAME" "${ARTIFACTS[@]}" --clobber
         else
