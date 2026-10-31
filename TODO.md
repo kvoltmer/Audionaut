@@ -408,6 +408,27 @@ the one-gesture crossfade UX on top:
   Engine side ~1 day, surfaces and tests 1-2 more; own branch after
   feature/parallel-rendering, independent of the effect phases.
 
+## Mixer — follow-ups (found 2026-10-31 in PR #249)
+
+- [ ] **Render a mono main mix like the stereo one and fold to mono at the
+  very end.** Today a one-channel output (mono device, mono bounce) takes
+  its own path through `AudioBusRenderer`: the bus channels sum unpanned
+  into the main mix in `renderMaster`, the sends tap them unpanned on both
+  sides (`tapSends`), the aux return ignores its balance and contributes
+  its first side, and the mono mix runs through the master chain as two
+  identical channels. That is a second set of rules to keep in step with
+  the stereo path (pan law, send taps, aux balance, soon PDC and the
+  per-track block). Instead render every main mix as the stereo one -
+  `panIntoPartial`, the post-fader taps from the panned block, stage B
+  with balance, dry gain, aux returns, master inserts and gain - and fold
+  the finished stereo mix to one channel as the last step before the
+  output block (and decide the fold: (L + R) / 2 keeps a centred source at
+  its level, L + R keeps a hard-panned one). `monoMain` then disappears
+  from `BlockContext`, `tapSends` loses its pan branch, `auxGainOf` goes,
+  and the mono scenarios in `InsertRenderTests` and `SendRenderTests`
+  state the fold instead of the unpanned sum. A stem export stays as it
+  is: its outputs are the dry bus channels.
+
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
 - [ ] **Each undo step keeps two container snapshots.** An

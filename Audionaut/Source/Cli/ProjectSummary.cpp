@@ -38,6 +38,33 @@ nlohmann::json describeInserts (const InsertChain& chain)
     return inserts;
 }
 
+nlohmann::json describeSend (int auxId, const SendState& state)
+{
+    return { { "aux", auxId },
+             { "level", state.level.load (std::memory_order_relaxed) },
+             { "preFader", state.preFader.load (std::memory_order_relaxed) },
+             { "mute", state.mute.load (std::memory_order_relaxed) } };
+}
+
+nlohmann::json describeAux (const AuxBus& bus)
+{
+    return { { "id", bus.getId() },
+             { "name", bus.getName() },
+             { "gain", bus.getGain() },
+             { "balance", bus.getBalance() },
+             { "mute", bus.getMute() },
+             { "solo", bus.getSolo() },
+             { "inserts", describeInserts (bus.getInserts()) } };
+}
+
+nlohmann::json describeAuxBuses (const AuxBusContainer& buses)
+{
+    auto array = nlohmann::json::array();
+    for (const auto& bus : buses.getBuses())
+        array.push_back (describeAux (*bus));
+    return array;
+}
+
 nlohmann::json makeProjectSummary (AudiumEngine& engine)
 {
     auto trackContainer = engine.getAudioTrackContainer();
@@ -57,11 +84,17 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
         trackJson["numChannels"] = numChannels;
 
         // the channel strips' mixer state an agent can set (track-pan,
-        // add-insert): pan and the strip's insert chain
+        // add-insert, set-send): pan, the strip's insert chain, its sends
         auto channels = nlohmann::json::array();
         for (int channel = 0; channel < numChannels; ++channel)
+        {
+            auto sends = nlohmann::json::array();
+            for (const auto& send : track->getChannel (channel)->sends.getEntries())
+                sends.push_back (describeSend (send.auxId, *send.state));
             channels.push_back ({ { "pan", track->getPan (channel) },
-                                  { "inserts", describeInserts (track->getChannel (channel)->inserts) } });
+                                  { "inserts", describeInserts (track->getChannel (channel)->inserts) },
+                                  { "sends", sends } });
+        }
         trackJson["channels"] = channels;
         trackJson["inserts"] = describeInserts (track->getTrackInserts());
 
@@ -90,6 +123,7 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
 
     summary["tracks"] = tracks;
     summary["masterInserts"] = describeInserts (trackContainer->getMasterInserts());
+    summary["auxBuses"] = describeAuxBuses (trackContainer->getAuxBuses());
     return summary;
 }
 

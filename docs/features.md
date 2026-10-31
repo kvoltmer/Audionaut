@@ -63,9 +63,14 @@ monitoring. Each take becomes a region and a single undo step.
 - Mute, solo, gain, pan and level meters per channel, plus master volume and
   meter.
 - **Insert effects** on every channel strip, on a whole track (all its
-  channels at once) and on the master: Trim, a three-band EQ with high-pass,
-  and a compressor, with click-free bypass. Playback and export run them
-  alike; agents add and set them through the MCP tools.
+  channels at once), on the aux buses and on the master: Trim, a three-band
+  EQ with high-pass, a compressor and a feedback delay, with click-free
+  bypass. Playback and export run them alike; agents add and set them
+  through the MCP tools.
+- **Aux buses and sends**: every project has two stereo aux buses (more can
+  be added), each with its own insert chain and a return into the main mix
+  with gain, balance, mute and solo. Every channel strip can send into each
+  bus, post- or pre-fader, following the strip's pan.
 - **Ableton Link:** syncs tempo and transport with other Link software on
   the network.
 - A **DSP load meter** in the header.
@@ -88,11 +93,12 @@ monitoring. Each take becomes a region and a single undo step.
 ([The command line and AI agents](manual/11-cli-and-agents.md))
 
 - **MCP server** (`audionaut-mcp` on npm, also in the official MCP
-  registry) with 27 tools: create a project, import, analyse, auto edit,
+  registry) with 32 tools: create a project, import, analyse, auto edit,
   assemble, split, create, retrim and clean up regions, place, move and
   remove clips, clip gain, fades, speed and stretch, stem separation,
-  remove tracks and channels, track pan, insert effects, export, project info, and
-  `request_feature` / `report_bug`, which file GitHub issues.
+  remove tracks and channels, track pan, insert effects, aux buses and
+  sends, export, project info, and `request_feature` / `report_bug`, which
+  file GitHub issues.
   Setup for Claude Code, with the app and Node.js 18+ installed:
   `claude mcp add audionaut -- npx -y audionaut-mcp`
 - **Edits land in the open document.** If the project is open in the app,

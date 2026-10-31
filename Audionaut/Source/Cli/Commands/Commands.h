@@ -101,6 +101,17 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context);
 /** `list-effects` - the effect types with their parameters. */
 int runListEffects (const juce::ArgumentList& args, CliContext& context);
 
+/** `add-aux <project> [--name N]` - a new aux bus. */
+int runAddAux (const juce::ArgumentList& args, CliContext& context);
+/** `remove-aux <project> --aux ID` - remove an aux bus and the sends into it. */
+int runRemoveAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-aux <project> --aux ID [--name N] [--gain G] [--balance B] [--mute on|off] [--solo on|off]` */
+int runSetAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-send <project> --track N [--channel C] --aux ID [--level L] [--pre-fader on|off] [--mute on|off]` */
+int runSetSend (const juce::ArgumentList& args, CliContext& context);
+/** `remove-send <project> --track N [--channel C] --aux ID` - remove a channel's send. */
+int runRemoveSend (const juce::ArgumentList& args, CliContext& context);
+
 /** `clip-speed <project> (--at P | --region N) (--ratio R | --semitones N | --length L)` - re-pitch a clip. */
 int runClipSpeed (const juce::ArgumentList& args, CliContext& context);
 

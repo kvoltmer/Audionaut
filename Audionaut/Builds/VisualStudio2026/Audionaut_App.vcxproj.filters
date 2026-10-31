@@ -1144,6 +1144,9 @@
     <ClCompile Include="..\..\Source\Cli\Commands\EffectCommands.cpp">
       <Filter>Audionaut\Source\Cli\Commands</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Cli\Commands\AuxCommands.cpp">
+      <Filter>Audionaut\Source\Cli\Commands</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp">
       <Filter>Audionaut\Source\Cli</Filter>
     </ClCompile>
@@ -1288,10 +1291,19 @@
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\AuxBus.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\AuxBusContainer.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\InsertChain.cpp">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\SendList.cpp">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\MixPlanContainer.cpp">
@@ -5028,11 +5040,20 @@
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\DelayEffect.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\TrimEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\AuxBus.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\AuxBusContainer.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\Effect.h">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
@@ -5047,6 +5068,9 @@
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlan.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\SendList.h">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlanContainer.h">
@@ -5254,6 +5278,9 @@
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEffectParameterAction.h">
+      <Filter>Audionaut\Source\Engine\Undo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableSendAction.h">
       <Filter>Audionaut\Source\Engine\Undo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h">

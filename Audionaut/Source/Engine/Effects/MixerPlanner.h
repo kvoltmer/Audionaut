@@ -117,6 +117,8 @@ private:
     /// The chain's slots for a plan, each prepared for numChannels; a slot in a live plan whose format changed waits outside.
     void collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders);
 
+    static constexpr double gainRampSeconds = 0.01;   ///< send levels and aux returns ramp like the channel gains
+
     std::shared_ptr<EffectRegistry> registry;
     std::shared_ptr<MixPlanContainer> plans;
     AudioTrackContainer* audioTrackContainer = nullptr;

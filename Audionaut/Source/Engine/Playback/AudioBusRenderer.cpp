@@ -23,6 +23,7 @@ AudioBusRenderer<SampleType>::AudioBusRenderer(std::shared_ptr<audium::Playback>
     mixPlans(std::move(mixPlans_))
 {
     setMasterGain(1.f);
+    dryGain.setGainLinear (static_cast<SampleType> (1));   // at unity from the first block, not ramped up to it
     for (auto& cost : jobCost)
         cost.store (0.0f, std::memory_order_relaxed);
 }
@@ -55,6 +56,7 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     trackOutput.setSize(2 * MAX_AUDIO_CHANNELS, samplesPerBlockExpected);
     panOutput.setSize(2 * maxWorkerSlots, samplesPerBlockExpected);
     voiceOutput.setSize(maxWorkerSlots, samplesPerBlockExpected);
+    sendScratch.setSize(2 * maxWorkerSlots, samplesPerBlockExpected);
 
     juce::dsp::ProcessSpec spec;
     spec.maximumBlockSize    = samplesPerBlockExpected;
@@ -71,6 +73,8 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     }
     
     spec.numChannels = 2;
+    dryGain.setRampDurationSeconds(0.01);
+    dryGain.prepare(spec);
     masterGain.setRampDurationSeconds(0.01);
     masterGain.prepare(spec);
 }
@@ -109,16 +113,32 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
         {
             // adopted by a command the commander ran just before this
             const auto* plan = mixPlans->getAdopted();
-            if (plan != nullptr && plan->hasInserts() && plan->sampleRate == sampleRate && numSamples <= plan->maxBlockSize)
+            if (plan != nullptr && plan->hasWork() && plan->sampleRate == sampleRate && numSamples <= plan->maxBlockSize)
                 ctx.plan = plan;
+        }
+
+        if (ctx.plan != nullptr)
+        {
+            // the plan's buffers, viewed once here: a job writes its own
+            // pairs through the views and never touches the buffers
+            if (ctx.plan->numSendPairs > 0)
+            {
+                ctx.sendOutput = AudioBlock<float> (ctx.plan->sendOutput).getSubBlock (0, static_cast<size_t> (numSamples));
+                ctx.sendOutput.clear();   // a send whose channel the bus does not render this block stays silent
+            }
+            if (! ctx.plan->auxes.empty())
+                ctx.auxOutput = AudioBlock<float> (ctx.plan->auxOutput).getSubBlock (0, static_cast<size_t> (numSamples));
+            ctx.anyAuxSolo = ctx.plan->anyAuxSolo();
         }
     }
     ctx.audioBus = audioBusBlock;
+    ctx.sendScratch = AudioBlock<float> (sendScratch).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.trackOutput = AudioBlock<SampleType> (trackOutput).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.panOutput = AudioBlock<SampleType> (panOutput).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.voiceOutput = AudioBlock<float> (voiceOutput).getSubBlock (0, static_cast<size_t> (numSamples));
     ctx.numSamples = numSamples;
     ctx.stereoMain = outputChannels >= 2 && ! stemExport.load();
+    ctx.monoMain = outputChannels == 1 && ! stemExport.load();
 
     if (sampleRate > 0.0)
         ctx.blockTicks = static_cast<juce::int64> (numSamples / sampleRate * static_cast<double> (juce::Time::getHighResolutionTicksPerSecond()));
@@ -146,11 +166,27 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
 
     // the pool serves the device callback; a bounce renders serially on
     // the thread that drives it (same code, same samples)
-    if (renderThreadPool != nullptr && renderThreadPool->isRunning() && ! RenderTiming::isOffline())
+    const auto pooled = renderThreadPool != nullptr && renderThreadPool->isRunning() && ! RenderTiming::isOffline();
+    if (pooled)
         renderThreadPool->run (numJobs, trackJob);
     else
         for (auto slot = 0; slot < numJobs; ++slot)
             trackJob (slot, 0);
+
+    // stage B: one job per aux bus, once every send pair is written
+    if constexpr (std::is_same_v<SampleType, float>)
+    {
+        if (ctx.plan != nullptr && (ctx.stereoMain || ctx.monoMain) && ! ctx.plan->auxes.empty())
+        {
+            const auto numAuxes = static_cast<int> (ctx.plan->auxes.size());
+            auto auxJob = [this, &ctx] (int aux, int workerId) noexcept { renderAux (aux, workerId, ctx); };
+            if (pooled && numAuxes > 1)
+                renderThreadPool->run (numAuxes, auxJob);
+            else
+                for (auto aux = 0; aux < numAuxes; ++aux)
+                    auxJob (aux, 0);
+        }
+    }
 
     if (ctx.shareTable >= 0)
     {
@@ -449,6 +485,10 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
                 for (auto* slot : plan->tracks[static_cast<size_t> (trackIndex)].inserts)
                     slot->process (trackBlock);
             }
+
+            // the pre-fader sends tap here: after the inserts, before the gain
+            if ((ctx.stereoMain || ctx.monoMain) && plan->numSendPairs > 0)
+                tapSends (job, workerId, ctx, audioBusBlock, true);
         }
     }
 
@@ -462,6 +502,8 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
 
     if (ctx.stereoMain)
         panIntoPartial (job, jobIndex, workerId, ctx, audioBusBlock);
+    else if (ctx.monoMain && ctx.plan != nullptr && ctx.plan->numSendPairs > 0)
+        tapSends (job, workerId, ctx, audioBusBlock, false);   // post-fader, unpanned like the mono main mix
 
    #if JUCE_DEBUG
     burnSimulatedLoad (job, ctx);
@@ -535,14 +577,142 @@ void AudioBusRenderer<SampleType>::panIntoPartial (const TrackJob& job, int jobI
     auto panned = ctx.panOutput.getSubsetChannelBlock (static_cast<size_t> (2 * workerId), 2);
 
     for (auto k = job.firstChannel; k < channelEnd; ++k) {
-        if (audioChannelData[k].outputChannel >= 0)
-            continue;   // a direct out: taken post-gain in stage C
+        const auto toMain = audioChannelData[k].outputChannel < 0;   // a direct out is taken post-gain in stage C
+
+        // the post-fader sends of the channel, if the plan has any
+        const std::vector<MixPlan::Send>* sends = nullptr;
+        if constexpr (std::is_same_v<SampleType, float>)
+        {
+            if (ctx.plan != nullptr && k < static_cast<int> (ctx.plan->channels.size()))
+            {
+                for (const auto& send : ctx.plan->channels[static_cast<size_t> (k)].sends)
+                {
+                    if (! send.state->preFader.load (std::memory_order_relaxed))
+                    {
+                        sends = &ctx.plan->channels[static_cast<size_t> (k)].sends;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (! toMain && sends == nullptr)
+            continue;
 
         auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
         panned.clear();
         ProcessContextNonReplacing<SampleType> panContext (channelBlock, panned);
         panners[k].process (panContext);
-        partial.add (panned);
+        if (toMain)
+            partial.add (panned);
+
+        if constexpr (std::is_same_v<SampleType, float>)
+        {
+            if (sends != nullptr)
+            {
+                // what the main mix gets, scaled by the send's level, into
+                // the send's own pair
+                auto scratch = ctx.sendScratch.getSubsetChannelBlock (static_cast<size_t> (2 * workerId), 2);
+                for (const auto& send : *sends)
+                {
+                    if (send.state->preFader.load (std::memory_order_relaxed))
+                        continue;
+                    scratch.copyFrom (panned);
+                    send.gain.setGainLinear (MixPlan::sendGainOf (*send.state));
+                    ProcessContextReplacing<float> sendContext (scratch);
+                    send.gain.process (sendContext);
+                    ctx.sendOutput.getSubsetChannelBlock (static_cast<size_t> (2 * send.pair), 2).add (scratch);
+                }
+            }
+        }
+    }
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::tapSends (const TrackJob& job, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock, bool preFader) noexcept
+{
+    if constexpr (std::is_same_v<SampleType, float>)
+    {
+        const auto* plan = ctx.plan;
+        const auto channelEnd = std::min (job.firstChannel + job.numChannels, static_cast<int> (plan->channels.size()));
+        auto scratch = ctx.sendScratch.getSubsetChannelBlock (static_cast<size_t> (2 * workerId), 2);
+
+        for (auto k = job.firstChannel; k < channelEnd; ++k)
+        {
+            const auto& sends = plan->channels[static_cast<size_t> (k)].sends;
+            if (sends.empty())
+                continue;
+
+            // the panner's balanced rule, without its ramp; a mono main mix
+            // has no pan, so the send is the channel on both sides
+            auto leftGain = 1.0f;
+            auto rightGain = 1.0f;
+            if (ctx.stereoMain)
+            {
+                const auto normalisedPan = 0.5f * (audioChannelData[k].pan + 1.0f);
+                leftGain = 2.0f * juce::jmin (0.5f, 1.0f - normalisedPan);
+                rightGain = 2.0f * juce::jmin (0.5f, normalisedPan);
+            }
+            auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
+
+            for (const auto& send : sends)
+            {
+                if (send.state->preFader.load (std::memory_order_relaxed) != preFader)
+                    continue;
+                scratch.getSingleChannelBlock (0).replaceWithProductOf (channelBlock, leftGain);
+                scratch.getSingleChannelBlock (1).replaceWithProductOf (channelBlock, rightGain);
+                send.gain.setGainLinear (MixPlan::sendGainOf (*send.state));
+                ProcessContextReplacing<float> sendContext (scratch);
+                send.gain.process (sendContext);
+                ctx.sendOutput.getSubsetChannelBlock (static_cast<size_t> (2 * send.pair), 2).add (scratch);
+            }
+        }
+    }
+    else
+    {
+        juce::ignoreUnused (job, workerId, ctx, audioBusBlock, preFader);
+    }
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::renderAux (int auxIndex, int workerId, const BlockContext& ctx) noexcept
+{
+    juce::ignoreUnused (workerId);
+    if constexpr (std::is_same_v<SampleType, float>)
+    {
+        const auto& aux = ctx.plan->auxes[static_cast<size_t> (auxIndex)];
+        auto out = ctx.auxOutput.getSubsetChannelBlock (static_cast<size_t> (2 * auxIndex), 2);
+
+        // the sends into this bus, in track order
+        out.clear();
+        for (const auto pair : aux.pairs)
+            out.add (ctx.sendOutput.getSubsetChannelBlock (static_cast<size_t> (2 * pair), 2));
+
+        for (auto* slot : aux.inserts)
+            slot->process (out);
+
+        // the return: gain and balance per side, silence while muted or
+        // while another aux is soloed
+        float left = 0.0f, right = 0.0f;
+        if (ctx.monoMain)
+            left = right = MixPlan::auxGainOf (*aux.state, ctx.anyAuxSolo);   // no sides to balance between
+        else
+            MixPlan::auxGainsOf (*aux.state, ctx.anyAuxSolo, left, right);
+        aux.gainLeft.setGainLinear (left);
+        aux.gainRight.setGainLinear (right);
+        auto leftBlock = out.getSingleChannelBlock (0);
+        auto rightBlock = out.getSingleChannelBlock (1);
+        ProcessContextReplacing<float> leftContext (leftBlock);
+        ProcessContextReplacing<float> rightContext (rightBlock);
+        aux.gainLeft.process (leftContext);
+        aux.gainRight.process (rightContext);
+
+        aux.state->level[0].store (std::abs (leftBlock.findMinAndMax().getEnd()), std::memory_order_relaxed);
+        aux.state->level[1].store (std::abs (rightBlock.findMinAndMax().getEnd()), std::memory_order_relaxed);
+    }
+    else
+    {
+        juce::ignoreUnused (auxIndex, ctx);
     }
 }
 
@@ -585,7 +755,7 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
 
     // a one-channel output (a mono device, a mono bounce) gets the main mix
     // summed without pan, through the same master chain as the stereo one
-    const auto monoMain = outputChannels == 1;
+    const auto monoMain = ctx.monoMain;
 
     auto mainMixBlock = AudioBlock<SampleType> (mainMixBuffer).getSubBlock (0, numSamples);
     if (ctx.stereoMain) {
@@ -620,6 +790,33 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         // which the first reaches the output
         if (monoMain)
             mainMixBlock.getSingleChannelBlock (1).copyFrom (mainMixBlock.getSingleChannelBlock (0));
+
+        // the dry mix gives way while an aux return is soloed, then the aux
+        // returns join it, in strip order; a mono mix takes a return's first
+        // side (the sides are the same: unpanned sends, no balance)
+        dryGain.setGainLinear (ctx.anyAuxSolo ? static_cast<SampleType> (0) : static_cast<SampleType> (1));
+        ProcessContextReplacing<SampleType> dryContext (mainMixBlock);
+        dryGain.process (dryContext);
+
+        if constexpr (std::is_same_v<SampleType, float>)
+        {
+            if (ctx.plan != nullptr)
+            {
+                for (size_t a = 0; a < ctx.plan->auxes.size(); ++a)
+                {
+                    if (monoMain)
+                    {
+                        auto side = ctx.auxOutput.getSingleChannelBlock (2 * a);
+                        mainMixBlock.getSingleChannelBlock (0).add (side);
+                        mainMixBlock.getSingleChannelBlock (1).add (side);
+                    }
+                    else
+                    {
+                        mainMixBlock.add (ctx.auxOutput.getSubsetChannelBlock (2 * a, 2));
+                    }
+                }
+            }
+        }
 
         // the master inserts, then master gain + level metering, apply to the main mix only
         if constexpr (std::is_same_v<SampleType, float>)

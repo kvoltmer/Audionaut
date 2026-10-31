@@ -8,6 +8,7 @@
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
 #include "Engine/Effects/InsertChain.h"
+#include "Engine/Effects/AuxBusContainer.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
@@ -85,6 +86,19 @@ public:
     MixerPlanner* getMixerPlanner() const noexcept { return mixerPlanner.get(); }
     /** The inserts on the main mix, before master gain (JSON key "master_inserts"). */
     InsertChain& getMasterInserts() noexcept { return masterInserts; }
+
+    /** The aux buses the channels send into (JSON key "aux_buses"); two from the start, see AuxBusContainer. */
+    AuxBusContainer& getAuxBuses() noexcept { return auxBuses; }
+    const AuxBusContainer& getAuxBuses() const noexcept { return auxBuses; }
+
+    /** A new aux bus at the end of the strips, named "Aux <id>" without a name. */
+    std::shared_ptr<AuxBus> addAuxBus(const std::string& name = {});
+
+    /**
+     * Removes the aux bus and every channel's send into it, in one plan.
+     * False when there is no bus with the id.
+     */
+    bool removeAuxBus(int auxId);
 
     /**
      * @brief Sets the master gain for the container.
@@ -312,6 +326,7 @@ private:
     float masterGain = 1.f; ///< Master gain value.
     std::shared_ptr<MixerPlanner> mixerPlanner; ///< Builds and publishes the mix plan; see setMixerPlanner().
     InsertChain masterInserts; ///< The main mix's insert effects.
+    AuxBusContainer auxBuses; ///< The aux buses, in strip order.
     std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
     bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 

@@ -18,6 +18,7 @@ AudioChannel::AudioChannel(AudioTrack &audioTrack_,
                            std::shared_ptr<AudioBusInterface> audioBusInterface_) :
     Selectable(selectionManager_),
     inserts(audioTrack_.getAudioTrackContainer().getMixerPlanner()),
+    sends(audioTrack_.getAudioTrackContainer().getMixerPlanner()),
     audioTrack(audioTrack_),
     audioBusInterface(audioBusInterface_)
 {
