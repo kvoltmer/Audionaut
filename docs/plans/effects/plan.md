@@ -664,6 +664,41 @@ is made on first set), `remove-send`; the insert verbs take `--aux ID` as a chai
 
 ### Phase 4: Latency compensation and export alignment
 
+Built on `feature/effects-pdc` (2026-10-31, off `feature/effects-sends`). As built: `PdcDelay` is a
+fixed whole-sample delay for N channels (a ring of delay + block length, written then read, so any
+block length up to the prepared one works), with `replayHistory()` handing out the last `delay`
+samples. `EffectSlot` reads `getLatencySamples()` once at `prepare()`, and a latent slot owns a
+`bypassDelay` of that length for its dry signal: bypassed it is as late as running, the crossfade
+mixes aligned signals, and on the return from a bypass the effect is first fed the dry line's
+history so it has caught up when the crossfade starts (no hole of its latency). `MixPlan::Latency
+{preFader, aux, master}` carries the arithmetic of 2.4 (`atMainOutput()`, `atStemOutput()`), the
+plan owns `mainDryDelay` and per-channel `preFaderDelay`/`directOutDelay`, per-aux `returnDelay`,
+and `tailSeconds` (Effect::getTailSeconds summed along a path, the longest path at each point).
+`MixerPlanner::planLatency` computes them after the chains are collected; `delayFor()` carries a
+delay over from the previous plan by (kind, track id, channel in track | aux id) when the wait is
+unchanged, so a rebuild while playing leaves the signal in flight intact (tested). The renderer runs
+the delays on the stage that owns the signal: the fader point after the track inserts (stage A),
+the return delay after the aux inserts (stage B), the dry delay before the returns join and the
+direct-out delay on the way to the output (stage C, a delay reset when its channel was not routed
+to a direct out the block before); stems leave at the fader point. `AudioBusRenderer::
+getOutputLatencySamples()` reads the adopted plan (`atOutput(stemExport)`) and `AudioBusInterface`
+forwards it, together with the device's input/output latency from `audioDeviceAboutToStart`.
+`LinkAudioDevice::latencyToOutput()` = device output latency + compensation feeds both the
+`audioCallback` stamp and `beatAtTime`; the test harness uses the same method. For a solo session
+the term cancels (the start is pinned in the same compensated time), so the live tests check the
+pure shift and the figure itself; only peers see the difference. `PlayListScheduler::startRecording`
+places the take `getRecordingLatencySamples()` (device round trip + compensation) before the stamped
+position, clamped at the timeline's start. `bounceProject` renders `L` samples more and drops the
+first `L` (the stems' `L` for a stem export), appends the tail for a bounce to the project's end
+unless `ExportAudioConfig::includeEffectTails` is off (CLI `export --no-tails`, MCP `include_tails`),
+and resets the chains when it ends as well as when it starts, so live playback never hears its
+tail. `LatencyCompensationTests` ([latency]): `PdcDelay` with mixed block lengths; a 480-sample
+channel insert shifts live outputs (main and direct outs) exactly and the bounce equals the plain
+one sample for sample, for 0 and 3 workers, stems and mono too; track + channel chains add; bypassed
+and toggled while playing; aux and master points alone and all three together (1036); a rebuild
+while playing carries the delay lines over; Link term and recording placement with a fake device of
+64/128 samples; the tail extension.
+
 - `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per channel/aux/main/direct;
   arithmetic from 2.4 in `MixerPlanner::build`; delay state carried over by id; bypass delay in
   the slot.
