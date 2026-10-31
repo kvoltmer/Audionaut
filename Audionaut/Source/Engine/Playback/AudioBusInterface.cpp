@@ -40,11 +40,16 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
 
 void AudioBusInterface::postCommand (std::function<void()> command)
 {
-    lockFreeCommander->fifo.push (std::move (command));
+    // a full fifo drops the command and the render thread misses a layout
+    // change or a plan: the factory sizes it for the longest burst an edit
+    // posts, so this is a bug, not a load condition
+    const auto queued = lockFreeCommander->fifo.push (std::move (command));
+    jassert (queued);
+    juce::ignoreUnused (queued);
 
     // With no audio device running there is no render callback to drain the
-    // fifo (capacity 256, drops on full) - pump it synchronously. Runtime
-    // check so the GUI binary's in-app CLI mode gets the same treatment.
+    // fifo (drops on full) - pump it synchronously. Runtime check so the GUI
+    // binary's in-app CLI mode gets the same treatment.
     if (pumpsCommandsSynchronously.value_or (HeadlessMode::isHeadless() || ! deviceRunning.load (std::memory_order_relaxed)))
         lockFreeCommander->invoke();
 }

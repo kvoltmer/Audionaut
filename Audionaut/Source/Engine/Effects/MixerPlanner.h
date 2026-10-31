@@ -91,11 +91,13 @@ public:
 
     /**
      * Message thread, with the device stopped or bypassed (nothing renders):
-     * the format the renderer was prepared with. A block within the
-     * prepared size at the same rate needs nothing (a bounce's shorter last
-     * block, the device's own after a bounce); otherwise every slot is
-     * prepared again in place and a plan is published, as it is when there
-     * is none yet.
+     * the format the renderer was prepared with, no more and no less. The
+     * same rate and block size as before, with a plan published, needs
+     * nothing; any other block size - smaller as well as larger (a bounce's,
+     * the device's own after it) - or another rate prepares every slot
+     * again in place and publishes a plan, as is done when there is none
+     * yet. (A block shorter than the prepared one renders fine; it is the
+     * prepare that keeps the effects' buffers the size of the renderer's.)
      */
     void prepare (double sampleRate, int maxBlockSize);
 

@@ -94,7 +94,11 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
 
     auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording, renderThreadPool, mixPlans);
 
-    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
+    // sized for the longest burst one edit posts while the device runs but
+    // does not drain (a project load under bypass): a clear per old bus
+    // channel, two commits per new one and the plan, far below this for
+    // MAX_AUDIO_CHANNELS; a full fifo drops, which postCommand asserts on
+    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(4096);
     
     auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer, renderThreadPool);
     

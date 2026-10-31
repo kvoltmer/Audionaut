@@ -233,6 +233,14 @@ SCENARIO ("inserts render where their chain sits", "[engine][effects][inserts]")
                 requireScaled (live, reference, 0, kMinus6);
                 requireScaled (live, reference, 3, 1.0f, 0.0f);
             }
+
+            THEN ("a mono bounce runs the master chain as well")
+            {
+                const auto plainMono = bounceProject (*plain.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
+                const auto mono = bounceProject (*session.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
+                REQUIRE (mono.getNumChannels() == 1);
+                requireScaled (mono, plainMono, 0, kMinus6);
+            }
         }
 
         WHEN ("a trim is added but disabled")
@@ -378,6 +386,35 @@ SCENARIO ("insert edits are undoable and keep their effect instances", "[engine]
             {
                 REQUIRE (chain.getSlot (0) == slot);
                 REQUIRE (slot->getEffect().getParameter (TrimEffect::gainDb) == Approx (-9.0f));
+            }
+        }
+    }
+}
+
+SCENARIO ("the master inserts go with the project they belong to", "[engine][effects][inserts]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("a session with a master insert")
+    {
+        Session session;
+        addTrim (session.tracks().getMasterInserts(), -6.0f);
+        const auto rebuildsBefore = session.planner().getNumRebuilds();
+
+        WHEN ("the container is cleaned up for the next project")
+        {
+            session.tracks().cleanup();
+
+            THEN ("the master chain is empty, in the one plan built with the layout, and the next project saves without it")
+            {
+                REQUIRE (session.tracks().getMasterInserts().isEmpty());
+                REQUIRE (session.planner().getNumRebuilds() - rebuildsBefore == 1);
+
+                session.engine->getProjectSerializer()->createNewProject (0);
+                REQUIRE (session.tracks().getMasterInserts().isEmpty());
+                json written;
+                session.tracks().writeToJson (written);
+                REQUIRE_FALSE (written.contains ("master_inserts"));
             }
         }
     }

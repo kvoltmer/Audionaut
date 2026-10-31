@@ -583,11 +583,18 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         return;
     }
 
+    // a one-channel output (a mono device, a mono bounce) gets the main mix
+    // summed without pan, through the same master chain as the stereo one
+    const auto monoMain = outputChannels == 1;
+
     auto mainMixBlock = AudioBlock<SampleType> (mainMixBuffer).getSubBlock (0, numSamples);
     if (ctx.stereoMain) {
         mainMixBlock.clear();
         for (auto j = 0; j < numJobs; ++j)
             mainMixBlock.add (ctx.trackOutput.getSubsetChannelBlock (static_cast<size_t> (2 * j), 2));
+    }
+    else if (monoMain) {
+        mainMixBlock.clear();
     }
 
     for (auto i = 0; i < audioBusChannels; i++) {
@@ -595,9 +602,9 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         const auto destination = audioChannelData[i].outputChannel;
 
         if (destination < 0) {
-            if (outputChannels == 1) {
-                // mono device: sum the main mix into the single output
-                outputBlock.getSingleChannelBlock (0).add (channelBlock);
+            if (monoMain) {
+                // mono device: the main mix is the plain sum of its channels
+                mainMixBlock.getSingleChannelBlock (0).add (channelBlock);
             }
         }
         else if (destination < outputChannels) {
@@ -607,7 +614,13 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         // else: routed beyond the current device's outputs -> dropped
     }
 
-    if (ctx.stereoMain) {
+    if (ctx.stereoMain || monoMain) {
+        // the master chain and master gain are prepared for the stereo main
+        // mix: a mono mix runs through them as two identical channels, of
+        // which the first reaches the output
+        if (monoMain)
+            mainMixBlock.getSingleChannelBlock (1).copyFrom (mainMixBlock.getSingleChannelBlock (0));
+
         // the master inserts, then master gain + level metering, apply to the main mix only
         if constexpr (std::is_same_v<SampleType, float>)
             if (ctx.plan != nullptr)
@@ -617,10 +630,12 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         ProcessContextReplacing<SampleType> gainContext(mainMixBlock);
         masterGain.process(gainContext);
 
+        const auto mainOutputs = monoMain ? 1 : 2;
         for (auto m = 0; m < 2; ++m) {
             auto minmax = mainMixBlock.getSingleChannelBlock (static_cast<size_t> (m)).findMinAndMax();
             masterLevel[m].store( std::abs(minmax.getEnd()) );
-            outputBlock.getSingleChannelBlock (static_cast<size_t> (m)).add (mainMixBlock.getSingleChannelBlock (static_cast<size_t> (m)));
+            if (m < mainOutputs)
+                outputBlock.getSingleChannelBlock (static_cast<size_t> (m)).add (mainMixBlock.getSingleChannelBlock (static_cast<size_t> (m)));
         }
     }
 }

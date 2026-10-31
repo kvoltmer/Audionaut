@@ -27,6 +27,7 @@ class AudioResourceContainer;
 class AudioBusInterface;
 class TransportLoop;
 class AnalysisProvider;
+class MixerPlanner;
 
 /**
  * @class AudioTrackContainer
@@ -36,8 +37,6 @@ class AnalysisProvider;
  * interacting with audio tracks. It supports undo/redo operations, selection management,
  * serialization, and broadcasting changes to listeners.
  */
-class MixerPlanner;
-
 class AudioTrackContainer : public juce::ActionBroadcaster, public juce::ChangeBroadcaster, public Streamable
 {
 public:
@@ -77,10 +76,6 @@ public:
     ~AudioTrackContainer() override;
 
     /**
-     * @brief Sets the master gain for the container.
-     * @param newGain The new master gain value.
-     */
-    /**
      * The planner that builds the mix plan from this container; wired by the
      * factory right after construction (the constructor has enough
      * collaborators). The chains of the tracks, channels and the master
@@ -90,6 +85,11 @@ public:
     MixerPlanner* getMixerPlanner() const noexcept { return mixerPlanner.get(); }
     /** The inserts on the main mix, before master gain (JSON key "master_inserts"). */
     InsertChain& getMasterInserts() noexcept { return masterInserts; }
+
+    /**
+     * @brief Sets the master gain for the container.
+     * @param newGain The new master gain value.
+     */
     void setMasterGain(const float newGain);
 
     /**

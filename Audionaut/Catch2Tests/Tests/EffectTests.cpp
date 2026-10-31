@@ -92,6 +92,48 @@ SCENARIO ("the effect registry creates every built-in for one and two channels",
     }
 }
 
+SCENARIO ("an EQ band that comes back on starts from rest", "[engine][effects]")
+{
+    GIVEN ("an EQ whose boosted low shelf has filtered a signal")
+    {
+        Eq3Effect eq;
+        eq.prepare (kSampleRate, kBlockSize, 1);
+        eq.setParameter (Eq3Effect::lowDb, 12.0f);
+        auto signal = makeSine (1, 4, 100.0, 0.5f);
+        run (eq, signal);
+        REQUIRE (settledPeak (signal) > 0.5f);
+
+        WHEN ("the band goes to 0 dB for a block and then comes back")
+        {
+            eq.setParameter (Eq3Effect::lowDb, 0.0f);
+            auto passed = makeSine (1, 1, 100.0, 0.5f);
+            run (eq, passed);
+            eq.setParameter (Eq3Effect::lowDb, 12.0f);
+
+            THEN ("silence in is silence out: nothing from before the band was off rings")
+            {
+                juce::AudioBuffer<float> silence (1, kBlockSize);
+                silence.clear();
+                run (eq, silence);
+                REQUIRE (silence.getMagnitude (0, 0, kBlockSize) == 0.0f);
+            }
+        }
+
+        WHEN ("the band's gain changes while it stays on")
+        {
+            eq.setParameter (Eq3Effect::lowDb, 11.0f);
+
+            THEN ("its delay line is kept: the next block continues the filtered signal, no step to zero")
+            {
+                juce::AudioBuffer<float> silence (1, kBlockSize);
+                silence.clear();
+                run (eq, silence);
+                REQUIRE (silence.getMagnitude (0, 0, 4) > 0.0f);
+            }
+        }
+    }
+}
+
 SCENARIO ("effect parameters and state round trip deterministically", "[engine][effects]")
 {
     GIVEN ("an EQ with a few parameters changed")

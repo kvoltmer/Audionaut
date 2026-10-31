@@ -66,29 +66,68 @@ public:
 
         // prepareToPlay may rebuild the mix plan, which is model state and
         // posts to the renderer's command queue, both the message thread's:
-        // on an export thread the message thread holds still for it
+        // on an export thread the message thread holds still for it. The
+        // lock watches this thread's exit flag: a cancel from the progress
+        // window stops the message thread inside stopThread(), waiting for
+        // this thread, which must not wait for the message thread in turn
+        // (a frozen window until the timeout, then a killed thread that
+        // never lifts the bypass). False when the thread was told to exit
+        // before the lock came.
         auto prepareToPlay = [this] (int blockSize, double sampleRate)
         {
             auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
-            std::unique_ptr<juce::MessageManagerLock> lock;
-            if (messageManager != nullptr && ! messageManager->isThisTheMessageThread())
-                lock = std::make_unique<juce::MessageManagerLock>();
+            if (messageManager == nullptr || messageManager->isThisTheMessageThread()) {
+                audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+                return true;
+            }
+
+            juce::MessageManagerLock lock (juce::Thread::getCurrentThread());
+            if (! lock.lockWasGained())
+                return false;
             audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+            return true;
         };
 
-        audiumEngine.getLinkAudioDevice()->setBypass(true);
-        prepareToPlay (config->blockSize, config->sampleRate);
+        auto linkAudioDevice = audiumEngine.getLinkAudioDevice();
+        linkAudioDevice->setBypass(true);
+
+        if (! prepareToPlay (config->blockSize, config->sampleRate)) {
+            // cancelled before anything changed: the device format stands
+            config->userCanceled = true;
+            linkAudioDevice->setBypass(false);
+            return false;
+        }
 
         auto written = writeOutput(updateProgress);
 
         // change back to device settings
+        auto restoreDeviceFormat = [scheduler = audiumEngine.getPlayListScheduler(),
+                                    deviceManager = audiumEngine.getAudioDeviceManager()]
+        {
+            if (auto* device = deviceManager->getCurrentAudioDevice())
+                scheduler->prepareToPlay (device->getCurrentBufferSizeSamples(), device->getCurrentSampleRate());
+        };
+
+        auto restored = true;
         if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice()) {
             auto numSamples = device->getCurrentBufferSizeSamples();
             auto sampleRate = device->getCurrentSampleRate();
-            prepareToPlay (numSamples, sampleRate);
+            restored = prepareToPlay (numSamples, sampleRate);
         }
-        audiumEngine.getLinkAudioDevice()->setBypass(false);
 
+        if (! restored) {
+            // told to exit while waiting for the lock: the message thread,
+            // once it is free again, puts the device format back and lifts
+            // the bypass itself, so no block renders with the bounce's format
+            juce::MessageManager::callAsync ([restoreDeviceFormat, linkAudioDevice]
+            {
+                restoreDeviceFormat();
+                linkAudioDevice->setBypass(false);
+            });
+            return written;
+        }
+
+        linkAudioDevice->setBypass(false);
         return written;
     }
 

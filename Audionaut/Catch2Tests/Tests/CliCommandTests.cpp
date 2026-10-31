@@ -1880,6 +1880,23 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
             REQUIRE (envelope["result"]["masterInserts"].size() == 1);
             REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
         }
+
+        THEN ("a track, channel or value that is not a number is a usage error, not 0")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim"), context) == cli::exitOk);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track one --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--track") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --channel c0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--channel") != std::string::npos);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value x4"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--value") != std::string::npos);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value -6.5"), context) == cli::exitOk);
+            REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["tracks"][1]["channels"][0]["inserts"].size() == 0);
+            REQUIRE (envelope["result"]["tracks"][0]["inserts"].size() == 0);
+            REQUIRE (envelope["result"]["masterInserts"].size() == 1);
+            REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (-6.5));
+        }
     }
 
     workDir.deleteRecursively();

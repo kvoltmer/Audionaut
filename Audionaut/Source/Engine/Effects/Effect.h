@@ -46,10 +46,11 @@ struct EffectTypeInfo
  *
  * Threads: prepare(), release() and the state round trip run on the message
  * thread while nothing renders the effect (the planner sees to that).
- * prepare() can come again on the same instance - another sample rate, a
- * larger block, another channel count - and the effect sizes itself afresh;
- * a block shorter than the prepared one needs nothing. reset() and
- * process() run on whichever render thread takes the job, one at a time. Parameters are atomics inside the effect: setParameter() is a
+ * prepare() can come again on the same instance - another sample rate,
+ * another block size, another channel count - and the effect sizes itself
+ * afresh; process() takes any block up to the prepared size. reset() and
+ * process() run on whichever render thread takes the job, one at a time.
+ * Parameters are atomics inside the effect: setParameter() is a
  * store from the message thread or the CLI, process() reads them at the
  * start of a block. Smoothing is the effect's own business.
  *

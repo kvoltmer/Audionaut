@@ -196,7 +196,7 @@ private:
         AudioBlock<SampleType> panOutput;      ///< one stereo pair per worker slot
         AudioBlock<float> voiceOutput;         ///< one mono row per worker slot
         int numSamples = 0;
-        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export)
+        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export); a one-channel output sums them unpanned instead
         juce::int64 blockTicks = 0;   ///< the block period in high-resolution ticks
         int shareTable = -1;          ///< the job share table this block fills, -1 = not recording
         const MixPlan* plan = nullptr;   ///< the inserts to run, nullptr = none (no plan, or one of another format)

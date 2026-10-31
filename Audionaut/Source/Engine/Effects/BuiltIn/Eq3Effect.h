@@ -16,7 +16,8 @@ namespace audium
  * EQ: a high-pass, a low shelf, a peaking mid band and a high shelf, each a
  * biquad per channel. The coefficients come from juce_dsp's array makers
  * (no allocation) and are recomputed on the render thread when a parameter
- * changed; a band at 0 dB, or the high-pass while off, is skipped.
+ * changed; a band at 0 dB, or the high-pass while off, is skipped, and
+ * starts from a cleared delay line when it comes back.
  */
 class Eq3Effect final : public Effect
 {
@@ -104,6 +105,12 @@ private:
             a2 = unnormalised[5] / a0;
             active = true;
         }
+
+        void clearState() noexcept
+        {
+            for (auto& state : states)
+                state = {};
+        }
     };
 
     void computeCoefficients() noexcept
@@ -116,6 +123,10 @@ private:
         const auto maxHz = static_cast<float> (sampleRate * 0.45);
         const auto hz = [maxHz] (float value) { return juce::jmin (value, maxHz); };
         const auto gainOf = [] (float db) { return juce::Decibels::decibelsToGain (db); };
+
+        std::array<bool, 4> wasActive;
+        for (size_t i = 0; i < bands.size(); ++i)
+            wasActive[i] = bands[i].active;
 
         bands[0].active = false;
         if (getParameter (hpOn) >= 0.5f)
@@ -132,6 +143,13 @@ private:
         bands[3].active = false;
         if (getParameter (highDb) != 0.0f)
             bands[3].set (Makers::makeHighShelf (sampleRate, hz (getParameter (highHz)), shelfQ, gainOf (getParameter (highDb))));
+
+        // a skipped band kept the state of the last block it filtered,
+        // seconds or minutes ago: coming back, it starts from rest instead
+        // of ringing with it
+        for (size_t i = 0; i < bands.size(); ++i)
+            if (bands[i].active && ! wasActive[i])
+                bands[i].clearState();
     }
 
     static constexpr float shelfQ = 0.7071f;

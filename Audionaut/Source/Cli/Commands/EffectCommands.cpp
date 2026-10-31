@@ -16,15 +16,29 @@
 #include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Undo/UndoableEffectParameterAction.h"
 
+#include <cmath>
+#include <cstdlib>
+
 namespace audium {
 namespace cli {
 
 namespace {
 
-/// A slot index or position as typed: digits only, so a typo never acts on slot 0.
+/// A slot index, position, track id or channel number as typed: digits only, so a typo never acts on 0.
 bool isIndexValue (const juce::String& value)
 {
     return value.isNotEmpty() && value.containsOnly ("0123456789");
+}
+
+/// A parameter value as typed: one finite number and nothing else, so "x4" is a usage error, not 0.
+bool isNumberValue (const juce::String& value)
+{
+    const auto text = value.trim().toStdString();
+    if (text.empty())
+        return false;
+    char* end = nullptr;
+    const auto number = std::strtod (text.c_str(), &end);
+    return end == text.c_str() + text.size() && std::isfinite (number);
 }
 
 /// A chain the options name, plus how the result refers to it.
@@ -60,6 +74,12 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
         return targets;
     }
 
+    if (! isIndexValue (trackValue))
+    {
+        failure = context.fail (exitUsage, "usage", "--track must be a track id (a number from 0)");
+        return {};
+    }
+
     const auto trackId = trackValue.getIntValue();
     auto track = findTrackById (container, trackId);
     if (track == nullptr)
@@ -86,8 +106,8 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
         return targets;
     }
 
-    const auto channel = channelValue.getIntValue();
-    if (channel < 0 || channel >= numChannels || ! channelValue.containsAnyOf ("0123456789"))
+    const auto channel = isIndexValue (channelValue) ? channelValue.getIntValue() : -1;
+    if (channel < 0 || channel >= numChannels)
     {
         failure = context.fail (exitUsage, "usage", "--channel must be 0.." + std::to_string (numChannels - 1));
         return {};
@@ -143,6 +163,8 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
 
         const auto applied = applyAsUndoableEdit (container, [&]
         {
+            // every chain of --all-channels in one plan, built when the batch closes
+            MixerPlanner::ScopedBatch planBatch (planner);
             for (auto& target : targets)
             {
                 auto slot = target.chain->add (typeValue.toStdString(), at);
@@ -252,7 +274,7 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
             if (parameter < 0)
                 return context.fail (exitFailure, "unknown_parameter",
                                      effect.getType().name + " has no parameter " + paramValue.toStdString());
-            if (! valueValue.containsAnyOf ("0123456789"))
+            if (! isNumberValue (valueValue))
                 return context.fail (exitUsage, "usage", "--value must be a number");
 
             // the value as the effect will hold it: clamped to the range

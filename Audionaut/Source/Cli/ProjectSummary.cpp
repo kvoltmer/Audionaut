@@ -21,10 +21,6 @@
 namespace audium {
 namespace cli {
 
-namespace {
-
-} // namespace
-
 nlohmann::json describeInsert (const EffectSlot& slot, int index)
 {
     return { { "index", index },

@@ -65,6 +65,9 @@ void AudioTrackContainer::cleanup()
         track->cleanup();
     }
     audioTracks.clear();
+    // the main mix's inserts go with the project they belong to: the plan
+    // built when the batch closes has no master chain either
+    masterInserts.clear();
     publishNumAudioTrackChannels();
     commitChannelLayout(0, previousNumChannels);
 }
