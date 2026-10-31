@@ -5,18 +5,18 @@
 Audionaut has no effects. [`features.md`](../../features.md) lists "Plugin hosting (VST3 / AU /
 LV2), effects and automation envelopes" under *Not yet*.
 
-The mixer is one flat array of mono bus lanes (`MAX_AUDIO_CHANNELS`,
+The mixer is one flat array of mono bus channels (`MAX_AUDIO_CHANNELS`,
 [`PlaybackDefines.h`](../../../Audionaut/Source/Engine/Playback/PlaybackDefines.h)). Every
-`AudioChannel` of every `AudioTrack` owns one lane at `track.getChannelOffset() + channelIndex`
+`AudioChannel` of every `AudioTrack` owns one bus channel at `track.getChannelOffset() + channelIndex`
 ([`AudioChannel.cpp:114`](../../../Audionaut/Source/Engine/Channel/AudioChannel.cpp#L114)), voices
-sum into their lane ([`Playback.h:95`](../../../Audionaut/Source/Engine/Playback/Playback.h#L95)),
+sum into their bus channel ([`Playback.h:95`](../../../Audionaut/Source/Engine/Playback/Playback.h#L95)),
 and [`AudioBusRenderer::process`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L54)
 applies gain (mute/solo folded in), pan into a stereo main mix or a direct device output, then
 master gain. All mixer state lives in the renderer and is written only through `LockFreeCommander`
 lambdas.
 
-This plan adds **insert effects** (per lane, console style, plus an optional per-track block that
-sees all lanes of a track at once) and **send effects** (per-lane aux sends into dedicated FX buses
+This plan adds **insert effects** (per bus channel, console style, plus an optional per-track block that
+sees all bus channels of a track at once) and **send effects** (per-channel aux sends into dedicated FX buses
 that return to the main mix), in phases, and a **multithreaded renderer** that runs tracks and
 aux buses in parallel inside the audio callback without adding latency (2.9). The renderer comes
 first: it needs no effect code, fixes the stretched-track overruns on its own, and leaves the
@@ -26,8 +26,8 @@ Decisions taken (2026-10-25):
 
 - Built-in effects first (juce_dsp, already a project module, no new dependencies). VST3/AU
   hosting implements the same interface in a later phase.
-- Inserts per lane, like an analog console; optionally a per-track insert block processing all
-  lanes of a track together (stereo effects on a stereo track).
+- Inserts per bus channel, like an analog console; optionally a per-track insert block processing all
+  bus channels of a track together (stereo effects on a stereo track).
 - Send destinations are dedicated FX buses shown as strips in the channel view, not tracks. The
   master bus gets an insert chain too.
 
@@ -40,14 +40,14 @@ lists where this design differs and why.
 
 ```
 hardware input (monitor) ─┐
-voices (clips) ───────────┴─► lane k ─► [lane inserts k] ─┐
-                                                          │ for each track t: lanes [off..off+n)
+voices (clips) ───────────┴─► bus channel k ─► [channel inserts k] ─┐
+                                                          │ for each track t: bus channels [off..off+n)
                                            [track inserts t] (n-channel block, in place)
                                                           │
                                                    PDC delay (pre-fader align)
                                                           │
                                  ┌── pre-fader send taps ──┤
-                                 │                     lane gain (mute/solo) ─► lane meter
+                                 │                     channel gain (mute/solo) ─► channel meter
                                  │                        │
                                  │                  pan (mono→stereo)
                                  │                        │
@@ -57,14 +57,14 @@ aux bus a (stereo): Σ sends ─► [aux inserts a] ─► PDC ─► return gai
 main mix ─► PDC (dry delay) ─► + aux returns ─► [master inserts] ─► master gain ─► master meter ─► device out 0/1
 ```
 
-- **Lane insert**: mono chain on one bus lane, pre-fader. The console-strip model.
-- **Track insert**: n-channel chain over the contiguous lanes of one track (n = track channel
-  count), after the lane inserts, before the fader. Contiguity holds because
-  `commitChannelData()` places lanes at `channelOffset + index`. Processed with
+- **Channel insert**: mono chain on one bus channel, pre-fader. The console-strip model.
+- **Track insert**: n-channel chain over the contiguous bus channels of one track (n = track channel
+  count), after the channel inserts, before the fader. Contiguity holds because
+  `commitChannelData()` places bus channels at `channelOffset + index`. Processed with
   `AudioBlock::getSubsetChannelBlock(offset, n)` in place, no copy.
-- **Sends** are per lane: each lane has 0..N entries `{auxId, level, preFader, mute}`. A send is
-  *post-pan*: the lane's mono signal is panned with the lane's pan into the stereo aux. Post-fader
-  sends tap the lane's `stereoBlock` right after `panners[i].process`
+- **Sends** are per bus channel: each bus channel has 0..N entries `{auxId, level, preFader, mute}`. A send is
+  *post-pan*: the bus channel's mono signal is panned with the bus channel's pan into the stereo aux. Post-fader
+  sends tap the bus channel's `stereoBlock` right after `panners[i].process`
   ([`AudioBusRenderer.h:131`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L131)),
   exactly what the main mix gets, scaled. Pre-fader sends tap before gain with a stateless gain
   pair from the same balanced pan rule (`juce::dsp::Panner` default, `Rule::balanced`), so they
@@ -73,14 +73,21 @@ main mix ─► PDC (dry delay) ─► + aux returns ─► [master inserts] ─
   balance, mute, solo. v1 routes only to the main mix. No aux→aux sends in v1, so the topology is
   acyclic by construction and needs no cycle detection. Aux→aux with a topological order is a
   later extension.
+- **Two aux buses by default** (Klaus 2026-10-31), like the aux sends of a console: every project
+  has "Aux 1" (id 1) and "Aux 2" (id 2) from the start. `AuxBusContainer` creates them for a new
+  project and when a project without an `"aux_buses"` key loads, so older projects gain them on
+  open without a file change until saved. They are ordinary buses otherwise: renamable, removable,
+  more can be added. A bus channel without a send entry for an aux sends nothing to it; the strip
+  shows one send control per existing aux bus, so the two defaults appear as two rotaries on every
+  channel.
 - **Master inserts** sit before master gain, so the master fader stays the last stage.
 - **Direct outs** (`outputChannel >= 0`) keep today's semantics (post-gain, unpanned, no master),
   get PDC alignment (2.4), and can still feed sends.
 - **Stem export** (`config->numChannels > 2`,
   [`PlayListScheduler.cpp:756`](../../../Audionaut/Source/Engine/PlayList/PlayListScheduler.cpp#L756))
-  copies lanes post-inserts, post-gain as today; aux returns are not in stems (standard DAW
+  copies bus channels post-inserts, post-gain as today; aux returns are not in stems (standard DAW
   behaviour, to be documented).
-- **Monitoring** input is added to the lane before the inserts, so monitored input is heard through
+- **Monitoring** input is added to the bus channel before the inserts, so monitored input is heard through
   the inserts while the recorder still captures dry input (it reads `inputBlock`). Free.
 - **Clip bounce** (`bouncePlayListItem`) bypasses the bus today and stays dry. Unchanged.
 
@@ -110,11 +117,11 @@ public:
 };
 ```
 
-- Channel support: `EffectTypeInfo::supportsChannels(int n)`. Lane inserts need mono; track, aux
+- Channel support: `EffectTypeInfo::supportsChannels(int n)`. Channel inserts need mono; track, aux
   and master inserts need n-channel. Built-ins support 1..n generically.
 - `EffectSlot` (`shared_ptr`-owned): `{type, enabled, shared_ptr<Effect>, bypass crossfade +
   bypass delay runtime}`. `InsertChain` = vector of `shared_ptr<EffectSlot>` + JSON in/out +
-  add/remove/move/enable. One `InsertChain` type serves lane, track, aux and master.
+  add/remove/move/enable. One `InsertChain` type serves channel, track, aux and master.
 - `EffectRegistry`: engine service injected via
   [`AudiumFactory`](../../../Audionaut/Source/Engine/Factory/AudiumFactory.cpp), **no statics**
   (several engines per process). Maps type id → factory + `EffectTypeInfo`. Built-ins register in
@@ -138,13 +145,13 @@ audio thread without locks; values keep flowing through atomics and commander la
 ```cpp
 struct MixPlan {                       // immutable once published; built on the message thread
     struct Send { int aux; SendState* state; juce::SmoothedValue<float> level; bool preFader; };
-    struct Lane  { std::vector<EffectSlot*> inserts; std::vector<Send> sends; int preFaderDelay; };
-    struct Track { int firstLane, numLanes; std::vector<EffectSlot*> inserts; };
+    struct Channel { std::vector<EffectSlot*> inserts; std::vector<Send> sends; int preFaderDelay; };
+    struct Track { int firstChannel, numChannels; std::vector<EffectSlot*> inserts; };
     struct Aux   { AuxState* state; std::vector<EffectSlot*> inserts; int returnDelay; juce::dsp::Gain<float> gain; };
-    std::vector<Lane> lanes; std::vector<Track> tracks; std::vector<Aux> auxes; std::vector<EffectSlot*> master;
+    std::vector<Channel> channels; std::vector<Track> tracks; std::vector<Aux> auxes; std::vector<EffectSlot*> master;
     int mainDryDelay, totalLatency; double sampleRate; int maxBlockSize;   // the spec it was prepared for
     std::vector<std::shared_ptr<EffectSlot>> keepAlive;   // every slot the plan references: survives model rebuilds
-    std::vector<std::unique_ptr<PdcDelay>> laneDelays, auxDelays; PdcDelay mainDelay, directOutDelay; // carried over by id
+    std::vector<std::unique_ptr<PdcDelay>> channelDelays, auxDelays; PdcDelay mainDelay, directOutDelay; // carried over by id
     juce::AudioBuffer<float> auxBuffers;     // numAux * 2 channels, maxBlockSize
 };
 ```
@@ -182,7 +189,7 @@ struct MixPlan {                       // immutable once published; built on the
   ([`PlayListScheduler.cpp:745`](../../../Audionaut/Source/Engine/PlayList/PlayListScheduler.cpp#L745)).
 - **Values that do not rebuild**: effect parameters (atomics in the effect), send level/mute
   (`SendState` atomics read by the plan's `SmoothedValue` per block), aux return
-  gain/balance/mute/solo (`AuxState` atomics), lane gain/pan/mute/solo (unchanged commander path).
+  gain/balance/mute/solo (`AuxState` atomics), channel gain/pan/mute/solo (unchanged commander path).
 - **prepare**: [`PlayListScheduler::prepareToPlay`](../../../Audionaut/Source/Engine/PlayList/PlayListScheduler.cpp#L72)
   calls `planner.prepare(sampleRate, blockSize)` before the bus. All callers run with the device
   stopped or bypassed (`audioDeviceAboutToStart`, `AudioExporter` after `setBypass(true)`, tests).
@@ -195,10 +202,10 @@ struct MixPlan {                       // immutable once published; built on the
   resetting filter/delay state there would be audible). Safety net: the renderer skips a plan
   whose spec differs from its own.
 - **Layout race**: `publishNumAudioTrackChannels` precedes `commitChannelLayout` on every path, so
-  the published lane count and lane data are already up to one block apart. The plan is built
+  the published channel count and channel data are already up to one block apart. The plan is built
   from the same track vector; the renderer clamps: a `Track` with
-  `firstLane + numLanes > audioBusChannels` is skipped, lanes iterate to
-  `min(plan.lanes.size(), audioBusChannels)`.
+  `firstChannel + numChannels > audioBusChannels` is skipped, bus channels iterate to
+  `min(plan.channels.size(), audioBusChannels)`.
 - **Audio thread invariants**: no allocation (aux buffers and delays sized at build), no locks,
   plan pointer read once per block, loops bounded by the plan's vectors and `MAX_AUDIO_CHANNELS`.
   New commander lambdas capture pointers/ints only (the existing `AudioChannelData` capture
@@ -214,7 +221,7 @@ The topology has exactly three summing points, so the delays are computed arithm
 
 | Point | Inputs aligned | Delay inserted |
 |---|---|---|
-| Fader (per lane) | lane inserts + its track inserts | `preFaderDelay[k] = Lpre − (laneLat[k] + trackLat[t(k)])`, `Lpre = max over lanes` |
+| Fader (per bus channel) | channel inserts + its track inserts | `preFaderDelay[k] = Lpre − (channelLat[k] + trackLat[t(k)])`, `Lpre = max over bus channels` |
 | Main mix + aux returns | dry main vs. each aux chain | `mainDryDelay = Laux = max auxLat[a]`, `returnDelay[a] = Laux − auxLat[a]` |
 | Device output | main path vs. direct outs | direct outs delayed by `Laux + Lmaster` |
 
@@ -238,7 +245,7 @@ count and consumed in three places:
   `getTailSeconds()` when "include effect tails" is set (config flag, default on for project
   bounces).
 
-Delay lines carry over between plans by lane/aux id. Hosted plugins that change latency at
+Delay lines carry over between plans by channel/aux id. Hosted plugins that change latency at
 runtime trigger a rebuild.
 
 ### 2.5 Persistence, undo, agents
@@ -273,7 +280,8 @@ runtime trigger a rebuild.
                 "inserts": [ { "type": "builtin:eq3", "enabled": true, "state": { "hp_hz": 80 } } ],
                 "sends":   [ { "aux": 1, "level": 0.5, "pre_fader": false, "mute": false } ] } ],
 "inserts": [ ],
-"aux_buses":      [ { "id": 1, "name": "Reverb", "gain": 1.0, "balance": 0.0, "mute": false, "solo": false, "inserts": [ ] } ],
+"aux_buses":      [ { "id": 1, "name": "Aux 1", "gain": 1.0, "balance": 0.0, "mute": false, "solo": false, "inserts": [ ] },
+                    { "id": 2, "name": "Aux 2", "gain": 1.0, "balance": 0.0, "mute": false, "solo": false, "inserts": [ ] } ],
 "master_inserts": [ ]
 ```
 
@@ -296,9 +304,9 @@ runtime trigger a rebuild.
   `:116`, `:128`); voices and gains advance the full length every block (latent bug). Phase 1
   takes `getSubBlock(0, numSamples)` for all three at the renderer entry.
 - `AudioBusRenderer<double>` is instantiated but unused; effects are float only.
-- `MAX_AUDIO_CHANNELS` is 64 in Debug, 128 in Release; plan vectors are sized by the live lane
+- `MAX_AUDIO_CHANNELS` is 64 in Debug, 128 in Release; plan vectors are sized by the live bus channel
   count.
-- `applyMuteAndSoloGains` scans lane data only
+- `applyMuteAndSoloGains` scans channel data only
   ([`AudioBusRenderer.h:213`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L213));
   aux solo is OR-ed in from `AuxState` in phase 3.
 - [`Playback::processingBuffer`](../../../Audionaut/Source/Engine/Playback/Playback.h#L127) is
@@ -310,7 +318,7 @@ runtime trigger a rebuild.
   container, so it is wired after construction with a setter (like
   `projectFileStore->setSerializer`).
 - Effect CPU goes through the existing `DspLoadMeter`; the hidden bench (`[.][bench]`) gets an
-  "N lanes with EQ + compressor" case.
+  "N channels with EQ + compressor" case.
 
 ### 2.7 CLI, MCP, UI touch points
 
@@ -333,7 +341,7 @@ runtime trigger a rebuild.
 |---|---|---|
 | General node DAG rebuilt from the model on every structural change | Fixed mixer topology + a plain-data `MixPlan` rebuilt on structural change | Three summing points; a DAG compiler buys nothing and costs a scheduler, cycle detection and node state carry-over |
 | Lock-free object swap, deferred destruction on the non-RT side | Same idea with the existing `LockFreeContainer` + `isPulled()` retire list | Already proven in `VoiceSourceContainer` |
-| Sends and returns are inert plugins; a bus is an integer | Sends are lane properties; the aux bus is a first-class object with its own strip | Console mental model; a bus with a name, chain and return fader needs an object anyway |
+| Sends and returns are inert plugins; a bus is an integer | Sends are channel properties; the aux bus is a first-class object with its own strip | Console mental model; a bus with a name, chain and return fader needs an object anyway |
 | Volume/pan/meter are plugins; pre/post = chain position | Fader/pan stay fixed stages; sends carry a pre/post flag | Keeps the existing renderer, undo and UI; pre/post is the only ordering users need |
 | PDC via latency nodes inserted at every summing node by a transform pass | Same rule, computed arithmetically for the three known summing points | No graph transform needed |
 | Multithreaded node player: lock-free node queue, dependency counting, six wait strategies | Fork-join over track and aux jobs inside the callback (2.9): two barriers, the audio thread takes jobs too, semaphore wait between blocks | No DAG, so the jobs are known at plan build; ordered summation gives bit-identical output for any worker count |
@@ -353,7 +361,7 @@ divides by the number of workers.
 
 **Why the track is the job.**
 [`Playback::process`](../../../Audionaut/Source/Engine/Playback/Playback.h#L91) renders every
-voice serially through one shared scratch buffer; a voice knows only its destination lane
+voice serially through one shared scratch buffer; a voice knows only its destination bus channel
 (`VoiceSource::destinationChannel = dstChannel + track->getChannelOffset()`,
 [`VoiceSource.cpp:147`](../../../Audionaut/Source/Engine/AudioSources/VoiceSource.cpp#L147)).
 The time-stretch bench shows where the time goes: Rubber Band R3 costs about 8 % of a 128-sample
@@ -367,7 +375,7 @@ its biggest win before the first effect exists; inserts are one more step inside
 audio thread, serial:  invoke commander, pull plan, schedule pass (start/stop voices, PlayListScheduler::process),
                        input monitor + recorder pass (unchanged), bucket active voices by track
 stage A, parallel over tracks (longest first):
-   job(t) = voices of t into its lanes → lane inserts → track inserts → PDC → gain + lane meter
+   job(t) = voices of t into its bus channels → channel inserts → track inserts → PDC → gain + channel meter
             → pan into trackOut[t] (stereo) and send taps into sendOut[t][a]
 ── barrier ──
 stage B, parallel over aux buses (skipped when no aux has inserts; the sums then fold into C):
@@ -375,29 +383,29 @@ stage B, parallel over aux buses (skipped when no aux has inserts; the sums then
 ── barrier ──
 stage C, audio thread, serial:
    main = Σ_t trackOut[t] in track order → dry PDC delay → + Σ_a auxOut[a] → master inserts → master gain
-   → device out; direct outs and stem copies from the post-gain lane buffers; master meter
+   → device out; direct outs and stem copies from the post-gain channel buffers; master meter
 ```
 
 **Track job in detail.**
 
 - Voice bucketing: after the schedule pass the audio thread walks `voices[MAX_VOICES]` once,
-  reads each active voice's lane (`VoiceSource::getDestinationChannel`) and counting-sorts the
-  voice indices by the lane's track into a fixed `voiceOrder[MAX_VOICES]` with per-track
+  reads each active voice's bus channel (`VoiceSource::getDestinationChannel`) and counting-sorts the
+  voice indices by the bus channel's track into a fixed `voiceOrder[MAX_VOICES]` with per-track
   begin/count. O(voices), no allocation; `Voice` and `VoiceSource` stay as they are. The job
-  table itself needs no plan: lanes of a track are contiguous and carry
-  `AudioChannelData::trackId`, so runs of equal `trackId` over the renderer's lane data are the
-  tracks (built per block, O(lanes)); once the `MixPlan` exists it supplies the table with the
+  table itself needs no plan: bus channels of a track are contiguous and carry
+  `AudioChannelData::trackId`, so runs of equal `trackId` over the renderer's channel data are the
+  tracks (built per block, O(bus channels)); once the `MixPlan` exists it supplies the table with the
   chains attached.
 - Each worker owns one mono scratch block: `processingBuffer` becomes `scratch[workerId]`. A
   voice's chain (`ClipTransportSource` → `StretchAudioSource` → `ClipResamplingSource` → reader)
   is per voice and only ever touched by the one job that owns its track, so its per-instance
   locks (`ClipResamplingSource::callbackLock`, `BufferingAudioSource`'s range lock) are never
   contended between jobs.
-- Per-lane state (`gains[i]`, `panners[i]`, `channelLevel[i]`, lane inserts, PDC delays) is
-  owned by exactly one job. A job writes only its track's lanes, its partial buffers and its own
+- Per-channel state (`gains[i]`, `panners[i]`, `channelLevel[i]`, channel inserts, PDC delays) is
+  owned by exactly one job. A job writes only its track's bus channels, its partial buffers and its own
   effects.
 - Partial buffers replace today's shared `stereoBuffer`/`mainMixBuffer` adds: `trackOut`
-  (tracks × 2 × maxBlock, sized to the lane maximum at prepare, 512 KB in Release) plus, from
+  (tracks × 2 × maxBlock, sized to the channel maximum at prepare, 512 KB in Release) plus, from
   the sends phase, one stereo block per existing (track, aux) send pair allocated at plan
   build, so send memory follows what the project uses.
 - **Determinism**: all sums run in track order on one thread, so the output is bit-identical for
@@ -458,7 +466,7 @@ stage C, audio thread, serial:
 
 - A worker pre-empted mid-job makes the audio thread wait. With RT priority and the workgroup
   this is rare, and it is the exposure every multicore DAW has. The audio thread cannot abandon a
-  job (the worker would write into lane buffers during the next block), so it waits; a wait
+  job (the worker would write into channel buffers during the next block), so it waits; a wait
   longer than two block periods counts a `stall` next to the `DspLoadMeter` overrun counter,
   shown in the header meter tooltip.
 - [`VoiceSource::waitForReadAhead`](../../../Audionaut/Source/Engine/AudioSources/VoiceSource.cpp#L74)
@@ -468,11 +476,11 @@ stage C, audio thread, serial:
   normal-priority read-ahead thread, also exists today on the audio thread; not made worse,
   listed for completeness.
 - Not parallelised: the schedule pass, stage C, and anything with a single job. One heavy track
-  still has to fit the budget alone. (The per-lane input monitor and recorder calls move into
+  still has to fit the budget alone. (The per-channel input monitor and recorder calls move into
   the track job, see 2.10.)
 
 **Render-ahead, a later option.** Because a track job is self-contained, a track with no
-monitored or record-armed lane could be rendered k blocks early on the workers *between*
+monitored or record-armed bus channel could be rendered k blocks early on the workers *between*
 callbacks into a per-track FIFO, decoupling bursty jobs (Rubber Band) from the callback deadline
 entirely. Timeline alignment is unchanged; what moves is control: parameter and fader changes
 take effect k blocks later (k = 2 at 128 samples = 5 ms, inaudible), and seeks, stop, loop wraps
@@ -482,31 +490,31 @@ phases: the fork-join renderer lands first and may make it unnecessary.
 
 ### 2.10 Track-to-track recording, prepared by phase 1
 
-A lane of track B can take its input from track A instead of a device channel, and record or
-monitor it. The per-track job already produces the signal (A's post-gain lane buffers and its
-panned `trackOut[A]`); what is missing is a way to name a track as a lane input and a guarantee
+A bus channel of track B can take its input from track A instead of a device channel, and record or
+monitor it. The per-track job already produces the signal (A's post-gain channel buffers and its
+panned `trackOut[A]`); what is missing is a way to name a track as a bus channel input and a guarantee
 that A's job has finished before B's job reads it.
 
-- **Input source model.** Today a lane's input is one int, `inputChannel`, resolved against the
+- **Input source model.** Today a bus channel's input is one int, `inputChannel`, resolved against the
   device input block
   ([`AudioBusRenderer.h:76`](../../../Audionaut/Source/Engine/Playback/AudioBusRenderer.h#L76),
   [`effectiveInputChannel`](../../../Audionaut/Source/Engine/Channel/AudioChannelData.h#L42)).
-  `AudioChannelData` gains a source kind: device channel, or track output (track id plus lane
-  index for a mono lane-to-lane patch, or L/R of the track's stereo output). The struct stays
+  `AudioChannelData` gains a source kind: device channel, or track output (track id plus bus channel
+  index for a mono channel-to-channel patch, or L/R of the track's stereo output). The struct stays
   scalar, so JSON (two optional keys), `commitChannelData`, `UndoableChannelAction` and the
-  strip's input selector extend without new mechanisms. Removing a track resets lanes that point
+  strip's input selector extend without new mechanisms. Removing a track resets bus channels that point
   at it, inside the same container snapshot.
 - **Dependency ordering in stage A.** The per-block job table gets a level: tracks without track
   inputs are level 0, a track whose sources are all level 0 is level 1, and so on. Stage A runs
   as one fork-join sub-stage per level: one extra barrier per level, nothing when the feature is
-  unused. Levels come from the lane data in O(tracks × depth) on the audio thread,
+  unused. Levels come from the channel data in O(tracks × depth) on the audio thread,
   allocation-free, with a depth cap. A cycle (A records B while B records A) leaves a track
   unassigned: its track inputs read silence and an atomic flag lets the UI show the conflict.
   Determinism and the serial path are unchanged, the sums still run in track order.
-- **Phase 1 preparation.** The monitor add and the recorder call are per lane, read only the
-  device input block and touch only that lane's recorder, so phase 1 moves them from the serial
+- **Phase 1 preparation.** The monitor add and the recorder call are per bus channel, read only the
+  device input block and touch only that bus channel's recorder, so phase 1 moves them from the serial
   input pass into `renderTrack`, and the stage dispatcher takes a level count. A track-sourced
-  lane is then a source switch: read from A's post-gain lane buffer or `trackOut[A]` instead of
+  bus channel is then a source switch: read from A's post-gain channel buffer or `trackOut[A]` instead of
   the input block. The recorder, its disk thread and the take-to-region step do not change.
 - **Placement.** A device take is placed by the block's output time and, from phase 4, corrected
   for the device round trip. A track-sourced take must not get that correction, because the
@@ -535,12 +543,12 @@ renderer in job form for the effect phases.
    `next`/`remaining`, audio-thread participation + spin-wait, `startRealtimeThread` options,
    `WorkgroupToken` per worker, MMCSS call on Windows, stall counter.
 2. `AudioBusRenderer`: sub-block fix; job table per block from runs of equal
-   `AudioChannelData::trackId` over the lanes, insertion-sorted by the per-job cost EMA;
+   `AudioChannelData::trackId` over the bus channels, insertion-sorted by the per-job cost EMA;
    voice bucketing; per-worker scratch (`Playback::process` becomes
    `Playback::processVoice(index, scratch)`); `renderTrack(t, workerId)` (voices of the track,
    gain + meter, pan into `trackOut[t]`), `renderMaster()` (ordered sum, master gain, direct
    outs, stems); stages A and C from 2.9, stage B arrives with the aux buses; `trackOut` sized
-   to the lane maximum at prepare. Preparation for 2.10: the per-lane monitor add and recorder
+   to the channel maximum at prepare. Preparation for 2.10: the per-channel monitor add and recorder
    call move into `renderTrack`, and the dispatcher runs stage A per level (one level today).
 3. `LinkAudioDevice::audioDeviceAboutToStart`: workgroup to the pool;
    `PlayListScheduler::prepareToPlay` sizes the pool for the live device only; `bounceProject`
@@ -554,7 +562,17 @@ renderer in job form for the effect phases.
    stall count stays 0. Bench case: 8 stretched tracks at 0 / 1 / 3 / 7 workers (the website
    performance page blocker).
 
-### Phase 2: Effect interface, built-ins, inserts (lane, track, master), MixPlan
+### Phase 2: Effect interface, built-ins, inserts (channel, track, master), MixPlan
+
+Built on `feature/effects-inserts` (2026-10-30). As built: the `MixPlan` lists `Channel`, `Track`
+and `master` slots plus a `trackAtChannel` lookup; the renderer keeps its per-block job table
+from the channel data and finds a job's track inserts by the job's first bus channel, skipping
+them when the plan's channel count disagrees (the layout race). Slots carry the bypass
+crossfade; the dry delay for latency waits for phase 4. A live slot whose format changes
+(channel count, sample rate, a longer block) is replaced by a fresh instance with the same state
+rather than re-prepared under the audio thread. The CLI verbs are `add-insert`, `remove-insert`,
+`set-insert` and `list-effects`, the MCP tools `add_insert`, `remove_insert`, `set_insert` and
+`list_effects`; `info` lists every chain.
 
 Build order:
 
@@ -572,9 +590,9 @@ Build order:
    write in `writeChannelToJson`, read in `readFromJson` and `mergeChannelFromJson`.
 7. `AudioTrackContainer.h/.cpp`: `masterInserts`, `"master_inserts"`, planner setter,
    `requestRebuild()` in `publishNumAudioTrackChannels`.
-8. `AudioBusRenderer.h/.cpp`: pull plan, clamping; the phase-1 `renderTrack` gains lane inserts
+8. `AudioBusRenderer.h/.cpp`: pull plan, clamping; the phase-1 `renderTrack` gains channel inserts
    and track inserts, `renderMaster` gains master inserts before `masterGain.process`; the job
-   table and `laneToTrack` come from the plan from now on (built at rebuild instead of per
+   table and `channelToJob` come from the plan from now on (built at rebuild instead of per
    block), the per-block cost sort stays.
 9. `PlayListScheduler.cpp`: `planner.prepare()` before the bus in `prepareToPlay`; flush pending
    rebuild in `bounceProject`.
@@ -586,41 +604,74 @@ Build order:
     --enabled`, `list-effects`; dispatch table; `ProjectSummary`; MCP tools + `test.mjs` list.
 13. Jucer entries + resave; tests `Catch2Tests/Tests/EffectTests.cpp` (registry creates every
     built-in for 1 and 2 channels; state round trip deterministic), `InsertRenderTests.cpp`
-    (Trim −6 dB on one lane halves that lane in `LiveBlockDriver` render and in `bounceProject`;
-    track insert sees both lanes; master insert affects main only, not direct outs; add/remove
+    (Trim −6 dB on one bus channel halves that bus channel in `LiveBlockDriver` render and in `bounceProject`;
+    track insert sees both bus channels; master insert affects main only, not direct outs; add/remove
     insert while playing stays click-free, `compareBuffers` vs bounce; undo/redo restores JSON and
     keeps effect instances; save/reopen; legacy project loads with empty chains; headless
     add-insert then export applies the insert; CLI envelope test; pool 0 / 3 bit-identical with
-    inserts). Bench case: 64 lanes EQ + compressor at 0 / 1 / 3 / 7 workers.
+    inserts). Bench case: 64 channels EQ + compressor at 0 / 1 / 3 / 7 workers.
 
 ### Phase 3: Sends and aux buses
 
+Built on `feature/effects-sends` (2026-10-31, off `feature/effects-inserts`). As built: `AuxBus`
+holds a `shared_ptr<AuxState>` (gain, balance, mute, solo atomics plus the return meter) and an
+`InsertChain`; `AuxBusContainer` is a member of `AudioTrackContainer`, starts with the two
+defaults at construction and on `cleanup()`, reads `"aux_buses"` in place by id (absent key =
+defaults, empty array = none), and never reuses an id. `SendList` is a sibling of `inserts` on
+`AudioChannel`, one `SendEntry {auxId, shared_ptr<SendState>}` per aux at most, kept in aux id
+order, `"sends"` written only when there is one. The plan gains `Send {aux, pair, state, gain}` per
+channel, `Aux {id, state, pairs, inserts, gainLeft, gainRight}` in strip order, and owns the
+`sendOutput` (one stereo pair per send) and `auxOutput` (one per aux) buffers, sized at build;
+the planner seeds every `juce::dsp::Gain` at its target before `prepare`, so a new plan never
+ramps. Send levels and aux return gains are linear like the channel gain; the return balance
+attenuates the side it turns away from (`left = gain · min(1, 1 − b)`, `right = gain · min(1, 1 + b)`)
+and does not move signal across. Aux solo: with any aux soloed the dry main mix (a `dryGain` on the
+renderer) and the non-soloed returns go silent; sends follow channel mute/solo unless pre-fader.
+Pre-fader taps use the panner's balanced rule statelessly from `AudioChannelData::pan`; post-fader
+taps reuse the panned block the main mix gets. `removeAuxBus` on the container drops every send
+into the bus (undo brings both back through the snapshot). Stage B runs through the pool only when
+there is more than one aux. A one-channel output (mono device, mono bounce, `monoMain`) has no
+pan: its sends tap the bus channel as it is on both sides, the return gain ignores balance, and the
+return's first side joins the mono mix; a stem export carries no sends or returns (its outputs are
+the dry bus channels). Merged with develop after PR #246 (the inserts review round) on 2026-10-31. CLI: `add-aux [--name]`, `remove-aux --aux`,
+`set-aux --aux [--name] [--gain] [--balance] [--mute] [--solo]`, `set-send --track [--channel]
+--aux [--level] [--pre-fader] [--mute]` (every channel of the track without `--channel`; the send
+is made on first set), `remove-send`; the insert verbs take `--aux ID` as a chain; `info` lists
+`auxBuses` and per-channel `sends`. MCP: `add_aux`, `remove_aux`, `set_aux`, `set_send`,
+`remove_send`, `aux` on the chain params (32 tools). Undo: `UndoableSendAction`,
+`UndoableAuxAction` for values, `InsertChainAddress::ofAux` for aux inserts.
+
 1. `Effects/AuxBus.h/.cpp`, `AuxBusContainer.h/.cpp` (stable ids, `AuxState` atomics, insert
-   chain), `SendEntry.h` (`SendState` atomics), `SendList`.
+   chain, `createDefaults()` = "Aux 1" and "Aux 2"), `SendEntry.h` (`SendState` atomics),
+   `SendList`.
 2. `AudioChannel`: `sends` member + JSON; `AudioTrackContainer` owns `AuxBusContainer`,
-   `"aux_buses"` JSON, rebuild on add/remove.
-3. `MixPlan`/`MixerPlanner`: `sendOut` partials per (track, aux) pair sized at build, per-lane
+   `"aux_buses"` JSON (written always, read in place by id; a missing key creates the two
+   defaults, an empty array means the user removed them), defaults created in `cleanup()` so a
+   new project starts with them, rebuild on add/remove.
+3. `MixPlan`/`MixerPlanner`: `sendOut` partials per (track, aux) pair sized at build, per-channel
    sends, aux chains, aux solo folded into the solo rule.
-4. `AudioBusRenderer.h`: post-fader taps from the lane's panned stereo in `renderTrack`,
+4. `AudioBusRenderer.h`: post-fader taps from the bus channel's panned stereo in `renderTrack`,
    pre-fader taps with the balanced gain pair before `gains[i].process`, `renderAux(a, workerId)`
    as the stage B job (ordered sum of `sendOut[·][a]` → inserts → return gain/balance/mute →
    meter), aux returns summed into the main mix in stage C before master inserts.
 5. Undo (`applyAsUndoableEdit` for structure, `UndoableSendAction` for levels), CLI
    `add-aux`/`remove-aux`/`set-aux`/`set-send --track --channel --aux --level [--pre-fader]
-   [--mute]`, MCP, `ProjectSummary`, jucer, tests `SendRenderTests.cpp` (level −inf → aux silent;
-   pre vs post fader with lane gain 0; aux insert Trim; mute/solo matrix incl. aux solo; JSON
-   round trip; undo).
+   [--mute]`, MCP, `ProjectSummary`, jucer, tests `SendRenderTests.cpp` (new project has Aux 1
+   and Aux 2 and renders silence to both; legacy project without `aux_buses` opens with the two
+   defaults, saved JSON lists them; a project saved with an empty `aux_buses` array stays empty;
+   level −inf → aux silent; pre vs post fader with channel gain 0; aux insert Trim; mute/solo
+   matrix incl. aux solo; JSON round trip; undo of remove-aux brings the bus back with its sends).
 
 ### Phase 4: Latency compensation and export alignment
 
-- `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per lane/aux/main/direct;
+- `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per channel/aux/main/direct;
   arithmetic from 2.4 in `MixerPlanner::build`; delay state carried over by id; bypass delay in
   the slot.
 - Planner publishes `totalLatency` (atomic samples). `LinkAudioDevice` adds it to the output-time
   term that feeds `beatAtTime` and `LinkEngine::audioCallback`; `Recording` subtracts it (plus
   device round-trip latency) from the take's start position; `bounceProject` pre-rolls by `L` and
   drops `L` samples, optional tail extension.
-- Test-only `LatencyTestEffect(N)` registry entry: a click on lane A with latency 512 and lane B
+- Test-only `LatencyTestEffect(N)` registry entry: a click on channel A with latency 512 and channel B
   without lands on the same sample in the bounce; aux chain latency keeps dry/wet aligned; bypass
   toggle keeps alignment; with the fake device and a 480-sample insert, a click scheduled at beat
   1 leaves the output at the same device sample as without the insert (Link compensation); a
@@ -660,11 +711,11 @@ Build order:
 
 Can land any time after phase 1.
 
-1. `AudioChannelData`: `inputSource` kind + `inputTrackId` + `inputLane` scalars, optional JSON
+1. `AudioChannelData`: `inputSource` kind + `inputTrackId` + `inputChannelIndex` scalars, optional JSON
    keys, `effectiveInput()` replaces `effectiveInputChannel`; `AudioTrackContainer::removeTrack`
    resets dependents in the snapshot.
 2. `AudioBusRenderer`: levels in the job table, stage A per level, source switch in
-   `renderTrack` (device block, A's post-gain lane, `trackOut[A]` L/R), cycle flag; "internal
+   `renderTrack` (device block, A's post-gain bus channel, `trackOut[A]` L/R), cycle flag; "internal
    only" output value for `outputChannel`.
 3. `Recording`: per-source placement latency (device round trip vs. source pre-fader delay).
 4. CLI `track-input`, MCP tool, `info`, undo via `UndoableChannelAction`; strip input menu
@@ -678,7 +729,7 @@ Can land any time after phase 1.
 ```
 cmake -B build -S Audionaut/Catch2Tests && cmake --build build -j8
 ./build/AudionautTests_artefacts/AudionautTests "[effects]"
-./build/AudionautTests_artefacts/AudionautTests "[.][bench]"      # CPU before/after on the 64-lane project
+./build/AudionautTests_artefacts/AudionautTests "[.][bench]"      # CPU before/after on the 64-channel project
 ```
 
 Then the app build (jucer resave, Xcode Debug): play the bench project with inserts while adding
