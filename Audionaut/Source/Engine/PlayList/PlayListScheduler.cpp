@@ -28,6 +28,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 
 using namespace::std::chrono;
@@ -75,6 +76,9 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     bufferSize = samplesPerBlockExpected;
     voiceSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    // the inserts' format, published as a plan before the bus renders with it
+    if (auto* planner = audioTrackContainer->getMixerPlanner())
+        planner->prepare(sampleRate, samplesPerBlockExpected);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
@@ -743,6 +747,12 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // out to silence. Safe here: the exporter bypasses the device callback,
     // so this thread is the only one draining the queue.
     audioBusInterface->invokeCommands();
+
+    // the inserts start the bounce from rest, as the voices do: no
+    // envelope, delay line or bypass crossfade carried over from live
+    // playback or the previous bounce, so two bounces of one project are
+    // the same file
+    audioBusInterface->resetInserts();
 
     // remember last position. The bounce bypasses the device, so whether
     // Link reports playing says nothing about it - and right after a Stop

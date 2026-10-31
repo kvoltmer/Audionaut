@@ -203,13 +203,13 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all twenty-three tools listed",
+    "all twenty-seven tools listed",
     JSON.stringify(names) ===
-      JSON.stringify(["analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades", "clip_gain",
-                      "clip_speed", "create_project", "create_region", "export_audio", "get_project_info",
-                      "import_audio", "move_clip", "place_clip", "remove_channel", "remove_clip",
-                      "remove_track", "report_bug", "request_feature", "separate_stems", "set_region",
-                      "split", "track_pan"]),
+      JSON.stringify(["add_insert", "analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades",
+                      "clip_gain", "clip_speed", "create_project", "create_region", "export_audio",
+                      "get_project_info", "import_audio", "list_effects", "move_clip", "place_clip",
+                      "remove_channel", "remove_clip", "remove_insert", "remove_track", "report_bug",
+                      "request_feature", "separate_stems", "set_insert", "set_region", "split", "track_pan"]),
     names.join(",")
   );
 
@@ -405,6 +405,45 @@ try {
     arguments: { project, track: 0, pan: -0.5 },
   });
   check("track_pan", !panned.isError && panned.content[0].text.includes("pans"), panned.content?.[0]?.text);
+
+  // Insert effects: the types, then a trim on track 0's first strip, set, listed, removed.
+  const effects = await client.callTool({ name: "list_effects", arguments: {} });
+  check(
+    "list_effects",
+    !effects.isError && effects.content[0].text.includes("builtin:trim") && effects.content[0].text.includes("gain_db"),
+    effects.content?.[0]?.text
+  );
+
+  const inserted = await client.callTool({
+    name: "add_insert",
+    arguments: { project, track: 0, channel: 0, type: "builtin:trim" },
+  });
+  check("add_insert", !inserted.isError && inserted.content[0].text.includes("builtin:trim"), inserted.content?.[0]?.text);
+
+  const insertSet = await client.callTool({
+    name: "set_insert",
+    arguments: { project, track: 0, channel: 0, index: 0, param: "gain_db", value: -6 },
+  });
+  check("set_insert", !insertSet.isError && insertSet.content[0].text.includes("-6"), insertSet.content?.[0]?.text);
+
+  const infoWithInsert = await client.callTool({ name: "get_project_info", arguments: { project } });
+  check(
+    "get_project_info lists the insert",
+    !infoWithInsert.isError && infoWithInsert.content[0].text.includes("builtin:trim"),
+    infoWithInsert.content?.[0]?.text
+  );
+
+  const uninserted = await client.callTool({
+    name: "remove_insert",
+    arguments: { project, track: 0, channel: 0, index: 0 },
+  });
+  check("remove_insert", !uninserted.isError && uninserted.content[0].text.includes("removed"), uninserted.content?.[0]?.text);
+
+  const badInsert = await client.callTool({
+    name: "add_insert",
+    arguments: { project, track: 0, type: "builtin:nothing" },
+  });
+  check("add_insert of an unknown type is a tool error", badInsert.isError === true, badInsert.content?.[0]?.text);
 
   // Structure edits last: they remove the strips the flow above worked on.
   const channelGone = await client.callTool({

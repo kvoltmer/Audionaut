@@ -98,6 +98,10 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     const double latency = static_cast<double>(deviceLatency) / linkEngine->mSampleRate;
     linkEngine->mOutputLatency.store(duration_cast<microseconds>(duration<double>{latency}));
 
+    // from here on the callback drains the commands posted to the renderer
+    if (playListScheduler != nullptr)
+        playListScheduler->getAudioBusInterface()->setDeviceRunning (true);
+
     // the render workers join the device's audio workgroup (CoreAudio; empty
     // elsewhere), so the scheduler runs them as part of the audio deadline
     workgroup = device->getWorkgroup();
@@ -107,6 +111,16 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
 void LinkAudioDevice::audioDeviceStopped()
 {
     stopRenderThreads();
+
+    // no callback runs any more: what was posted since the last one (a mix
+    // plan, channel data) is run here, and later posts are pumped as they
+    // come, so a stopped device does not hold edits back from the renderer
+    if (playListScheduler != nullptr)
+    {
+        auto bus = playListScheduler->getAudioBusInterface();
+        bus->setDeviceRunning (false);
+        bus->invokeCommands();
+    }
 
     // nothing to restart until the next start: a Processing setting changed
     // while the device is stopped waits for it, and the workgroup is the

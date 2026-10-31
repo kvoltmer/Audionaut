@@ -101,6 +101,8 @@
                 file="Source/Cli/Commands/SeparateCommand.cpp"/>
           <FILE id="CliTr1" name="TrackCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/TrackCommands.cpp"/>
+          <FILE id="CliEfC" name="EffectCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/EffectCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
@@ -310,6 +312,36 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
           <FILE id="ClOvTg1" name="ClipOverlayTarget.h" compile="0" resource="0" file="Source/Engine/Selection/ClipOverlayTarget.h"/>
         </GROUP>
+        <GROUP id="{3E7F1A52-9C04-4B8D-A6E1-2F5D7C9B0E41}" name="Effects">
+          <GROUP id="{5B9D2C73-1E86-4F0A-B7C2-8A3E6D1F4C92}" name="BuiltIn">
+            <FILE id="EfBCmp" name="CompressorEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/CompressorEffect.h"/>
+            <FILE id="EfBEq3" name="Eq3Effect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/Eq3Effect.h"/>
+            <FILE id="EfBTrm" name="TrimEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/TrimEffect.h"/>
+          </GROUP>
+          <FILE id="EfEffH" name="Effect.h" compile="0" resource="0" file="Source/Engine/Effects/Effect.h"/>
+          <FILE id="EfRegC" name="EffectRegistry.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/EffectRegistry.cpp"/>
+          <FILE id="EfRegH" name="EffectRegistry.h" compile="0" resource="0"
+                file="Source/Engine/Effects/EffectRegistry.h"/>
+          <FILE id="EfSltH" name="EffectSlot.h" compile="0" resource="0"
+                file="Source/Engine/Effects/EffectSlot.h"/>
+          <FILE id="EfInsC" name="InsertChain.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/InsertChain.cpp"/>
+          <FILE id="EfInsH" name="InsertChain.h" compile="0" resource="0"
+                file="Source/Engine/Effects/InsertChain.h"/>
+          <FILE id="EfPlnH" name="MixPlan.h" compile="0" resource="0" file="Source/Engine/Effects/MixPlan.h"/>
+          <FILE id="EfPlCC" name="MixPlanContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/MixPlanContainer.cpp"/>
+          <FILE id="EfPlCH" name="MixPlanContainer.h" compile="0" resource="0"
+                file="Source/Engine/Effects/MixPlanContainer.h"/>
+          <FILE id="EfMxPC" name="MixerPlanner.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/MixerPlanner.cpp"/>
+          <FILE id="EfMxPH" name="MixerPlanner.h" compile="0" resource="0"
+                file="Source/Engine/Effects/MixerPlanner.h"/>
+        </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
           <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
                 file="Source/Engine/Core/LockFreeCommander.h"/>
@@ -509,6 +541,8 @@
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
           <FILE id="UndChn" name="UndoableChannelAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableChannelAction.h"/>
+          <FILE id="UndEfP" name="UndoableEffectParameterAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableEffectParameterAction.h"/>
           <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEdit.h"/>
           <FILE id="UndPLI" name="UndoablePlayListItemAction.h" compile="0" resource="0"

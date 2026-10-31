@@ -115,6 +115,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/ClipCommands_465a1bd1.o \
   $(JUCE_OBJDIR)/SeparateCommand_b9775fb9.o \
   $(JUCE_OBJDIR)/TrackCommands_a6175784.o \
+  $(JUCE_OBJDIR)/EffectCommands_3279f92.o \
   $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
   $(JUCE_OBJDIR)/AgentProtocol_7aaf204f.o \
   $(JUCE_OBJDIR)/AgentClient_c1a08c82.o \
@@ -160,6 +161,10 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/Mp3AudioFormat_a0828914.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
+  $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o \
+  $(JUCE_OBJDIR)/InsertChain_a4a5e8f7.o \
+  $(JUCE_OBJDIR)/MixPlanContainer_ea9e0c97.o \
+  $(JUCE_OBJDIR)/MixerPlanner_835e4444.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
   $(JUCE_OBJDIR)/AutoEdit_95866c4b.o \
   $(JUCE_OBJDIR)/AutoEditParameter_df9b8e8.o \
@@ -481,6 +486,11 @@ $(JUCE_OBJDIR)/TrackCommands_a6175784.o: ../../Source/Cli/Commands/TrackCommands
 	@echo "Compiling TrackCommands.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/EffectCommands_3279f92.o: ../../Source/Cli/Commands/EffectCommands.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling EffectCommands.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling CliDispatch.cpp"
@@ -704,6 +714,26 @@ $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o: ../../Source/Engine/Export/AudioExp
 $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o: ../../Source/Engine/Selection/SelectionManager.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling SelectionManager.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o: ../../Source/Engine/Effects/EffectRegistry.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling EffectRegistry.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/InsertChain_a4a5e8f7.o: ../../Source/Engine/Effects/InsertChain.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling InsertChain.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/MixPlanContainer_ea9e0c97.o: ../../Source/Engine/Effects/MixPlanContainer.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling MixPlanContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/MixerPlanner_835e4444.o: ../../Source/Engine/Effects/MixerPlanner.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling MixerPlanner.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/DspClip_7236184f.o: ../../Source/Engine/Core/DspClip.cpp

@@ -19,6 +19,7 @@
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Undo/UndoableChannelAction.h"
 #include "Engine/Undo/UndoableEdit.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 namespace audium {
 
@@ -53,7 +54,8 @@ AudioTrack::AudioTrack(AudioTrackContainer &owner_,
     analysisProvider(analysisProvider_),
     resourceGroupContainer(resourceGroups_),
     audioChannelContainer(channels_),
-    name(nameString_.toStdString())
+    name(nameString_.toStdString()),
+    trackInserts(owner_.getMixerPlanner())
 {
     playListContainer = std::shared_ptr<PlayListContainer> (new PlayListContainer(*this,
                                                                                   owner.getTempoProvider(),
@@ -109,6 +111,7 @@ bool AudioTrack::writeToJson (json& output)
 {
     output["name"] = name;
     viewState.writeToJson(output);
+    trackInserts.writeToJson(output);
 
     return writeChannelToJson(output, nullptr);
 }
@@ -116,8 +119,11 @@ bool AudioTrack::writeToJson (json& output)
 bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
 {
     for (auto channel : audioChannelContainer->getObjects()) {
-        if (audioChannel == nullptr || channel.get() == audioChannel)
-            output["channels"] += channel->data;
+        if (audioChannel == nullptr || channel.get() == audioChannel) {
+            json element = channel->data;
+            channel->inserts.writeToJson(element);
+            output["channels"] += element;
+        }
     }
     
     for (auto resourceGroup : resourceGroupContainer->getObjects()) {
@@ -143,6 +149,7 @@ void AudioTrack::mergeChannelFromJson(json& input)
         destChannel = channel->getChannelNumber();
         channel->data = jsonElement;
         channel->commitChannelData();
+        channel->inserts.readFromJson(jsonElement);
     }
     jassert(destChannel != -1);
     
@@ -180,6 +187,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         name = input["name"].template get<std::string>();
 
     viewState.readFromJson(input);
+    trackInserts.readFromJson(input);
 
     // Channels
     auto jsonChannels = input["channels"];
@@ -205,6 +213,7 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         if (channel != nullptr) {
             channel->data = jsonElement;
             channel->commitChannelData();
+            channel->inserts.readFromJson(jsonElement);
         }
         c++;
     }
@@ -249,6 +258,7 @@ int AudioTrack::getNumAudioTrackChannels() const
 
 void AudioTrack::ensureNumChannels(int channelsNeeded)
 {
+    MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
     while (getNumAudioTrackChannels() < channelsNeeded)
     {
         if (addChannel() == nullptr)
@@ -259,6 +269,8 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
     if (getAudioTrackContainer().getNumAudioTrackChannels() < MAX_AUDIO_CHANNELS) {
+        // the plan follows once the layout below is committed
+        MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
         auto channel = std::make_shared<AudioChannel>(*this,
                                                       selectionManager,
                                                       getAudioTrackContainer().audioBusInterface);
@@ -564,6 +576,7 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     bool result = false;
     
     if (audioChannelContainer->objectExists(channel)) {
+        MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
         const auto channelNumber = channel->getChannelNumber();
         const auto previousNumChannels = owner.getNumAudioTrackChannels();
         audioResourceContainer.onDeleteChannel(this, channel);

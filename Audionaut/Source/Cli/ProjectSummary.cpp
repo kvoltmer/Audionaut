@@ -4,6 +4,9 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "Cli/ProjectSummary.h"
+
+#include "Engine/Channel/AudioChannel.h"
+#include "Engine/Effects/InsertChain.h"
 #include "Engine/Project/ProjectFileStore.h"
 
 #include "Engine/AudiumEngine.h"
@@ -17,6 +20,23 @@
 
 namespace audium {
 namespace cli {
+
+nlohmann::json describeInsert (const EffectSlot& slot, int index)
+{
+    return { { "index", index },
+             { "type", slot.getEffect().getType().id },
+             { "name", slot.getEffect().getType().name },
+             { "enabled", slot.isEnabled() },
+             { "state", slot.getEffect().getState() } };
+}
+
+nlohmann::json describeInserts (const InsertChain& chain)
+{
+    auto inserts = nlohmann::json::array();
+    for (auto i = 0; i < chain.size(); ++i)
+        inserts.push_back (describeInsert (*chain.getSlot (i), i));
+    return inserts;
+}
 
 nlohmann::json makeProjectSummary (AudiumEngine& engine)
 {
@@ -36,11 +56,14 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
         auto numChannels = static_cast<int> (track->audioChannelContainer->objects.size());
         trackJson["numChannels"] = numChannels;
 
-        // the channel strips' mixer state an agent can set (track-pan)
+        // the channel strips' mixer state an agent can set (track-pan,
+        // add-insert): pan and the strip's insert chain
         auto channels = nlohmann::json::array();
         for (int channel = 0; channel < numChannels; ++channel)
-            channels.push_back ({ { "pan", track->getPan (channel) } });
+            channels.push_back ({ { "pan", track->getPan (channel) },
+                                  { "inserts", describeInserts (track->getChannel (channel)->inserts) } });
         trackJson["channels"] = channels;
+        trackJson["inserts"] = describeInserts (track->getTrackInserts());
 
         auto clips = nlohmann::json::array();
         for (auto& item : track->getPlayListContainer()->getPlayListItems()) {
@@ -66,6 +89,7 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
     }
 
     summary["tracks"] = tracks;
+    summary["masterInserts"] = describeInserts (trackContainer->getMasterInserts());
     return summary;
 }
 

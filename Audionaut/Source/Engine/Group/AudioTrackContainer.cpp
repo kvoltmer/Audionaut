@@ -19,13 +19,24 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/PlayList/TransportLoop.h"
 #include "Engine/Group/WaveFormColours.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 namespace audium {
 
 AudioTrackContainer::~AudioTrackContainer()
 {
+    if (mixerPlanner != nullptr)
+        mixerPlanner->setSource(nullptr);
     undoManager = nullptr;
     jassert(audioTracks.empty());
+}
+
+void AudioTrackContainer::setMixerPlanner(std::shared_ptr<MixerPlanner> planner)
+{
+    mixerPlanner = std::move(planner);
+    masterInserts.setPlanner(mixerPlanner.get());
+    if (mixerPlanner != nullptr)
+        mixerPlanner->setSource(this);
 }
 
 void AudioTrackContainer::setMasterGain(const float newGain)
@@ -43,6 +54,7 @@ const float AudioTrackContainer::getMasterGain() const noexcept
 
 void AudioTrackContainer::cleanup()
 {
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
     selectionManager->clear();
     voiceSourceContainer->cleanup();
     audioResourceContainer->cleanup();
@@ -53,6 +65,9 @@ void AudioTrackContainer::cleanup()
         track->cleanup();
     }
     audioTracks.clear();
+    // the main mix's inserts go with the project they belong to: the plan
+    // built when the batch closes has no master chain either
+    masterInserts.clear();
     publishNumAudioTrackChannels();
     commitChannelLayout(0, previousNumChannels);
 }
@@ -89,6 +104,7 @@ int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> sear
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce::String nameString)
 {
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
     auto audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
@@ -109,6 +125,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     });
     
     if (it != audioTracks.end()) {
+        MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
         const auto previousNumChannels = getNumAudioTrackChannels();
         const auto index = static_cast<std::size_t>(std::distance(audioTracks.begin(), it));
 
@@ -193,7 +210,7 @@ bool AudioTrackContainer::writeToJson (json& output)
         output["audio_tracks"] += j;
     }
     output["master_gain"] = getMasterGain();
-    
+    masterInserts.writeToJson(output, "master_inserts");
     output["loop_data"] = transportLoop->getLoopData();
     
     return true;
@@ -201,6 +218,9 @@ bool AudioTrackContainer::writeToJson (json& output)
 
 bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
 {
+    // one plan for the whole read, after every chain and channel is in
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
+
     json jsonTracks;
     if (input.contains("audio_tracks")) {
         jsonTracks = input["audio_tracks"];
@@ -226,7 +246,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     else {
         setMasterGain(1.f);
     }
-    
+    masterInserts.readFromJson(input, "master_inserts");
     
     int count = 0;
     for (auto& jsonElement : jsonTracks) {
@@ -311,6 +331,13 @@ int AudioTrackContainer::getNumAudioTrackChannels() const
 void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
 {
     publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
+
+    // every path that adds or removes a channel or a track comes through
+    // here: the plan's channel and track lists follow. The paths open a
+    // planner batch, so the plan is built and posted once, after the layout
+    // they commit next, and the render thread takes both over together.
+    if (mixerPlanner != nullptr)
+        mixerPlanner->requestRebuild();
 }
 
 void AudioTrackContainer::commitChannelLayout(std::size_t firstTrack, int previousNumChannels)

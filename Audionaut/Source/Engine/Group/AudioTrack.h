@@ -17,6 +17,7 @@
 #include "Engine/Selection/SelectableObjectContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Engine/Effects/InsertChain.h"
 
 namespace audium {
 
@@ -215,6 +216,8 @@ public:
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
     std::shared_ptr<AnalysisProvider> getAnalysisProvider() const { return analysisProvider; }
+    /** The track's own inserts: they see all its bus channels at once, after the channels' inserts. */
+    InsertChain& getTrackInserts() noexcept { return trackInserts; }
     
 private:
     AudioTrackContainer &owner; ///< Reference to the owning container.
@@ -229,6 +232,7 @@ public:
 
 private:
     std::string name; ///< Name of the audio track.
+    InsertChain trackInserts; ///< The track's insert effects (JSON key "inserts" of the track).
     AudioTrackViewState viewState { *this }; ///< View/display state of the audio track.
     std::unique_ptr<UndoableChannelAction> undoableChannelAction; ///< Pending channel-parameter undo step.
     bool lastReadRebuiltChannels = false; ///< Set by readFromJson(): the channels were replaced.

@@ -191,7 +191,8 @@ async function runCli(args, pathIndexes = [], extra = undefined) {
   if (!cli.path) return errorResult(notFoundMessage(cli));
 
   args = [...args];
-  const paths = [1, ...pathIndexes];
+  // the project path, where the verb takes one (list-effects takes none)
+  const paths = [1, ...pathIndexes].filter((index) => index < args.length);
   for (const index of paths) args[index] = userPath(args[index]);
 
   if (cli.sandboxed && !process.env.AUDIONAUT_SKIP_PATH_CHECK) {
@@ -867,6 +868,112 @@ server.registerTool(
       "--pan",
       String(pan),
       ...(channel !== undefined ? ["--channel", String(channel)] : []),
+    ]))
+);
+
+// Insert effects. A chain is one channel strip's (track + channel), a track's
+// own (track alone: it processes all the track's channels together, after the
+// strips' chains) or the master's (master: true); the CLI verbs take the same
+// three forms.
+const chainParams = {
+  track: z.number().int().min(0).optional().describe("Track id (with channel: one strip's chain; alone: the track's chain)"),
+  channel: z.number().int().min(0).optional().describe("Channel strip (0-based) of the track"),
+  master: z.boolean().optional().describe("The master chain, before master gain"),
+};
+const chainArgs = ({ track, channel, master }) => [
+  ...(track !== undefined ? ["--track", String(track)] : []),
+  ...(channel !== undefined ? ["--channel", String(channel)] : []),
+  ...(master ? ["--master"] : []),
+];
+
+server.registerTool(
+  "list_effects",
+  {
+    title: "List effect types",
+    description:
+      "The effect types add_insert can create (built-in: Trim, EQ, Compressor), each with its parameters: " +
+      "id, name, unit, range and default. Needs no project.",
+    inputSchema: {},
+  },
+  async () => runCli(["list-effects"])
+);
+
+server.registerTool(
+  "add_insert",
+  {
+    title: "Add an insert effect",
+    description:
+      "Inserts an effect (a type id from list_effects, e.g. builtin:eq3) into a chain: a channel strip's " +
+      "(track + channel), a track's own (track alone) or the master's (master). Appends by default, or at " +
+      "position at; all_channels adds one to every strip of the track. Parameters start at their defaults: " +
+      "set them with set_insert. Playback and export_audio both run the inserts; get_project_info lists them.",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      all_channels: z.boolean().optional().describe("With track: one insert on every strip of the track"),
+      type: z.string().describe("Effect type id, e.g. builtin:trim, builtin:eq3, builtin:compressor"),
+      at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, type, at, all_channels, ...chain }) =>
+    runCli([
+      "add-insert",
+      project,
+      ...chainArgs(chain),
+      ...(all_channels ? ["--all-channels"] : []),
+      "--type",
+      type,
+      ...(at !== undefined ? ["--at", String(at)] : []),
+    ]))
+);
+
+server.registerTool(
+  "remove_insert",
+  {
+    title: "Remove an insert effect",
+    description:
+      "Removes the insert at index (0-based, as get_project_info lists them) from a chain named like " +
+      "add_insert names it. The inserts after it move up.",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      index: z.number().int().min(0).describe("Slot index in the chain"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, index, ...chain }) =>
+    runCli(["remove-insert", project, ...chainArgs(chain), "--index", String(index)]))
+);
+
+server.registerTool(
+  "set_insert",
+  {
+    title: "Set an insert's parameter or enabled state",
+    description:
+      "Sets parameter param (an id from list_effects, e.g. gain_db) of the insert at index to value, clamped " +
+      "to the parameter's range, and/or enables or disables the insert. A disabled insert passes the " +
+      "signal through unchanged.",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      index: z.number().int().min(0).describe("Slot index in the chain"),
+      param: z.string().optional().describe("Parameter id, e.g. gain_db"),
+      value: z.number().optional().describe("The new value (goes with param)"),
+      enabled: z.boolean().optional().describe("Switch the insert on or off"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, index, param, value, enabled, ...chain }) =>
+    runCli([
+      "set-insert",
+      project,
+      ...chainArgs(chain),
+      "--index",
+      String(index),
+      ...(param !== undefined ? ["--param", param] : []),
+      ...(value !== undefined ? ["--value", String(value)] : []),
+      ...(enabled !== undefined ? ["--enabled", enabled ? "on" : "off"] : []),
     ]))
 );
 

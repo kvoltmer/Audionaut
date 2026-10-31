@@ -11,6 +11,7 @@
 #include "Engine/Selection/Selectable.h"
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Playback/AudioBusInterface.h"
+#include "Engine/Effects/InsertChain.h"
 
 namespace audium
 {
@@ -35,12 +36,7 @@ public:
      */
     AudioChannel(AudioTrack &audioTrack_,
                  std::shared_ptr<SelectionManager> selectionManager_,
-                 std::shared_ptr<AudioBusInterface> audioBusInterface_) :
-        Selectable(selectionManager_),
-        audioTrack(audioTrack_),
-        audioBusInterface(audioBusInterface_)
-    {
-    }
+                 std::shared_ptr<AudioBusInterface> audioBusInterface_);
 
     /**
     * @brief Retrieves the height of the audio channel.
@@ -135,6 +131,7 @@ public:
     AudioTrack &getAudioTrack() const { return audioTrack; }
     
     AudioChannelData data; ///< The data structure holding the channel's properties.
+    InsertChain inserts;   ///< The channel's insert effects, in order; see InsertChain for the JSON form.
     
 private:
     AudioTrack &audioTrack; ///< Reference to the associated audio track.

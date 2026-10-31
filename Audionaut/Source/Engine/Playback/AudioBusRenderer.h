@@ -12,12 +12,14 @@
 #include "Engine/Playback/Playback.h"
 #include "Engine/Channel/AudioChannelData.h"
 #include "Engine/Recording/Recording.h"
+#include "Engine/Effects/MixPlan.h"
 
 using namespace juce::dsp;
 
 namespace audium
 {
 class AudioThumbnail;
+class MixPlanContainer;
 
 /**
  * One track job's share of the last block, per render thread slot (0 = the
@@ -65,7 +67,8 @@ public:
      */
     AudioBusRenderer(std::shared_ptr<audium::Playback> playback_,
                      std::shared_ptr<Recording> recording_,
-                     std::shared_ptr<RenderThreadPool> renderThreadPool_);
+                     std::shared_ptr<RenderThreadPool> renderThreadPool_,
+                     std::shared_ptr<MixPlanContainer> mixPlans_ = nullptr);
 
     ~AudioBusRenderer() = default;
 
@@ -140,6 +143,9 @@ public:
      */
     void setTrackJobSharesEnabled (bool enabled) noexcept { trackJobSharesEnabled.store (enabled, std::memory_order_relaxed); }
 
+    /** Whoever renders next, while nothing else does (a bounce about to start): every insert of the adopted plan starts from rest. */
+    void resetInserts() noexcept;
+
     /**
      * Message thread: copies the last block's job shares into `out`, at most
      * `capacity` of them, and returns how many jobs the block had. Zero
@@ -190,9 +196,10 @@ private:
         AudioBlock<SampleType> panOutput;      ///< one stereo pair per worker slot
         AudioBlock<float> voiceOutput;         ///< one mono row per worker slot
         int numSamples = 0;
-        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export)
+        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export); a one-channel output sums them unpanned instead
         juce::int64 blockTicks = 0;   ///< the block period in high-resolution ticks
         int shareTable = -1;          ///< the job share table this block fills, -1 = not recording
+        const MixPlan* plan = nullptr;   ///< the inserts to run, nullptr = none (no plan, or one of another format)
     };
 
     /**
@@ -247,6 +254,7 @@ private:
     std::shared_ptr<Recording> recording;
 
     std::shared_ptr<RenderThreadPool> renderThreadPool;
+    std::shared_ptr<MixPlanContainer> mixPlans;   ///< holds the plan the commands adopt; read once per block
 
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> mainMixBuffer;
