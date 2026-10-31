@@ -76,15 +76,15 @@ void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
     if (sampleRate_ <= 0.0 || maxBlockSize_ <= 0)
         return;
 
-    // a block within what the slots are prepared for needs nothing (a
-    // bounce's shorter last block, the device's own after a bounce); a
-    // larger one, or another rate, makes every slot's format stale and
-    // the rebuild prepares them again - in place: nothing renders now
-    const auto unchanged = sampleRate == sampleRate_ && maxBlockSize_ <= maxBlockSize;
+    // the format is the one the renderer was prepared with, no more: another
+    // block size, smaller as well as larger (a bounce's, the device's own
+    // after it), or another rate makes every slot's format stale and the
+    // rebuild prepares them again - in place: nothing renders now
+    const auto unchanged = sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_;
     if (unchanged && plans->getCurrent() != nullptr)
         return;
 
-    maxBlockSize = sampleRate == sampleRate_ ? juce::jmax (maxBlockSize, maxBlockSize_) : maxBlockSize_;
+    maxBlockSize = maxBlockSize_;
     sampleRate = sampleRate_;
     rebuild (true);
 }

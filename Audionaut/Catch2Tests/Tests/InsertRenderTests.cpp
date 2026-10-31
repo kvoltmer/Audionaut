@@ -513,6 +513,30 @@ SCENARIO ("a bounce starts its inserts from rest", "[engine][effects][inserts][e
                 REQUIRE (diff.firstOverTolerance == -1);
             }
         }
+
+        WHEN ("the project is bounced with a block a quarter of the device's, then played live again")
+        {
+            auto& planner = session.planner();
+            const auto slot = session.tracks().getMasterInserts().getSlot (0);
+            REQUIRE (planner.getMaxBlockSize() == kBlockSize);
+            const auto bounced = bounceProject (*session.engine, 0.0, 0.2, kBlockSize / 4, kSampleRate, 2);
+            const auto blockAfterBounce = planner.getMaxBlockSize();
+            renderLive (*session.engine);
+
+            THEN ("the compressor is the same instance, prepared for the smaller block and then for the device's again")
+            {
+                REQUIRE (session.tracks().getMasterInserts().getSlot (0) == slot);
+                REQUIRE (blockAfterBounce == kBlockSize / 4);
+                REQUIRE (planner.getMaxBlockSize() == kBlockSize);
+                REQUIRE (slot->isPreparedFor (kSampleRate, kBlockSize, 2));
+                REQUIRE_FALSE (slot->isPreparedFor (kSampleRate, kBlockSize / 4, 2));
+
+                const auto reference = bounceProject (*session.engine, 0.0, 0.2, kBlockSize, kSampleRate, 2);
+                const auto diff = compareBuffers (bounced, reference, 1.0e-6f);
+                CAPTURE (diff.maxAbs, diff.atSample);
+                REQUIRE (diff.firstOverTolerance == -1);
+            }
+        }
     }
 }
 
