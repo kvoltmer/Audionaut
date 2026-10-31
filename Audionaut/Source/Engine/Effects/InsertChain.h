@@ -26,7 +26,10 @@ class MixerPlanner;
  * "inserts", written only when there is something in it, so a project
  * without effects serializes as before. readFromJson keeps the effect
  * instances where the types line up, so an undo step or a hosted edit that
- * changes a value does not rebuild the chain.
+ * changes a value does not rebuild the chain. An element of a type this
+ * engine cannot create (a project from a newer build) is kept as it was
+ * read and written back in its place, so saving the project does not lose
+ * it; it is not a slot and nothing runs for it.
  */
 class InsertChain
 {
@@ -38,6 +41,8 @@ public:
 
     int size() const noexcept { return static_cast<int> (slots.size()); }
     bool isEmpty() const noexcept { return slots.empty(); }
+    /// Elements read from JSON that no slot could be made for; written back as they were.
+    int getNumUnresolved() const noexcept { return static_cast<int> (unresolved.size()); }
     const std::vector<std::shared_ptr<EffectSlot>>& getSlots() const noexcept { return slots; }
 
     /// The slot at the index, nullptr out of range.
@@ -51,19 +56,23 @@ public:
     bool setEnabled (int index, bool enabled);
     void clear();
 
-    /// Writes the chain under `key` when it has slots; a project without effects serializes as before.
+    /// Writes the chain under `key` when it has slots or unresolved elements; a project without effects serializes as before.
     void writeToJson (json& output, const char* key = "inserts") const;
     /// Reads the chain under `key` (an absent key empties it), keeping instances where the types line up.
     void readFromJson (const json& input, const char* key = "inserts");
 
-    /// Planner only, while building a plan: a fresh instance of another format takes a live slot's place.
-    void replaceSlot (int index, std::shared_ptr<EffectSlot> slot);
-
 private:
     void changed();
 
+    struct Unresolved
+    {
+        int index;      // position in the array it was read from
+        json element;
+    };
+
     MixerPlanner* planner = nullptr;
     std::vector<std::shared_ptr<EffectSlot>> slots;
+    std::vector<Unresolved> unresolved;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InsertChain)
 };

@@ -11,6 +11,8 @@
 #include "Engine/Playback/RenderThreadPool.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include <atomic>
+#include <functional>
 #include <optional>
 
 namespace audium
@@ -65,6 +67,25 @@ public:
     {
         lockFreeCommander->invoke();
     }
+
+    /**
+     * @brief Message thread: a command for the render thread, run at the top
+     *        of its next block in the order posted - or right here, when no
+     *        device callback will drain it (see setPumpsCommandsSynchronously).
+     */
+    void postCommand (std::function<void()> command);
+
+    /**
+     * @brief Whether a device callback is draining the commands. Set by the
+     *        device callback's about-to-start and stopped; outside that span
+     *        the commands are pumped where they are posted, so an edit made
+     *        with the device stopped (or none) reaches the renderer at once
+     *        and nothing piles up in the fifo.
+     */
+    void setDeviceRunning (bool isRunning) noexcept { deviceRunning.store (isRunning, std::memory_order_relaxed); }
+
+    /** @brief Whoever renders next, while nothing else does: every insert of the adopted plan starts from rest. */
+    void resetInserts() noexcept;
     
     /**
     * @brief Sets the number of audio bus channels.
@@ -83,13 +104,14 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data);
 
     /**
-     * @brief Whether channel commands are drained inline instead of by a
-     *        render callback.
+     * @brief Whether commands are drained inline instead of by a render
+     *        callback.
      *
-     * Defaults to `HeadlessMode`, which is process-wide and therefore wrong
-     * for a scratch engine running inside the GUI: the scratch engine has no
-     * device and must pump its own fifo, while the live engine's device is
-     * draining as usual and must not. Set it explicitly on such an engine.
+     * Defaults to pumping whenever no device callback is running (headless
+     * engines, the GUI before its device starts or when it has none). Set
+     * it explicitly where that rule is wrong: a scratch engine inside the
+     * GUI has no device of its own and must pump, and a test that fills the
+     * fifo on purpose must not.
      */
     void setPumpsCommandsSynchronously(bool shouldPump) noexcept { pumpsCommandsSynchronously = shouldPump; }
 
@@ -193,6 +215,7 @@ public:
  private:
      /// Unset = follow HeadlessMode (the process-wide default).
      std::optional<bool> pumpsCommandsSynchronously;
+     std::atomic<bool> deviceRunning { false };
 
      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander; ///< Thread-safe command manager.
      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer; ///< Renderer for audio bus processing.

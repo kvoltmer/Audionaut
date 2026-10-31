@@ -9,6 +9,9 @@
 #include <cmath>
 
 #include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/InsertChain.h"
+#include "Engine/Effects/MixPlanContainer.h"
+#include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Effects/BuiltIn/CompressorEffect.h"
 #include "Engine/Effects/BuiltIn/Eq3Effect.h"
 #include "Engine/Effects/BuiltIn/TrimEffect.h"
@@ -131,6 +134,62 @@ SCENARIO ("effect parameters and state round trip deterministically", "[engine][
             REQUIRE (eq.getParameter (Eq3Effect::hpHz) == Approx (123.456789f).margin (1.0e-5f));
             eq.setState (json::array());
             REQUIRE (eq.getParameter (Eq3Effect::midDb) == Approx (6.0f));
+        }
+    }
+}
+
+SCENARIO ("an insert chain keeps what it cannot create", "[engine][effects][inserts]")
+{
+    GIVEN ("a chain with a planner that knows the built-ins only")
+    {
+        auto registry = std::make_shared<EffectRegistry>();
+        registry->addBuiltInEffects();
+        MixerPlanner planner (registry, std::make_shared<MixPlanContainer>());
+        InsertChain chain (&planner);
+
+        WHEN ("a chain of a trim, an effect of an unknown type and an EQ is read")
+        {
+            json input;
+            input["inserts"] = json::array ({ { { "type", "builtin:trim" }, { "enabled", true }, { "state", { { "gain_db", -6.0 } } } },
+                                              { { "type", "builtin:future" }, { "enabled", false }, { "state", { { "amount", 0.5 } } } },
+                                              { { "type", "builtin:eq3" }, { "enabled", true }, { "state", json::object() } } });
+            chain.readFromJson (input);
+
+            THEN ("the two known types are slots and the unknown one is kept aside")
+            {
+                REQUIRE (chain.size() == 2);
+                REQUIRE (chain.getSlot (0)->getEffect().getType().id == "builtin:trim");
+                REQUIRE (chain.getSlot (1)->getEffect().getType().id == "builtin:eq3");
+                REQUIRE (chain.getNumUnresolved() == 1);
+            }
+
+            THEN ("writing the chain puts the unknown element back where it was, as it was")
+            {
+                json output;
+                chain.writeToJson (output);
+                REQUIRE (output["inserts"].size() == 3);
+                REQUIRE (output["inserts"][0]["type"] == "builtin:trim");
+                REQUIRE (output["inserts"][1]["type"] == "builtin:future");
+                REQUIRE (output["inserts"][1]["enabled"] == false);
+                REQUIRE (output["inserts"][1]["state"]["amount"].get<double>() == Catch::Approx (0.5));
+                REQUIRE (output["inserts"][2]["type"] == "builtin:eq3");
+            }
+
+            THEN ("removing the slots leaves the element, so the chain still writes it")
+            {
+                REQUIRE (chain.remove (1));
+                REQUIRE (chain.remove (0));
+                REQUIRE (chain.isEmpty());
+                json output;
+                chain.writeToJson (output);
+                REQUIRE (output["inserts"].size() == 1);
+                REQUIRE (output["inserts"][0]["type"] == "builtin:future");
+
+                chain.clear();
+                json cleared;
+                chain.writeToJson (cleared);
+                REQUIRE_FALSE (cleared.contains ("inserts"));
+            }
         }
     }
 }

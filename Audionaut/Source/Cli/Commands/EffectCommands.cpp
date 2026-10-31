@@ -5,6 +5,7 @@
 
 #include "Cli/Commands/Commands.h"
 #include "Cli/CommandSession.h"
+#include "Cli/ProjectSummary.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Effects/EffectRegistry.h"
@@ -20,30 +21,10 @@ namespace cli {
 
 namespace {
 
-std::shared_ptr<AudioTrack> trackById (const AudioTrackContainer& tracks, int trackId)
+/// A slot index or position as typed: digits only, so a typo never acts on slot 0.
+bool isIndexValue (const juce::String& value)
 {
-    for (auto& track : tracks.getAudioTracks())
-        if (track->getId() == trackId)
-            return track;
-    return nullptr;
-}
-
-/// One slot as the verbs report it: its index, type, enabled flag and state.
-nlohmann::json describeSlot (const EffectSlot& slot, int index)
-{
-    return { { "index", index },
-             { "type", slot.getEffect().getType().id },
-             { "name", slot.getEffect().getType().name },
-             { "enabled", slot.isEnabled() },
-             { "state", slot.getEffect().getState() } };
-}
-
-nlohmann::json describeChain (const InsertChain& chain)
-{
-    auto inserts = nlohmann::json::array();
-    for (auto i = 0; i < chain.size(); ++i)
-        inserts.push_back (describeSlot (*chain.getSlot (i), i));
-    return inserts;
+    return value.isNotEmpty() && value.containsOnly ("0123456789");
 }
 
 /// A chain the options name, plus how the result refers to it.
@@ -80,7 +61,7 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
     }
 
     const auto trackId = trackValue.getIntValue();
-    auto track = trackById (container, trackId);
+    auto track = findTrackById (container, trackId);
     if (track == nullptr)
     {
         failure = context.fail (exitFailure, "track_not_found", "no track with id " + trackValue.toStdString());
@@ -142,6 +123,8 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "add-insert requires --type <effect type id> (see list-effects)");
     if (allChannels && (trackValue.isEmpty() || channelValue.isNotEmpty()))
         return context.fail (exitUsage, "usage", "--all-channels goes with --track <id> and without --channel");
+    if (atValue.isNotEmpty() && ! isIndexValue (atValue))
+        return context.fail (exitUsage, "usage", "--at must be a slot position (a number from 0)");
 
     return runProjectEdit (working, context, "add-insert", [&] (ProjectSession& session, EditOutcome& outcome)
     {
@@ -167,7 +150,7 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
                     return false;
                 auto entry = target.where;
                 entry["index"] = at < 0 || at > target.chain->size() - 1 ? target.chain->size() - 1 : at;
-                entry["inserts"] = describeChain (*target.chain);
+                entry["inserts"] = describeInserts (*target.chain);
                 added.push_back (entry);
             }
             return true;
@@ -192,6 +175,8 @@ int runRemoveInsert (const juce::ArgumentList& args, CliContext& context)
 
     if (indexValue.isEmpty())
         return context.fail (exitUsage, "usage", "remove-insert requires --index <slot index>");
+    if (! isIndexValue (indexValue))
+        return context.fail (exitUsage, "usage", "--index must be a slot index (a number from 0)");
 
     return runProjectEdit (working, context, "remove-insert", [&] (ProjectSession& session, EditOutcome& outcome)
     {
@@ -213,7 +198,7 @@ int runRemoveInsert (const juce::ArgumentList& args, CliContext& context)
         outcome.log = "removed " + juce::String (removedType) + " at " + juce::String (index);
         outcome.result = target.where;
         outcome.result["removed"] = { { "index", index }, { "type", removedType } };
-        outcome.result["inserts"] = describeChain (*target.chain);
+        outcome.result["inserts"] = describeInserts (*target.chain);
         return exitOk;
     });
 }
@@ -231,6 +216,8 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
 
     if (indexValue.isEmpty())
         return context.fail (exitUsage, "usage", "set-insert requires --index <slot index>");
+    if (! isIndexValue (indexValue))
+        return context.fail (exitUsage, "usage", "--index must be a slot index (a number from 0)");
     if (paramValue.isNotEmpty() != valueValue.isNotEmpty())
         return context.fail (exitUsage, "usage", "--param and --value go together");
     if (paramValue.isEmpty() && enabledValue.isEmpty())
@@ -255,6 +242,10 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
         auto& effect = slot->getEffect();
         auto undoManager = container.getUndoManager();
 
+        // one verb, one undo step: the parameter and the enabled flag go
+        // into the same transaction
+        undoManager->beginNewTransaction();
+
         if (paramValue.isNotEmpty())
         {
             const auto parameter = effect.getParameterIndex (paramValue.toStdString());
@@ -272,20 +263,24 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
 
             undoManager->perform (new UndoableEffectParameterAction (container, target.address, index, parameter, oldValue, newValue),
                                   "Set " + effect.getType().name + " " + paramValue.toStdString());
-            undoManager->beginNewTransaction();
         }
 
         if (enabledValue.isNotEmpty())
         {
+            // joins the transaction above (applyAsUndoableEdit only begins a new one after its perform)
             const auto enabled = enabledValue == "on";
             if (! applyAsUndoableEdit (container, [&] { return target.chain->setEnabled (index, enabled); },
                                        enabled ? "Enable Insert" : "Disable Insert", false))
                 return context.fail (exitFailure, "set_failed", "could not change the insert");
         }
+        else
+        {
+            undoManager->beginNewTransaction();
+        }
 
         outcome.log = "set " + juce::String (effect.getType().name) + " at " + juce::String (index);
         outcome.result = target.where;
-        outcome.result["insert"] = describeSlot (*slot, index);
+        outcome.result["insert"] = describeInsert (*slot, index);
         return exitOk;
     });
 }

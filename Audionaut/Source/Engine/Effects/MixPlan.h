@@ -6,6 +6,7 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -19,9 +20,11 @@ namespace audium
  * What the renderer runs on top of the mixer's fixed topology: the insert
  * slots of every bus channel, every track and the master, as plain lists
  * of pointers. Built on the message thread from the model, immutable once
- * published, handed to the audio thread through the MixPlanContainer. The
- * plan keeps every slot it points at alive, so a model rebuild that drops
- * channels cannot free an effect the audio thread is inside.
+ * published, adopted by the render thread through a command in the same
+ * queue as the channel data, so a block sees the plan together with the
+ * layout it was built for (see MixPlanContainer). The plan keeps every
+ * slot it points at alive, so a model rebuild that drops channels cannot
+ * free an effect the audio thread is inside.
  *
  * The plan is structure only: what runs where, in which order. Gain, pan,
  * mute and solo keep their own path through the commander, and an effect's
@@ -29,7 +32,9 @@ namespace audium
  * The sends, aux buses and latency delays of the later phases go in here.
  *
  * The spec the slots were prepared for travels with the plan; the renderer
- * skips a plan prepared for another sample rate or a shorter block.
+ * skips a plan prepared for another sample rate or a shorter block. Every
+ * slot counts the plans that point at it, so the planner knows when a slot
+ * can be prepared again in place and when it has to wait.
  */
 struct MixPlan
 {
@@ -52,16 +57,32 @@ struct MixPlan
 
     double sampleRate = 0.0;
     int maxBlockSize = 0;
+    std::uint64_t serial = 0;                             ///< commit order; the container frees a retired plan once a later one is adopted
 
     std::vector<std::shared_ptr<EffectSlot>> keepAlive;   ///< every slot referenced above
 
     MixPlan() { trackAtChannel.fill (-1); }
+
+    ~MixPlan()
+    {
+        for (auto& slot : keepAlive)
+            slot->removePlanReference();
+    }
+
+    /// Keeps the slot alive for as long as the plan is, and counts the plan on it.
+    void retain (std::shared_ptr<EffectSlot> slot)
+    {
+        slot->addPlanReference();
+        keepAlive.push_back (std::move (slot));
+    }
 
     /// Whether any chain has a slot: a plan without is skipped as a whole.
     bool hasInserts() const noexcept
     {
         return ! keepAlive.empty();
     }
+
+    JUCE_DECLARE_NON_COPYABLE (MixPlan)
 };
 
 } // namespace audium

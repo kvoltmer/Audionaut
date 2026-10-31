@@ -107,7 +107,8 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
     {
         if (mixPlans != nullptr)
         {
-            const auto* plan = mixPlans->pull();
+            // adopted by a command the commander ran just before this
+            const auto* plan = mixPlans->getAdopted();
             if (plan != nullptr && plan->hasInserts() && plan->sampleRate == sampleRate && numSamples <= plan->maxBlockSize)
                 ctx.plan = plan;
         }
@@ -622,6 +623,16 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
             outputBlock.getSingleChannelBlock (static_cast<size_t> (m)).add (mainMixBlock.getSingleChannelBlock (static_cast<size_t> (m)));
         }
     }
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::resetInserts() noexcept
+{
+    if (mixPlans == nullptr)
+        return;
+    if (const auto* plan = mixPlans->getAdopted())
+        for (auto& slot : plan->keepAlive)
+            slot->reset();
 }
 
 template class AudioBusRenderer<float>;

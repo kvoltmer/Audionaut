@@ -143,6 +143,9 @@ public:
      */
     void setTrackJobSharesEnabled (bool enabled) noexcept { trackJobSharesEnabled.store (enabled, std::memory_order_relaxed); }
 
+    /** Whoever renders next, while nothing else does (a bounce about to start): every insert of the adopted plan starts from rest. */
+    void resetInserts() noexcept;
+
     /**
      * Message thread: copies the last block's job shares into `out`, at most
      * `capacity` of them, and returns how many jobs the block had. Zero
@@ -251,7 +254,7 @@ private:
     std::shared_ptr<Recording> recording;
 
     std::shared_ptr<RenderThreadPool> renderThreadPool;
-    std::shared_ptr<MixPlanContainer> mixPlans;   ///< where the planner publishes; pulled once per block
+    std::shared_ptr<MixPlanContainer> mixPlans;   ///< holds the plan the commands adopt; read once per block
 
     juce::AudioBuffer<SampleType> audioBus;
     juce::AudioBuffer<SampleType> mainMixBuffer;

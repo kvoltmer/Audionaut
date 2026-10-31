@@ -6,8 +6,10 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
+#include <vector>
+
+#include <JuceHeader.h>
 
 #include "EffectRegistry.h"
 #include "EffectSlot.h"
@@ -22,22 +24,30 @@ class InsertChain;
 /**
  * Builds the mix plan from the model and publishes it. Structure changes
  * (an insert added, removed or moved, a channel or track added or removed,
- * a project loaded) call requestRebuild(); the rebuilds of one message are
- * coalesced through an AsyncUpdater, or run at once where no message loop
- * turns (headless engines) or when asked to.
+ * a project loaded) call requestRebuild(), which builds and publishes at
+ * once - on the message thread, like the edit itself - so the plan is
+ * posted to the render thread right behind the channel data of the same
+ * edit and a block never runs one without the other. An edit made of many
+ * steps (a project load, a track with its channels) opens a ScopedBatch:
+ * the requests inside it fold into one rebuild when the batch closes,
+ * after the layout has been committed.
  *
  * The planner also owns the format: prepare() records the sample rate and
  * block size the renderer was prepared with, and every slot enters a plan
- * prepared for that format and its chain's channel count. A slot already
- * referenced by a published plan is never re-prepared under the audio
- * thread; when its format changes it is replaced by a fresh instance with
- * the same state, and the old one goes with the retired plan.
+ * prepared for that format and its chain's channel count. A slot keeps its
+ * instance through every format change - an effect, like a plugin, is
+ * prepared again rather than made anew - but never while a plan the render
+ * thread may be inside points at it. prepare() runs with the device
+ * stopped or bypassed, so there it is done in place; a chain whose channel
+ * count changes while the device runs leaves its slots out of the plan
+ * until the plans that ran them are freed, then prepares them and builds
+ * once more.
  */
-class MixerPlanner : private juce::AsyncUpdater
+class MixerPlanner
 {
 public:
     MixerPlanner (std::shared_ptr<EffectRegistry> registry_, std::shared_ptr<MixPlanContainer> plans_);
-    ~MixerPlanner() override;
+    ~MixerPlanner();
 
     /// The model the plans are built from; nullptr detaches (the container does that when it goes).
     void setSource (AudioTrackContainer* container) noexcept;
@@ -48,43 +58,62 @@ public:
     /// A slot with a new effect of the type, nullptr for an unknown id. Prepared when it enters a plan.
     std::shared_ptr<EffectSlot> createSlot (const std::string& typeId) const;
 
-    /// Asks for a new plan: now, or coalesced on the message thread.
+    /// Message thread: a new plan, built and published now - or when the enclosing batch closes.
     void requestRebuild();
 
-    /// Builds and publishes a plan at once (also runs a pending request).
+    /// Message thread: builds and publishes a plan at once, batch or not.
     void rebuildNow();
 
-    /// Runs a pending request, for a render driven off the message thread (a bounce) before it starts.
-    void flushPendingRebuild();
+    /**
+     * Folds the rebuild requests of a multi-step edit into one, made when
+     * the outermost batch closes. A null planner makes the batch a no-op,
+     * so a container without a planner (tests) needs no special case.
+     */
+    class ScopedBatch
+    {
+    public:
+        explicit ScopedBatch (MixerPlanner* planner_) noexcept : planner (planner_)
+        {
+            if (planner != nullptr)
+                planner->beginBatch();
+        }
+
+        ~ScopedBatch()
+        {
+            if (planner != nullptr)
+                planner->endBatch();
+        }
+
+    private:
+        MixerPlanner* planner;
+        JUCE_DECLARE_NON_COPYABLE (ScopedBatch)
+    };
 
     /**
-     * Message thread, with the device stopped or bypassed: the format the
-     * renderer was prepared with. Slots keep their instance when the sample
-     * rate is unchanged and the block size did not grow (a bounce's shorter
-     * last block), and are replaced otherwise. Publishes a plan.
+     * Message thread, with the device stopped or bypassed (nothing renders):
+     * the format the renderer was prepared with. A block within the
+     * prepared size at the same rate needs nothing (a bounce's shorter last
+     * block, the device's own after a bounce); otherwise every slot is
+     * prepared again in place and a plan is published, as it is when there
+     * is none yet.
      */
     void prepare (double sampleRate, int maxBlockSize);
 
     double getSampleRate() const noexcept { return sampleRate; }
     int getMaxBlockSize() const noexcept { return maxBlockSize; }
 
-    /**
-     * Whether requestRebuild() rebuilds inline instead of on the message
-     * loop. Unset = follow HeadlessMode (the process-wide default); set it
-     * on a scratch engine inside the GUI, which has no device driving it.
-     */
-    void setRebuildsSynchronously (bool shouldRebuildInline) noexcept { rebuildsSynchronously = shouldRebuildInline; }
-
     /// How many plans were published (tests).
     int getNumRebuilds() const noexcept { return numRebuilds; }
 
 private:
-    void handleAsyncUpdate() override;
-    bool rebuildsInline() const noexcept;
+    void beginBatch() noexcept;
+    void endBatch();
 
-    /// The chain's slots for a plan, each prepared for numChannels; a live slot of another format is replaced.
-    void collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan);
-    std::shared_ptr<EffectSlot> replaceSlot (const EffectSlot& old) const;
+    /// Builds and publishes a plan; nothingRenders lets a slot in a live plan be prepared in place.
+    void rebuild (bool nothingRenders);
+
+    /// The chain's slots for a plan, each prepared for numChannels; a slot in a live plan whose format changed waits outside.
+    void collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders);
 
     std::shared_ptr<EffectRegistry> registry;
     std::shared_ptr<MixPlanContainer> plans;
@@ -92,7 +121,9 @@ private:
 
     double sampleRate = 0.0;
     int maxBlockSize = 0;
-    std::optional<bool> rebuildsSynchronously;
+    int batchDepth = 0;
+    bool rebuildPending = false;
+    bool prepareDeferred = false;   // a slot waits outside the plan for its new format
     int numRebuilds = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixerPlanner)

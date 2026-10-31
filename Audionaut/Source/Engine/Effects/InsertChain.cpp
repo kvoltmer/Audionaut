@@ -5,6 +5,8 @@
 
 #include "InsertChain.h"
 
+#include <algorithm>
+
 #include "MixerPlanner.h"
 
 namespace audium
@@ -67,21 +69,16 @@ bool InsertChain::setEnabled (int index, bool enabled)
 
 void InsertChain::clear()
 {
+    unresolved.clear();
     if (slots.empty())
         return;
     slots.clear();
     changed();
 }
 
-void InsertChain::replaceSlot (int index, std::shared_ptr<EffectSlot> slot)
-{
-    if (index >= 0 && index < size() && slot != nullptr)
-        slots[static_cast<size_t> (index)] = std::move (slot);
-}
-
 void InsertChain::writeToJson (json& output, const char* key) const
 {
-    if (slots.empty())
+    if (slots.empty() && unresolved.empty())
         return;
 
     auto inserts = json::array();
@@ -91,6 +88,15 @@ void InsertChain::writeToJson (json& output, const char* key) const
                              { "enabled", slot->isEnabled() },
                              { "state", slot->getEffect().getState() } });
     }
+
+    // what could not be read goes back where it was, as it was (the list
+    // is in index order, so each lands behind the one before)
+    for (const auto& entry : unresolved)
+    {
+        const auto at = std::min (static_cast<size_t> (std::max (entry.index, 0)), inserts.size());
+        inserts.insert (inserts.begin() + static_cast<json::difference_type> (at), entry.element);
+    }
+
     output[key] = std::move (inserts);
 }
 
@@ -106,10 +112,13 @@ void InsertChain::readFromJson (const json& input, const char* key)
     std::vector<std::shared_ptr<EffectSlot>> previous = std::move (slots);
     std::vector<bool> used (previous.size(), false);
     slots.clear();
+    unresolved.clear();
 
+    auto index = -1;
     for (const auto& element : inserts)
     {
-        if (! element.is_object() || ! element.contains ("type"))
+        ++index;
+        if (! element.is_object() || ! element.contains ("type") || ! element["type"].is_string())
             continue;
 
         const auto typeId = element["type"].get<std::string>();
@@ -127,11 +136,14 @@ void InsertChain::readFromJson (const json& input, const char* key)
 
         if (slot == nullptr)
         {
-            if (planner == nullptr)
-                continue;
-            slot = planner->createSlot (typeId);
+            if (planner != nullptr)
+                slot = planner->createSlot (typeId);
             if (slot == nullptr)
-                continue;   // a type this engine cannot create: dropped, like a missing plugin would be
+            {
+                // a type this engine cannot create: kept for the file, not run
+                unresolved.push_back ({ index, element });
+                continue;
+            }
         }
 
         if (element.contains ("enabled") && element["enabled"].is_boolean())

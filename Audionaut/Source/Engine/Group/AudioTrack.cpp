@@ -19,6 +19,7 @@
 #include "Engine/Analysis/AnalysisProvider.h"
 #include "Engine/Undo/UndoableChannelAction.h"
 #include "Engine/Undo/UndoableEdit.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 namespace audium {
 
@@ -257,6 +258,7 @@ int AudioTrack::getNumAudioTrackChannels() const
 
 void AudioTrack::ensureNumChannels(int channelsNeeded)
 {
+    MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
     while (getNumAudioTrackChannels() < channelsNeeded)
     {
         if (addChannel() == nullptr)
@@ -267,6 +269,8 @@ void AudioTrack::ensureNumChannels(int channelsNeeded)
 std::shared_ptr<AudioChannel> AudioTrack::addChannel()
 {
     if (getAudioTrackContainer().getNumAudioTrackChannels() < MAX_AUDIO_CHANNELS) {
+        // the plan follows once the layout below is committed
+        MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
         auto channel = std::make_shared<AudioChannel>(*this,
                                                       selectionManager,
                                                       getAudioTrackContainer().audioBusInterface);
@@ -572,6 +576,7 @@ bool AudioTrack::deleteChannel(AudioChannel* channel) {
     bool result = false;
     
     if (audioChannelContainer->objectExists(channel)) {
+        MixerPlanner::ScopedBatch planBatch (owner.getMixerPlanner());
         const auto channelNumber = channel->getChannelNumber();
         const auto previousNumChannels = owner.getNumAudioTrackChannels();
         audioResourceContainer.onDeleteChannel(this, channel);

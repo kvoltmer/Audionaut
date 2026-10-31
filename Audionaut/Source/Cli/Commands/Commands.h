@@ -26,6 +26,9 @@ namespace cli {
 
 class ProjectSession;
 
+/** The track with the id the verbs take (`--track N`), nullptr when there is none. */
+std::shared_ptr<AudioTrack> findTrackById (const AudioTrackContainer& tracks, int trackId);
+
 /**
  * The CLI's verb set. Each command runs to completion inside its own
  * HeadlessEngineSession and returns one of the exit codes in CliContext.h.

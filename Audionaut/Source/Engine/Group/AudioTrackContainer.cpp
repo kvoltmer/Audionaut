@@ -54,6 +54,7 @@ const float AudioTrackContainer::getMasterGain() const noexcept
 
 void AudioTrackContainer::cleanup()
 {
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
     selectionManager->clear();
     voiceSourceContainer->cleanup();
     audioResourceContainer->cleanup();
@@ -100,6 +101,7 @@ int AudioTrackContainer::getChannelOffset(std::shared_ptr<const AudioTrack> sear
 
 std::shared_ptr<AudioTrack> AudioTrackContainer::createNewAudioTrack(const juce::String nameString)
 {
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
     auto audioTrack = AudioTrackFactory::createAudioTrack(*this, audioResourceContainer);
     if (nameString.isEmpty())
     {
@@ -120,6 +122,7 @@ bool AudioTrackContainer::deleteAudioTrack(AudioTrack* track)
     });
     
     if (it != audioTracks.end()) {
+        MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
         const auto previousNumChannels = getNumAudioTrackChannels();
         const auto index = static_cast<std::size_t>(std::distance(audioTracks.begin(), it));
 
@@ -212,6 +215,9 @@ bool AudioTrackContainer::writeToJson (json& output)
 
 bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
 {
+    // one plan for the whole read, after every chain and channel is in
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
+
     json jsonTracks;
     if (input.contains("audio_tracks")) {
         jsonTracks = input["audio_tracks"];
@@ -324,7 +330,9 @@ void AudioTrackContainer::publishNumAudioTrackChannels() noexcept
     publishedNumAudioTrackChannels.store(getNumAudioTrackChannels(), std::memory_order_release);
 
     // every path that adds or removes a channel or a track comes through
-    // here: the plan's channel and track lists follow
+    // here: the plan's channel and track lists follow. The paths open a
+    // planner batch, so the plan is built and posted once, after the layout
+    // they commit next, and the render thread takes both over together.
     if (mixerPlanner != nullptr)
         mixerPlanner->requestRebuild();
 }

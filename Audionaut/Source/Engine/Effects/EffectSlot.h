@@ -19,11 +19,13 @@ namespace audium
  * position and every mix plan that references it, so a removed slot lives
  * on until the audio thread has let go of the last plan that had it.
  *
- * prepare() runs on the message thread while no live plan uses the slot:
- * the planner prepares a fresh slot before it enters a plan and replaces a
- * live one whose format changed. process() runs on whichever render thread
- * takes the job; the enabled flag is read once per block. Toggling it
- * crossfades the dry and the processed signal over about ten milliseconds.
+ * prepare() runs on the message thread while nothing renders the slot:
+ * before it enters its first plan, or again - same instance, new format -
+ * when the device is stopped or bypassed, or once every plan that ran it
+ * is gone (the planner sees to that). process() runs on whichever render
+ * thread takes the job; the enabled flag is read once per block. Toggling
+ * it crossfades the dry and the processed signal over about ten
+ * milliseconds.
  */
 class EffectSlot
 {
@@ -40,7 +42,7 @@ public:
     bool isEnabled() const noexcept { return enabled.load (std::memory_order_relaxed); }
     void setEnabled (bool shouldBeEnabled) noexcept { enabled.store (shouldBeEnabled, std::memory_order_relaxed); }
 
-    /// Message thread: sizes the effect and the bypass for this format.
+    /// Message thread, nothing rendering the slot: sizes the effect and the bypass for this format, again if need be.
     void prepare (double sampleRate_, int maxBlockSize_, int numChannels_)
     {
         sampleRate = sampleRate_;
@@ -61,9 +63,24 @@ public:
     bool isPrepared() const noexcept { return prepared; }
     int getNumChannels() const noexcept { return numChannels; }
 
-    /// Whether a published plan has referenced this slot: then its format cannot change in place.
-    bool isPublished() const noexcept { return published; }
-    void markPublished() noexcept { published = true; }
+    /**
+     * Whoever renders next, while nothing else does (a bounce about to
+     * start, with the device bypassed): the effect forgets what it has
+     * processed and the bypass settles, so the render starts from rest
+     * rather than from the tail of live playback.
+     */
+    void reset() noexcept
+    {
+        if (! prepared)
+            return;
+        effect->reset();
+        wet = isEnabled() ? 1.0f : 0.0f;
+    }
+
+    /// Whether a plan the render thread may run references the slot (counted by MixPlan).
+    bool isInAPlan() const noexcept { return planReferences > 0; }
+    void addPlanReference() noexcept { ++planReferences; }
+    void removePlanReference() noexcept { jassert (planReferences > 0); --planReferences; }
 
     /// Render thread: the effect in place, or the crossfade into or out of it.
     void process (juce::dsp::AudioBlock<float>& block) noexcept
@@ -113,7 +130,7 @@ private:
     int maxBlockSize = 0;
     int numChannels = 0;
     bool prepared = false;
-    bool published = false;
+    int planReferences = 0;   // message thread: plans alive that point at this slot
 
     juce::AudioBuffer<float> dry;   // the unprocessed block, for the crossfade
     float wet = 1.0f;               // render thread: 1 = the effect, 0 = bypassed

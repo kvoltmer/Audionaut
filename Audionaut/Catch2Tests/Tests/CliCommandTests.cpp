@@ -1868,6 +1868,18 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
             REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --master --index 0"), context) == cli::exitUsage);
             REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param x"), context) == cli::exitUsage);
         }
+
+        THEN ("an index or position that is not a number is a usage error, not slot 0")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim"), context) == cli::exitOk);
+            REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --master --index foo"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--index") != std::string::npos);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index x --param gain_db --value -6"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim --at first"), context) == cli::exitUsage);
+            REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["masterInserts"].size() == 1);
+            REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
+        }
     }
 
     workDir.deleteRecursively();

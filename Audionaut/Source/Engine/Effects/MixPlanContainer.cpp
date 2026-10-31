@@ -5,46 +5,54 @@
 
 #include "MixPlanContainer.h"
 
+#include <algorithm>
+
 namespace audium
 {
 
-void MixPlanContainer::commit (std::unique_ptr<MixPlan> plan)
+const MixPlan* MixPlanContainer::commit (std::unique_ptr<MixPlan> plan)
 {
     releaseRetired();
 
     if (current != nullptr)
         retired.push_back (std::move (current));
     current = std::move (plan);
-
-    auto& producer = snapshot.getProducerObjects();
-    producer.clear();
-    producer.push_back (current.get());
-    snapshot.commit();
+    current->serial = ++lastSerial;
 
     if (! retired.empty())
         startTimer (50);
+
+    return current.get();
 }
 
-const MixPlan* MixPlanContainer::pull() noexcept
+void MixPlanContainer::adopt (const MixPlan* plan) noexcept
 {
-    snapshot.pull();
-    const auto& objects = snapshot.getConsumerObjects();
-    return objects.empty() ? nullptr : objects.front();
+    adopted.store (plan, std::memory_order_relaxed);
+    adoptedSerial.store (plan != nullptr ? plan->serial : 0, std::memory_order_release);
 }
 
-void MixPlanContainer::releaseRetired()
+bool MixPlanContainer::releaseRetired()
 {
-    // once the audio thread has pulled the latest plan, no retired one is read any more
-    if (retired.empty() || ! snapshot.isPulled())
-        return;
-    retired.clear();
+    if (retired.empty())
+        return false;
+
+    // a plan older than the adopted one is read by nobody: the render
+    // thread adopts at the top of a block and renders from the new one
+    const auto done = adoptedSerial.load (std::memory_order_acquire);
+    const auto before = retired.size();
+    retired.erase (std::remove_if (retired.begin(), retired.end(),
+                                   [done] (const std::unique_ptr<MixPlan>& plan) { return plan->serial < done; }),
+                   retired.end());
+    return retired.size() < before;
 }
 
 void MixPlanContainer::timerCallback()
 {
-    releaseRetired();
+    const auto released = releaseRetired();
     if (retired.empty())
         stopTimer();
+    if (released && onRetiredReleased != nullptr)
+        onRetiredReleased();
 }
 
 } // namespace audium

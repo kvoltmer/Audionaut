@@ -23,22 +23,24 @@ namespace cli {
 
 namespace {
 
-/// An insert chain as the summary shows it: index, type, name, enabled and state per slot.
+} // namespace
+
+nlohmann::json describeInsert (const EffectSlot& slot, int index)
+{
+    return { { "index", index },
+             { "type", slot.getEffect().getType().id },
+             { "name", slot.getEffect().getType().name },
+             { "enabled", slot.isEnabled() },
+             { "state", slot.getEffect().getState() } };
+}
+
 nlohmann::json describeInserts (const InsertChain& chain)
 {
     auto inserts = nlohmann::json::array();
-    for (auto i = 0; i < chain.size(); ++i) {
-        const auto& slot = *chain.getSlot (i);
-        inserts.push_back ({ { "index", i },
-                             { "type", slot.getEffect().getType().id },
-                             { "name", slot.getEffect().getType().name },
-                             { "enabled", slot.isEnabled() },
-                             { "state", slot.getEffect().getState() } });
-    }
+    for (auto i = 0; i < chain.size(); ++i)
+        inserts.push_back (describeInsert (*chain.getSlot (i), i));
     return inserts;
 }
-
-} // namespace
 
 nlohmann::json makeProjectSummary (AudiumEngine& engine)
 {

@@ -7,9 +7,9 @@
 
 #include "InsertChain.h"
 #include "Engine/Channel/AudioChannel.h"
-#include "Engine/Core/HeadlessMode.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Playback/AudioBusInterface.h"
 
 namespace audium
 {
@@ -18,18 +18,23 @@ MixerPlanner::MixerPlanner (std::shared_ptr<EffectRegistry> registry_, std::shar
     registry (std::move (registry_)),
     plans (std::move (plans_))
 {
+    // a retired plan freed by the timer may have been the last to run a
+    // slot that waits for its new format
+    plans->onRetiredReleased = [this]
+    {
+        if (prepareDeferred)
+            requestRebuild();
+    };
 }
 
 MixerPlanner::~MixerPlanner()
 {
-    cancelPendingUpdate();
+    plans->onRetiredReleased = nullptr;
 }
 
 void MixerPlanner::setSource (AudioTrackContainer* container) noexcept
 {
     audioTrackContainer = container;
-    if (audioTrackContainer == nullptr)
-        cancelPendingUpdate();
 }
 
 std::shared_ptr<EffectSlot> MixerPlanner::createSlot (const std::string& typeId) const
@@ -45,25 +50,25 @@ void MixerPlanner::requestRebuild()
     if (audioTrackContainer == nullptr)
         return;
 
-    if (rebuildsInline())
-        rebuildNow();
-    else
-        triggerAsyncUpdate();
-}
+    if (batchDepth > 0)
+    {
+        rebuildPending = true;
+        return;
+    }
 
-void MixerPlanner::flushPendingRebuild()
-{
-    handleUpdateNowIfNeeded();
-}
-
-void MixerPlanner::handleAsyncUpdate()
-{
     rebuildNow();
 }
 
-bool MixerPlanner::rebuildsInline() const noexcept
+void MixerPlanner::beginBatch() noexcept
 {
-    return rebuildsSynchronously.value_or (HeadlessMode::isHeadless());
+    ++batchDepth;
+}
+
+void MixerPlanner::endBatch()
+{
+    jassert (batchDepth > 0);
+    if (--batchDepth == 0 && rebuildPending)
+        rebuildNow();
 }
 
 void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
@@ -71,24 +76,31 @@ void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
     if (sampleRate_ <= 0.0 || maxBlockSize_ <= 0)
         return;
 
-    // a shorter block than prepared for needs nothing; a longer one, or
-    // another rate, makes every slot's format stale and rebuildNow replaces them
-    if (sampleRate != sampleRate_ || maxBlockSize_ > maxBlockSize)
-    {
-        sampleRate = sampleRate_;
-        maxBlockSize = maxBlockSize_;
-    }
+    // a block within what the slots are prepared for needs nothing (a
+    // bounce's shorter last block, the device's own after a bounce); a
+    // larger one, or another rate, makes every slot's format stale and
+    // the rebuild prepares them again - in place: nothing renders now
+    const auto unchanged = sampleRate == sampleRate_ && maxBlockSize_ <= maxBlockSize;
+    if (unchanged && plans->getCurrent() != nullptr)
+        return;
 
-    cancelPendingUpdate();
-    rebuildNow();
+    maxBlockSize = sampleRate == sampleRate_ ? juce::jmax (maxBlockSize, maxBlockSize_) : maxBlockSize_;
+    sampleRate = sampleRate_;
+    rebuild (true);
 }
 
 void MixerPlanner::rebuildNow()
 {
-    cancelPendingUpdate();
+    rebuild (false);
+}
+
+void MixerPlanner::rebuild (bool nothingRenders)
+{
+    rebuildPending = false;
     if (audioTrackContainer == nullptr)
         return;
 
+    prepareDeferred = false;
     auto plan = std::make_unique<MixPlan>();
     plan->sampleRate = sampleRate;
     plan->maxBlockSize = maxBlockSize;
@@ -103,7 +115,7 @@ void MixerPlanner::rebuildNow()
             if (busChannel >= MAX_AUDIO_CHANNELS)
                 break;
             MixPlan::Channel entry;
-            collect (channel->inserts, 1, entry.inserts, *plan);
+            collect (channel->inserts, 1, entry.inserts, *plan, nothingRenders);
             plan->channels.push_back (std::move (entry));
             ++busChannel;
         }
@@ -113,22 +125,33 @@ void MixerPlanner::rebuildNow()
             MixPlan::Track entry;
             entry.firstChannel = busChannel - numChannels;
             entry.numChannels = numChannels;
-            collect (track->getTrackInserts(), numChannels, entry.inserts, *plan);
+            collect (track->getTrackInserts(), numChannels, entry.inserts, *plan, nothingRenders);
             plan->trackAtChannel[static_cast<size_t> (entry.firstChannel)] = static_cast<int> (plan->tracks.size());
             plan->tracks.push_back (std::move (entry));
         }
     }
 
-    collect (audioTrackContainer->getMasterInserts(), 2, plan->master, *plan);
+    collect (audioTrackContainer->getMasterInserts(), 2, plan->master, *plan, nothingRenders);
 
-    for (auto& slot : plan->keepAlive)
-        slot->markPublished();
+    // the render thread takes the plan over at the top of a block, behind
+    // whatever channel data the same edit posted before it
+    const auto* published = plans->commit (std::move (plan));
+    auto* container = plans.get();
+    audioTrackContainer->getAudioBusInterface()->postCommand ([container, published] { container->adopt (published); });
 
-    plans->commit (std::move (plan));
+    // pumped on the spot where no device runs: the previous plan is free
+    // already; otherwise the container's timer frees it after the adoption
+    plans->releaseRetired();
     ++numRebuilds;
+
+    // a slot that waited for the previous plan to go is free now: once
+    // more, with it prepared (the timer's release comes back through
+    // onRetiredReleased otherwise)
+    if (prepareDeferred && plans->getNumRetired() == 0)
+        rebuild (nothingRenders);
 }
 
-void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan)
+void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders)
 {
     const auto prepared = sampleRate > 0.0 && maxBlockSize > 0;
 
@@ -138,15 +161,12 @@ void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<Eff
 
         if (prepared && ! slot->isPreparedFor (sampleRate, maxBlockSize, numChannels))
         {
-            if (slot->isPublished())
+            if (slot->isInAPlan() && ! nothingRenders)
             {
-                // live in a plan the audio thread may be inside: a fresh
-                // instance takes over, the old one goes with the retired plan
-                auto replacement = replaceSlot (*slot);
-                if (replacement == nullptr)
-                    continue;
-                chain.replaceSlot (i, replacement);
-                slot = std::move (replacement);
+                // the render thread may be inside it: the slot sits this
+                // plan out and is prepared once the plans that ran it are gone
+                prepareDeferred = true;
+                continue;
             }
             slot->prepare (sampleRate, maxBlockSize, numChannels);
         }
@@ -155,18 +175,8 @@ void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<Eff
             continue;   // no format yet (no device, no bounce): nothing to run
 
         into.push_back (slot.get());
-        plan.keepAlive.push_back (slot);
+        plan.retain (slot);
     }
-}
-
-std::shared_ptr<EffectSlot> MixerPlanner::replaceSlot (const EffectSlot& old) const
-{
-    auto slot = createSlot (old.getEffect().getType().id);
-    if (slot == nullptr)
-        return nullptr;
-    slot->getEffect().setState (old.getEffect().getState());
-    slot->setEnabled (old.isEnabled());
-    return slot;
 }
 
 } // namespace audium

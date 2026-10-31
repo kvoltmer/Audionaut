@@ -5,23 +5,31 @@
 
 #pragma once
 
+#include <atomic>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
 
-#include "Engine/Core/LockFreeContainer.h"
+#include <JuceHeader.h>
+
 #include "MixPlan.h"
 
 namespace audium
 {
 
 /**
- * Hands mix plans from the message thread to the audio thread without
- * locks, modelled on VoiceSourceContainer: commit() publishes a plan, the
- * renderer pull()s the latest at the top of each block and reads it until
- * its next pull. The previous plan is retired, not deleted: it goes once
- * the audio thread has pulled the plan that replaced it, which a timer
- * checks on the message thread, since nothing is ever freed on the audio
- * thread. The effects a retired plan kept alive go with it.
+ * Owns the mix plans and hands them from the message thread to the render
+ * thread without locks. commit() takes a plan as the current one and
+ * retires the previous; the planner then posts a command that adopt()s it
+ * on the render thread, in the same queue as the channel data, so a block
+ * runs the plan together with the layout it was built for. A retired plan
+ * is freed, on the message thread, once the render thread has adopted a
+ * later one: adoption happens at the top of a block, before anything
+ * renders, so nothing is inside the old plan by then. The effects a
+ * retired plan kept alive go with it. A timer checks while the device
+ * runs; where no device runs, the commands are pumped as they are posted
+ * and the next commit frees what the last adoption let go of.
  */
 class MixPlanContainer : private juce::Timer
 {
@@ -29,16 +37,22 @@ public:
     MixPlanContainer() = default;
     ~MixPlanContainer() override { stopTimer(); }
 
-    /// Message thread: publishes the plan; the previous one is retired.
-    void commit (std::unique_ptr<MixPlan> plan);
+    /// Message thread: the plan becomes the current one, the previous is retired. Returns what to adopt().
+    const MixPlan* commit (std::unique_ptr<MixPlan> plan);
 
-    /// Render thread: the latest published plan (nullptr before the first commit), valid until the next pull().
-    const MixPlan* pull() noexcept;
+    /// Render thread (a posted command): the plan the renderer runs from now on.
+    void adopt (const MixPlan* plan) noexcept;
 
-    /// Message thread: frees retired plans the audio thread has let go of; otherwise the timer does.
-    void releaseRetired();
+    /// Render thread: the adopted plan, nullptr before the first adoption.
+    const MixPlan* getAdopted() const noexcept { return adopted.load (std::memory_order_relaxed); }
 
-    /// The plan the message thread published last (not necessarily pulled yet).
+    /// Message thread: frees the retired plans the render thread has moved past; otherwise the timer does. True when any went.
+    bool releaseRetired();
+
+    /// Called from the timer when it freed a retired plan: the slots only that plan ran are free again.
+    std::function<void()> onRetiredReleased;
+
+    /// The plan the message thread committed last (not necessarily adopted yet).
     const MixPlan* getCurrent() const noexcept { return current.get(); }
 
     size_t getNumRetired() const noexcept { return retired.size(); }
@@ -46,9 +60,12 @@ public:
 private:
     void timerCallback() override;
 
-    LockFreeContainer<MixPlan*> snapshot { 1 };
     std::unique_ptr<MixPlan> current;
     std::vector<std::unique_ptr<MixPlan>> retired;
+    std::uint64_t lastSerial = 0;
+
+    std::atomic<const MixPlan*> adopted { nullptr };
+    std::atomic<std::uint64_t> adoptedSerial { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixPlanContainer)
 };

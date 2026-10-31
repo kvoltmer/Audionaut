@@ -15,6 +15,7 @@
 
 #include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Effects/BuiltIn/CompressorEffect.h"
 #include "Engine/Effects/BuiltIn/TrimEffect.h"
 #include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Factory/AudiumFactory.h"
@@ -403,9 +404,17 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
         {
             auto engine = AudiumFactory::createAudiumEngine();
             engine->getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
+            auto& planner = *engine->getAudioTrackContainer()->getMixerPlanner();
+            const auto rebuildsBefore = planner.getNumRebuilds();
             REQUIRE (engine->getProjectFileStore()->open (package, nullptr));
             auto& container = *engine->getAudioTrackContainer();
             REQUIRE (container.getNumItems() == 1);
+
+            THEN ("the load built a plan for the clear and one for the read, not one per channel and chain")
+            {
+                REQUIRE (planner.getNumRebuilds() - rebuildsBefore <= 2);
+                REQUIRE (planner.getPlans().getNumRetired() == 0);
+            }
 
             THEN ("every chain is back with its state and enabled flag")
             {
@@ -447,6 +456,66 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
     package.deleteRecursively();
 }
 
+SCENARIO ("a bounce starts its inserts from rest", "[engine][effects][inserts][export]")
+{
+    MessageThread messageThread;
+
+    const auto addSlowCompressor = [] (Session& session)
+    {
+        auto slot = session.tracks().getMasterInserts().add (CompressorEffect::typeInfo().id);
+        REQUIRE (slot != nullptr);
+        slot->getEffect().setParameter (CompressorEffect::thresholdDb, -40.0f);
+        slot->getEffect().setParameter (CompressorEffect::ratio, 8.0f);
+        slot->getEffect().setParameter (CompressorEffect::releaseMs, 2000.0f);
+    };
+
+    GIVEN ("a session with a slow compressor on the master, played live")
+    {
+        Session session;
+        addSlowCompressor (session);
+        // leaves the compressor's envelope wherever the playback ended
+        renderLive (*session.engine);
+
+        WHEN ("the project is bounced twice")
+        {
+            const auto first = bounceProject (*session.engine, 0.0, 0.2, kBlockSize, kSampleRate, 2);
+            const auto second = bounceProject (*session.engine, 0.0, 0.2, kBlockSize, kSampleRate, 2);
+
+            THEN ("both bounces are the same file, and the one a session that never played renders")
+            {
+                requireIdentical (first, second);
+
+                Session fresh;
+                addSlowCompressor (fresh);
+                const auto cold = bounceProject (*fresh.engine, 0.0, 0.2, kBlockSize, kSampleRate, 2);
+                const auto diff = compareBuffers (first, cold, 1.0e-6f);
+                CAPTURE (diff.maxAbs, diff.atSample);
+                REQUIRE (diff.firstOverTolerance == -1);
+            }
+        }
+
+        WHEN ("the project is bounced with a block eight times the device's")
+        {
+            auto& planner = session.planner();
+            const auto slot = session.tracks().getMasterInserts().getSlot (0);
+            const auto blockBefore = planner.getMaxBlockSize();
+            const auto bounced = bounceProject (*session.engine, 0.0, 0.2, kBlockSize * 8, kSampleRate, 2);
+
+            THEN ("the compressor is the same instance, prepared for the larger block, and the file the same as at the device's block")
+            {
+                REQUIRE (session.tracks().getMasterInserts().getSlot (0) == slot);
+                REQUIRE (planner.getMaxBlockSize() == kBlockSize * 8);
+                REQUIRE (blockBefore == kBlockSize);
+
+                const auto reference = bounceProject (*session.engine, 0.0, 0.2, kBlockSize, kSampleRate, 2);
+                const auto diff = compareBuffers (bounced, reference, 1.0e-6f);
+                CAPTURE (diff.maxAbs, diff.atSample);
+                REQUIRE (diff.firstOverTolerance == -1);
+            }
+        }
+    }
+}
+
 SCENARIO ("the mix plan follows the channel layout", "[engine][effects][inserts]")
 {
     MessageThread messageThread;
@@ -479,17 +548,80 @@ SCENARIO ("the mix plan follows the channel layout", "[engine][effects][inserts]
             LiveBlockDriver driver (*session.engine, device);
             REQUIRE (planner.getNumRebuilds() > rebuilds);
             REQUIRE (plans.getCurrent()->tracks[1].inserts.size() == 1);
+            REQUIRE (plans.getAdopted() == plans.getCurrent());
 
+            const auto* before = plans.getCurrent();
+            const auto rebuildsBefore = planner.getNumRebuilds();
             REQUIRE (session.tracks().deleteAudioTrack (session.track (0)));
-            driver.idle (2);
+
+            THEN ("the plan is rebuilt on the spot, once for the whole removal, and the next block takes it over with the layout")
+            {
+                // no message loop turned: the edit itself built the plan
+                REQUIRE (planner.getNumRebuilds() == rebuildsBefore + 1);
+                REQUIRE (plans.getCurrent() != before);
+                REQUIRE (plans.getCurrent()->tracks.size() == 1);
+
+                // the render thread adopts it with its next block at the
+                // latest, behind the channel data of the same edit (here,
+                // where the commands are pumped as posted, at once), and the
+                // previous plan goes once that happened
+                driver.idle (1);
+                REQUIRE (plans.getAdopted() == plans.getCurrent());
+                plans.releaseRetired();
+                REQUIRE (plans.getNumRetired() == 0);
+            }
 
             THEN ("the insert's track moved to bus channel 0 and keeps its instance")
             {
+                driver.idle (2);
                 const auto* plan = plans.getCurrent();
                 REQUIRE (plan->tracks.size() == 1);
                 REQUIRE (plan->tracks[0].firstChannel == 0);
                 REQUIRE (plan->tracks[0].inserts.size() == 1);
                 REQUIRE (plan->tracks[0].inserts[0] == session.track (0)->getTrackInserts().getSlot (0).get());
+            }
+        }
+
+        WHEN ("no device runs and the layout changes")
+        {
+            const auto rebuildsBefore = planner.getNumRebuilds();
+            REQUIRE (session.track (1)->addChannel() != nullptr);
+
+            THEN ("the plan is built once and taken over at once, so nothing is left retired")
+            {
+                REQUIRE (planner.getNumRebuilds() == rebuildsBefore + 1);
+                REQUIRE (plans.getAdopted() == plans.getCurrent());
+                REQUIRE (plans.getNumRetired() == 0);
+                REQUIRE (plans.getCurrent()->tracks[1].numChannels == 3);
+            }
+        }
+
+        WHEN ("a device runs and the track with the insert gets a third channel")
+        {
+            FakeAudioIODevice device (kSampleRate, kBlockSize, 2, kNumOutputs);
+            LiveBlockDriver driver (*session.engine, device);
+            const auto slot = session.track (1)->getTrackInserts().getSlot (0);
+            REQUIRE (slot->getNumChannels() == 2);
+            REQUIRE (slot->isInAPlan());
+
+            const auto rebuildsBefore = planner.getNumRebuilds();
+            REQUIRE (session.track (1)->addChannel() != nullptr);
+            driver.idle (2);
+
+            THEN ("the insert kept its instance, prepared again for three channels once the plan that ran it was gone")
+            {
+                // a plan without it, then - the previous plan freed on the
+                // spot here, where the commands are pumped as posted - one
+                // with it prepared for the new count
+                REQUIRE (planner.getNumRebuilds() == rebuildsBefore + 2);
+                REQUIRE (session.track (1)->getTrackInserts().getSlot (0) == slot);
+                REQUIRE (slot->getNumChannels() == 3);
+
+                const auto* plan = plans.getCurrent();
+                REQUIRE (plan->tracks[1].numChannels == 3);
+                REQUIRE (plan->tracks[1].inserts.size() == 1);
+                REQUIRE (plan->tracks[1].inserts[0] == slot.get());
+                REQUIRE (plans.getAdopted() == plan);
             }
         }
     }

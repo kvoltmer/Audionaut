@@ -64,8 +64,20 @@ public:
         // the render instead of rebuilding the graph underneath it
         const PlayListScheduler::ScopedOfflineRender offlineRender (*audiumEngine.getPlayListScheduler());
 
+        // prepareToPlay may rebuild the mix plan, which is model state and
+        // posts to the renderer's command queue, both the message thread's:
+        // on an export thread the message thread holds still for it
+        auto prepareToPlay = [this] (int blockSize, double sampleRate)
+        {
+            auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
+            std::unique_ptr<juce::MessageManagerLock> lock;
+            if (messageManager != nullptr && ! messageManager->isThisTheMessageThread())
+                lock = std::make_unique<juce::MessageManagerLock>();
+            audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+        };
+
         audiumEngine.getLinkAudioDevice()->setBypass(true);
-        audiumEngine.getPlayListScheduler()->prepareToPlay(config->blockSize, config->sampleRate);
+        prepareToPlay (config->blockSize, config->sampleRate);
 
         auto written = writeOutput(updateProgress);
 
@@ -73,7 +85,7 @@ public:
         if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice()) {
             auto numSamples = device->getCurrentBufferSizeSamples();
             auto sampleRate = device->getCurrentSampleRate();
-            audiumEngine.getPlayListScheduler()->prepareToPlay(numSamples, sampleRate);
+            prepareToPlay (numSamples, sampleRate);
         }
         audiumEngine.getLinkAudioDevice()->setBypass(false);
 

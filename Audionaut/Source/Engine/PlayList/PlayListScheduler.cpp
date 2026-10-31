@@ -748,10 +748,11 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // so this thread is the only one draining the queue.
     audioBusInterface->invokeCommands();
 
-    // a plan requested on the message loop that has not turned yet (a CLI
-    // export right after an edit) is built now, so the bounce renders it
-    if (auto* planner = audioTrackContainer->getMixerPlanner())
-        planner->flushPendingRebuild();
+    // the inserts start the bounce from rest, as the voices do: no
+    // envelope, delay line or bypass crossfade carried over from live
+    // playback or the previous bounce, so two bounces of one project are
+    // the same file
+    audioBusInterface->resetInserts();
 
     // remember last position. The bounce bypasses the device, so whether
     // Link reports playing says nothing about it - and right after a Stop
