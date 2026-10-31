@@ -437,6 +437,7 @@
 		6F75568B0D072582C1F4CE0A /* RegionTableListBox.h */ /* RegionTableListBox.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionTableListBox.h; path = ../../Source/Interface/Controls/RegionTableListBox.h; sourceTree = SOURCE_ROOT; };
 		700D95B0AEC9D0098078E56C /* Inter-LICENSE.txt */ /* Inter-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text.txt; name = "Inter-LICENSE.txt"; path = "../../Resources/Fonts/Inter-LICENSE.txt"; sourceTree = SOURCE_ROOT; };
 		7047F9B37958EEEF23EAFB84 /* dsp.cpp */ /* dsp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = dsp.cpp; path = ../../../Submodules/demucs.cpp/src/dsp.cpp; sourceTree = SOURCE_ROOT; };
+		70FA224A7BC7746A3EF607EC /* DelayEffect.h */ /* DelayEffect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DelayEffect.h; path = ../../Source/Engine/Effects/BuiltIn/DelayEffect.h; sourceTree = SOURCE_ROOT; };
 		71508ADE3ED7A1FDC3FD454B /* AudioResource.cpp */ /* AudioResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResource.cpp; path = ../../Source/Engine/Resource/AudioResource.cpp; sourceTree = SOURCE_ROOT; };
 		72428891FA02A01D63988F82 /* juce_cryptography */ /* juce_cryptography */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_cryptography; path = ../../../Submodules/JUCE/modules/juce_cryptography; sourceTree = SOURCE_ROOT; };
 		727C75CD14A6A25B60F5F5F0 /* bitstream.c */ /* bitstream.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = bitstream.c; path = ../../../ThirdParty/lame/libmp3lame/bitstream.c; sourceTree = SOURCE_ROOT; };
@@ -1098,6 +1099,7 @@
 			isa = PBXGroup;
 			children = (
 				5BDAC6E3EC21C309DB6CF8E2,
+				70FA224A7BC7746A3EF607EC,
 				81EC3A5347CC3EB686784014,
 				754715464162B1CA9CE38491,
 			);

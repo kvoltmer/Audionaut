@@ -318,6 +318,8 @@
           <GROUP id="{5B9D2C73-1E86-4F0A-B7C2-8A3E6D1F4C92}" name="BuiltIn">
             <FILE id="EfBCmp" name="CompressorEffect.h" compile="0" resource="0"
                   file="Source/Engine/Effects/BuiltIn/CompressorEffect.h"/>
+            <FILE id="EfBDly" name="DelayEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/DelayEffect.h"/>
             <FILE id="EfBEq3" name="Eq3Effect.h" compile="0" resource="0"
                   file="Source/Engine/Effects/BuiltIn/Eq3Effect.h"/>
             <FILE id="EfBTrm" name="TrimEffect.h" compile="0" resource="0"

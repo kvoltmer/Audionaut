@@ -13,6 +13,7 @@
 #include "Engine/Effects/MixPlanContainer.h"
 #include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Effects/BuiltIn/CompressorEffect.h"
+#include "Engine/Effects/BuiltIn/DelayEffect.h"
 #include "Engine/Effects/BuiltIn/Eq3Effect.h"
 #include "Engine/Effects/BuiltIn/TrimEffect.h"
 
@@ -59,12 +60,13 @@ SCENARIO ("the effect registry creates every built-in for one and two channels",
         EffectRegistry registry;
         registry.addBuiltInEffects();
 
-        THEN ("Trim, EQ and Compressor are registered under their type ids")
+        THEN ("Trim, EQ, Compressor and Delay are registered under their type ids")
         {
-            REQUIRE (registry.getTypes().size() == 3);
+            REQUIRE (registry.getTypes().size() == 4);
             REQUIRE (registry.hasType ("builtin:trim"));
             REQUIRE (registry.hasType ("builtin:eq3"));
             REQUIRE (registry.hasType ("builtin:compressor"));
+            REQUIRE (registry.hasType ("builtin:delay"));
             REQUIRE_FALSE (registry.hasType ("builtin:nothing"));
             REQUIRE (registry.create ("builtin:nothing") == nullptr);
         }
@@ -81,11 +83,14 @@ SCENARIO ("the effect registry creates every built-in for one and two channels",
                     effect->prepare (kSampleRate, kBlockSize, numChannels);
 
                     // at the defaults every built-in is transparent to a signal
-                    // below the compressor's threshold
+                    // below the compressor's threshold; the delay passes half
+                    // of it dry, and its first echo (350 ms) lies past these
+                    // eight blocks
+                    const auto expected = type.id == "builtin:delay" ? 0.01f : 0.02f;
                     auto buffer = makeSine (numChannels, 8, 1000.0, 0.02f);
                     run (*effect, buffer);
                     for (auto c = 0; c < numChannels; ++c)
-                        REQUIRE (settledPeak (buffer, c) == Approx (0.02f).margin (0.002f));
+                        REQUIRE (settledPeak (buffer, c) == Approx (expected).margin (0.002f));
                 }
             }
         }
@@ -293,6 +298,78 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             auto tone = makeSine (1, 16, 1000.0);
             run (eq, tone);
             REQUIRE (settledPeak (tone) == Approx (0.5f * juce::Decibels::decibelsToGain (6.0f)).margin (0.02f));
+        }
+    }
+
+    GIVEN ("a delay of 100 ms, feedback 0.5, fully wet")
+    {
+        DelayEffect delay;
+        delay.setParameter (DelayEffect::timeMs, 100.0f);
+        delay.setParameter (DelayEffect::feedback, 0.5f);
+        delay.setParameter (DelayEffect::mix, 1.0f);
+        delay.prepare (kSampleRate, kBlockSize, 2);
+        const auto period = static_cast<int> (0.1 * kSampleRate);   // 4800 samples
+
+        THEN ("an impulse comes back after 100 ms, then at half every 100 ms, on both channels and nothing in between")
+        {
+            juce::AudioBuffer<float> buffer (2, 16 * kBlockSize);   // 4096 samples: the first echo lands in the second run
+            buffer.clear();
+            buffer.setSample (0, 0, 1.0f);
+            buffer.setSample (1, 0, 0.5f);
+            juce::AudioBuffer<float> output (2, 4 * period);
+            output.clear();
+            for (auto start = 0; start < output.getNumSamples(); start += buffer.getNumSamples())
+            {
+                if (start > 0)
+                    buffer.clear();
+                run (delay, buffer);
+                const auto count = std::min (buffer.getNumSamples(), output.getNumSamples() - start);
+                for (auto c = 0; c < 2; ++c)
+                    output.copyFrom (c, start, buffer, c, 0, count);
+            }
+
+            for (auto c = 0; c < 2; ++c)
+            {
+                const auto impulse = c == 0 ? 1.0f : 0.5f;
+                REQUIRE (output.getSample (c, 0) == Approx (0.0f));   // fully wet: no dry impulse
+                REQUIRE (output.getSample (c, period) == Approx (impulse).margin (1.0e-5f));
+                REQUIRE (output.getSample (c, 2 * period) == Approx (0.5f * impulse).margin (1.0e-5f));
+                REQUIRE (output.getSample (c, 3 * period) == Approx (0.25f * impulse).margin (1.0e-5f));
+                REQUIRE (output.getMagnitude (c, 1, period - 1) == Approx (0.0f));
+                REQUIRE (output.getMagnitude (c, period + 1, period - 1) == Approx (0.0f));
+            }
+        }
+
+        THEN ("a fractional delay time passes a tone at its level: the read interpolates between samples")
+        {
+            delay.setParameter (DelayEffect::feedback, 0.0f);
+            delay.setParameter (DelayEffect::timeMs, 10.01f);   // 480.48 samples
+            delay.reset();
+            auto tone = makeSine (1, 16, 1000.0, 0.5f);
+            run (delay, tone);
+            REQUIRE (settledPeak (tone) == Approx (0.5f).margin (1.0e-3f));
+        }
+
+        THEN ("the tail is the time times the repeats down to -60 dB")
+        {
+            REQUIRE (delay.getTailSeconds() == Approx (1.0));   // 10 repeats of 0.5 = -60 dB
+            delay.setParameter (DelayEffect::feedback, 0.0f);
+            REQUIRE (delay.getTailSeconds() == Approx (0.1));
+        }
+
+        THEN ("at half mix the dry signal passes at half and reset() empties the line")
+        {
+            delay.setParameter (DelayEffect::mix, 0.5f);
+            delay.reset();
+            auto tone = makeSine (2, 8, 1000.0, 0.5f);   // 2048 samples, before the first echo
+            run (delay, tone);
+            REQUIRE (settledPeak (tone) == Approx (0.25f).margin (1.0e-4f));
+
+            delay.reset();
+            juce::AudioBuffer<float> silence (2, 8 * kBlockSize);
+            silence.clear();
+            run (delay, silence);
+            REQUIRE (silence.getMagnitude (0, 0, silence.getNumSamples()) == Approx (0.0f));
         }
     }
 

@@ -16,6 +16,7 @@
 #include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Effects/AuxBusContainer.h"
+#include "Engine/Effects/BuiltIn/DelayEffect.h"
 #include "Engine/Effects/BuiltIn/TrimEffect.h"
 #include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Factory/AudiumFactory.h"
@@ -375,6 +376,31 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
                 THEN ("the return is trimmed, the dry channel not")
                 {
                     requireScaled (renderLive (*session.engine), reference, 0, 1.0f + 0.5f * kMinus6);
+                }
+            }
+
+            AND_WHEN ("a fully wet 100 ms delay without feedback sits on the aux")
+            {
+                auto slot = session.auxes().get (1)->getInserts().add (DelayEffect::typeInfo().id);
+                REQUIRE (slot != nullptr);
+                slot->getEffect().setParameter (DelayEffect::timeMs, 100.0f);
+                slot->getEffect().setParameter (DelayEffect::feedback, 0.0f);
+                slot->getEffect().setParameter (DelayEffect::mix, 1.0f);
+                const auto period = static_cast<int> (0.1 * kSampleRate);   // 4410 samples
+
+                THEN ("output 0 is the dry channel plus half of it 100 ms later, output 1 stays silent, the bounce agrees")
+                {
+                    const auto live = renderLive (*session.engine);
+                    // the glide from the default time has long settled by two periods in
+                    auto maxDiff = 0.0f;
+                    for (auto i = 2 * period; i < live.getNumSamples(); ++i)
+                    {
+                        const auto expected = reference.getSample (0, i) + 0.5f * reference.getSample (0, i - period);
+                        maxDiff = std::max (maxDiff, std::abs (live.getSample (0, i) - expected));
+                    }
+                    REQUIRE (maxDiff <= 2.0e-4f);
+                    requireSilent (live, 1);
+                    requireIdentical (mainOf (live), bounceProject (*session.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 2));
                 }
             }
 

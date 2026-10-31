@@ -1763,7 +1763,7 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
     {
         REQUIRE (cli::runListEffects (makeArgs ("list-effects"), context) == cli::exitOk);
         auto effects = envelope["result"]["effects"];
-        REQUIRE (effects.size() == 3);
+        REQUIRE (effects.size() == 4);
         REQUIRE (effects[0]["type"] == "builtin:trim");
         REQUIRE (effects[0]["parameters"][0]["id"] == "gain_db");
         REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (-24.0));

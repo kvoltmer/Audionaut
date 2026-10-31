@@ -5040,6 +5040,9 @@
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\DelayEffect.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
     </ClInclude>

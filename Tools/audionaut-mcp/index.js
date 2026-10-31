@@ -894,7 +894,7 @@ server.registerTool(
   {
     title: "List effect types",
     description:
-      "The effect types add_insert can create (built-in: Trim, EQ, Compressor), each with its parameters: " +
+      "The effect types add_insert can create (built-in: Trim, EQ, Compressor, Delay), each with its parameters: " +
       "id, name, unit, range and default. Needs no project.",
     inputSchema: {},
   },
@@ -914,7 +914,7 @@ server.registerTool(
       project: projectParam,
       ...chainParams,
       all_channels: z.boolean().optional().describe("With track: one insert on every strip of the track"),
-      type: z.string().describe("Effect type id, e.g. builtin:trim, builtin:eq3, builtin:compressor"),
+      type: z.string().describe("Effect type id, e.g. builtin:trim, builtin:eq3, builtin:compressor, builtin:delay"),
       at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
       task: taskParam,
     },

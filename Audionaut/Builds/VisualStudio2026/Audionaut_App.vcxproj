@@ -3540,6 +3540,7 @@
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionManager.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\DelayEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\TrimEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\AuxBus.h"/>

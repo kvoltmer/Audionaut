@@ -111,7 +111,7 @@ read or edit them.
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
 | `track_pan` | `track-pan` | Pan a track's channel strips, -1 left to 1 right (all strips or one) |
-| `list_effects` | `list-effects` | The effect types (Trim, EQ, Compressor) and their parameters |
+| `list_effects` | `list-effects` | The effect types (Trim, EQ, Compressor, Delay) and their parameters |
 | `add_insert` | `add-insert` | Insert an effect into a channel strip's, a track's, an aux bus's or the master's chain |
 | `remove_insert` | `remove-insert` | Remove an insert from a chain |
 | `set_insert` | `set-insert` | Set an insert's parameter, or enable / disable it |
