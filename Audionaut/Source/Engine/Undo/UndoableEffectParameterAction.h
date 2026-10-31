@@ -17,25 +17,33 @@ namespace audium
 
 /**
  * Where an insert chain lives: a bus channel of a track, a track's own
- * inserts, or the master. Resolved against the container at apply time, so
- * the address stays valid across rebuilds that replace the objects.
+ * inserts, an aux bus or the master. Resolved against the container at
+ * apply time, so the address stays valid across rebuilds that replace the
+ * objects.
  */
 struct InsertChainAddress
 {
-    enum class Kind { channel, track, master };
+    enum class Kind { channel, track, aux, master };
 
     Kind kind = Kind::master;
-    int trackId = -1;
+    int trackId = -1;        // the aux id for Kind::aux
     int channelNumber = -1;
 
     static InsertChainAddress ofChannel (int trackId, int channelNumber) { return { Kind::channel, trackId, channelNumber }; }
     static InsertChainAddress ofTrack (int trackId) { return { Kind::track, trackId, -1 }; }
+    static InsertChainAddress ofAux (int auxId) { return { Kind::aux, auxId, -1 }; }
     static InsertChainAddress ofMaster() { return { Kind::master, -1, -1 }; }
 
     InsertChain* resolve (AudioTrackContainer& container) const
     {
         if (kind == Kind::master)
             return &container.getMasterInserts();
+
+        if (kind == Kind::aux)
+        {
+            auto bus = container.getAuxBuses().get (trackId);
+            return bus != nullptr ? &bus->getInserts() : nullptr;
+        }
 
         auto track = container.getAudioTrack (trackId);
         if (track == nullptr)

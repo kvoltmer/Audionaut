@@ -203,13 +203,13 @@ try {
   const { tools } = await client.listTools();
   const names = tools.map((tool) => tool.name).sort();
   check(
-    "all twenty-seven tools listed",
+    "all thirty-two tools listed",
     JSON.stringify(names) ===
-      JSON.stringify(["add_insert", "analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades",
+      JSON.stringify(["add_aux", "add_insert", "analyze", "assemble", "auto_edit", "cleanup_regions", "clip_fades",
                       "clip_gain", "clip_speed", "create_project", "create_region", "export_audio",
                       "get_project_info", "import_audio", "list_effects", "move_clip", "place_clip",
-                      "remove_channel", "remove_clip", "remove_insert", "remove_track", "report_bug",
-                      "request_feature", "separate_stems", "set_insert", "set_region", "split", "track_pan"]),
+                      "remove_aux", "remove_channel", "remove_clip", "remove_insert", "remove_send", "remove_track", "report_bug",
+                      "request_feature", "separate_stems", "set_aux", "set_insert", "set_region", "set_send", "split", "track_pan"]),
     names.join(",")
   );
 
@@ -444,6 +444,35 @@ try {
     arguments: { project, track: 0, type: "builtin:nothing" },
   });
   check("add_insert of an unknown type is a tool error", badInsert.isError === true, badInsert.content?.[0]?.text);
+
+  // Aux buses and sends: the two default buses, a third, a send into it, its return, both removed.
+  const infoAux = await client.callTool({ name: "get_project_info", arguments: { project } });
+  check(
+    "get_project_info lists the default aux buses",
+    !infoAux.isError && infoAux.content[0].text.includes("Aux 1") && infoAux.content[0].text.includes("Aux 2"),
+    infoAux.content?.[0]?.text
+  );
+
+  const auxAdded = await client.callTool({ name: "add_aux", arguments: { project, name: "Verb" } });
+  check("add_aux", !auxAdded.isError && auxAdded.content[0].text.includes("Verb"), auxAdded.content?.[0]?.text);
+
+  const sendSet = await client.callTool({
+    name: "set_send",
+    arguments: { project, track: 0, channel: 0, aux: 3, level: 0.5, pre_fader: true },
+  });
+  check("set_send", !sendSet.isError && sendSet.content[0].text.includes("0.5"), sendSet.content?.[0]?.text);
+
+  const auxSet = await client.callTool({ name: "set_aux", arguments: { project, aux: 3, gain: 0.5, mute: true } });
+  check("set_aux", !auxSet.isError && auxSet.content[0].text.includes("Verb"), auxSet.content?.[0]?.text);
+
+  const sendGone = await client.callTool({ name: "remove_send", arguments: { project, track: 0, channel: 0, aux: 3 } });
+  check("remove_send", !sendGone.isError && sendGone.content[0].text.includes("removed"), sendGone.content?.[0]?.text);
+
+  const auxGone = await client.callTool({ name: "remove_aux", arguments: { project, aux: 3 } });
+  check("remove_aux", !auxGone.isError && auxGone.content[0].text.includes("removed"), auxGone.content?.[0]?.text);
+
+  const auxMiss = await client.callTool({ name: "set_send", arguments: { project, track: 0, channel: 0, aux: 9, level: 0.5 } });
+  check("set_send into a missing bus is a tool error", auxMiss.isError === true, auxMiss.content?.[0]?.text);
 
   // Structure edits last: they remove the strips the flow above worked on.
   const channelGone = await client.callTool({

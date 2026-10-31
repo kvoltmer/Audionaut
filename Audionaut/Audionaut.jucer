@@ -103,6 +103,8 @@
                 file="Source/Cli/Commands/TrackCommands.cpp"/>
           <FILE id="CliEfC" name="EffectCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/EffectCommands.cpp"/>
+          <FILE id="CliAxC" name="AuxCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/AuxCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
@@ -321,6 +323,12 @@
             <FILE id="EfBTrm" name="TrimEffect.h" compile="0" resource="0"
                   file="Source/Engine/Effects/BuiltIn/TrimEffect.h"/>
           </GROUP>
+          <FILE id="EfAuxC" name="AuxBus.cpp" compile="1" resource="0" file="Source/Engine/Effects/AuxBus.cpp"/>
+          <FILE id="EfAuxH" name="AuxBus.h" compile="0" resource="0" file="Source/Engine/Effects/AuxBus.h"/>
+          <FILE id="EfAxCC" name="AuxBusContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/AuxBusContainer.cpp"/>
+          <FILE id="EfAxCH" name="AuxBusContainer.h" compile="0" resource="0"
+                file="Source/Engine/Effects/AuxBusContainer.h"/>
           <FILE id="EfEffH" name="Effect.h" compile="0" resource="0" file="Source/Engine/Effects/Effect.h"/>
           <FILE id="EfRegC" name="EffectRegistry.cpp" compile="1" resource="0"
                 file="Source/Engine/Effects/EffectRegistry.cpp"/>
@@ -333,6 +341,9 @@
           <FILE id="EfInsH" name="InsertChain.h" compile="0" resource="0"
                 file="Source/Engine/Effects/InsertChain.h"/>
           <FILE id="EfPlnH" name="MixPlan.h" compile="0" resource="0" file="Source/Engine/Effects/MixPlan.h"/>
+          <FILE id="EfSndC" name="SendList.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/SendList.cpp"/>
+          <FILE id="EfSndH" name="SendList.h" compile="0" resource="0" file="Source/Engine/Effects/SendList.h"/>
           <FILE id="EfPlCC" name="MixPlanContainer.cpp" compile="1" resource="0"
                 file="Source/Engine/Effects/MixPlanContainer.cpp"/>
           <FILE id="EfPlCH" name="MixPlanContainer.h" compile="0" resource="0"
@@ -543,6 +554,8 @@
                 file="Source/Engine/Undo/UndoableChannelAction.h"/>
           <FILE id="UndEfP" name="UndoableEffectParameterAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEffectParameterAction.h"/>
+          <FILE id="UndSnd" name="UndoableSendAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableSendAction.h"/>
           <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEdit.h"/>
           <FILE id="UndPLI" name="UndoablePlayListItemAction.h" compile="0" resource="0"

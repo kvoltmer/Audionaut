@@ -248,6 +248,7 @@
     <ClCompile Include="..\..\Source\Cli\Commands\SeparateCommand.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\TrackCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\Commands\EffectCommands.cpp"/>
+    <ClCompile Include="..\..\Source\Cli\Commands\AuxCommands.cpp"/>
     <ClCompile Include="..\..\Source\Cli\CliDispatch.cpp"/>
     <ClCompile Include="..\..\Source\Cli\AgentProtocol.cpp"/>
     <ClCompile Include="..\..\Source\Cli\AgentClient.cpp"/>
@@ -302,8 +303,11 @@
     <ClCompile Include="..\..\Source\Engine\Export\Mp3AudioFormat.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Effects\AuxBus.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Effects\AuxBusContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\InsertChain.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Effects\SendList.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\MixPlanContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\MixerPlanner.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Core\DspClip.cpp"/>
@@ -3538,11 +3542,14 @@
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\TrimEffect.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\AuxBus.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\AuxBusContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Effect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\EffectRegistry.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\EffectSlot.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\InsertChain.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlan.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\SendList.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlanContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixerPlanner.h"/>
     <ClInclude Include="..\..\Source\Engine\Core\LockFreeCommander.h"/>
@@ -3612,6 +3619,7 @@
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableReloadAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableChannelAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEffectParameterAction.h"/>
+    <ClInclude Include="..\..\Source\Engine\Undo\UndoableSendAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoableEdit.h"/>
     <ClInclude Include="..\..\Source\Engine\Undo\UndoablePlayListItemAction.h"/>
     <ClInclude Include="..\..\Source\Engine\Project\ProjectDirectories.h"/>

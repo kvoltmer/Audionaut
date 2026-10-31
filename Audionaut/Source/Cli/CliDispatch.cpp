@@ -317,6 +317,48 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "range and default. Needs no project.",
           runListEffects },
 
+        { "add-aux",
+          "add-aux <project.audium> [--name N] [--json]",
+          "Adds an aux bus.",
+          "Adds a stereo aux bus - a send destination with its own insert chain and return into "
+          "the main mix - after the existing ones, named N or \"Aux <id>\". Every project has "
+          "Aux 1 and Aux 2 from the start; info lists them with their ids. Feed it with set-send, "
+          "put effects on it with add-insert --aux.",
+          runAddAux },
+
+        { "remove-aux",
+          "remove-aux <project.audium> --aux ID [--json]",
+          "Removes an aux bus and the sends into it.",
+          "Removes the aux bus with the id (as info lists it) together with every channel's send "
+          "into it. The other buses keep their ids.",
+          runRemoveAux },
+
+        { "set-aux",
+          "set-aux <project.audium> --aux ID [--name N] [--gain G] [--balance B]\n"
+          "                         [--mute on|off] [--solo on|off] [--json]",
+          "Sets an aux bus's name or return.",
+          "Sets the aux bus's name and/or its return into the main mix: gain G (linear, 1 = unity), "
+          "balance B (-1 left .. 1 right), mute, solo. With an aux soloed, only the soloed aux "
+          "returns are heard.",
+          runSetAux },
+
+        { "set-send",
+          "set-send <project.audium> --track N [--channel C] --aux ID [--level L]\n"
+          "                          [--pre-fader on|off] [--mute on|off] [--json]",
+          "Sets a channel strip's send into an aux bus.",
+          "Sets the send from track N's channel C (every channel of the track without --channel) "
+          "into the aux bus: level L (linear, 0 = off, 1 = unity), pre-fader (then the channel's "
+          "gain, mute and solo do not apply to it) and mute. A send is made the first time it is "
+          "set; a channel without one sends nothing. The send follows the channel's pan.",
+          runSetSend },
+
+        { "remove-send",
+          "remove-send <project.audium> --track N [--channel C] --aux ID [--json]",
+          "Removes a channel strip's send into an aux bus.",
+          "Removes the send from track N's channel C (every channel of the track without --channel) "
+          "into the aux bus with the id.",
+          runRemoveSend },
+
         { "separate",
           "separate <project.audium> [--track N] [--clip N] [--threads N] [--model PATH]\n"
           "                          [--no-mute-source] [--backend demucs|fake] [--json]",

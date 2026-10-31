@@ -60,14 +60,15 @@ SCENARIO ("cli dispatch fall-through and matching", "[cli]")
     GIVEN ("the command table") {
         THEN ("all verbs are present with handlers and help text") {
             auto& commands = cli::getCliCommands();
-            REQUIRE (commands.size() == 25);
+            REQUIRE (commands.size() == 30);
 
             for (auto verb : { "info", "create", "import", "export", "analyze", "auto-edit", "assemble",
                                "split", "create-region", "set-region",
                                "remove-clip", "move-clip", "place-clip", "cleanup-regions",
                                "clip-gain", "clip-fades", "clip-speed",
                                "remove-track", "remove-channel", "track-pan",
-                               "add-insert", "remove-insert", "set-insert", "list-effects", "separate" }) {
+                               "add-insert", "remove-insert", "set-insert", "list-effects",
+                               "add-aux", "remove-aux", "set-aux", "set-send", "remove-send", "separate" }) {
                 auto found = std::find_if (commands.begin(), commands.end(),
                                            [verb] (auto& spec) { return spec.verb == verb; });
                 REQUIRE (found != commands.end());

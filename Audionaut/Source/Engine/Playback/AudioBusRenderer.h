@@ -41,18 +41,25 @@ struct TrackJobShare
  * owns one of them. A block is rendered in two stages:
  *
  *  - Stage A, one job per track (the run of bus channels with the track's id):
- *    the bus channels' input monitoring and recording, the track's voices, channel
- *    gain and metering, and the pan of each bus channel into the track's own
- *    stereo partial (`trackOutput`). Jobs are independent - a job touches only
- *    its channels, its partial and its voices - so the RenderThreadPool runs
- *    them concurrently, longest first.
+ *    the bus channels' input monitoring and recording, the track's voices, the
+ *    inserts, channel gain and metering, the pan of each bus channel into the
+ *    track's own stereo partial (`trackOutput`) and its sends into their own
+ *    pairs of the plan's send buffer (a one-channel output has no pan: the
+ *    sends tap the bus channels as they are). Jobs are independent - a job touches
+ *    only its channels, its partial, its send pairs and its voices - so the
+ *    RenderThreadPool runs them concurrently, longest first.
+ *  - Stage B, one job per aux bus: the send pairs feeding it summed in track
+ *    order, the aux inserts, the return gain and balance into the plan's aux
+ *    output. Skipped when the plan has no aux bus, and for a stem export,
+ *    whose outputs are the dry bus channels.
  *  - Stage C, on the calling thread: the partials are summed in track order
- *    into the main mix, direct outs and stem copies are taken from the
- *    post-gain bus channels, then master gain and metering.
+ *    into the main mix, the aux returns are added, direct outs and stem copies
+ *    are taken from the post-gain bus channels, then the master inserts,
+ *    master gain and metering.
  *
  * The sums always run in track order on one thread, so the output is the
  * same for any number of workers, including none (the serial path, which is
- * what offline bounces use). Stage B (aux buses) is reserved for sends.
+ * what offline bounces use).
  *
  * @tparam SampleType The type of audio sample (float or double; voices render in float).
  */
@@ -195,8 +202,13 @@ private:
         AudioBlock<SampleType> trackOutput;    ///< the stereo partials, one pair per job
         AudioBlock<SampleType> panOutput;      ///< one stereo pair per worker slot
         AudioBlock<float> voiceOutput;         ///< one mono row per worker slot
+        AudioBlock<float> sendScratch;         ///< one stereo pair per worker slot, for a send's scaled copy
+        AudioBlock<float> sendOutput;          ///< the plan's send pairs, the block's length (empty without sends)
+        AudioBlock<float> auxOutput;           ///< the plan's aux returns, the block's length (empty without aux buses)
+        bool anyAuxSolo = false;               ///< an aux return is soloed: the dry main mix and the other returns are silent
         int numSamples = 0;
-        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export); a one-channel output sums them unpanned instead
+        bool stereoMain = false;   ///< bus channels pan into the main mix (a stereo device, no stem export)
+        bool monoMain = false;     ///< a one-channel output (a mono device, a mono bounce): bus channels sum unpanned into the main mix, and so do the sends and the aux returns
         juce::int64 blockTicks = 0;   ///< the block period in high-resolution ticks
         int shareTable = -1;          ///< the job share table this block fills, -1 = not recording
         const MixPlan* plan = nullptr;   ///< the inserts to run, nullptr = none (no plan, or one of another format)
@@ -237,8 +249,30 @@ private:
     /// The job's channels' input: monitored input added to the bus, armed channels metered and recorded.
     void renderInput (const TrackJob& job, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept;
 
-    /// The job's main-mix channels panned and summed into the track's stereo partial.
+    /**
+     * The job's main-mix channels panned and summed into the track's stereo
+     * partial, and every channel's post-fader sends written from the same
+     * panned signal, scaled by the send's level, into the send's pair.
+     */
     void panIntoPartial (const TrackJob& job, int jobIndex, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock) noexcept;
+
+    /**
+     * The job's pre-fader sends: each channel's post-insert, pre-gain signal
+     * panned with the channel's pan by the same balanced rule the panner
+     * uses (stateless, so it only differs from the main pan while the pan
+     * moves), scaled by the send's level, into the send's pair. Before the
+     * channel gain, so the channel's gain, mute and solo do not apply.
+     */
+    void tapSends (const TrackJob& job, int workerId, const BlockContext& ctx, const AudioBlock<SampleType>& audioBusBlock, bool preFader) noexcept;
+
+    /**
+     * Stage B for one aux bus: its send pairs summed in track order, its
+     * inserts, the return gain per side (gain, balance, mute, solo) and the
+     * return meter, into the aux's pair of the plan's aux output. Writes
+     * only that pair and the aux's own gains, so the aux jobs run
+     * concurrently.
+     */
+    void renderAux (int auxIndex, int workerId, const BlockContext& ctx) noexcept;
 
     /**
      * Stage C: the partials summed in track order into the main mix, the
@@ -261,6 +295,7 @@ private:
     juce::AudioBuffer<SampleType> trackOutput;   ///< a track's output: stereo partial per job, channels 2j, 2j+1
     juce::AudioBuffer<SampleType> panOutput;     ///< a channel's panned output: one stereo pair per worker slot
     juce::AudioBuffer<float> voiceOutput;        ///< a voice's output: one mono row per worker slot
+    juce::AudioBuffer<float> sendScratch;        ///< a send's scaled copy: one stereo pair per worker slot
 
     TrackJob jobs[MAX_AUDIO_CHANNELS];
     int numJobs = 0;
@@ -302,6 +337,7 @@ private:
 
     Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
+    Gain<SampleType> dryGain;      ///< the dry main mix: unity, or silence while an aux return is soloed
     Gain<SampleType> masterGain;
 
     std::atomic<float> masterLevel[2];
