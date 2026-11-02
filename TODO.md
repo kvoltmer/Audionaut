@@ -429,6 +429,26 @@ the one-gesture crossfade UX on top:
   state the fold instead of the unpanned sum. A stem export stays as it
   is: its outputs are the dry bus channels.
 
+- [ ] **Refactor `AudioBusRenderer`: simplify by encapsulating.** The class
+  has grown into the one place that does everything per block (355 + 853
+  lines, 2026-11-02): mixer state and its lock-free commands, the job table
+  and voice buckets, the per-worker scratch buffers, the stage A track
+  render (input, voices, pan, send taps), stage B (aux returns, master), the
+  job-share tables for the Processing Load window and the simulated load
+  for the bench. Carve the self-contained parts into their own types with
+  one job each and a small interface, so the renderer is left to order the
+  stages: candidates are the job table + voice bucketing (`buildJobTable`,
+  `bucketVoices`, `jobOrder`/`channelToJob`/`voiceOrder`), the job-share
+  publishing (`JobShareTable`, `readTrackJobShares`, the two-table sequence
+  dance), the per-slot scratch (`panOutput`, `voiceOutput`, `sendScratch`
+  sized in `prepareToPlay`), and the stage A and stage B passes as stateless
+  functions over a `BlockContext`. Behaviour-preserving: the
+  `[parallel]`, `[inserts]`, `[sends]` and `[playback][bench]` scenarios
+  stay as they are and must pass bit-identically for every worker count.
+  Sequence it with the mono-fold item above and phase 4 (PDC, built on
+  feature/effects-pdc), which both touch the same passes: one of the three
+  first, the others on top, not interleaved.
+
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
 - [ ] **Each undo step keeps two container snapshots.** An
