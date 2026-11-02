@@ -20,7 +20,7 @@ class MixerPlanner;
 
 /**
  * The values of one aux bus the render thread reads per block: return
- * gain (linear), balance (-1 left .. 1 right), mute and solo, and the
+ * gain (linear), pan (-1 left .. 1 right), mute and solo, and the
  * return meter it writes. Atomics, so a change needs no new plan; the plan
  * holds a shared_ptr to the state, so a model rebuild under a live plan
  * cannot free it.
@@ -28,7 +28,7 @@ class MixerPlanner;
 struct AuxState
 {
     std::atomic<float> gain { 1.0f };
-    std::atomic<float> balance { 0.0f };
+    std::atomic<float> pan { 0.0f };
     std::atomic<bool> mute { false };
     std::atomic<bool> solo { false };
     std::atomic<float> level[2] { 0.0f, 0.0f };   ///< the return's peak per block, left and right
@@ -36,11 +36,11 @@ struct AuxState
 
 /**
  * A stereo send destination with its own strip: a stable id the sends
- * refer to, a name, an insert chain and the return stage (gain, balance,
+ * refer to, a name, an insert chain and the return stage (gain, pan,
  * mute, solo) into the main mix. Every project has "Aux 1" and "Aux 2"
  * from the start (AuxBusContainer); more can be added, any can go.
  *
- * JSON: {"id", "name", "gain", "balance", "mute", "solo", "inserts": [...]},
+ * JSON: {"id", "name", "gain", "pan", "mute", "solo", "inserts": [...]},
  * one object per bus in the container's "aux_buses" array.
  */
 class AuxBus
@@ -61,8 +61,8 @@ public:
 
     float getGain() const noexcept { return state->gain.load (std::memory_order_relaxed); }
     void setGain (float gain) noexcept { state->gain.store (juce::jmax (0.0f, gain), std::memory_order_relaxed); }
-    float getBalance() const noexcept { return state->balance.load (std::memory_order_relaxed); }
-    void setBalance (float balance) noexcept { state->balance.store (juce::jlimit (-1.0f, 1.0f, balance), std::memory_order_relaxed); }
+    float getPan() const noexcept { return state->pan.load (std::memory_order_relaxed); }
+    void setPan (float pan) noexcept { state->pan.store (juce::jlimit (-1.0f, 1.0f, pan), std::memory_order_relaxed); }
     bool getMute() const noexcept { return state->mute.load (std::memory_order_relaxed); }
     void setMute (bool mute) noexcept { state->mute.store (mute, std::memory_order_relaxed); }
     bool getSolo() const noexcept { return state->solo.load (std::memory_order_relaxed); }

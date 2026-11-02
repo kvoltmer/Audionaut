@@ -2065,7 +2065,7 @@ SCENARIO ("cli aux buses and sends", "[cli][effects][sends]")
             REQUIRE (envelope["error"]["code"] == "aux_not_found");
             REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 5 --aux 1 --level 0.5"), context) == cli::exitUsage);
             REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1"), context) == cli::exitUsage);
-            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --balance 2"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --pan 2"), context) == cli::exitUsage);
             REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux one --gain 1"), context) == cli::exitUsage);
             REQUIRE (cli::runRemoveAux (makeArgs ("remove-aux " + projectArg), context) == cli::exitUsage);
             REQUIRE (cli::runRemoveAux (makeArgs ("remove-aux " + projectArg + " --aux 7"), context) == cli::exitFailure);

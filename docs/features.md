@@ -69,7 +69,7 @@ monitoring. Each take becomes a region and a single undo step.
   through the MCP tools.
 - **Aux buses and sends**: every project has two stereo aux buses (more can
   be added), each with its own insert chain and a return into the main mix
-  with gain, balance, mute and solo. Every channel strip can send into each
+  with gain, pan, mute and solo. Every channel strip can send into each
   bus, post- or pre-fader, following the strip's pan.
 - **Ableton Link:** syncs tempo and transport with other Link software on
   the network.

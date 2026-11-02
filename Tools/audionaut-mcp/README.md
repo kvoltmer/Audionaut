@@ -117,7 +117,7 @@ read or edit them.
 | `set_insert` | `set-insert` | Set an insert's parameter, or enable / disable it |
 | `add_aux` | `add-aux` | Add a stereo aux bus (every project starts with Aux 1 and Aux 2) |
 | `remove_aux` | `remove-aux` | Remove an aux bus and the sends into it |
-| `set_aux` | `set-aux` | Set an aux bus's name, or its return: gain, balance, mute, solo |
+| `set_aux` | `set-aux` | Set an aux bus's name, or its return: gain, pan, mute, solo |
 | `set_send` | `set-send` | Set a channel strip's send into an aux bus: level, pre-fader, mute |
 | `remove_send` | `remove-send` | Remove a channel strip's send |
 | `request_feature` | — | Send a feature request to the maintainer (see below) |

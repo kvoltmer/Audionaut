@@ -72,7 +72,7 @@ struct MixPlan
     /**
      * One aux bus: the send pairs that feed it, in track order (so the sum
      * is the same for any number of workers), its inserts over the stereo
-     * sum, and the return into the main mix: gain, balance, mute and solo
+     * sum, and the return into the main mix: gain, pan, mute and solo
      * from the state, ramped by one gain per side that only the job
      * rendering the aux touches.
      */
@@ -131,20 +131,20 @@ struct MixPlan
     }
 
     /**
-     * An aux return's gain per side: the return gain spread by the balance
-     * (the side the balance turns away from is attenuated, the other stays),
+     * An aux return's gain per side: the return gain spread by the pan
+     * (the side the pan turns away from is attenuated, the other stays),
      * silence while the aux is muted or while another aux is soloed and this
      * one is not.
      */
     static void auxGainsOf (const AuxState& state, bool anyAuxSolo, float& left, float& right) noexcept
     {
         const auto gain = auxGainOf (state, anyAuxSolo);
-        const auto balance = state.balance.load (std::memory_order_relaxed);
-        left = gain * juce::jmin (1.0f, 1.0f - balance);
-        right = gain * juce::jmin (1.0f, 1.0f + balance);
+        const auto pan = state.pan.load (std::memory_order_relaxed);
+        left = gain * juce::jmin (1.0f, 1.0f - pan);
+        right = gain * juce::jmin (1.0f, 1.0f + pan);
     }
 
-    /// The return gain before balance: 0 while the aux is muted or another one is soloed. What a mono main mix applies.
+    /// The return gain before pan: 0 while the aux is muted or another one is soloed. What a mono main mix applies.
     static float auxGainOf (const AuxState& state, bool anyAuxSolo) noexcept
     {
         const auto mute = state.mute.load (std::memory_order_relaxed);

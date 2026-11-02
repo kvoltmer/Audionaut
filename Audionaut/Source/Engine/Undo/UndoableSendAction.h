@@ -86,7 +86,7 @@ private:
 };
 
 /**
- * Undo step for the return values of one aux bus: gain, balance, mute and
+ * Undo step for the return values of one aux bus: gain, pan, mute and
  * solo, old and new, into the bus's atomics; no plan is rebuilt. Addressed
  * by aux id; a bus that is gone makes the step a no-op.
  */
@@ -95,19 +95,19 @@ struct UndoableAuxAction final : public juce::UndoableAction
     struct Values
     {
         float gain = 1.0f;
-        float balance = 0.0f;
+        float pan = 0.0f;
         bool mute = false;
         bool solo = false;
 
         static Values of (const AuxBus& bus) noexcept
         {
-            return { bus.getGain(), bus.getBalance(), bus.getMute(), bus.getSolo() };
+            return { bus.getGain(), bus.getPan(), bus.getMute(), bus.getSolo() };
         }
 
         void applyTo (AuxBus& bus) const noexcept
         {
             bus.setGain (gain);
-            bus.setBalance (balance);
+            bus.setPan (pan);
             bus.setMute (mute);
             bus.setSolo (solo);
         }

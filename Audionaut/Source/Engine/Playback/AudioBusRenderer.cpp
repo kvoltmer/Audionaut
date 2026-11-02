@@ -691,11 +691,11 @@ void AudioBusRenderer<SampleType>::renderAux (int auxIndex, int workerId, const 
         for (auto* slot : aux.inserts)
             slot->process (out);
 
-        // the return: gain and balance per side, silence while muted or
+        // the return: gain and pan per side, silence while muted or
         // while another aux is soloed
         float left = 0.0f, right = 0.0f;
         if (ctx.monoMain)
-            left = right = MixPlan::auxGainOf (*aux.state, ctx.anyAuxSolo);   // no sides to balance between
+            left = right = MixPlan::auxGainOf (*aux.state, ctx.anyAuxSolo);   // no sides to pan between
         else
             MixPlan::auxGainsOf (*aux.state, ctx.anyAuxSolo, left, right);
         aux.gainLeft.setGainLinear (left);
@@ -793,7 +793,7 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
 
         // the dry mix gives way while an aux return is soloed, then the aux
         // returns join it, in strip order; a mono mix takes a return's first
-        // side (the sides are the same: unpanned sends, no balance)
+        // side (the sides are the same: unpanned sends, no pan)
         dryGain.setGainLinear (ctx.anyAuxSolo ? static_cast<SampleType> (0) : static_cast<SampleType> (1));
         ProcessContextReplacing<SampleType> dryContext (mainMixBlock);
         dryGain.process (dryContext);

@@ -293,9 +293,9 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
                 }
             }
 
-            AND_WHEN ("the aux return is balanced hard right")
+            AND_WHEN ("the aux return is panned hard right")
             {
-                session.auxes().get (1)->setBalance (1.0f);
+                session.auxes().get (1)->setPan (1.0f);
                 THEN ("the return's left side is turned down: output 0 is dry, and nothing was on the right to begin with")
                 {
                     const auto live = renderLive (*session.engine);
@@ -303,7 +303,7 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
                     requireSilent (live, 1);
                 }
 
-                THEN ("a mono bounce has no side to balance to: the return stays whole")
+                THEN ("a mono bounce has no side to pan to: the return stays whole")
                 {
                     const auto plainMono = bounceProject (*plain.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
                     const auto mono = bounceProject (*session.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
@@ -311,10 +311,10 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
                 }
             }
 
-            AND_WHEN ("the channel is panned to the centre and the aux return balanced half right")
+            AND_WHEN ("the channel is panned to the centre and the aux return panned half right")
             {
                 session.track (0)->setPan (0.0f, 0);
-                session.auxes().get (1)->setBalance (0.5f);
+                session.auxes().get (1)->setPan (0.5f);
                 THEN ("the dry channel is on both sides, the return at half on the left and whole on the right")
                 {
                     const auto live = renderLive (*session.engine);

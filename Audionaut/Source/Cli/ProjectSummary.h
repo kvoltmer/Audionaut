@@ -42,7 +42,7 @@ nlohmann::json describeInserts (const InsertChain& chain);
 /** One send as the summary and set-send report it: aux id, level, preFader, mute. */
 nlohmann::json describeSend (int auxId, const SendState& state);
 
-/** An aux bus as the summary and the aux verbs report it: id, name, gain, balance, mute, solo, inserts. */
+/** An aux bus as the summary and the aux verbs report it: id, name, gain, pan, mute, solo, inserts. */
 nlohmann::json describeAux (const AuxBus& bus);
 
 /** The aux buses in strip order, each describeAux(). */

@@ -13,7 +13,7 @@ void AuxBus::writeToJson (json& output) const
     output["id"] = id;
     output["name"] = name;
     output["gain"] = getGain();
-    output["balance"] = getBalance();
+    output["pan"] = getPan();
     output["mute"] = getMute();
     output["solo"] = getSolo();
     inserts.writeToJson (output);
@@ -28,8 +28,8 @@ void AuxBus::readFromJson (const json& input)
         name = input["name"].get<std::string>();
     if (input.contains ("gain") && input["gain"].is_number())
         setGain (input["gain"].get<float>());
-    if (input.contains ("balance") && input["balance"].is_number())
-        setBalance (input["balance"].get<float>());
+    if (input.contains ("pan") && input["pan"].is_number())
+        setPan (input["pan"].get<float>());
     if (input.contains ("mute") && input["mute"].is_boolean())
         setMute (input["mute"].get<bool>());
     if (input.contains ("solo") && input["solo"].is_boolean())

@@ -105,7 +105,7 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context);
 int runAddAux (const juce::ArgumentList& args, CliContext& context);
 /** `remove-aux <project> --aux ID` - remove an aux bus and the sends into it. */
 int runRemoveAux (const juce::ArgumentList& args, CliContext& context);
-/** `set-aux <project> --aux ID [--name N] [--gain G] [--balance B] [--mute on|off] [--solo on|off]` */
+/** `set-aux <project> --aux ID [--name N] [--gain G] [--pan P] [--mute on|off] [--solo on|off]` */
 int runSetAux (const juce::ArgumentList& args, CliContext& context);
 /** `set-send <project> --track N [--channel C] --aux ID [--level L] [--pre-fader on|off] [--mute on|off]` */
 int runSetSend (const juce::ArgumentList& args, CliContext& context);

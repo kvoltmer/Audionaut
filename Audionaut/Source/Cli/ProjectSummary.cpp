@@ -51,7 +51,7 @@ nlohmann::json describeAux (const AuxBus& bus)
     return { { "id", bus.getId() },
              { "name", bus.getName() },
              { "gain", bus.getGain() },
-             { "balance", bus.getBalance() },
+             { "pan", bus.getPan() },
              { "mute", bus.getMute() },
              { "solo", bus.getSolo() },
              { "inserts", describeInserts (bus.getInserts()) } };

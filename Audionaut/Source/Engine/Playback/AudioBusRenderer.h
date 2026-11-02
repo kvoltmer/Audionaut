@@ -49,7 +49,7 @@ struct TrackJobShare
  *    only its channels, its partial, its send pairs and its voices - so the
  *    RenderThreadPool runs them concurrently, longest first.
  *  - Stage B, one job per aux bus: the send pairs feeding it summed in track
- *    order, the aux inserts, the return gain and balance into the plan's aux
+ *    order, the aux inserts, the return gain and pan into the plan's aux
  *    output. Skipped when the plan has no aux bus, and for a stem export,
  *    whose outputs are the dry bus channels.
  *  - Stage C, on the calling thread: the partials are summed in track order
@@ -267,7 +267,7 @@ private:
 
     /**
      * Stage B for one aux bus: its send pairs summed in track order, its
-     * inserts, the return gain per side (gain, balance, mute, solo) and the
+     * inserts, the return gain per side (gain, pan, mute, solo) and the
      * return meter, into the aux's pair of the plan's aux output. Writes
      * only that pair and the aux's own gains, so the aux jobs run
      * concurrently.

@@ -29,7 +29,7 @@ bool isIdValue (const juce::String& value)
     return value.isNotEmpty() && value.containsOnly ("0123456789");
 }
 
-/// A level, gain or balance as typed: one finite number and nothing else.
+/// A level, gain or pan as typed: one finite number and nothing else.
 bool isNumberValue (const juce::String& value)
 {
     const auto text = value.trim().toStdString();
@@ -176,18 +176,18 @@ int runSetAux (const juce::ArgumentList& args, CliContext& context)
     auto auxValue = takeOptionValue (working, "--aux");
     auto nameValue = takeOptionValue (working, "--name");
     auto gainValue = takeOptionValue (working, "--gain");
-    auto balanceValue = takeOptionValue (working, "--balance");
+    auto panValue = takeOptionValue (working, "--pan");
     auto muteValue = takeOptionValue (working, "--mute");
     auto soloValue = takeOptionValue (working, "--solo");
 
     if (auxValue.isEmpty())
         return context.fail (exitUsage, "usage", "set-aux requires --aux <id>");
-    if (nameValue.isEmpty() && gainValue.isEmpty() && balanceValue.isEmpty() && muteValue.isEmpty() && soloValue.isEmpty())
-        return context.fail (exitUsage, "usage", "set-aux takes --name N, --gain G, --balance B, --mute on|off and/or --solo on|off");
+    if (nameValue.isEmpty() && gainValue.isEmpty() && panValue.isEmpty() && muteValue.isEmpty() && soloValue.isEmpty())
+        return context.fail (exitUsage, "usage", "set-aux takes --name N, --gain G, --pan P, --mute on|off and/or --solo on|off");
     if (gainValue.isNotEmpty() && (! isNumberValue (gainValue) || gainValue.getDoubleValue() < 0.0))
         return context.fail (exitUsage, "usage", "--gain must be a linear gain from 0 (1 = unity)");
-    if (balanceValue.isNotEmpty() && (! isNumberValue (balanceValue) || std::abs (balanceValue.getDoubleValue()) > 1.0))
-        return context.fail (exitUsage, "usage", "--balance must be -1 (left) .. 1 (right)");
+    if (panValue.isNotEmpty() && (! isNumberValue (panValue) || std::abs (panValue.getDoubleValue()) > 1.0))
+        return context.fail (exitUsage, "usage", "--pan must be -1 (left) .. 1 (right)");
     if (! isSwitchValue (muteValue) || ! isSwitchValue (soloValue))
         return context.fail (exitUsage, "usage", "--mute and --solo take on or off");
 
@@ -209,14 +209,14 @@ int runSetAux (const juce::ArgumentList& args, CliContext& context)
         auto newValues = oldValues;
         if (gainValue.isNotEmpty())
             newValues.gain = static_cast<float> (gainValue.getDoubleValue());
-        if (balanceValue.isNotEmpty())
-            newValues.balance = static_cast<float> (balanceValue.getDoubleValue());
+        if (panValue.isNotEmpty())
+            newValues.pan = static_cast<float> (panValue.getDoubleValue());
         if (muteValue.isNotEmpty())
             newValues.mute = muteValue == "on";
         if (soloValue.isNotEmpty())
             newValues.solo = soloValue == "on";
 
-        if (gainValue.isNotEmpty() || balanceValue.isNotEmpty() || muteValue.isNotEmpty() || soloValue.isNotEmpty())
+        if (gainValue.isNotEmpty() || panValue.isNotEmpty() || muteValue.isNotEmpty() || soloValue.isNotEmpty())
             undoManager->perform (new UndoableAuxAction (container, bus->getId(), oldValues, newValues), "Set Aux Bus");
 
         if (nameValue.isNotEmpty())

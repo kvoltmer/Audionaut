@@ -334,11 +334,11 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runRemoveAux },
 
         { "set-aux",
-          "set-aux <project.audium> --aux ID [--name N] [--gain G] [--balance B]\n"
+          "set-aux <project.audium> --aux ID [--name N] [--gain G] [--pan P]\n"
           "                         [--mute on|off] [--solo on|off] [--json]",
           "Sets an aux bus's name or return.",
           "Sets the aux bus's name and/or its return into the main mix: gain G (linear, 1 = unity), "
-          "balance B (-1 left .. 1 right), mute, solo. With an aux soloed, only the soloed aux "
+          "pan P (-1 left .. 1 right), mute, solo. With an aux soloed, only the soloed aux "
           "returns are heard.",
           runSetAux },
 

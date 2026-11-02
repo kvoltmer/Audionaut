@@ -1020,20 +1020,21 @@ server.registerTool(
   {
     title: "Set an aux bus's name or return",
     description:
-      "Sets an aux bus's name and/or its return into the main mix: gain (linear, 1 = unity), balance " +
-      "(-1 left .. 1 right), mute, solo. With an aux soloed only the soloed aux returns are heard.",
+      "Sets an aux bus's name and/or its return into the main mix: gain (linear, 1 = unity), pan " +
+      "(-1 left .. 1 right, a balance: the side you turn away from is attenuated), mute, solo. " +
+      "With an aux soloed only the soloed aux returns are heard.",
     inputSchema: {
       project: projectParam,
       aux: z.number().int().min(1).describe("Aux bus id"),
       name: z.string().optional().describe("A new name"),
       gain: z.number().min(0).optional().describe("Return gain, linear (1 = unity)"),
-      balance: z.number().min(-1).max(1).optional().describe("Return balance, -1 left .. 1 right"),
+      pan: z.number().min(-1).max(1).optional().describe("Return pan, -1 left .. 1 right (a balance: the side you turn away from is attenuated)"),
       mute: z.boolean().optional(),
       solo: z.boolean().optional(),
       task: taskParam,
     },
   },
-  withTask(async ({ project, aux, name, gain, balance, mute, solo }) =>
+  withTask(async ({ project, aux, name, gain, pan, mute, solo }) =>
     runCli([
       "set-aux",
       project,
@@ -1041,7 +1042,7 @@ server.registerTool(
       String(aux),
       ...(name !== undefined ? ["--name", name] : []),
       ...(gain !== undefined ? ["--gain", String(gain)] : []),
-      ...(balance !== undefined ? ["--balance", String(balance)] : []),
+      ...(pan !== undefined ? ["--pan", String(pan)] : []),
       ...(mute !== undefined ? ["--mute", onOff(mute)] : []),
       ...(solo !== undefined ? ["--solo", onOff(solo)] : []),
     ]))
