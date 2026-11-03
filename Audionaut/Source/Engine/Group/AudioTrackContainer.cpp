@@ -35,8 +35,28 @@ void AudioTrackContainer::setMixerPlanner(std::shared_ptr<MixerPlanner> planner)
 {
     mixerPlanner = std::move(planner);
     masterInserts.setPlanner(mixerPlanner.get());
+    auxBuses.setPlanner(mixerPlanner.get());
     if (mixerPlanner != nullptr)
         mixerPlanner->setSource(this);
+}
+
+std::shared_ptr<AuxBus> AudioTrackContainer::addAuxBus(const std::string& name)
+{
+    return auxBuses.add(name);
+}
+
+bool AudioTrackContainer::removeAuxBus(int auxId)
+{
+    if (auxBuses.get(auxId) == nullptr)
+        return false;
+
+    // the sends into it go with it: a send into a bus that is not there
+    // would be silent, and come back with the bus through undo anyway
+    MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
+    for (auto& track : audioTracks)
+        for (auto& channel : track->audioChannelContainer->getObjects())
+            channel->sends.remove(auxId);
+    return auxBuses.remove(auxId);
 }
 
 void AudioTrackContainer::setMasterGain(const float newGain)
@@ -68,6 +88,8 @@ void AudioTrackContainer::cleanup()
     // the main mix's inserts go with the project they belong to: the plan
     // built when the batch closes has no master chain either
     masterInserts.clear();
+    // the next project starts with the two aux buses every project has
+    auxBuses.resetToDefaults();
     publishNumAudioTrackChannels();
     commitChannelLayout(0, previousNumChannels);
 }
@@ -211,6 +233,7 @@ bool AudioTrackContainer::writeToJson (json& output)
     }
     output["master_gain"] = getMasterGain();
     masterInserts.writeToJson(output, "master_inserts");
+    auxBuses.writeToJson(output, "aux_buses");
     output["loop_data"] = transportLoop->getLoopData();
     
     return true;
@@ -247,6 +270,7 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
         setMasterGain(1.f);
     }
     masterInserts.readFromJson(input, "master_inserts");
+    auxBuses.readFromJson(input, "aux_buses");
     
     int count = 0;
     for (auto& jsonElement : jsonTracks) {

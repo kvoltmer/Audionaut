@@ -101,6 +101,17 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context);
 /** `list-effects` - the effect types with their parameters. */
 int runListEffects (const juce::ArgumentList& args, CliContext& context);
 
+/** `add-aux <project> [--name N]` - a new aux bus. */
+int runAddAux (const juce::ArgumentList& args, CliContext& context);
+/** `remove-aux <project> --aux ID` - remove an aux bus and the sends into it. */
+int runRemoveAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-aux <project> --aux ID [--name N] [--gain G] [--pan P] [--mute on|off] [--solo on|off]` */
+int runSetAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-send <project> --track N [--channel C] --aux ID [--level L] [--pre-fader on|off] [--mute on|off]` */
+int runSetSend (const juce::ArgumentList& args, CliContext& context);
+/** `remove-send <project> --track N [--channel C] --aux ID` - remove a channel's send. */
+int runRemoveSend (const juce::ArgumentList& args, CliContext& context);
+
 /** `clip-speed <project> (--at P | --region N) (--ratio R | --semitones N | --length L)` - re-pitch a clip. */
 int runClipSpeed (const juce::ArgumentList& args, CliContext& context);
 
@@ -138,6 +149,12 @@ bool musicalDurationToClocks (const juce::String& value,
                               const TempoProvider& tempoProvider,
                               double& outClocks,
                               std::string& error);
+
+/// An id, index, position or channel number as typed: digits only, so a typo never acts on 0.
+bool isIndexValue (const juce::String& value);
+
+/// An on/off option: empty (not given), "on" or "off"; anything else is a usage error.
+bool isSwitchValue (const juce::String& value);
 
 /**
  * Validates a plain numeric option value (seconds, measures, counts - the

@@ -12,6 +12,7 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Effects/InsertChain.h"
+#include "Engine/Effects/SendList.h"
 
 namespace audium
 {
@@ -132,6 +133,7 @@ public:
     
     AudioChannelData data; ///< The data structure holding the channel's properties.
     InsertChain inserts;   ///< The channel's insert effects, in order; see InsertChain for the JSON form.
+    SendList sends;        ///< The channel's sends into the aux buses; see SendList for the JSON form.
     
 private:
     AudioTrack &audioTrack; ///< Reference to the associated audio track.

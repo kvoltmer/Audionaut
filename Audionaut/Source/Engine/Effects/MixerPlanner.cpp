@@ -105,6 +105,49 @@ void MixerPlanner::rebuild (bool nothingRenders)
     plan->sampleRate = sampleRate;
     plan->maxBlockSize = maxBlockSize;
 
+    const auto prepared = sampleRate > 0.0 && maxBlockSize > 0;
+    juce::dsp::ProcessSpec stereoSpec { sampleRate, static_cast<juce::uint32> (juce::jmax (1, maxBlockSize)), 2 };
+
+    // a gain that starts at its target: prepare() resets the ramp to it
+    const auto seedGain = [&] (juce::dsp::Gain<float>& gain, float target)
+    {
+        gain.setRampDurationSeconds (gainRampSeconds);
+        gain.setGainLinear (target);
+        if (prepared)
+            gain.prepare (stereoSpec);
+    };
+
+    // the aux buses first: the sends refer to them by index
+    const auto anyAuxSolo = [&]
+    {
+        for (const auto& bus : audioTrackContainer->getAuxBuses().getBuses())
+            if (bus->getSolo())
+                return true;
+        return false;
+    }();
+
+    for (const auto& bus : audioTrackContainer->getAuxBuses().getBuses())
+    {
+        MixPlan::Aux entry;
+        entry.id = bus->getId();
+        entry.state = bus->getState().get();
+        plan->keepAliveAuxes.push_back (bus->getState());
+        collect (bus->getInserts(), 2, entry.inserts, *plan, nothingRenders);
+        float left = 0.0f, right = 0.0f;
+        MixPlan::auxGainsOf (*entry.state, anyAuxSolo, left, right);
+        seedGain (entry.gainLeft, left);
+        seedGain (entry.gainRight, right);
+        plan->auxes.push_back (std::move (entry));
+    }
+
+    const auto auxIndexOf = [&plan] (int auxId)
+    {
+        for (size_t a = 0; a < plan->auxes.size(); ++a)
+            if (plan->auxes[a].id == auxId)
+                return static_cast<int> (a);
+        return -1;
+    };
+
     auto busChannel = 0;
     for (const auto& track : audioTrackContainer->getAudioTracks())
     {
@@ -116,6 +159,25 @@ void MixerPlanner::rebuild (bool nothingRenders)
                 break;
             MixPlan::Channel entry;
             collect (channel->inserts, 1, entry.inserts, *plan, nothingRenders);
+
+            // one send buffer pair per send into a bus that exists, handed
+            // out in bus channel order, which is track order: the aux sums
+            // its pairs in that order
+            for (const auto& send : channel->sends.getEntries())
+            {
+                const auto aux = auxIndexOf (send.auxId);
+                if (aux < 0 || send.state == nullptr)
+                    continue;
+                MixPlan::Send planned;
+                planned.aux = aux;
+                planned.pair = plan->numSendPairs++;
+                planned.state = send.state.get();
+                seedGain (planned.gain, MixPlan::sendGainOf (*planned.state));
+                plan->keepAliveSends.push_back (send.state);
+                plan->auxes[static_cast<size_t> (aux)].pairs.push_back (planned.pair);
+                entry.sends.push_back (std::move (planned));
+            }
+
             plan->channels.push_back (std::move (entry));
             ++busChannel;
         }
@@ -132,6 +194,16 @@ void MixerPlanner::rebuild (bool nothingRenders)
     }
 
     collect (audioTrackContainer->getMasterInserts(), 2, plan->master, *plan, nothingRenders);
+
+    // the buffers between the stages, sized now so the render thread
+    // allocates nothing: what the sends write, what the aux returns are
+    if (prepared)
+    {
+        if (plan->numSendPairs > 0)
+            plan->sendOutput.setSize (2 * plan->numSendPairs, maxBlockSize);
+        if (! plan->auxes.empty())
+            plan->auxOutput.setSize (2 * static_cast<int> (plan->auxes.size()), maxBlockSize);
+    }
 
     // the render thread takes the plan over at the top of a block, behind
     // whatever channel data the same edit posted before it

@@ -32,7 +32,7 @@ public:
     /// Registers a type; a second registration of the same id replaces the first.
     void add (EffectTypeInfo type, Factory factory);
 
-    /// Registers Trim, EQ and Compressor.
+    /// Registers Trim, EQ, Compressor and Delay.
     void addBuiltInEffects();
 
     /// A new instance of the type, nullptr for an unknown id.

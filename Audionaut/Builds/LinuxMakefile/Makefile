@@ -116,6 +116,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SeparateCommand_b9775fb9.o \
   $(JUCE_OBJDIR)/TrackCommands_a6175784.o \
   $(JUCE_OBJDIR)/EffectCommands_3279f92.o \
+  $(JUCE_OBJDIR)/AuxCommands_c401a7d.o \
   $(JUCE_OBJDIR)/CliDispatch_d59c360c.o \
   $(JUCE_OBJDIR)/AgentProtocol_7aaf204f.o \
   $(JUCE_OBJDIR)/AgentClient_c1a08c82.o \
@@ -161,8 +162,11 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/Mp3AudioFormat_a0828914.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
+  $(JUCE_OBJDIR)/AuxBus_58602d7.o \
+  $(JUCE_OBJDIR)/AuxBusContainer_59272cb4.o \
   $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o \
   $(JUCE_OBJDIR)/InsertChain_a4a5e8f7.o \
+  $(JUCE_OBJDIR)/SendList_e0fcbf81.o \
   $(JUCE_OBJDIR)/MixPlanContainer_ea9e0c97.o \
   $(JUCE_OBJDIR)/MixerPlanner_835e4444.o \
   $(JUCE_OBJDIR)/DspClip_7236184f.o \
@@ -491,6 +495,11 @@ $(JUCE_OBJDIR)/EffectCommands_3279f92.o: ../../Source/Cli/Commands/EffectCommand
 	@echo "Compiling EffectCommands.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AuxCommands_c401a7d.o: ../../Source/Cli/Commands/AuxCommands.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AuxCommands.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/CliDispatch_d59c360c.o: ../../Source/Cli/CliDispatch.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling CliDispatch.cpp"
@@ -716,6 +725,16 @@ $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o: ../../Source/Engine/Selection/Select
 	@echo "Compiling SelectionManager.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
+$(JUCE_OBJDIR)/AuxBus_58602d7.o: ../../Source/Engine/Effects/AuxBus.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AuxBus.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AuxBusContainer_59272cb4.o: ../../Source/Engine/Effects/AuxBusContainer.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AuxBusContainer.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
 $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o: ../../Source/Engine/Effects/EffectRegistry.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling EffectRegistry.cpp"
@@ -724,6 +743,11 @@ $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o: ../../Source/Engine/Effects/EffectRegis
 $(JUCE_OBJDIR)/InsertChain_a4a5e8f7.o: ../../Source/Engine/Effects/InsertChain.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling InsertChain.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/SendList_e0fcbf81.o: ../../Source/Engine/Effects/SendList.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling SendList.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/MixPlanContainer_ea9e0c97.o: ../../Source/Engine/Effects/MixPlanContainer.cpp
