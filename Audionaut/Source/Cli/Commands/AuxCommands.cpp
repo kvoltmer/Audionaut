@@ -15,36 +15,11 @@
 #include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Undo/UndoableSendAction.h"
 
-#include <cmath>
-#include <cstdlib>
 
 namespace audium {
 namespace cli {
 
 namespace {
-
-/// An id or channel number as typed: digits only, so a typo never acts on 0.
-bool isIdValue (const juce::String& value)
-{
-    return value.isNotEmpty() && value.containsOnly ("0123456789");
-}
-
-/// A level, gain or pan as typed: one finite number and nothing else.
-bool isNumberValue (const juce::String& value)
-{
-    const auto text = value.trim().toStdString();
-    if (text.empty())
-        return false;
-    char* end = nullptr;
-    const auto number = std::strtod (text.c_str(), &end);
-    return end == text.c_str() + text.size() && std::isfinite (number);
-}
-
-/// An on/off option: empty (not given), "on" or "off"; anything else is a usage error.
-bool isSwitchValue (const juce::String& value)
-{
-    return value.isEmpty() || value == "on" || value == "off";
-}
 
 /// A channel of a track, as the send verbs address it.
 struct SendTarget
@@ -64,7 +39,7 @@ std::vector<SendTarget> resolveSendTargets (CliContext& context, AudioTrackConta
 {
     failure = exitOk;
 
-    if (! isIdValue (trackValue))
+    if (! isIndexValue (trackValue))
     {
         failure = context.fail (exitUsage, "usage", "--track must be a track id (a number from 0)");
         return {};
@@ -90,7 +65,7 @@ std::vector<SendTarget> resolveSendTargets (CliContext& context, AudioTrackConta
         return targets;
     }
 
-    const auto channel = isIdValue (channelValue) ? channelValue.getIntValue() : -1;
+    const auto channel = isIndexValue (channelValue) ? channelValue.getIntValue() : -1;
     if (channel < 0 || channel >= numChannels)
     {
         failure = context.fail (exitUsage, "usage", "--channel must be 0.." + std::to_string (numChannels - 1));
@@ -105,7 +80,7 @@ std::vector<SendTarget> resolveSendTargets (CliContext& context, AudioTrackConta
 std::shared_ptr<AuxBus> resolveAux (CliContext& context, AudioTrackContainer& container, const juce::String& auxValue, int& failure)
 {
     failure = exitOk;
-    if (! isIdValue (auxValue))
+    if (! isIndexValue (auxValue))
     {
         failure = context.fail (exitUsage, "usage", "--aux must be an aux bus id (a number from 1, as info lists them)");
         return nullptr;
@@ -184,9 +159,12 @@ int runSetAux (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "set-aux requires --aux <id>");
     if (nameValue.isEmpty() && gainValue.isEmpty() && panValue.isEmpty() && muteValue.isEmpty() && soloValue.isEmpty())
         return context.fail (exitUsage, "usage", "set-aux takes --name N, --gain G, --pan P, --mute on|off and/or --solo on|off");
-    if (gainValue.isNotEmpty() && (! isNumberValue (gainValue) || gainValue.getDoubleValue() < 0.0))
+    // each number parsed once, so what was checked is what is applied ("0x10" is a usage error, not 0)
+    double gain = 0.0, pan = 0.0;
+    std::string error;
+    if (gainValue.isNotEmpty() && ! parseNumericOption ("--gain", gainValue, 0.0, false, gain, error))
         return context.fail (exitUsage, "usage", "--gain must be a linear gain from 0 (1 = unity)");
-    if (panValue.isNotEmpty() && (! isNumberValue (panValue) || std::abs (panValue.getDoubleValue()) > 1.0))
+    if (panValue.isNotEmpty() && (! parseNumericOption ("--pan", panValue, -1.0, false, pan, error) || pan > 1.0))
         return context.fail (exitUsage, "usage", "--pan must be -1 (left) .. 1 (right)");
     if (! isSwitchValue (muteValue) || ! isSwitchValue (soloValue))
         return context.fail (exitUsage, "usage", "--mute and --solo take on or off");
@@ -208,9 +186,9 @@ int runSetAux (const juce::ArgumentList& args, CliContext& context)
         const auto oldValues = UndoableAuxAction::Values::of (*bus);
         auto newValues = oldValues;
         if (gainValue.isNotEmpty())
-            newValues.gain = static_cast<float> (gainValue.getDoubleValue());
+            newValues.gain = static_cast<float> (gain);
         if (panValue.isNotEmpty())
-            newValues.pan = static_cast<float> (panValue.getDoubleValue());
+            newValues.pan = static_cast<float> (pan);
         if (muteValue.isNotEmpty())
             newValues.mute = muteValue == "on";
         if (soloValue.isNotEmpty())
@@ -250,7 +228,9 @@ int runSetSend (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "set-send requires --track <id> [--channel <index>] --aux <id>");
     if (levelValue.isEmpty() && preFaderValue.isEmpty() && muteValue.isEmpty())
         return context.fail (exitUsage, "usage", "set-send takes --level L, --pre-fader on|off and/or --mute on|off");
-    if (levelValue.isNotEmpty() && (! isNumberValue (levelValue) || levelValue.getDoubleValue() < 0.0))
+    double level = 0.0;
+    std::string error;
+    if (levelValue.isNotEmpty() && ! parseNumericOption ("--level", levelValue, 0.0, false, level, error))
         return context.fail (exitUsage, "usage", "--level must be a linear gain from 0 (1 = unity)");
     if (! isSwitchValue (preFaderValue) || ! isSwitchValue (muteValue))
         return context.fail (exitUsage, "usage", "--pre-fader and --mute take on or off");
@@ -276,7 +256,7 @@ int runSetSend (const juce::ArgumentList& args, CliContext& context)
         const auto valuesFrom = [&] (UndoableSendAction::Values values)
         {
             if (levelValue.isNotEmpty())
-                values.level = static_cast<float> (levelValue.getDoubleValue());
+                values.level = static_cast<float> (level);
             if (preFaderValue.isNotEmpty())
                 values.preFader = preFaderValue == "on";
             if (muteValue.isNotEmpty())
@@ -347,7 +327,7 @@ int runRemoveSend (const juce::ArgumentList& args, CliContext& context)
 
     if (trackValue.isEmpty() || auxValue.isEmpty())
         return context.fail (exitUsage, "usage", "remove-send requires --track <id> [--channel <index>] --aux <id>");
-    if (! isIdValue (auxValue))
+    if (! isIndexValue (auxValue))
         return context.fail (exitUsage, "usage", "--aux must be an aux bus id (a number from 1)");
 
     return runProjectEdit (working, context, "remove-send", [&] (ProjectSession& session, EditOutcome& outcome)

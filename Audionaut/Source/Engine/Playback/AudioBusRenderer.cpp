@@ -115,6 +115,9 @@ void AudioBusRenderer<SampleType>::process (const ProcessContextNonReplacing<Sam
             const auto* plan = mixPlans->getAdopted();
             if (plan != nullptr && plan->hasWork() && plan->sampleRate == sampleRate && numSamples <= plan->maxBlockSize)
                 ctx.plan = plan;
+            else if (plan != nullptr)
+                for (const auto& aux : plan->auxes)   // a skipped plan renders no return: its meters fall
+                    aux.state->level[0].store (0.0f, std::memory_order_relaxed), aux.state->level[1].store (0.0f, std::memory_order_relaxed);
         }
 
         if (ctx.plan != nullptr)
@@ -796,7 +799,8 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         // side (the sides are the same: unpanned sends, no pan)
         dryGain.setGainLinear (ctx.anyAuxSolo ? static_cast<SampleType> (0) : static_cast<SampleType> (1));
         ProcessContextReplacing<SampleType> dryContext (mainMixBlock);
-        dryGain.process (dryContext);
+        if (ctx.anyAuxSolo || dryGain.isSmoothing())   // at unity and settled the multiply is a no-op, so it is skipped
+            dryGain.process (dryContext);
 
         if constexpr (std::is_same_v<SampleType, float>)
         {

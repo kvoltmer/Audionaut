@@ -63,13 +63,14 @@ public:
     void resetToDefaults();
     void clear();
 
-    /// Always written, so a project with its buses removed stays that way.
+    /// Always written, so a project with its buses removed stays that way; "<key>_next_id" beside it carries the id counter.
     void writeToJson (json& output, const char* key = "aux_buses") const;
     /// Reads in place by id (instances kept where the ids line up); an absent key gives the defaults.
     void readFromJson (const json& input, const char* key = "aux_buses");
 
 private:
     void changed();
+    static std::string nextIdKey (const char* key);
     std::shared_ptr<AuxBus> make (int id, std::string name);
 
     MixerPlanner* planner = nullptr;

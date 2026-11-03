@@ -118,10 +118,14 @@ struct MixPlan
         keepAlive.push_back (std::move (slot));
     }
 
-    /// Whether any chain has a slot or any channel sends: a plan without either is skipped as a whole.
+    /**
+     * Whether the plan changes the mix: any chain has a slot, any channel
+     * sends, or an aux return is soloed (which silences the dry mix). A plan
+     * without any of these is skipped as a whole.
+     */
     bool hasWork() const noexcept
     {
-        return ! keepAlive.empty() || numSendPairs > 0;
+        return ! keepAlive.empty() || numSendPairs > 0 || anyAuxSolo();
     }
 
     /// A send's gain as its state says: the level, or silence while muted.

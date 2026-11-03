@@ -95,7 +95,7 @@ void SendList::readFromJson (const json& input, const char* key)
         {
             if (entry.auxId == auxId && entry.state != nullptr)
             {
-                state = std::move (entry.state);
+                state = entry.state;   // a copy: previous keeps its pointer for the structure check below
                 break;
             }
         }

@@ -284,6 +284,21 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
                 requireScaled (mono, plainMono, 0, 1.5f);
             }
 
+            AND_WHEN ("the send is removed again while the return meter is lit")
+            {
+                renderLive (*session.engine);
+                REQUIRE (session.auxes().get (1)->getLevel (0) > 0.05f);
+                {
+                    MixerPlanner::ScopedBatch batch (&session.planner());
+                    REQUIRE (session.channel (0, 0)->sends.remove (1));
+                }
+                THEN ("the plan with nothing to do is skipped, and the meter falls to 0 with it")
+                {
+                    requireScaled (renderLive (*session.engine), reference, 0, 1.0f);
+                    REQUIRE (session.auxes().get (1)->getLevel (0) == 0.0f);
+                }
+            }
+
             AND_WHEN ("the aux return is at half gain")
             {
                 session.auxes().get (1)->setGain (0.5f);
@@ -444,6 +459,17 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
             }
         }
 
+        WHEN ("nothing sends and Aux 1 is soloed")
+        {
+            session.auxes().get (1)->setSolo (true);
+            THEN ("the dry mix still gives way: the main mix is silent, the direct out untouched")
+            {
+                const auto live = renderLive (*session.engine);
+                requireSilent (live, 0);
+                requireScaled (live, reference, 3, 1.0f);
+            }
+        }
+
         WHEN ("channel 0 sends into both buses")
         {
             session.send (0, 0, 1, 0.5f);
@@ -503,6 +529,23 @@ SCENARIO ("sends and aux buses save, reopen and undo", "[engine][effects][sends]
             }
         }
 
+        WHEN ("the container is read back with the track renamed in the JSON")
+        {
+            json written;
+            session.tracks().writeToJson (written);
+            written["audio_tracks"][0]["name"] = "Renamed";
+            const auto sendState = session.channel (0, 0)->sends.get (1);
+            const auto rebuilds = session.planner().getNumRebuilds();
+            session.tracks().readFromJson (written, false);
+
+            THEN ("the send goes on with its state, and no new plan is asked for: nothing of the mix changed")
+            {
+                REQUIRE (session.track (0)->getAudioTrackName() == "Renamed");
+                REQUIRE (session.channel (0, 0)->sends.get (1) == sendState);
+                REQUIRE (session.planner().getNumRebuilds() == rebuilds);
+            }
+        }
+
         WHEN ("the JSON is read into a fresh session with a rebuild")
         {
             json written;
@@ -520,6 +563,22 @@ SCENARIO ("sends and aux buses save, reopen and undo", "[engine][effects][sends]
                 REQUIRE (state != nullptr);
                 REQUIRE (state->level.load() == Approx (0.5f));
                 REQUIRE (state->preFader.load());
+            }
+        }
+
+        WHEN ("Aux 2 is removed and the project is saved and read into a fresh session")
+        {
+            REQUIRE (session.auxes().remove (2));
+            json written;
+            session.tracks().writeToJson (written);
+            Session fresh;
+            fresh.tracks().readFromJson (written, true);
+
+            THEN ("the next bus does not take the removed id: the counter travels with the file")
+            {
+                REQUIRE (written["aux_buses_next_id"] == 3);
+                REQUIRE (fresh.auxes().size() == 1);
+                REQUIRE (fresh.auxes().add()->getId() == 3);
             }
         }
 

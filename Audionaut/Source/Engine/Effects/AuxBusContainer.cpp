@@ -12,6 +12,11 @@
 namespace audium
 {
 
+std::string AuxBusContainer::nextIdKey (const char* key)
+{
+    return std::string (key) + "_next_id";
+}
+
 void AuxBusContainer::setPlanner (MixerPlanner* planner_) noexcept
 {
     planner = planner_;
@@ -97,6 +102,7 @@ void AuxBusContainer::writeToJson (json& output, const char* key) const
         array.push_back (std::move (element));
     }
     output[key] = std::move (array);
+    output[nextIdKey (key)] = nextId;   // so a removed id stays retired across save and reload
 }
 
 void AuxBusContainer::readFromJson (const json& input, const char* key)
@@ -151,6 +157,12 @@ void AuxBusContainer::readFromJson (const json& input, const char* key)
     auto same = buses.size() == previous.size();
     for (size_t i = 0; same && i < buses.size(); ++i)
         same = previous[i] == nullptr && buses[i]->getId() == previousIds[i];
+    // the counter from the file keeps retired ids retired; the ids read
+    // above have already raised it past themselves
+    const auto counterKey = nextIdKey (key);
+    if (input.contains (counterKey) && input[counterKey].is_number_integer())
+        nextId = std::max (nextId, input[counterKey].get<int>());
+
     if (! same)
         changed();
 }

@@ -150,6 +150,12 @@ bool musicalDurationToClocks (const juce::String& value,
                               double& outClocks,
                               std::string& error);
 
+/// An id, index, position or channel number as typed: digits only, so a typo never acts on 0.
+bool isIndexValue (const juce::String& value);
+
+/// An on/off option: empty (not given), "on" or "off"; anything else is a usage error.
+bool isSwitchValue (const juce::String& value);
+
 /**
  * Validates a plain numeric option value (seconds, measures, counts - the
  * options that do not go through the musical-unit parsers above). Fails with

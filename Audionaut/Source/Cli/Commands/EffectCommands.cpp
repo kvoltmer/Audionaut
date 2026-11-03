@@ -16,30 +16,12 @@
 #include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Undo/UndoableEffectParameterAction.h"
 
-#include <cmath>
-#include <cstdlib>
+#include <limits>
 
 namespace audium {
 namespace cli {
 
 namespace {
-
-/// A slot index, position, track id or channel number as typed: digits only, so a typo never acts on 0.
-bool isIndexValue (const juce::String& value)
-{
-    return value.isNotEmpty() && value.containsOnly ("0123456789");
-}
-
-/// A parameter value as typed: one finite number and nothing else, so "x4" is a usage error, not 0.
-bool isNumberValue (const juce::String& value)
-{
-    const auto text = value.trim().toStdString();
-    if (text.empty())
-        return false;
-    char* end = nullptr;
-    const auto number = std::strtod (text.c_str(), &end);
-    return end == text.c_str() + text.size() && std::isfinite (number);
-}
 
 /// A chain the options name, plus how the result refers to it.
 struct ChainTarget
@@ -66,6 +48,11 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
     if (named != 1)
     {
         failure = context.fail (exitUsage, "usage", "name the chain: --master, --aux <id>, or --track <id> with or without --channel <index>");
+        return {};
+    }
+    if (channelValue.isNotEmpty() && trackValue.isEmpty())
+    {
+        failure = context.fail (exitUsage, "usage", "--channel goes with --track <id>, not with --master or --aux");
         return {};
     }
 
@@ -296,12 +283,15 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
             if (parameter < 0)
                 return context.fail (exitFailure, "unknown_parameter",
                                      effect.getType().name + " has no parameter " + paramValue.toStdString());
-            if (! isNumberValue (valueValue))
+            // parsed once, so what was checked is what is applied ("0x10" is a usage error, not 0)
+            double value = 0.0;
+            std::string error;
+            if (! parseNumericOption ("--value", valueValue, std::numeric_limits<double>::lowest(), false, value, error))
                 return context.fail (exitUsage, "usage", "--value must be a number");
 
             // the value as the effect will hold it: clamped to the range
             const auto oldValue = effect.getParameter (parameter);
-            effect.setParameter (parameter, static_cast<float> (valueValue.getDoubleValue()));
+            effect.setParameter (parameter, static_cast<float> (value));
             const auto newValue = effect.getParameter (parameter);
             effect.setParameter (parameter, oldValue);
 

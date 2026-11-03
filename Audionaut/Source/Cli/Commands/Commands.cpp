@@ -90,6 +90,16 @@ bool parseMusicalDuration (const juce::String& value,
     return true;
 }
 
+bool isIndexValue (const juce::String& value)
+{
+    return value.isNotEmpty() && value.containsOnly ("0123456789");
+}
+
+bool isSwitchValue (const juce::String& value)
+{
+    return value.isEmpty() || value == "on" || value == "off";
+}
+
 bool parseNumericOption (const juce::String& option,
                          const juce::String& value,
                          double minimum,
@@ -98,9 +108,10 @@ bool parseNumericOption (const juce::String& option,
                          std::string& error)
 {
     // getDoubleValue() reads "abc" (or a bare "--start" with no value) as 0,
-    // which would pass for a legitimate zero
+    // which would pass for a legitimate zero; and a plain decimal only:
+    // strtod would also read hex ("0x10" = 16), which no verb documents
     const auto text = value.trim();
-    if (text.isEmpty()) {
+    if (text.isEmpty() || ! text.containsOnly ("0123456789+-.eE")) {
         error = option.toStdString() + " must be a number";
         return false;
     }

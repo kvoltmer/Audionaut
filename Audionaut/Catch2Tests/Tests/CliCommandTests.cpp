@@ -2072,6 +2072,11 @@ SCENARIO ("cli aux buses and sends", "[cli][effects][sends]")
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 7 --type builtin:trim"), context) == cli::exitFailure);
             REQUIRE (envelope["error"]["code"] == "aux_not_found");
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --master --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --channel 0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--channel") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --channel 0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --gain 0x10"), context) == cli::exitUsage);   // hex is not a number here: strtod read 16, getDoubleValue 0
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 1 --level 0x10"), context) == cli::exitUsage);
         }
     }
 
