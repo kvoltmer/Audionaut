@@ -142,18 +142,22 @@ struct MixPlan
 
     /**
      * The longest ring-out the chains add after their last input, in
-     * seconds: Effect::getTailSeconds summed along a path, the longest path
-     * at each summing point. Read from the effects as they are now, not as
+     * seconds, at the output asked for: Effect::getTailSeconds summed along
+     * a path, the longest path at each summing point - up to the fader
+     * point for the stems of a stem export, through the aux and master
+     * stages for the main mix (the split of Latency::atOutput). A bypassed
+     * slot rings out nothing. Read from the effects as they are now, not as
      * they were when the plan was built - a delay time changed since counts
      * - so a bounce that runs on for the tail takes the current figure.
      */
-    double tailSeconds() const noexcept
+    double tailSeconds (bool stemExport) const noexcept
     {
         const auto tailOf = [] (const std::vector<EffectSlot*>& slots)
         {
             auto seconds = 0.0;
             for (const auto* slot : slots)
-                seconds += std::max (0.0, slot->getEffect().getTailSeconds());
+                if (slot->isEnabled())
+                    seconds += std::max (0.0, slot->getEffect().getTailSeconds());
             return seconds;
         };
 
@@ -164,6 +168,9 @@ struct MixPlan
             for (auto k = track.firstChannel; k < track.firstChannel + track.numChannels && k < static_cast<int> (channels.size()); ++k)
                 beforeFader = std::max (beforeFader, tailOf (channels[static_cast<size_t> (k)].inserts) + trackTail);
         }
+        if (stemExport)
+            return beforeFader;
+
         auto ofAuxes = 0.0;
         for (const auto& aux : auxes)
             ofAuxes = std::max (ofAuxes, tailOf (aux.inserts));

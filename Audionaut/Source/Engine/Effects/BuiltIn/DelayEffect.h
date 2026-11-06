@@ -130,6 +130,8 @@ public:
     /// Roughly how long the echoes take to fall 60 dB: the time, times the repeats the feedback allows.
     double getTailSeconds() const noexcept override
     {
+        if (getParameter (mix) <= 0.0f)
+            return 0.0;   // fully dry: the echoes are never heard
         const auto seconds = getParameter (timeMs) * 0.001;
         const auto fb = getParameter (feedback);
         if (fb <= 0.0f)

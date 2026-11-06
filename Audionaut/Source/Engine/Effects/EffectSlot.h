@@ -115,6 +115,13 @@ public:
         const auto target = isEnabled() ? 1.0f : 0.0f;
         const auto numSamples = static_cast<int> (block.getNumSamples());
 
+        if (target <= 0.0f)
+        {
+            // bypassed, caught up or not: the next return starts afresh
+            returning = false;
+            catchingUp = 0;
+        }
+
         if (wet == target)
         {
             if (target > 0.0f)
@@ -147,11 +154,6 @@ public:
             returning = true;
             effect->reset();
             catchingUp = latencySamples;
-        }
-        else if (target <= 0.0f)
-        {
-            returning = false;   // bypassed again, caught up or not
-            catchingUp = 0;
         }
 
         juce::dsp::AudioBlock<float> dryBlock (dry);

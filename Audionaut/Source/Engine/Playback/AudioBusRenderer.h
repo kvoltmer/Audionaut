@@ -168,7 +168,7 @@ public:
      */
     int getOutputLatencySamples() const noexcept;
 
-    /** The longest ring-out the adopted plan's chains add after the last input, in seconds (see MixPlan::tailSeconds). */
+    /** The longest ring-out the adopted plan's chains add after the last input at the current output (main mix or stems), in seconds (see MixPlan::tailSeconds). */
     double getEffectTailSeconds() const noexcept;
 
     /**

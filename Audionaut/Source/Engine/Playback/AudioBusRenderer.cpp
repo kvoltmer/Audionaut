@@ -906,7 +906,7 @@ double AudioBusRenderer<SampleType>::getEffectTailSeconds() const noexcept
     if (mixPlans == nullptr)
         return 0.0;
     if (const auto* plan = mixPlans->getAdopted())
-        return plan->tailSeconds();
+        return plan->tailSeconds (stemExport.load());
     return 0.0;
 }
 

@@ -332,6 +332,54 @@ SCENARIO ("a PdcDelay delays a block by whole samples, whatever the block size",
     }
 }
 
+SCENARIO ("a latent slot comes back from a bypass aligned, however the toggle is timed", "[engine][effects][latency]")
+{
+    GIVEN ("a bypassed slot around a pure 1200-sample delay, prepared for 512-sample blocks, fed a ramp")
+    {
+        constexpr auto latency = 1200;
+        constexpr auto block = 512;
+        EffectSlot slot (std::make_unique<LatencyTestEffect> (latency));
+        slot.setEnabled (false);
+        slot.prepare (kSampleRate, block, 1);
+        REQUIRE (slot.getLatencySamples() == latency);
+
+        auto fed = 0;
+        juce::AudioBuffer<float> buffer (1, block);
+        const auto processBlock = [&]
+        {
+            for (auto i = 0; i < block; ++i)
+                buffer.setSample (0, i, static_cast<float> (fed + i));
+            juce::dsp::AudioBlock<float> view (buffer);
+            slot.process (view);
+            // bypassed or running, the slot is the ramp 1200 samples late:
+            // the crossfades mix identical signals, the catch-up feeds the dry
+            for (auto i = 0; i < block; ++i)
+            {
+                const auto expected = fed + i - latency;
+                REQUIRE (buffer.getSample (0, i) == static_cast<float> (expected < 0 ? 0 : expected));
+            }
+            fed += block;
+        };
+
+        WHEN ("it is switched on, off again while it still catches up, and on once more")
+        {
+            processBlock();
+            slot.setEnabled (true);
+            processBlock();             // catching up: 512 of 1200 fed
+            slot.setEnabled (false);
+            processBlock();             // bypassed before the crossfade began
+            slot.setEnabled (true);
+            for (auto n = 0; n < 6; ++n)
+                processBlock();         // a fresh catch-up of 1200, then the crossfade
+
+            THEN ("every sample came out 1200 late: the second return started afresh")
+            {
+                REQUIRE (fed == 9 * block);
+            }
+        }
+    }
+}
+
 SCENARIO ("a latent insert makes the whole output later and leaves the mix aligned", "[engine][effects][latency]")
 {
     MessageThread messageThread;
@@ -637,21 +685,21 @@ SCENARIO ("a project bounce runs on for the chains' ring-out", "[engine][effects
 
     GIVEN ("a session whose master has a 100 ms delay without feedback, and the plain one")
     {
-        Session plain (1);
-        Session session (1);
+        Session plain;
+        Session session;
         auto slot = session.tracks().getMasterInserts().add (DelayEffect::typeInfo().id);
         REQUIRE (slot != nullptr);
         slot->getEffect().setParameter (DelayEffect::timeMs, 100.0f);
         slot->getEffect().setParameter (DelayEffect::feedback, 0.0f);
         slot->getEffect().setParameter (DelayEffect::mix, 1.0f);
 
-        const auto bounceToEnd = [] (AudiumEngine& engine, bool includeTails)
+        const auto bounceToEnd = [] (AudiumEngine& engine, bool includeTails, int numChannels = 2)
         {
             auto config = std::make_shared<ExportAudioConfig>();
             config->fileName = juce::File::createTempFile ("-tail.wav");
             config->sampleRate = kSampleRate;
             config->blockSize = kBlockSize;
-            config->numChannels = 2;
+            config->numChannels = numChannels;
             config->bitDepth = 32;
             config->includeEffectTails = includeTails;
             REQUIRE (AudioExporter (engine, config).bounce());
@@ -669,9 +717,26 @@ SCENARIO ("a project bounce runs on for the chains' ring-out", "[engine][effects
         {
             const auto plainLength = bounceToEnd (*plain.engine, true);
             REQUIRE (plainLength > 0);
-            REQUIRE (session.preparedPlan().tailSeconds() == Approx (0.1));
+            REQUIRE (session.preparedPlan().tailSeconds (false) == Approx (0.1));
             REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.1 * kSampleRate).margin (1.0));
             REQUIRE (bounceToEnd (*session.engine, false) == plainLength);
+        }
+
+        THEN ("a stem export leaves at the fader point, before the master's tail, and is as long as the plain one")
+        {
+            REQUIRE (session.preparedPlan().tailSeconds (true) == 0.0);
+            REQUIRE (bounceToEnd (*session.engine, true, 4) == bounceToEnd (*plain.engine, true, 4));
+        }
+
+        THEN ("a bypassed delay rings out nothing, and neither does a fully dry one")
+        {
+            const auto plainLength = bounceToEnd (*plain.engine, true);
+            slot->setEnabled (false);
+            REQUIRE (session.preparedPlan().tailSeconds (false) == 0.0);
+            REQUIRE (bounceToEnd (*session.engine, true) == plainLength);
+            slot->setEnabled (true);
+            slot->getEffect().setParameter (DelayEffect::mix, 0.0f);
+            REQUIRE (session.preparedPlan().tailSeconds (false) == 0.0);
         }
 
         THEN ("a delay time changed since the plan was built counts: the tail is read from the effects as they are")
@@ -679,7 +744,7 @@ SCENARIO ("a project bounce runs on for the chains' ring-out", "[engine][effects
             const auto plainLength = bounceToEnd (*plain.engine, true);
             REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.1 * kSampleRate).margin (1.0));   // the plan is built now
             slot->getEffect().setParameter (DelayEffect::timeMs, 250.0f);   // a value change rebuilds nothing
-            REQUIRE (session.preparedPlan().tailSeconds() == Approx (0.25));
+            REQUIRE (session.preparedPlan().tailSeconds (false) == Approx (0.25));
             REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.25 * kSampleRate).margin (1.0));
         }
     }
