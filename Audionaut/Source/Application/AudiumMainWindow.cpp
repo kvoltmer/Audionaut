@@ -260,6 +260,10 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
           { KeyPress ('f', cmd | ModifierKeys::ctrlModifier, 0) },
           {}, [this] { return isFullScreen(); }, {},
           [this] { setFullScreen (!isFullScreen()); } },
+        { CommandIDs::showMixer, "Mixer", "Shows the mixer below the arrangement", CommandCategories::view,
+          { KeyPress ('m', cmd | ModifierKeys::shiftModifier, 0) },
+          {}, [this] { return mainComponent->isMixerVisible(); }, {},
+          [this] { mainComponent->setMixerVisible (! mainComponent->isMixerVisible()); } },
 
         // The step's name follows the verb, as the undo history names it:
         // "Undo Move Clip", "Undo Agent: remove pauses". The menu is built

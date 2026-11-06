@@ -650,6 +650,10 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <GROUP id="{B7C1D2E3-4F50-6A7B-8C9D-0E1F2A3B4C5D}" name="MixerPanel">
+            <FILE id="MxrCmH" name="MixerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.h"/>
+          </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
@@ -782,6 +786,12 @@
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="LdMtrH" name="LoadMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LoadMeter.h"/>
           <FILE id="LdMtrC" name="LoadMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LoadMeter.cpp"/>
+          <FILE id="ClpPnl" name="CollapsiblePanel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/CollapsiblePanel.h"/>
+          <FILE id="PnlRzB" name="PanelResizerBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelResizerBar.h"/>
+          <FILE id="PnlTgB" name="PanelToggleButton.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelToggleButton.h"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"

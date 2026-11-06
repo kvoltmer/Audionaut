@@ -11,6 +11,9 @@
 
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
+#include "Interface/Components/MixerPanel/MixerComponent.h"
+#include "Interface/Controls/CollapsiblePanel.h"
+#include "Interface/Controls/PanelResizerBar.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
@@ -25,29 +28,65 @@ public:
         snapToGridHandler.reset(new SnapToGridHandler(playListScheduler));
         zoomHandler.reset(new ZoomHandler(playListScheduler, snapToGridHandler));
 
+        // the mixer's height is at most half the panel; its open state and size
+        // are the user's and go to the owner for persisting
+        mixer.maximumSize = [this] { return getHeight() / 2; };
+        mixer.onRelayout = [this] { resized(); };
+        mixer.onUserChange = [this] { NullCheckedInvocation::invoke (onMixerLayoutChanged); };
+
+        // the seam above the mixer: dragging it up makes the mixer taller, dragging
+        // it well past the minimum collapses the mixer until dragged back or released
+        mixerResizerBar = std::make_unique<PanelResizerBar> (false);
+        mixerResizerBar->onDragStart = [this] { mixer.dragStarted(); };
+        mixerResizerBar->onDrag = [this] (int distance) { mixer.dragged (distance); };
+        mixerResizerBar->onDragEnd = [this] { mixer.dragEnded(); };
+        mixerResizerBar->onDoubleClick = [this] { mixer.resetToDefault(); };
+
         createComponents();
     }
-    
+
     ~MiddlePanelComponent() override
     {
     }
-    
+
     void createComponents()
     {
         removeAllChildren();
-        
+
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
-        
+
         arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
 
+        mixerComponent.reset (new MixerComponent (audiumEngine));
+        addChildComponent (mixerComponent.get());    // shown by resized() while the mixer is open
+        addChildComponent (mixerResizerBar.get());   // after its neighbours: it overlaps their edges
+
         const auto visibleRange = zoomHandler->getVisibleRange();
-    
+
         arrangementComponent->setVisible(true);
-        
+
         zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
     }
+
+    //==============================================================================
+    // The mixer at the bottom. Whether it is open and how tall it is are app
+    // preferences, kept by the owner through onMixerLayoutChanged.
+
+    static constexpr int minMixerHeight = 180;
+    static constexpr int defaultMixerHeight = 300;
+
+    /// Fires after the user opened, closed, resized or reset the mixer (by its seam, a button or a command).
+    std::function<void()> onMixerLayoutChanged;
+
+    bool isMixerVisible() const noexcept { return mixer.isOpen(); }
+    void setMixerVisible (bool visible) { mixer.setOpen (visible); }
+
+    int getMixerHeight() const noexcept { return mixer.getSize(); }
+
+    /// From the preferences at start-up: no animation.
+    void restoreMixerLayout (bool visible, int height) { mixer.restore (visible, height); }
     
     enum UIContext {
         EntireContext,
@@ -66,6 +105,17 @@ public:
     void resized() override
     {
         auto localBounds = getLocalBounds();
+
+        const auto mixerHeight = mixer.getShownSize();
+        if (mixerHeight > 0 && ! mixerComponent->isVisible())
+            mixerComponent->updateUI();   // coming back: what it shows may be stale
+        mixerComponent->setVisible (mixerHeight > 0);
+        mixerResizerBar->setVisible (mixerHeight > 0 || mixer.isDragging());   // a drag keeps its seam through a collapse
+        if (mixerHeight > 0)
+            mixerComponent->setBounds (localBounds.removeFromBottom (mixerHeight));
+        if (mixerResizerBar->isVisible())
+            mixerResizerBar->setBounds (PanelResizerBar::boundsForSeam (localBounds.removeFromBottom (PanelResizerBar::seamThickness), false));
+
         auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);
         channelBounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
         channelsComponent->setBounds(channelBounds);
@@ -77,6 +127,7 @@ public:
         if (context == EntireContext) {
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
+            mixerComponent->updateUI();
         }
         else if(context == VerticalScrollContext) {
             if (arrangementComponent->isVisible()) {
@@ -91,6 +142,7 @@ public:
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
+            mixerComponent->updateUI();
             
             arrangementComponent->setVerticalScrollOffset(verticalScrollOffset);
             arrangementComponent->setHorizontalScrollOffset(horizontalScrollOffset);
@@ -106,6 +158,7 @@ public:
         }
         else if (context == ChannelsContext) {
             channelsComponent->updateUI();
+            mixerComponent->updateUI();
         }
     }
     
@@ -206,6 +259,9 @@ private:
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
+    std::unique_ptr<MixerComponent> mixerComponent;
+    std::unique_ptr<PanelResizerBar> mixerResizerBar;
+    CollapsiblePanel mixer { minMixerHeight, defaultMixerHeight };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

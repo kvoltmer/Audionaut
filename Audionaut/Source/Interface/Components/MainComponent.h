@@ -7,12 +7,14 @@
 
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Interface/Controls/CollapsiblePanel.h"
 
 using namespace juce;
 
 class MiddlePanelComponent;
 class RightPanelComponent;
 class HeaderComponent;
+class PanelResizerBar;
 
 class MainComponent :   public juce::Component,
                         public juce::DragAndDropContainer,
@@ -52,19 +54,34 @@ public:
                                                juce::StringArray& files,
                                                bool& canMoveFiles) override;
 
+    //==============================================================================
+    // Panel layout: the right panel's width and the mixer's height are the
+    // user's, dragged at the seams and kept as app preferences.
+
+    static constexpr int minRightPanelWidth = 260;
+    static constexpr int defaultRightPanelWidth = 400;
+    static constexpr int minMiddlePanelWidth = 400;
+
+    void setRightPanelVisible (bool visible) { rightPanel.setOpen (visible); }
+    bool isRightPanelVisible() const noexcept { return rightPanel.isOpen(); }
+
+    void setMixerVisible (bool visible);
+    bool isMixerVisible() const;
+
 private:
-    
+
+    void readLayoutPreferences();
+    void writeLayoutPreferences();
+    void updatePanelToggles();
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
-    
+
     std::unique_ptr<HeaderComponent> headerComponent;
     std::unique_ptr<MiddlePanelComponent> middlePanelComponent;
     std::unique_ptr<RightPanelComponent> rightPanelComponent;
+    std::unique_ptr<PanelResizerBar> rightPanelResizerBar;
+    CollapsiblePanel rightPanel { minRightPanelWidth, defaultRightPanelWidth };
 
-    std::unique_ptr<StretchableLayoutManager> stretchableLayoutManager;
-    std::unique_ptr<StretchableLayoutResizerBar> stretchableLayoutResizerBar;
-
-    bool rightPanelVisible = true;
-    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
 

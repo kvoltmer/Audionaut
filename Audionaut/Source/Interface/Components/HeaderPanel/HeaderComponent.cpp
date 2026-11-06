@@ -141,15 +141,19 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     
     
     // RIGHT PANEL
-    rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
-    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
+    rightPanelButton = std::make_unique<PanelToggleButton>("Right Panel", PanelToggleButton::Pane::right);
     addAndMakeVisible(rightPanelButton.get());
-    auto path = getRightPanelButtonPath();
-    rightPanelButton->setShape(path, true, true, true);
     rightPanelButton->onClick = [this]() {
         NullCheckedInvocation::invoke(this->onRightPanelButtonClick);
     };
-    
+
+    // MIXER (the panel at the bottom of the middle panel)
+    mixerButton = std::make_unique<PanelToggleButton>("Mixer", PanelToggleButton::Pane::bottom);
+    addAndMakeVisible(mixerButton.get());
+    mixerButton->onClick = [this]() {
+        NullCheckedInvocation::invoke(this->onMixerButtonClick);
+    };
+
     
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
@@ -178,7 +182,7 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     };
 
 
-    setSize (1200, 40);
+    setSize (1200, preferredHeight);
     startTimerHz(AudiumLookAndFeel::timerHz);
 }
 
@@ -259,6 +263,7 @@ void HeaderComponent::resized()
     loadMeter->setBounds(x, 10, 10, 20);
 
     rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
+    mixerButton->setBounds(getWidth() - 80, 10, 30, 20);
 }
 
 void HeaderComponent::updateUI()
@@ -326,30 +331,10 @@ void HeaderComponent::timerCallback()
     }
 }
 
-juce::Path HeaderComponent::getRightPanelButtonPath()
+void HeaderComponent::setPanelStates (bool rightPanelShown, bool mixerShown)
 {
-    juce::Path rightPanelPath;
-    auto w = 30;
-    auto h = 20;
-    auto b = 19;
-    
-    rightPanelPath.addRoundedRectangle(0, 0, w, h, 2.f);
-    rightPanelPath.startNewSubPath(b, 0);
-    rightPanelPath.lineTo(b, h);
-    rightPanelPath.closeSubPath();
-    
-    
-    
-    auto y = 5.f;
-    auto s = 3.f;
-    for (auto i = 0; i < 3; i++) {
-        rightPanelPath.startNewSubPath(b+s, y);
-        rightPanelPath.lineTo(w-s, y);
-        rightPanelPath.closeSubPath();
-        y += 4.f;
-    }
-    
-    return rightPanelPath;
+    rightPanelButton->setToggleState (rightPanelShown, dontSendNotification);
+    mixerButton->setToggleState (mixerShown, dontSendNotification);
 }
 
 juce::Path HeaderComponent::getLoopButtonPath()

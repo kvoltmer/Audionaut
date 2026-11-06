@@ -49,6 +49,11 @@ public:
     // PopupMenu
     juce::Font getPopupMenuFont() override;
     
+    // Resizer bar between two panels (the right panel's split): the same
+    // seam line as PanelResizerBar draws for the main panels.
+    void drawStretchableLayoutResizerBar (juce::Graphics& g, int w, int h, bool isVerticalBar,
+                                          bool isMouseOver, bool isMouseDragging) override;
+
     // Slider
     juce::Label* createSliderTextBox (juce::Slider& slider) override;
     void drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,

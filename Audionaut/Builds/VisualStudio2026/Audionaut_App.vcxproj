@@ -3656,6 +3656,7 @@
     <ClInclude Include="..\..\Source\Interface\Widgets\audium_ListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Handlers\SnapToGridHandler.h"/>
     <ClInclude Include="..\..\Source\Interface\Handlers\ZoomHandler.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\MiddlePanelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelGroupComponent.h"/>
@@ -3697,6 +3698,9 @@
     <ClInclude Include="..\..\Source\Interface\Controls\DraggerControl.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\CollapsiblePanel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelResizerBar.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelToggleButton.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PositionMarker.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\RectangleMarker.h"/>

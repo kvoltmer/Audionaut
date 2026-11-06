@@ -52,6 +52,7 @@ namespace CommandIDs
         pageRight               = 0x300079,
         showProcessingLoad      = 0x30007a,
         showLoadSimulator       = 0x30007b,   // debug builds only
+        showMixer               = 0x30007c,
         
         createAudioTrack     = 0x300085,
 

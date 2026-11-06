@@ -852,6 +852,8 @@ PopupMenu AudiumApplication::createViewMenu()
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
     menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::showMixer);
+    menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showFileBrowser);
     menu.addCommandItem (commandManager.get(), CommandIDs::showProcessingLoad);
    #if JUCE_DEBUG

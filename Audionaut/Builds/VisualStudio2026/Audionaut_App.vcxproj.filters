@@ -122,6 +122,9 @@
     <Filter Include="Audionaut\Source\Interface\Handlers">
       <UniqueIdentifier>{E9C21236-7FDD-1AD7-58E7-B76EEB2D75BD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Interface\Components\MixerPanel">
+      <UniqueIdentifier>{97371869-A596-42A9-DA87-F960AF441807}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Interface\Components\MiddlePanel\ChannelView">
       <UniqueIdentifier>{3282F91C-8681-4BCC-7362-8D7AF9C276F2}</UniqueIdentifier>
     </Filter>
@@ -5388,6 +5391,9 @@
     <ClInclude Include="..\..\Source\Interface\Handlers\ZoomHandler.h">
       <Filter>Audionaut\Source\Interface\Handlers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\MiddlePanelComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel</Filter>
     </ClInclude>
@@ -5509,6 +5515,15 @@
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\CollapsiblePanel.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelResizerBar.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelToggleButton.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h">
