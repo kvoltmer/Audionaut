@@ -139,7 +139,36 @@ struct MixPlan
 
     Latency latency;                                     ///< what the delays below realise
     std::shared_ptr<PdcDelay> mainDryDelay;              ///< the dry main mix waits for the latest aux chain; nullptr when none is needed
-    double tailSeconds = 0.0;                            ///< the longest ring-out the chains add after the last input (Effect::getTailSeconds along the longest path)
+
+    /**
+     * The longest ring-out the chains add after their last input, in
+     * seconds: Effect::getTailSeconds summed along a path, the longest path
+     * at each summing point. Read from the effects as they are now, not as
+     * they were when the plan was built - a delay time changed since counts
+     * - so a bounce that runs on for the tail takes the current figure.
+     */
+    double tailSeconds() const noexcept
+    {
+        const auto tailOf = [] (const std::vector<EffectSlot*>& slots)
+        {
+            auto seconds = 0.0;
+            for (const auto* slot : slots)
+                seconds += std::max (0.0, slot->getEffect().getTailSeconds());
+            return seconds;
+        };
+
+        auto beforeFader = 0.0;
+        for (const auto& track : tracks)
+        {
+            const auto trackTail = tailOf (track.inserts);
+            for (auto k = track.firstChannel; k < track.firstChannel + track.numChannels && k < static_cast<int> (channels.size()); ++k)
+                beforeFader = std::max (beforeFader, tailOf (channels[static_cast<size_t> (k)].inserts) + trackTail);
+        }
+        auto ofAuxes = 0.0;
+        for (const auto& aux : auxes)
+            ofAuxes = std::max (ofAuxes, tailOf (aux.inserts));
+        return beforeFader + ofAuxes + tailOf (master);
+    }
 
     int numSendPairs = 0;
     mutable juce::AudioBuffer<float> sendOutput;          ///< 2 * numSendPairs channels, maxBlockSize: what the sends write, what the auxes sum

@@ -68,6 +68,8 @@ public:
 
         const auto numSamples = static_cast<int> (block.getNumSamples());
         jassert (numSamples <= maxBlockSize);
+        if (numSamples > maxBlockSize)
+            return;   // longer than the ring was sized for: left as it is rather than written past the ring
         const auto channels = std::min (numChannels, static_cast<int> (block.getNumChannels()));
 
         for (auto c = 0; c < channels; ++c)
@@ -85,30 +87,6 @@ public:
         }
 
         writePosition = wrapped (writePosition + numSamples);
-    }
-
-    /**
-     * Render thread: the last `delaySamples` samples that went in, oldest
-     * first, in pieces no longer than the prepared block, each handed to
-     * `consume` as a block over `scratch` (which must have the prepared
-     * channels and length). What a latent effect is fed to catch up when it
-     * takes over from this line (EffectSlot's return from bypass). The line
-     * itself is left as it is.
-     */
-    template <typename Consume>
-    void replayHistory (juce::dsp::AudioBlock<float> scratch, Consume&& consume) const noexcept
-    {
-        jassert (static_cast<int> (scratch.getNumChannels()) >= numChannels && static_cast<int> (scratch.getNumSamples()) >= maxBlockSize);
-        for (auto offset = 0; offset < delaySamples; offset += maxBlockSize)
-        {
-            const auto count = std::min (maxBlockSize, delaySamples - offset);
-            const auto position = wrapped (writePosition - delaySamples + offset);
-            for (auto c = 0; c < numChannels; ++c)
-                copyOutOfRing (scratch.getChannelPointer (static_cast<size_t> (c)),
-                               ring.data() + static_cast<size_t> (c) * static_cast<size_t> (capacity), position, count);
-            auto piece = scratch.getSubsetChannelBlock (0, static_cast<size_t> (numChannels)).getSubBlock (0, static_cast<size_t> (count));
-            consume (piece);
-        }
     }
 
 private:

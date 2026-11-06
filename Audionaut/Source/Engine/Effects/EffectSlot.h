@@ -33,10 +33,12 @@ namespace audium
  * dry signal by the same amount, and the crossfade mixes the delayed dry
  * with the processed signal. So toggling an effect never shifts what comes
  * after it, and the planner's latency figures depend on the chain alone.
- * Coming back from a bypass, a latent effect is first fed the signal it
- * missed - the dry line holds exactly that much - so it has caught up when
- * the crossfade starts and does not open with its latency's worth of
- * silence.
+ * Coming back from a bypass, a latent effect's first latency's worth of
+ * output is the pre-roll of a signal it has not heard yet: the delayed dry
+ * carries on for that long, and the crossfade starts once the effect's
+ * output is the signal - aligned, and without a hole. So a latent effect
+ * comes back its latency later than it was switched on, at the cost of no
+ * extra work in the block that switches it.
  */
 class EffectSlot
 {
@@ -64,8 +66,9 @@ public:
         effect->prepare (sampleRate, maxBlockSize, numChannels);
         latencySamples = std::max (0, effect->getLatencySamples());
         bypassDelay = latencySamples > 0 ? std::make_unique<PdcDelay> (numChannels, latencySamples, maxBlockSize) : nullptr;
-        catchUp.setSize (numChannels, latencySamples > 0 ? maxBlockSize : 0);
         wet = isEnabled() ? 1.0f : 0.0f;
+        returning = false;
+        catchingUp = 0;
         prepared = true;
     }
 
@@ -94,6 +97,8 @@ public:
         if (bypassDelay != nullptr)
             bypassDelay->reset();
         wet = isEnabled() ? 1.0f : 0.0f;
+        returning = false;
+        catchingUp = 0;
     }
 
     /// Whether a plan the render thread may run references the slot (counted by MixPlan).
@@ -133,17 +138,20 @@ public:
         }
 
         // the effect comes back from a bypass with a clean slate, so the
-        // first processed block is not a burst of stale state - and, when it
-        // is latent, having caught up on the signal it missed, which the dry
-        // line holds: its output then meets the delayed dry in step
-        if (wet <= 0.0f && target > 0.0f)
+        // first processed block is not a burst of stale state. A latent one
+        // has nothing to say for its first latencySamples - that output is
+        // the pre-roll of a signal it has not heard yet - so the delayed dry
+        // goes on alone until then, and the crossfade starts aligned
+        if (wet <= 0.0f && target > 0.0f && ! returning)
         {
+            returning = true;
             effect->reset();
-            if (bypassDelay != nullptr)
-            {
-                juce::dsp::AudioBlock<float> scratch (catchUp);
-                bypassDelay->replayHistory (scratch, [this] (juce::dsp::AudioBlock<float>& piece) { effect->process (piece); });
-            }
+            catchingUp = latencySamples;
+        }
+        else if (target <= 0.0f)
+        {
+            returning = false;   // bypassed again, caught up or not
+            catchingUp = 0;
         }
 
         juce::dsp::AudioBlock<float> dryBlock (dry);
@@ -155,6 +163,13 @@ public:
 
         for (auto i = 0; i < numSamples; ++i)
         {
+            if (catchingUp > 0)
+            {
+                --catchingUp;   // the dry alone while the effect catches up
+                for (auto c = 0; c < numChannels; ++c)
+                    block.getChannelPointer (static_cast<size_t> (c))[i] = dryView.getChannelPointer (static_cast<size_t> (c))[i];
+                continue;
+            }
             wet = target > wet ? juce::jmin (target, wet + rampStep) : juce::jmax (target, wet - rampStep);
             for (auto c = 0; c < numChannels; ++c)
             {
@@ -163,6 +178,8 @@ public:
                 out[i] = in[i] + (out[i] - in[i]) * wet;
             }
         }
+        if (wet == target)
+            returning = false;
     }
 
 private:
@@ -180,7 +197,8 @@ private:
     juce::AudioBuffer<float> dry;   // the unprocessed block, for the crossfade
     int latencySamples = 0;         // the effect's, as read at prepare()
     std::unique_ptr<PdcDelay> bypassDelay;   // the dry signal's share of that latency; nullptr for a prompt effect
-    juce::AudioBuffer<float> catchUp;        // what the effect is fed from the dry line on its return from bypass (empty for a prompt effect)
+    bool returning = false;         // render thread: on the way back from a bypass, the reset done
+    int catchingUp = 0;             // render thread: samples of pre-roll the effect still owes before the crossfade starts
     float wet = 1.0f;               // render thread: 1 = the effect, 0 = bypassed
     float rampStep = 0.0f;
 

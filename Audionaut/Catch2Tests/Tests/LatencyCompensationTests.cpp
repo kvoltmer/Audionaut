@@ -669,9 +669,18 @@ SCENARIO ("a project bounce runs on for the chains' ring-out", "[engine][effects
         {
             const auto plainLength = bounceToEnd (*plain.engine, true);
             REQUIRE (plainLength > 0);
-            REQUIRE (session.preparedPlan().tailSeconds == Approx (0.1));
+            REQUIRE (session.preparedPlan().tailSeconds() == Approx (0.1));
             REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.1 * kSampleRate).margin (1.0));
             REQUIRE (bounceToEnd (*session.engine, false) == plainLength);
+        }
+
+        THEN ("a delay time changed since the plan was built counts: the tail is read from the effects as they are")
+        {
+            const auto plainLength = bounceToEnd (*plain.engine, true);
+            REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.1 * kSampleRate).margin (1.0));   // the plan is built now
+            slot->getEffect().setParameter (DelayEffect::timeMs, 250.0f);   // a value change rebuilds nothing
+            REQUIRE (session.preparedPlan().tailSeconds() == Approx (0.25));
+            REQUIRE (bounceToEnd (*session.engine, true) - plainLength == Approx (0.25 * kSampleRate).margin (1.0));
         }
     }
 }

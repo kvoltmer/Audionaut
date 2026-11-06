@@ -815,7 +815,8 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
             outputBlock.getSingleChannelBlock (static_cast<size_t> (destination)).add (channelBlock);
         }
         // else: routed beyond the current device's outputs -> dropped
-        directOutDelayed[i] = delayed;
+        if (ctx.plan != nullptr)
+            directOutDelayed[i] = delayed;   // a block the plan sat out says nothing about the line
     }
 
     if (ctx.stereoMain || monoMain) {
@@ -905,7 +906,7 @@ double AudioBusRenderer<SampleType>::getEffectTailSeconds() const noexcept
     if (mixPlans == nullptr)
         return 0.0;
     if (const auto* plan = mixPlans->getAdopted())
-        return plan->tailSeconds;
+        return plan->tailSeconds();
     return 0.0;
 }
 

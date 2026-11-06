@@ -125,7 +125,7 @@ private:
     /// The chain's slots for a plan, each prepared for numChannels; a slot in a live plan whose format changed waits outside.
     void collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders);
 
-    /// Works out the plan's Latency and tail from its slots and gives every signal that has to wait its delay, carried over where it can be.
+    /// Works out the plan's Latency from its slots and gives every signal that has to wait its delay, carried over where it can be.
     void planLatency (MixPlan& plan);
 
     /// What a delay of the previous plan waited for, so the next plan can take it over if it still needs the same wait.
@@ -139,8 +139,9 @@ private:
         std::shared_ptr<PdcDelay> delay;
     };
 
-    /// The previous plan's delay for this wait when it fits, else a new one; recorded for the plan after this.
-    std::shared_ptr<PdcDelay> delayFor (CarriedDelay::Kind kind, int trackId, int channel, int auxId, int numChannels, int delaySamples);
+    /// The previous plan's delay for this wait when it fits, else a new one; recorded in `carrying` for the plan after this.
+    std::shared_ptr<PdcDelay> delayFor (CarriedDelay::Kind kind, int trackId, int channel, int auxId, int numChannels, int delaySamples,
+                                        std::vector<CarriedDelay>& carrying);
 
     static constexpr double gainRampSeconds = 0.01;   ///< send levels and aux returns ramp like the channel gains
 
@@ -156,7 +157,6 @@ private:
     int numRebuilds = 0;
 
     std::vector<CarriedDelay> carriedDelays;   ///< the delays of the plan built last, by what they wait for
-    std::vector<CarriedDelay> carryingDelays;  ///< the delays of the plan being built, to become carriedDelays
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixerPlanner)
 };
