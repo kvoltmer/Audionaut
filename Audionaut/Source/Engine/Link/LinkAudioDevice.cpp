@@ -52,7 +52,7 @@ void LinkAudioDevice::audioDeviceIOCallbackWithContext (const float* const* inpu
     if (not byPass.load()) {
         // Synchronize host time to reference the point when its output reaches the speaker.
         const auto hostTime =  host_time_filter.sampleTimeToHostTime(sample_time);
-        const auto bufferBeginAtOutput = hostTime + linkEngine->mOutputLatency.load();
+        const auto bufferBeginAtOutput = hostTime + latencyToOutput();
         const auto isPlaying = linkEngine->audioCallback(bufferBeginAtOutput,
                                                          static_cast<std::size_t>(numSamples));
         const auto beats = linkEngine->beatAtTime(bufferBeginAtOutput, linkEngine->quantum());
@@ -100,7 +100,11 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
 
     // from here on the callback drains the commands posted to the renderer
     if (playListScheduler != nullptr)
-        playListScheduler->getAudioBusInterface()->setDeviceRunning (true);
+    {
+        auto bus = playListScheduler->getAudioBusInterface();
+        bus->setDeviceLatency (device->getInputLatencyInSamples(), deviceLatency);
+        bus->setDeviceRunning (true);
+    }
 
     // the render workers join the device's audio workgroup (CoreAudio; empty
     // elsewhere), so the scheduler runs them as part of the audio deadline
@@ -156,6 +160,20 @@ void LinkAudioDevice::restartRenderThreads()
     stopRenderThreads();
     startRenderThreads();
     setBypass (wasBypassed);
+}
+
+std::chrono::microseconds LinkAudioDevice::latencyToOutput() const noexcept
+{
+    using namespace std::chrono;
+    const auto device = linkEngine->mOutputLatency.load();
+    if (playListScheduler == nullptr || sampleRate <= 0.0)
+        return device;
+
+    // the renderer's own latency, on top of the device's: the block is heard
+    // this much later still, and the beat it renders has to be the beat of
+    // that moment, or every Link peer runs ahead of this engine
+    const auto compensation = playListScheduler->getAudioBusInterface()->getOutputLatencySamples();
+    return device + microseconds (std::llround (static_cast<double> (compensation) * 1.0e6 / sampleRate));
 }
 
 void LinkAudioDevice::startPlaying()

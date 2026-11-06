@@ -343,6 +343,7 @@
           <FILE id="EfInsH" name="InsertChain.h" compile="0" resource="0"
                 file="Source/Engine/Effects/InsertChain.h"/>
           <FILE id="EfPlnH" name="MixPlan.h" compile="0" resource="0" file="Source/Engine/Effects/MixPlan.h"/>
+          <FILE id="EfPdcH" name="PdcDelay.h" compile="0" resource="0" file="Source/Engine/Effects/PdcDelay.h"/>
           <FILE id="EfSndC" name="SendList.cpp" compile="1" resource="0"
                 file="Source/Engine/Effects/SendList.cpp"/>
           <FILE id="EfSndH" name="SendList.h" compile="0" resource="0" file="Source/Engine/Effects/SendList.h"/>

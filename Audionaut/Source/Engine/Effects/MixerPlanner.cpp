@@ -5,6 +5,8 @@
 
 #include "MixerPlanner.h"
 
+#include <algorithm>
+
 #include "InsertChain.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioTrack.h"
@@ -185,6 +187,7 @@ void MixerPlanner::rebuild (bool nothingRenders)
         if (numChannels > 0 && busChannel <= MAX_AUDIO_CHANNELS)
         {
             MixPlan::Track entry;
+            entry.id = track->getId();
             entry.firstChannel = busChannel - numChannels;
             entry.numChannels = numChannels;
             collect (track->getTrackInserts(), numChannels, entry.inserts, *plan, nothingRenders);
@@ -203,6 +206,8 @@ void MixerPlanner::rebuild (bool nothingRenders)
             plan->sendOutput.setSize (2 * plan->numSendPairs, maxBlockSize);
         if (! plan->auxes.empty())
             plan->auxOutput.setSize (2 * static_cast<int> (plan->auxes.size()), maxBlockSize);
+
+        planLatency (*plan);
     }
 
     // the render thread takes the plan over at the top of a block, behind
@@ -221,6 +226,86 @@ void MixerPlanner::rebuild (bool nothingRenders)
     // onRetiredReleased otherwise)
     if (prepareDeferred && plans->getNumRetired() == 0)
         rebuild (nothingRenders);
+}
+
+void MixerPlanner::planLatency (MixPlan& plan)
+{
+    // latency adds along a path; where paths meet, each waits for the latest
+    const auto latencyOf = [] (const std::vector<EffectSlot*>& slots)
+    {
+        auto samples = 0;
+        for (const auto* slot : slots)
+            samples += slot->getLatencySamples();
+        return samples;
+    };
+
+    // the fader point: every bus channel is as late as its own inserts and
+    // its track's together, and all of them wait for the latest
+    std::vector<int> channelLatency (plan.channels.size(), 0);
+    std::vector<int> channelOwner (plan.channels.size(), -1);   // index into plan.tracks
+    for (size_t t = 0; t < plan.tracks.size(); ++t)
+    {
+        const auto& track = plan.tracks[t];
+        const auto trackLatency = latencyOf (track.inserts);
+        for (auto k = track.firstChannel; k < track.firstChannel + track.numChannels && k < static_cast<int> (plan.channels.size()); ++k)
+        {
+            channelLatency[static_cast<size_t> (k)] = latencyOf (plan.channels[static_cast<size_t> (k)].inserts) + trackLatency;
+            channelOwner[static_cast<size_t> (k)] = static_cast<int> (t);
+        }
+    }
+    auto& latency = plan.latency;
+    latency.preFader = channelLatency.empty() ? 0 : *std::max_element (channelLatency.begin(), channelLatency.end());
+
+    // the aux returns: the dry main mix and the quicker returns wait for the latest aux chain
+    std::vector<int> auxLatency (plan.auxes.size(), 0);
+    for (size_t a = 0; a < plan.auxes.size(); ++a)
+        auxLatency[a] = latencyOf (plan.auxes[a].inserts);
+    latency.aux = auxLatency.empty() ? 0 : *std::max_element (auxLatency.begin(), auxLatency.end());
+
+    latency.master = latencyOf (plan.master);
+
+    // the waits, each on the job that owns the waiting signal; none where
+    // there is nothing to wait for, so a plan without latency has no delays.
+    // What this plan waits for is recorded for the plan after it
+    std::vector<CarriedDelay> carrying;
+    const auto afterFader = latency.aux + latency.master;   // what a direct out skips
+    for (size_t k = 0; k < plan.channels.size(); ++k)
+    {
+        const auto owner = channelOwner[k];
+        const auto trackId = owner >= 0 ? plan.tracks[static_cast<size_t> (owner)].id : -1;
+        const auto channelInTrack = owner >= 0 ? static_cast<int> (k) - plan.tracks[static_cast<size_t> (owner)].firstChannel : static_cast<int> (k);
+        auto& channel = plan.channels[k];
+        channel.preFaderDelay = delayFor (CarriedDelay::Kind::preFader, trackId, channelInTrack, -1, 1, latency.preFader - channelLatency[k], carrying);
+        channel.directOutDelay = delayFor (CarriedDelay::Kind::directOut, trackId, channelInTrack, -1, 1, afterFader, carrying);
+    }
+    for (size_t a = 0; a < plan.auxes.size(); ++a)
+        plan.auxes[a].returnDelay = delayFor (CarriedDelay::Kind::auxReturn, -1, -1, plan.auxes[a].id, 2, latency.aux - auxLatency[a], carrying);
+    plan.mainDryDelay = delayFor (CarriedDelay::Kind::mainDry, -1, -1, -1, 2, latency.aux, carrying);
+
+    carriedDelays = std::move (carrying);
+}
+
+std::shared_ptr<PdcDelay> MixerPlanner::delayFor (CarriedDelay::Kind kind, int trackId, int channel, int auxId, int numChannels, int delaySamples,
+                                                  std::vector<CarriedDelay>& carrying)
+{
+    if (delaySamples <= 0)
+        return nullptr;
+
+    std::shared_ptr<PdcDelay> delay;
+    for (const auto& carried : carriedDelays)
+    {
+        if (carried.kind == kind && carried.trackId == trackId && carried.channel == channel && carried.auxId == auxId
+            && carried.delay->matches (numChannels, delaySamples, maxBlockSize))
+        {
+            delay = carried.delay;   // the same wait as before: the signal in flight goes on
+            break;
+        }
+    }
+    if (delay == nullptr)
+        delay = std::make_shared<PdcDelay> (numChannels, delaySamples, maxBlockSize);
+
+    carrying.push_back ({ kind, trackId, channel, auxId, delay });
+    return delay;
 }
 
 void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders)

@@ -84,8 +84,47 @@ public:
      */
     void setDeviceRunning (bool isRunning) noexcept { deviceRunning.store (isRunning, std::memory_order_relaxed); }
 
-    /** @brief Whoever renders next, while nothing else does: every insert of the adopted plan starts from rest. */
+    /** @brief Whoever renders next, while nothing else does: every insert and delay of the adopted plan starts from rest. */
     void resetInserts() noexcept;
+
+    /**
+     * @brief How many samples later than its input the renderer's output is,
+     *        through the latency compensation of the plan it runs (the main
+     *        mix's figure, or the stems' during a stem export). What a bounce
+     *        drops from its start, and the share of the output latency that
+     *        is the engine's own, see LinkAudioDevice::latencyToOutput.
+     */
+    int getOutputLatencySamples() const noexcept;
+
+    /** @brief The longest ring-out the running plan's chains add after the last input, in seconds. */
+    double getEffectTailSeconds() const noexcept;
+
+    /**
+     * @brief The device's own latency in samples, as audioDeviceAboutToStart
+     *        read it: how long before the callback its input was sampled,
+     *        how long after it its output is heard.
+     */
+    void setDeviceLatency (int inputSamples, int outputSamples) noexcept
+    {
+        deviceInputLatency.store (std::max (0, inputSamples), std::memory_order_relaxed);
+        deviceOutputLatency.store (std::max (0, outputSamples), std::memory_order_relaxed);
+    }
+
+    int getDeviceInputLatencySamples() const noexcept { return deviceInputLatency.load (std::memory_order_relaxed); }
+    int getDeviceOutputLatencySamples() const noexcept { return deviceOutputLatency.load (std::memory_order_relaxed); }
+
+    /**
+     * @brief How much earlier than the transport position of the block it
+     *        arrives in a recorded sample was performed: the device's round
+     *        trip (input and output latency) plus the renderer's output
+     *        latency, which the position - the moment the block is heard -
+     *        includes. A take placed this much before its block's position
+     *        lines up with what was heard while playing it.
+     */
+    int getRecordingLatencySamples() const noexcept
+    {
+        return getDeviceInputLatencySamples() + getDeviceOutputLatencySamples() + getOutputLatencySamples();
+    }
     
     /**
     * @brief Sets the number of audio bus channels.
@@ -221,6 +260,8 @@ public:
      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer; ///< Renderer for audio bus processing.
      std::shared_ptr<RenderThreadPool> renderThreadPool;
      std::atomic<int> numRenderThreads { -1 };
+     std::atomic<int> deviceInputLatency { 0 };
+     std::atomic<int> deviceOutputLatency { 0 };
 
      JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioBusInterface)
  };

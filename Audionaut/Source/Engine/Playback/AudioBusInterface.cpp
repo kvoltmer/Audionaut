@@ -59,6 +59,16 @@ void AudioBusInterface::resetInserts() noexcept
     audioBusRenderer->resetInserts();
 }
 
+int AudioBusInterface::getOutputLatencySamples() const noexcept
+{
+    return audioBusRenderer->getOutputLatencySamples();
+}
+
+double AudioBusInterface::getEffectTailSeconds() const noexcept
+{
+    return audioBusRenderer->getEffectTailSeconds();
+}
+
 const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber) const
 {
     return audioBusRenderer->getChannelData(channelNumber);

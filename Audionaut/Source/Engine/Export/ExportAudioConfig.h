@@ -31,6 +31,7 @@ struct ExportAudioConfig {
     bool multiMono = false;          ///< Whether to export as multiple mono files.
     double positionSeconds = 0.0;    ///< The starting position for the export in seconds.
     double lengthSeconds = -1.0;     ///< The export length in seconds.
+    bool includeEffectTails = true;  ///< A project bounce to the project's end runs on for the chains' ring-out (a delay's echoes); an explicit length is kept as given.
     juce::File fileName;             ///< The file to which the audio will be exported.
     
     std::shared_ptr<audium::PlayListItem> playListItem = nullptr;

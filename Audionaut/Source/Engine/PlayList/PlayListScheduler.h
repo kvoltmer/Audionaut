@@ -168,7 +168,7 @@ public:
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<Playback> getPlayback() const { return playback; }
-    std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
+    const std::shared_ptr<AudioBusInterface>& getAudioBusInterface() const noexcept { return audioBusInterface; }   ///< by reference: read on the audio thread too
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
     std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; } 
     

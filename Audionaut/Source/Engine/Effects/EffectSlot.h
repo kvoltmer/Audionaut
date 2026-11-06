@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "Effect.h"
+#include "PdcDelay.h"
 
 namespace audium
 {
@@ -26,6 +27,18 @@ namespace audium
  * thread takes the job; the enabled flag is read once per block. Toggling
  * it crossfades the dry and the processed signal over about ten
  * milliseconds.
+ *
+ * A slot is as late as its effect says (getLatencySamples, read once at
+ * prepare), whether the effect runs or not: bypassed, the slot delays the
+ * dry signal by the same amount, and the crossfade mixes the delayed dry
+ * with the processed signal. So toggling an effect never shifts what comes
+ * after it, and the planner's latency figures depend on the chain alone.
+ * Coming back from a bypass, a latent effect's first latency's worth of
+ * output is the pre-roll of a signal it has not heard yet: the delayed dry
+ * carries on for that long, and the crossfade starts once the effect's
+ * output is the signal - aligned, and without a hole. So a latent effect
+ * comes back its latency later than it was switched on, at the cost of no
+ * extra work in the block that switches it.
  */
 class EffectSlot
 {
@@ -51,9 +64,16 @@ public:
         rampStep = static_cast<float> (1.0 / juce::jmax (1.0, sampleRate * rampSeconds));
         dry.setSize (numChannels, maxBlockSize);
         effect->prepare (sampleRate, maxBlockSize, numChannels);
+        latencySamples = std::max (0, effect->getLatencySamples());
+        bypassDelay = latencySamples > 0 ? std::make_unique<PdcDelay> (numChannels, latencySamples, maxBlockSize) : nullptr;
         wet = isEnabled() ? 1.0f : 0.0f;
+        returning = false;
+        catchingUp = 0;
         prepared = true;
     }
+
+    /// How many samples later the slot's output is than its input, enabled or bypassed; 0 before prepare().
+    int getLatencySamples() const noexcept { return latencySamples; }
 
     bool isPreparedFor (double sampleRate_, int maxBlockSize_, int numChannels_) const noexcept
     {
@@ -74,7 +94,11 @@ public:
         if (! prepared)
             return;
         effect->reset();
+        if (bypassDelay != nullptr)
+            bypassDelay->reset();
         wet = isEnabled() ? 1.0f : 0.0f;
+        returning = false;
+        catchingUp = 0;
     }
 
     /// Whether a plan the render thread may run references the slot (counted by MixPlan).
@@ -89,27 +113,65 @@ public:
             return;
 
         const auto target = isEnabled() ? 1.0f : 0.0f;
+        const auto numSamples = static_cast<int> (block.getNumSamples());
+
+        if (target <= 0.0f)
+        {
+            // bypassed, caught up or not: the next return starts afresh
+            returning = false;
+            catchingUp = 0;
+        }
 
         if (wet == target)
         {
             if (target > 0.0f)
+            {
+                // enabled and settled: the effect alone - the dry line keeps
+                // running on the side, so a bypass finds the signal in it
+                if (bypassDelay != nullptr)
+                {
+                    juce::dsp::AudioBlock<float> dryBlock (dry);
+                    auto dryView = dryBlock.getSubBlock (0, static_cast<size_t> (numSamples));
+                    dryView.copyFrom (block);
+                    bypassDelay->process (dryView);
+                }
                 effect->process (block);
+            }
+            else if (bypassDelay != nullptr)
+            {
+                bypassDelay->process (block);   // bypassed and settled: as late as the effect would be, nothing else
+            }
             return;   // bypassed and settled: the effect sees nothing
         }
 
         // the effect comes back from a bypass with a clean slate, so the
-        // first processed block is not a burst of stale state
-        if (wet <= 0.0f && target > 0.0f)
+        // first processed block is not a burst of stale state. A latent one
+        // has nothing to say for its first latencySamples - that output is
+        // the pre-roll of a signal it has not heard yet - so the delayed dry
+        // goes on alone until then, and the crossfade starts aligned
+        if (wet <= 0.0f && target > 0.0f && ! returning)
+        {
+            returning = true;
             effect->reset();
+            catchingUp = latencySamples;
+        }
 
-        const auto numSamples = static_cast<int> (block.getNumSamples());
         juce::dsp::AudioBlock<float> dryBlock (dry);
         auto dryView = dryBlock.getSubBlock (0, static_cast<size_t> (numSamples));
         dryView.copyFrom (block);
+        if (bypassDelay != nullptr)
+            bypassDelay->process (dryView);   // the dry side as late as the wet one, so the crossfade mixes aligned signals
         effect->process (block);
 
         for (auto i = 0; i < numSamples; ++i)
         {
+            if (catchingUp > 0)
+            {
+                --catchingUp;   // the dry alone while the effect catches up
+                for (auto c = 0; c < numChannels; ++c)
+                    block.getChannelPointer (static_cast<size_t> (c))[i] = dryView.getChannelPointer (static_cast<size_t> (c))[i];
+                continue;
+            }
             wet = target > wet ? juce::jmin (target, wet + rampStep) : juce::jmax (target, wet - rampStep);
             for (auto c = 0; c < numChannels; ++c)
             {
@@ -118,6 +180,8 @@ public:
                 out[i] = in[i] + (out[i] - in[i]) * wet;
             }
         }
+        if (wet == target)
+            returning = false;
     }
 
 private:
@@ -133,6 +197,10 @@ private:
     int planReferences = 0;   // message thread: plans alive that point at this slot
 
     juce::AudioBuffer<float> dry;   // the unprocessed block, for the crossfade
+    int latencySamples = 0;         // the effect's, as read at prepare()
+    std::unique_ptr<PdcDelay> bypassDelay;   // the dry signal's share of that latency; nullptr for a prompt effect
+    bool returning = false;         // render thread: on the way back from a bypass, the reset done
+    int catchingUp = 0;             // render thread: samples of pre-roll the effect still owes before the crossfade starts
     float wet = 1.0f;               // render thread: 1 = the effect, 0 = bypassed
     float rampStep = 0.0f;
 

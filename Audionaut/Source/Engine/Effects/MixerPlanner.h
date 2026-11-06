@@ -14,6 +14,7 @@
 #include "EffectRegistry.h"
 #include "EffectSlot.h"
 #include "MixPlanContainer.h"
+#include "PdcDelay.h"
 
 namespace audium
 {
@@ -42,6 +43,13 @@ class InsertChain;
  * count changes while the device runs leaves its slots out of the plan
  * until the plans that ran them are freed, then prepares them and builds
  * once more.
+ *
+ * Every plan also gets its latency compensation (MixPlan::Latency): the
+ * slots' latencies summed along each path, the waits at the three summing
+ * points worked out from them, and a PdcDelay for every wait. A delay is
+ * signal in flight, so a rebuild hands the new plan the previous plan's
+ * delay for the same wait - the same bus channel, aux or stage, needing
+ * the same length - and makes a fresh one only where the wait changed.
  */
 class MixerPlanner
 {
@@ -117,6 +125,24 @@ private:
     /// The chain's slots for a plan, each prepared for numChannels; a slot in a live plan whose format changed waits outside.
     void collect (InsertChain& chain, int numChannels, std::vector<EffectSlot*>& into, MixPlan& plan, bool nothingRenders);
 
+    /// Works out the plan's Latency from its slots and gives every signal that has to wait its delay, carried over where it can be.
+    void planLatency (MixPlan& plan);
+
+    /// What a delay of the previous plan waited for, so the next plan can take it over if it still needs the same wait.
+    struct CarriedDelay
+    {
+        enum class Kind { preFader, directOut, auxReturn, mainDry };
+        Kind kind;
+        int trackId;    ///< preFader, directOut: the track whose channel waits
+        int channel;    ///< preFader, directOut: the channel within the track
+        int auxId;      ///< auxReturn: the aux whose return waits
+        std::shared_ptr<PdcDelay> delay;
+    };
+
+    /// The previous plan's delay for this wait when it fits, else a new one; recorded in `carrying` for the plan after this.
+    std::shared_ptr<PdcDelay> delayFor (CarriedDelay::Kind kind, int trackId, int channel, int auxId, int numChannels, int delaySamples,
+                                        std::vector<CarriedDelay>& carrying);
+
     static constexpr double gainRampSeconds = 0.01;   ///< send levels and aux returns ramp like the channel gains
 
     std::shared_ptr<EffectRegistry> registry;
@@ -129,6 +155,8 @@ private:
     bool rebuildPending = false;
     bool prepareDeferred = false;   // a slot waits outside the plan for its new format
     int numRebuilds = 0;
+
+    std::vector<CarriedDelay> carriedDelays;   ///< the delays of the plan built last, by what they wait for
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixerPlanner)
 };

@@ -61,6 +61,12 @@ struct TrackJobShare
  * same for any number of workers, including none (the serial path, which is
  * what offline bounces use).
  *
+ * Latency compensation is the plan's (MixPlan::Latency): where the plan hands
+ * a signal a delay, the stage that owns the signal runs it - a bus channel's
+ * after its inserts, an aux return's after the aux inserts, the dry main
+ * mix's before the returns join, a direct out's on its way to the output.
+ * getOutputLatencySamples() says how late the output is as a whole.
+ *
  * @tparam SampleType The type of audio sample (float or double; voices render in float).
  */
 template <class SampleType>
@@ -150,8 +156,20 @@ public:
      */
     void setTrackJobSharesEnabled (bool enabled) noexcept { trackJobSharesEnabled.store (enabled, std::memory_order_relaxed); }
 
-    /** Whoever renders next, while nothing else does (a bounce about to start): every insert of the adopted plan starts from rest. */
+    /** Whoever renders next, while nothing else does (a bounce about to start): every insert and delay of the adopted plan starts from rest. */
     void resetInserts() noexcept;
+
+    /**
+     * How many samples later than its input the output is, through the
+     * latency compensation of the adopted plan: the main mix's figure, or
+     * the stems' while a stem export is on. Read on the thread that adopts
+     * plans (the render thread, a bounce) or the message thread, which is
+     * the one that frees them.
+     */
+    int getOutputLatencySamples() const noexcept;
+
+    /** The longest ring-out the adopted plan's chains add after the last input at the current output (main mix or stems), in seconds (see MixPlan::tailSeconds). */
+    double getEffectTailSeconds() const noexcept;
 
     /**
      * Message thread: copies the last block's job shares into `out`, at most
@@ -334,6 +352,7 @@ private:
    #endif
 
     std::atomic<bool> stemExport { false };
+    bool directOutDelayed[MAX_AUDIO_CHANNELS] = {};   ///< render thread: whether the channel's direct-out delay ran last block, so one that starts again starts from silence
 
     Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
