@@ -336,7 +336,9 @@ server.registerTool(
       "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
       "channels per file), .aiff (8/16/24 bit), .ogg (Ogg Vorbis, lossy, at most 8 channels) or .mp3 " +
       "(lossy, mono or stereo, at most 48 kHz). Lossy formats take bitrate_kbps instead of bit_depth. " +
-      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades. " +
+      "A render to the project's end runs on for the effects' ring-out (a delay's echoes) unless " +
+      "include_tails is false; a length_seconds is kept as given. The inserts' latency is compensated. " +
+      "Pass region to bounce a single region instead - always dry, without any clip's gains, fades or effects. " +
       "Reports progress in 5% steps when the call carries a progressToken.",
     inputSchema: {
       project: projectParam,
@@ -350,12 +352,13 @@ server.registerTool(
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
       length_seconds: z.number().positive().optional().describe("Export length (default: whole project)"),
+      include_tails: z.boolean().optional().describe("Run on past the project's end for the effects' ring-out (default true; only without length_seconds)"),
       region: z.string().min(1).optional().describe("Bounce this region instead of the whole project"),
       track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
   async ({ project, output, sample_rate, bit_depth, bitrate_kbps, channels, multi_mono, start_seconds,
-           length_seconds, region, track }, extra) =>
+           length_seconds, include_tails, region, track }, extra) =>
     runCli([
       "export",
       project,
@@ -368,6 +371,7 @@ server.registerTool(
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
+      ...(include_tails === false ? ["--no-tails"] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
     ], [3], extra)

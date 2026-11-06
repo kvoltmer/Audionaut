@@ -58,6 +58,16 @@ public:
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
 
+    /**
+        How long after a callback its first sample is heard: the device's
+        output latency plus the renderer's latency compensation (what the
+        inserts of the running plan cost, see MixPlan::Latency). The
+        callback asks Link for the beat at that moment, so what plays is
+        the beat that is heard, in time with every peer. Read on the audio
+        thread; the test harness asks it for the same term.
+    */
+    std::chrono::microseconds latencyToOutput() const noexcept;
+
     /// Load measured across the whole audio callback; polled by the UI.
     DspLoadMeter& getDspLoadMeter() noexcept { return dspLoadMeter; }
     

@@ -474,6 +474,7 @@
 		7FAA26BEABC56901D3400DCB /* RightPanelComponent.h */ /* RightPanelComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RightPanelComponent.h; path = ../../Source/Interface/Components/RightPanel/RightPanelComponent.h; sourceTree = SOURCE_ROOT; };
 		7FEDFC70C72300B5FB236AD6 /* UndoableSendAction.h */ /* UndoableSendAction.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = UndoableSendAction.h; path = ../../Source/Engine/Undo/UndoableSendAction.h; sourceTree = SOURCE_ROOT; };
 		80FBABDB4D3BB32F2C661A1C /* StemSeparator.h */ /* StemSeparator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StemSeparator.h; path = ../../Source/Engine/Separation/StemSeparator.h; sourceTree = SOURCE_ROOT; };
+		814F431F4EEEABFD7D1DC9A2 /* PdcDelay.h */ /* PdcDelay.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PdcDelay.h; path = ../../Source/Engine/Effects/PdcDelay.h; sourceTree = SOURCE_ROOT; };
 		817FA0302FB2D6FBC495236D /* LinkAudioDevice.cpp */ /* LinkAudioDevice.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LinkAudioDevice.cpp; path = ../../Source/Engine/Link/LinkAudioDevice.cpp; sourceTree = SOURCE_ROOT; };
 		81EC3A5347CC3EB686784014 /* Eq3Effect.h */ /* Eq3Effect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Eq3Effect.h; path = ../../Source/Engine/Effects/BuiltIn/Eq3Effect.h; sourceTree = SOURCE_ROOT; };
 		8202F9C6D60D53659741D59B /* EventMerger.h */ /* EventMerger.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = EventMerger.h; path = ../../Source/Engine/Analysis/EventMerger.h; sourceTree = SOURCE_ROOT; };
@@ -1057,6 +1058,7 @@
 				649CB1C28B4A32EADB0E19C2,
 				AAB01B0CE6BA0094619213B0,
 				53D0484548D790A432F8B0F8,
+				814F431F4EEEABFD7D1DC9A2,
 				5783A8FA110861F893C3C6CD,
 				CA8818CC3BAEE465B129132B,
 				D8F548EFB86F250B53BD479A,

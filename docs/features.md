@@ -65,8 +65,11 @@ monitoring. Each take becomes a region and a single undo step.
 - **Insert effects** on every channel strip, on a whole track (all its
   channels at once), on the aux buses and on the master: Trim, a three-band
   EQ with high-pass, a compressor and a feedback delay, with click-free
-  bypass. Playback and export run them alike; agents add and set them
-  through the MCP tools.
+  bypass. Latency is compensated at every summing point, so a latent effect
+  never shifts its channel against the others, exports stay on the grid,
+  Link peers stay in time and recorded takes land where they were played.
+  Playback and export run them alike; agents add and set them through the
+  MCP tools.
 - **Aux buses and sends**: every project has two stereo aux buses (more can
   be added), each with its own insert chain and a return into the main mix
   with gain, pan, mute and solo. Every channel strip can send into each

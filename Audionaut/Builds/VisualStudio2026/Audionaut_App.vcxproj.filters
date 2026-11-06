@@ -5070,6 +5070,9 @@
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlan.h">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\PdcDelay.h">
+      <Filter>Audionaut\Source\Engine\Effects</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\SendList.h">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClInclude>

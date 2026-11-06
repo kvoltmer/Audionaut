@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "Effect.h"
+#include "PdcDelay.h"
 
 namespace audium
 {
@@ -26,6 +27,16 @@ namespace audium
  * thread takes the job; the enabled flag is read once per block. Toggling
  * it crossfades the dry and the processed signal over about ten
  * milliseconds.
+ *
+ * A slot is as late as its effect says (getLatencySamples, read once at
+ * prepare), whether the effect runs or not: bypassed, the slot delays the
+ * dry signal by the same amount, and the crossfade mixes the delayed dry
+ * with the processed signal. So toggling an effect never shifts what comes
+ * after it, and the planner's latency figures depend on the chain alone.
+ * Coming back from a bypass, a latent effect is first fed the signal it
+ * missed - the dry line holds exactly that much - so it has caught up when
+ * the crossfade starts and does not open with its latency's worth of
+ * silence.
  */
 class EffectSlot
 {
@@ -51,9 +62,15 @@ public:
         rampStep = static_cast<float> (1.0 / juce::jmax (1.0, sampleRate * rampSeconds));
         dry.setSize (numChannels, maxBlockSize);
         effect->prepare (sampleRate, maxBlockSize, numChannels);
+        latencySamples = std::max (0, effect->getLatencySamples());
+        bypassDelay = latencySamples > 0 ? std::make_unique<PdcDelay> (numChannels, latencySamples, maxBlockSize) : nullptr;
+        catchUp.setSize (numChannels, latencySamples > 0 ? maxBlockSize : 0);
         wet = isEnabled() ? 1.0f : 0.0f;
         prepared = true;
     }
+
+    /// How many samples later the slot's output is than its input, enabled or bypassed; 0 before prepare().
+    int getLatencySamples() const noexcept { return latencySamples; }
 
     bool isPreparedFor (double sampleRate_, int maxBlockSize_, int numChannels_) const noexcept
     {
@@ -74,6 +91,8 @@ public:
         if (! prepared)
             return;
         effect->reset();
+        if (bypassDelay != nullptr)
+            bypassDelay->reset();
         wet = isEnabled() ? 1.0f : 0.0f;
     }
 
@@ -89,23 +108,49 @@ public:
             return;
 
         const auto target = isEnabled() ? 1.0f : 0.0f;
+        const auto numSamples = static_cast<int> (block.getNumSamples());
 
         if (wet == target)
         {
             if (target > 0.0f)
+            {
+                // enabled and settled: the effect alone - the dry line keeps
+                // running on the side, so a bypass finds the signal in it
+                if (bypassDelay != nullptr)
+                {
+                    juce::dsp::AudioBlock<float> dryBlock (dry);
+                    auto dryView = dryBlock.getSubBlock (0, static_cast<size_t> (numSamples));
+                    dryView.copyFrom (block);
+                    bypassDelay->process (dryView);
+                }
                 effect->process (block);
+            }
+            else if (bypassDelay != nullptr)
+            {
+                bypassDelay->process (block);   // bypassed and settled: as late as the effect would be, nothing else
+            }
             return;   // bypassed and settled: the effect sees nothing
         }
 
         // the effect comes back from a bypass with a clean slate, so the
-        // first processed block is not a burst of stale state
+        // first processed block is not a burst of stale state - and, when it
+        // is latent, having caught up on the signal it missed, which the dry
+        // line holds: its output then meets the delayed dry in step
         if (wet <= 0.0f && target > 0.0f)
+        {
             effect->reset();
+            if (bypassDelay != nullptr)
+            {
+                juce::dsp::AudioBlock<float> scratch (catchUp);
+                bypassDelay->replayHistory (scratch, [this] (juce::dsp::AudioBlock<float>& piece) { effect->process (piece); });
+            }
+        }
 
-        const auto numSamples = static_cast<int> (block.getNumSamples());
         juce::dsp::AudioBlock<float> dryBlock (dry);
         auto dryView = dryBlock.getSubBlock (0, static_cast<size_t> (numSamples));
         dryView.copyFrom (block);
+        if (bypassDelay != nullptr)
+            bypassDelay->process (dryView);   // the dry side as late as the wet one, so the crossfade mixes aligned signals
         effect->process (block);
 
         for (auto i = 0; i < numSamples; ++i)
@@ -133,6 +178,9 @@ private:
     int planReferences = 0;   // message thread: plans alive that point at this slot
 
     juce::AudioBuffer<float> dry;   // the unprocessed block, for the crossfade
+    int latencySamples = 0;         // the effect's, as read at prepare()
+    std::unique_ptr<PdcDelay> bypassDelay;   // the dry signal's share of that latency; nullptr for a prompt effect
+    juce::AudioBuffer<float> catchUp;        // what the effect is fed from the dry line on its return from bypass (empty for a prompt effect)
     float wet = 1.0f;               // render thread: 1 = the effect, 0 = bypassed
     float rampStep = 0.0f;
 

@@ -3550,6 +3550,7 @@
     <ClInclude Include="..\..\Source\Engine\Effects\EffectSlot.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\InsertChain.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlan.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\PdcDelay.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\SendList.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixPlanContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\MixerPlanner.h"/>

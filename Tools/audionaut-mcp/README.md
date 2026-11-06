@@ -94,7 +94,7 @@ read or edit them.
 | `get_project_info` | `info` | Tempo, tracks, clips, files (or the raw persistence JSON) |
 | `create_project` | `create` | New empty `.audium` package |
 | `import_audio` | `import` | Add audio files (creates a new track) |
-| `export_audio` | `export` | Offline render to WAV, FLAC, AIFF, Ogg Vorbis or MP3 |
+| `export_audio` | `export` | Offline render to WAV, FLAC, AIFF, Ogg Vorbis or MP3, latency-compensated, with the effects' ring-out unless `include_tails` is false |
 | `analyze` | `analyze` | Segment, beat and onset analysis, cached next to the project |
 | `auto_edit` | `auto-edit` | Segment a clip using cached analysis |
 | `assemble` | `assemble` | Build an arrangement from regions |

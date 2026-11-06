@@ -489,6 +489,16 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
                     slot->process (trackBlock);
             }
 
+            // the fader point: a bus channel quicker than the latest one waits here
+            for (auto k = job.firstChannel; k < channelEnd && k < static_cast<int> (plan->channels.size()); ++k)
+            {
+                if (auto* delay = plan->channels[static_cast<size_t> (k)].preFaderDelay.get())
+                {
+                    auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
+                    delay->process (channelBlock);
+                }
+            }
+
             // the pre-fader sends tap here: after the inserts, before the gain
             if ((ctx.stereoMain || ctx.monoMain) && plan->numSendPairs > 0)
                 tapSends (job, workerId, ctx, audioBusBlock, true);
@@ -694,6 +704,11 @@ void AudioBusRenderer<SampleType>::renderAux (int auxIndex, int workerId, const 
         for (auto* slot : aux.inserts)
             slot->process (out);
 
+        // a quicker aux chain waits for the latest one, so the returns join
+        // the main mix together
+        if (aux.returnDelay != nullptr)
+            aux.returnDelay->process (out);
+
         // the return: gain and pan per side, silence while muted or
         // while another aux is soloed
         float left = 0.0f, right = 0.0f;
@@ -773,6 +788,7 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
     for (auto i = 0; i < audioBusChannels; i++) {
         auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (i));
         const auto destination = audioChannelData[i].outputChannel;
+        auto delayed = false;
 
         if (destination < 0) {
             if (monoMain) {
@@ -781,10 +797,25 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
             }
         }
         else if (destination < outputChannels) {
-            // direct mono out: post channel-gain, no pan, no master gain
+            // direct mono out: post channel-gain, no pan, no master gain -
+            // but as late as the main mix, whose aux and master stages it skips
+            if constexpr (std::is_same_v<SampleType, float>)
+            {
+                if (ctx.plan != nullptr && i < static_cast<int> (ctx.plan->channels.size()))
+                {
+                    if (auto* delay = ctx.plan->channels[static_cast<size_t> (i)].directOutDelay.get())
+                    {
+                        if (! directOutDelayed[i])
+                            delay->reset();   // routed here just now: nothing old in the line
+                        delay->process (channelBlock);
+                        delayed = true;
+                    }
+                }
+            }
             outputBlock.getSingleChannelBlock (static_cast<size_t> (destination)).add (channelBlock);
         }
         // else: routed beyond the current device's outputs -> dropped
+        directOutDelayed[i] = delayed;
     }
 
     if (ctx.stereoMain || monoMain) {
@@ -793,6 +824,12 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
         // which the first reaches the output
         if (monoMain)
             mainMixBlock.getSingleChannelBlock (1).copyFrom (mainMixBlock.getSingleChannelBlock (0));
+
+        // the dry mix waits for the latest aux chain, so the returns it
+        // meets below carry the same moment
+        if constexpr (std::is_same_v<SampleType, float>)
+            if (ctx.plan != nullptr && ctx.plan->mainDryDelay != nullptr)
+                ctx.plan->mainDryDelay->process (mainMixBlock);
 
         // the dry mix gives way while an aux return is soloed, then the aux
         // returns join it, in strip order; a mono mix takes a return's first
@@ -847,8 +884,29 @@ void AudioBusRenderer<SampleType>::resetInserts() noexcept
     if (mixPlans == nullptr)
         return;
     if (const auto* plan = mixPlans->getAdopted())
-        for (auto& slot : plan->keepAlive)
-            slot->reset();
+        plan->resetState();
+    for (auto& ran : directOutDelayed)
+        ran = false;
+}
+
+template <class SampleType>
+int AudioBusRenderer<SampleType>::getOutputLatencySamples() const noexcept
+{
+    if (mixPlans == nullptr)
+        return 0;
+    if (const auto* plan = mixPlans->getAdopted())
+        return plan->latency.atOutput (stemExport.load());
+    return 0;
+}
+
+template <class SampleType>
+double AudioBusRenderer<SampleType>::getEffectTailSeconds() const noexcept
+{
+    if (mixPlans == nullptr)
+        return 0.0;
+    if (const auto* plan = mixPlans->getAdopted())
+        return plan->tailSeconds;
+    return 0.0;
 }
 
 template class AudioBusRenderer<float>;

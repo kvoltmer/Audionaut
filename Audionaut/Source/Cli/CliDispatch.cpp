@@ -137,13 +137,16 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "export <project.audium> -o <out.wav|.flac|.aiff|.ogg|.mp3> [--sample-rate N]\n"
           "                          [--bit-depth N | --bitrate KBPS]\n"
           "                          [--channels N] [--multi-mono] [--start S] [--length S]\n"
-          "                          [--region NAME [--track N]] [--json]",
+          "                          [--no-tails] [--region NAME [--track N]] [--json]",
           "Renders the project (or one region) offline to a WAV, FLAC, AIFF, Ogg Vorbis or MP3 file.",
           "Renders the project offline (no audio device needed). The output's extension picks the format: "
           ".wav (8/16/24/32 bit), .flac (lossless, 16/24 bit, up to 8 channels), .aiff (8/16/24 bit), "
           ".ogg (Ogg Vorbis, lossy: --bitrate 64-500 kbps, up to 8 channels) or .mp3 (lossy: --bitrate "
           "96/128/160/192/256/320 kbps, mono or stereo, up to 48 kHz); lossy formats default to 192 kbps. "
-          "--multi-mono writes one mono file per channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
+          "--multi-mono writes one mono file per channel. A render to the project's end runs on for the effects' "
+          "ring-out (a delay's echoes) unless --no-tails is given; a --length is kept as given. The inserts' latency "
+          "is compensated, so the file lines up with the timeline. --region bounces a single region instead - always dry, "
+          "without any clip's gains, fades or effects.",
           runExport },
 
         { "analyze",
