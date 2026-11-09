@@ -8,15 +8,17 @@
 #include <JuceHeader.h>
 
 #include "Interface/Components/MixerPanel/InsertSlotListComponent.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 /**
  * The mixer's measurements. Every element of a strip has a fixed height, so
  * the mixer's height follows from what is shown (the sections the user has
  * switched on in the section bar, and the number of send rows) rather than
- * from a drag: the seam above the mixer only closes it.
+ * from a drag: dragging the header bar only closes and opens the mixer.
  */
 namespace MixerLayout
 {
+    constexpr int headerHeight = AudiumLookAndFeel::dividerHeight;   ///< the band across the mixer's top: the seam and the handle
     constexpr int stripWidth = 60;
     constexpr int stripGap = 1;
     constexpr int groupGap = 6;
@@ -99,10 +101,10 @@ namespace MixerLayout
         return bandHeight + ioHeight (sections) + insertList + stripHeight (sections, numAuxBuses);
     }
 
-    /// The mixer's height: a group and the scroll bar under it.
+    /// The mixer's height: the header bar, a group and the scroll bar under it.
     inline int mixerHeight (int sections, int numAuxBuses) noexcept
     {
-        return groupHeight (sections, numAuxBuses) + scrollBarHeight;
+        return headerHeight + groupHeight (sections, numAuxBuses) + scrollBarHeight;
     }
 
     /// The fader's travel area in a group's y, faderHeight tall: above the name bar at the group's bottom,

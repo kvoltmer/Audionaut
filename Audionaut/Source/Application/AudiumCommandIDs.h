@@ -54,6 +54,7 @@ namespace CommandIDs
         showLoadSimulator       = 0x30007b,   // debug builds only
         showMixer               = 0x30007c,
         showAuxBuses            = 0x30007d,
+        showRightPanel          = 0x30007e,
         
         createAudioTrack     = 0x300085,
         createAuxBus         = 0x300086,

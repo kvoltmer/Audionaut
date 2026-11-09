@@ -14,9 +14,10 @@
  * It keeps the user's choice (open or closed, and the size they dragged it
  * to) apart from what is on screen: the shown size follows the choice with
  * a short animation whenever the panel opens or closes. That includes the
- * middle of a seam drag, like Xcode's debug area: dragging the seam well past
- * the minimum collapses the panel, dragging back brings it back, and the
- * release decides. A panel closed by a drag remembers the size it had before.
+ * middle of a seam drag: dragging the seam well past the minimum collapses
+ * the panel, dragging back brings it back, and the release decides. A panel closed by a drag remembers the size it had before.
+ * A handle that stays while the panel is closed (the mixer's header bar)
+ * pulls it open the same way, with the same bit of hysteresis.
  *
  * The owner lays itself out from getShownSize() (0 = closed), supplies the
  * maximum size from its own bounds, and wires a PanelResizerBar's callbacks
@@ -98,13 +99,18 @@ public:
     {
         const auto wanted = shownAtDragStart - distance;
 
-        // hysteresis: collapse well under the minimum, come back a little earlier
-        if (open && wanted < minimum - closeMargin) {
+        // hysteresis: an open panel collapses once the seam is well under the minimum and comes back a
+        // little earlier; a panel that was closed when the drag began opens once its handle is pulled
+        // that little way, and closes again back at the start
+        const auto closeAt = openBeforeDrag ? shownAtDragStart - minimum + closeMargin : 0;
+        const auto openAt = closeAt - closeMargin / 2;
+
+        if (open && distance > closeAt) {
             closedByThisDrag = true;
             changeAnimated (false, size);
         }
-        else if (! open && closedByThisDrag && wanted >= minimum - closeMargin / 2) {
-            changeAnimated (true, minimum);
+        else if (! open && distance <= openAt) {
+            changeAnimated (true, closedByThisDrag ? minimum : size);   // back at the seam's minimum, or as large as it was
         }
         else if (open) {
             size = juce::jlimit (minimum, maximumNow(), wanted);

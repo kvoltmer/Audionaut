@@ -33,14 +33,9 @@ MainComponent::MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine
 {
     headerComponent = std::make_unique<HeaderComponent>(audiumEngine);
     headerComponent->onRightPanelButtonClick = [this] { setRightPanelVisible (! isRightPanelVisible()); };
-    headerComponent->onMixerButtonClick = [this] { setMixerVisible (! isMixerVisible()); };
 
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
-    middlePanelComponent->onMixerLayoutChanged = [this]
-    {
-        writeLayoutPreferences();
-        updatePanelToggles();   // a mixer toggle lays out the middle panel only, so the header hears it from here
-    };
+    middlePanelComponent->onMixerLayoutChanged = [this] { writeLayoutPreferences(); };
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
 
     // the right panel leaves the middle panel its minimum width; its open state
@@ -134,7 +129,7 @@ bool MainComponent::areAuxBusesVisible() const
 
 void MainComponent::updatePanelToggles()
 {
-    headerComponent->setPanelStates (rightPanel.isOpen(), isMixerVisible());
+    headerComponent->setPanelStates (rightPanel.isOpen());
 }
 
 void MainComponent::readLayoutPreferences()

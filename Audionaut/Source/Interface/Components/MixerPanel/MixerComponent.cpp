@@ -95,6 +95,7 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
         resized();   // the fader moved with the sections, and with it the bar's toggles
     };
     addAndMakeVisible (sectionBar);
+    addAndMakeVisible (header);
     lastPreferredHeight = getPreferredHeight();
 }
 
@@ -215,6 +216,14 @@ void MixerComponent::updateUI()
 void MixerComponent::resized()
 {
     auto bounds = getLocalBounds();
+    header.setBounds (bounds.removeFromTop (headerHeight));
+
+    // closed, the mixer is the header bar alone
+    const auto bodyShown = bounds.getHeight() > 0;
+    sectionBar.setVisible (bodyShown);
+    viewport.setVisible (bodyShown);
+    buses->setVisible (bodyShown);
+
     sectionBar.setBounds (bounds.removeFromLeft (MixerSectionBar::width));
     const auto sections = sectionBar.getSections();
     const auto numAuxBuses = static_cast<int> (context.container().getAuxBuses().size());
@@ -229,9 +238,9 @@ void MixerComponent::paint (juce::Graphics& g)
 {
     g.fillAll (findColour (audium::secondaryBackgroundColourId));
 
-    // a seam between the scrolling strips and the bus section
+    // a seam between the scrolling strips and the bus section, under the header bar
     g.setColour (findColour (audium::backgroundColourId));
-    g.fillRect (getWidth() - busColumnWidth(), 0, 1, getHeight());
+    g.fillRect (getWidth() - busColumnWidth(), headerHeight, 1, getHeight() - headerHeight);
 }
 
 void MixerComponent::visibilityChanged()
@@ -244,7 +253,7 @@ void MixerComponent::visibilityChanged()
 
 void MixerComponent::timerCallback()
 {
-    if (isShowing()) {
+    if (isShowing() && isBodyShown()) {
         content->refreshLive();
         buses->refreshLive();
     }

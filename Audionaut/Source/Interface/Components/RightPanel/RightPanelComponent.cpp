@@ -28,7 +28,7 @@ RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> a
     addAndMakeVisible(playListContainerComponent.get());
     addAndMakeVisible(footerComponent.get());
     
-    auto footerHeight = AudiumLookAndFeel::tableHeaderHeight;
+    auto footerHeight = AudiumLookAndFeel::dividerHeight;   // the same band as the mixer's header bar
     
     stretchableLayoutManager->setItemLayout (0,          // for item 0
                                              25, -1.0,    // size must be between 0% and 100% of the available space

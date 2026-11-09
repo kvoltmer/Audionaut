@@ -5436,6 +5436,9 @@
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerHeaderBar.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerSectionBar.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>

@@ -25,12 +25,14 @@ public:
         totalLengthLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         totalLengthLabel->setJustificationType (juce::Justification::centredLeft);
         totalLengthLabel->setEditable (false, false, false);
+        totalLengthLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);   // the footer's band shows through
         
         numVoicesLabel.reset(new juce::Label());
         addAndMakeVisible(numVoicesLabel.get());
         numVoicesLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         numVoicesLabel->setJustificationType (juce::Justification::centredLeft);
         numVoicesLabel->setEditable (false, false, false);
+        numVoicesLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
 
         // Background-analysis status. Added last so it draws on top of the two
         // labels above, and shown only while the AnalysisWorker is busy.
@@ -40,6 +42,7 @@ public:
         analysisStatusLabel->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions { 13.0f }));
         analysisStatusLabel->setJustificationType (juce::Justification::centredLeft);
         analysisStatusLabel->setEditable (false, false, false);
+        analysisStatusLabel->setColour (juce::Label::backgroundColourId, findColour (audium::dividerColourId));   // covers the two labels under it
 
 
         startTimer(50);
@@ -52,6 +55,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
+        g.fillAll (findColour (audium::dividerColourId));   // the same band as the mixer's header bar
     }
 
     void resized() override

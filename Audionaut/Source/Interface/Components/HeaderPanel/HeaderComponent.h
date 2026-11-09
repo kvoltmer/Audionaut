@@ -12,7 +12,6 @@
 #include "Interface/Controls/PanelToggleButton.h"
 
 #include "Engine/AudiumEngine.h"
-#include "Engine/Undo/UndoableSendAction.h"   // UndoableMasterAction
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer
@@ -32,10 +31,9 @@ public:
     void updateUI();
     
     std::function<void()> onRightPanelButtonClick;
-    std::function<void()> onMixerButtonClick;
 
-    /// The panel toggles show which panels are open.
-    void setPanelStates (bool rightPanelShown, bool mixerShown);
+    /// The panel toggle shows whether the right panel is open (the mixer's toggle sits on the mixer's header bar).
+    void setPanelStates (bool rightPanelShown);
 
 private:
         
@@ -57,12 +55,9 @@ private:
     
     std::unique_ptr<juce::DrawableButton> loopButton;
     std::unique_ptr<PanelToggleButton> rightPanelButton;
-    std::unique_ptr<PanelToggleButton> mixerButton;
 
     std::unique_ptr<StereoMeter> stereoMeter;
     std::unique_ptr<LoadMeter> loadMeter;
-    std::unique_ptr<juce::Slider> volumeSlider;
-    audium::UndoableMasterAction::Values masterAtDragStart;   ///< the master's values when a fader drag began, for its undo step
     
     
     /// A bars/beats/clicks slider: dragging it moves the play position by

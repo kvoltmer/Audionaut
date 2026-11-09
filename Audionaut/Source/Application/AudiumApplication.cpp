@@ -860,6 +860,7 @@ PopupMenu AudiumApplication::createViewMenu()
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showMixer);
     menu.addCommandItem (commandManager.get(), CommandIDs::showAuxBuses);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showRightPanel);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showFileBrowser);
     menu.addCommandItem (commandManager.get(), CommandIDs::showProcessingLoad);

@@ -147,13 +147,6 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
         NullCheckedInvocation::invoke(this->onRightPanelButtonClick);
     };
 
-    // MIXER (the panel at the bottom of the middle panel)
-    mixerButton = std::make_unique<PanelToggleButton>("Mixer", PanelToggleButton::Pane::bottom);
-    addAndMakeVisible(mixerButton.get());
-    mixerButton->onClick = [this]() {
-        NullCheckedInvocation::invoke(this->onMixerButtonClick);
-    };
-
     
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
@@ -162,30 +155,6 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // dsp load meter
     loadMeter = std::make_unique<LoadMeter>();
     addAndMakeVisible(loadMeter.get());
-    
-    // master volume
-    volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
-    addAndMakeVisible(volumeSlider.get());
-    AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get());
-    volumeSlider->setColour (Slider::backgroundColourId, juce::Colours::grey);
-
-    volumeSlider->onValueChange = [this] {
-        auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
-        this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);
-    };
-    volumeSlider->onDragStart = [this] {
-        masterAtDragStart = audium::UndoableMasterAction::Values::of (*audiumEngine->getAudioTrackContainer());
-    };
-    volumeSlider->onDragEnd = [this] {
-        // one undo step for the drag, as on the mixer's master strip
-        auto& container = *audiumEngine->getAudioTrackContainer();
-        const auto now = audium::UndoableMasterAction::Values::of (container);
-        if (now == masterAtDragStart)
-            return;
-        container.getUndoManager()->beginNewTransaction();
-        container.getUndoManager()->perform (new audium::UndoableMasterAction (container, masterAtDragStart, now), "Set Master Gain");
-    };
-
 
     setSize (1200, preferredHeight);
     startTimerHz(AudiumLookAndFeel::timerHz);
@@ -239,7 +208,7 @@ HeaderComponent::~HeaderComponent()
 
 void HeaderComponent::paint (juce::Graphics& g)
 {
-    g.fillAll (findColour (audium::secondaryBackgroundColourId));
+    g.fillAll (findColour (audium::dividerColourId));   // the same band as the mixer's header bar and the right panel's footer
 }
 
 void HeaderComponent::resized()
@@ -261,20 +230,15 @@ void HeaderComponent::resized()
     loopButton->setBounds(x, 10, 35, 20);
     
     x += 100;
-    volumeSlider->setBounds(x, 10, 70, 20);
-    x += 100;
     stereoMeter->setBounds(x, 10, 110, 20);
     x += 116;
     loadMeter->setBounds(x, 10, 10, 20);
 
-    rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
-    mixerButton->setBounds(getWidth() - 80, 10, 30, 20);
+    rightPanelButton->setBounds(getWidth() - 36, 10, 20, 20);
 }
 
 void HeaderComponent::updateUI()
 {
-    auto gain = audiumEngine->getAudioTrackContainer()->getMasterGain();
-    volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
     auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
     loopButton->setToggleState(loopActive, dontSendNotification);
     
@@ -319,10 +283,6 @@ void HeaderComponent::timerCallback()
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
 
-    // the master gain changes elsewhere too (the mixer's master strip, undo, an agent): follow it between drags
-    if (! volumeSlider->isMouseButtonDown())
-        volumeSlider->setValue (LevelMeter::gainToDecebel (audiumEngine->getAudioTrackContainer()->getMasterGain()), dontSendNotification);
-
     if (auto linkAudioDevice = audiumEngine->getLinkAudioDevice()) {
         auto& dspLoad = linkAudioDevice->getDspLoadMeter();
         loadMeter->setLoad(dspLoad.getLoad(), dspLoad.takePeak(audium::DspLoadMeter::headerMeter));
@@ -340,10 +300,9 @@ void HeaderComponent::timerCallback()
     }
 }
 
-void HeaderComponent::setPanelStates (bool rightPanelShown, bool mixerShown)
+void HeaderComponent::setPanelStates (bool rightPanelShown)
 {
     rightPanelButton->setToggleState (rightPanelShown, dontSendNotification);
-    mixerButton->setToggleState (mixerShown, dontSendNotification);
 }
 
 juce::Path HeaderComponent::getLoopButtonPath()

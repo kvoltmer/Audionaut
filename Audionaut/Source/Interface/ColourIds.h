@@ -20,6 +20,7 @@ enum ColourIds
     soloColourId                      = 0x234000b,
     muteColourId                      = 0x234000c,
     panIndicatorColourId              = 0x234000d,   ///< the pan dial's value arc and centre mark
+    dividerColourId                   = 0x234000e,   ///< the bands that frame the window: the header, the mixer's header bar, the right panel's footer
 };
 
 /// The accent colour of a toggled-on button: the header's Link, Play and

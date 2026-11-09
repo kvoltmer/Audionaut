@@ -675,6 +675,8 @@
                   file="Source/Interface/Components/MixerPanel/MixerContext.h"/>
             <FILE id="MxLayH" name="MixerLayout.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerLayout.h"/>
+            <FILE id="MxHdrB" name="MixerHeaderBar.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerHeaderBar.h"/>
             <FILE id="MxSBrH" name="MixerSectionBar.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerSectionBar.h"/>
             <FILE id="MxSElC" name="MixerStripElements.cpp" compile="1" resource="0"

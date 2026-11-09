@@ -227,6 +227,7 @@ public:
     static const int dragZoomControlHeight = standardItemHeight;
     static const int transportPositionControlHeight = standardItemHeight;
     static const int tableHeaderHeight = standardItemHeight;
+    static const int dividerHeight = 24;   ///< the bands in dividerColourId: the mixer's header bar, the right panel's footer
     static const float defaultFontSize;
     static const int extraSpaceAtBottom = 200;
     static const int maxTrackColours = 256;

@@ -276,6 +276,10 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
           {},
           {}, [this] { return mainComponent->areAuxBusesVisible(); }, {},
           [this] { mainComponent->setAuxBusesVisible (! mainComponent->areAuxBusesVisible()); } },
+        { CommandIDs::showRightPanel, "Right Panel", "Shows the playlist and region panel right of the arrangement", CommandCategories::view,
+          { KeyPress ('p', cmd | ModifierKeys::shiftModifier, 0) },
+          {}, [this] { return mainComponent->isRightPanelVisible(); }, {},
+          [this] { mainComponent->setRightPanelVisible (! mainComponent->isRightPanelVisible()); } },
 
         // The step's name follows the verb, as the undo history names it:
         // "Undo Move Clip", "Undo Agent: remove pauses". The menu is built

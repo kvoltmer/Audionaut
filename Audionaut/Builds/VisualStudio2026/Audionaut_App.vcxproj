@@ -3671,6 +3671,7 @@
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerHeaderBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerSectionBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripElements.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripComponent.h"/>

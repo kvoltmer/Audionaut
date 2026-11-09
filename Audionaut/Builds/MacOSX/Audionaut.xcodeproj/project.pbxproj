@@ -745,6 +745,7 @@
 		F8E23A04EB8ABD66140B0153 /* BeatSegmenter.cpp */ /* BeatSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = BeatSegmenter.cpp; path = ../../Source/Engine/Analysis/BeatSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		F90F2071384136BFA9D5AC6B /* AudioClipContainer.h */ /* AudioClipContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipContainer.h; path = ../../Source/Engine/Core/AudioClipContainer.h; sourceTree = SOURCE_ROOT; };
 		F92285741D1FC2129C528C37 /* SBicSegmenter.cpp */ /* SBicSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBicSegmenter.cpp; path = ../../Source/Engine/Analysis/SBicSegmenter.cpp; sourceTree = SOURCE_ROOT; };
+		F94069E058CFC56B7F0B4BFB /* MixerHeaderBar.h */ /* MixerHeaderBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MixerHeaderBar.h; path = ../../Source/Interface/Components/MixerPanel/MixerHeaderBar.h; sourceTree = SOURCE_ROOT; };
 		F9816C9AA6BF2BC4109172C2 /* include_juce_data_structures.mm */ /* include_juce_data_structures.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_data_structures.mm; path = ../../JuceLibraryCode/include_juce_data_structures.mm; sourceTree = SOURCE_ROOT; };
 		F98594A24820592F045D6479 /* AudioBusRenderer.h */ /* AudioBusRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusRenderer.h; path = ../../Source/Engine/Playback/AudioBusRenderer.h; sourceTree = SOURCE_ROOT; };
 		F986B76C535362EA061CA277 /* AudioExporter.h */ /* AudioExporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExporter.h; path = ../../Source/Engine/Export/AudioExporter.h; sourceTree = SOURCE_ROOT; };
@@ -1045,6 +1046,7 @@
 				CC6EF76FE6F4370B201E9A1E,
 				264D7DD68B4444EB842000C7,
 				E1744EE445689826558CB311,
+				F94069E058CFC56B7F0B4BFB,
 				5A8EE50C773ABC7A824A8218,
 				22132B59738F3486E8451818,
 				BB501D85FE0011009FA48B05,

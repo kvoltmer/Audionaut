@@ -11,9 +11,9 @@
 
 /**
  * The seam between two panels that the user drags to resize them: a one
- * pixel line where the panels meet, a wider grab zone around it that lights
- * up under the mouse and while dragging. A vertical bar sits between a left
- * and a right panel, a horizontal bar between a top and a bottom one.
+ * pixel line where the panels meet, a wider grab zone around it that the
+ * cursor alone announces. A vertical bar sits between a left and a right
+ * panel, a horizontal bar between a top and a bottom one.
  *
  * The bar owns no layout. It reports the drag distance from the mouse-down
  * point along its axis, and the owner turns that into a panel size, clamps
@@ -32,13 +32,12 @@ class PanelResizerBar : public juce::Component
 {
 public:
     static constexpr int seamThickness = 1;   ///< the gap between the two panels
-    static constexpr int grabOverlap = 2;     ///< how far the bar reaches into each panel on either side of the seam
+    static constexpr int grabOverlap = 3;     ///< how far the bar reaches into each panel on either side of the seam
 
     explicit PanelResizerBar (bool isVertical) : vertical (isVertical)
     {
         setMouseCursor (vertical ? juce::MouseCursor::LeftRightResizeCursor
                                  : juce::MouseCursor::UpDownResizeCursor);
-        setRepaintsOnMouseActivity (true);
     }
 
     /// The bar's bounds for a seam between two panels (seamThickness wide or high).
@@ -49,20 +48,16 @@ public:
 
     std::function<void()> onDragStart;
     std::function<void (int distance)> onDrag;   ///< pixels from the mouse-down point along the bar's axis
-    std::function<void()> onDragEnd;             ///< after a drag, the moment to persist the size
+    std::function<void()> onDragEnd;             ///< the mouse-up, the moment to persist the size
     std::function<void()> onDoubleClick;         ///< typically: back to the default size
 
     void paint (juce::Graphics& g) override
     {
-        const auto active = isMouseOverOrDragging();
-        const auto thickness = static_cast<float> (active ? seamThickness + grabOverlap : seamThickness);
+        auto line = getLocalBounds();
+        line = vertical ? line.withSizeKeepingCentre (seamThickness, line.getHeight())
+                        : line.withSizeKeepingCentre (line.getWidth(), seamThickness);
 
-        auto line = getLocalBounds().toFloat();
-        line = vertical ? line.withSizeKeepingCentre (thickness, line.getHeight())
-                        : line.withSizeKeepingCentre (line.getWidth(), thickness);
-
-        g.setColour (active ? juce::Colour (audium::toggledOnColour).withAlpha (0.85f)
-                            : findColour (audium::backgroundColourId));
+        g.setColour (findColour (audium::backgroundColourId));
         g.fillRect (line);
     }
 
@@ -77,10 +72,9 @@ public:
             onDrag (vertical ? e.getDistanceFromDragStartX() : e.getDistanceFromDragStartY());
     }
 
-    void mouseUp (const juce::MouseEvent& e) override
+    void mouseUp (const juce::MouseEvent&) override
     {
-        if (e.mouseWasDraggedSinceMouseDown())
-            juce::NullCheckedInvocation::invoke (onDragEnd);
+        juce::NullCheckedInvocation::invoke (onDragEnd);   // a click included: the owner's drag state ends with the mouse-down
     }
 
     void mouseDoubleClick (const juce::MouseEvent&) override

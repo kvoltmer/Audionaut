@@ -87,6 +87,7 @@ void AudiumLookAndFeel::setupColours()
     // Solo -> yellow-ish
     setColour (soloColourId,                         Colours::yellow.withAlpha(0.75f));
     setColour (panIndicatorColourId,                 Colour (0xffc8c8c8));
+    setColour (dividerColourId,                      findColour (secondaryBackgroundColourId).darker (0.3f));
     
     setColour (defaultHighlightColourId,             Colour (Colours::lightgrey));
 

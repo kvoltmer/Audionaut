@@ -9,6 +9,7 @@
 
 #include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Interface/Components/MixerPanel/MixerTrackGroupComponent.h"
+#include "Interface/Components/MixerPanel/MixerHeaderBar.h"
 #include "Interface/Components/MixerPanel/MixerSectionBar.h"
 #include "Interface/Components/MixerPanel/MixerBusGroupComponent.h"
 
@@ -16,9 +17,12 @@
  * The mixer at the bottom of the middle panel: one strip per channel,
  * grouped by track in arrangement order, scrolling horizontally, with the
  * section bar at the left that shows and hides strip sections (an app
- * preference). Its height is its own (MixerLayout, from the shown sections
- * and the send rows); the owner hears about a change through
- * onPreferredHeightChanged. The bus section (the aux buses, hidden by
+ * preference), under the header bar that is the handle the owner lets the
+ * mixer be dragged open and closed by (getHeader). Closed, the mixer is
+ * the header bar alone: the owner sizes
+ * it to the bar plus as much of the body as is open. The body's height is
+ * its own (MixerLayout, from the shown sections and the send rows); the
+ * owner hears about a change through onPreferredHeightChanged. The bus section (the aux buses, hidden by
  * setAuxBusesVisible, and the master) is pinned right of the scrolling strips.
  *
  * updateUI() re-reads the engine: when the structure changed (tracks,
@@ -38,8 +42,14 @@ public:
     /// Re-reads the engine: tracks, channels and their strips.
     void updateUI();
 
-    /// The height the mixer wants: its strips with the shown sections, and the scroll bar.
+    /// The height the mixer wants: the header bar, its strips with the shown sections, and the scroll bar.
     int getPreferredHeight() const;
+
+    /// The part under the header bar that opens and closes: the strips and the scroll bar.
+    int getBodyHeight() const { return getPreferredHeight() - MixerLayout::headerHeight; }
+
+    /// Whether any of the body is on show (the owner sized the mixer beyond the header bar).
+    bool isBodyShown() const noexcept { return viewport.isVisible(); }
 
     /// Whether the bus section shows the aux buses' strips before the master (an app preference, View > Aux Buses).
     bool areAuxBusesVisible() const noexcept { return auxBusesVisible; }
@@ -47,6 +57,9 @@ public:
 
     /// Fires when getPreferredHeight() changed (a section toggled, the send rows changed).
     std::function<void()> onPreferredHeightChanged;
+
+    /// The band across the top: the owner wires its drag callbacks to the panel the mixer opens and closes in.
+    MixerHeaderBar& getHeader() noexcept { return header; }
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -67,6 +80,7 @@ private:
     void preferredHeightMayHaveChanged();
 
     MixerContext context;
+    MixerHeaderBar header;
     MixerSectionBar sectionBar;
     juce::Viewport viewport;
     std::unique_ptr<Content> content;

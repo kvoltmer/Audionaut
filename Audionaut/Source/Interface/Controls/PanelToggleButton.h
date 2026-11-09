@@ -7,11 +7,13 @@
 
 #include <JuceHeader.h>
 
+#include "Interface/ColourIds.h"
+
 /**
- * A header button that shows and hides one of the window's panels, drawn
- * like Xcode's inspector and debug-area toggles: the window as a rounded
- * rectangle, a divider where the panel sits, and the panel's part filled in
- * while the panel is shown (the toggle state, set by the owner).
+ * A button that shows and hides one of the window's panels: a glyph of the
+ * window's rounded outline with a solid bar inset at the panel's side, in
+ * the accent colour while the panel is shown (the toggle state, set by the
+ * owner) and in the dimmed text colour while it is hidden.
  */
 class PanelToggleButton : public juce::Button
 {
@@ -27,39 +29,36 @@ public:
 
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
-        const auto active = shouldDrawButtonAsHighlighted || shouldDrawButtonAsDown;
-        const auto colour = juce::Colours::white.withAlpha (active ? 1.0f : 0.75f);
-        const auto cornerSize = 2.5f;
-        const auto lineThickness = 1.2f;
-
-        auto window = getLocalBounds().toFloat().reduced (2.0f, 1.5f);
-        auto panel = pane == Pane::right ? window.removeFromRight (window.getWidth() * 0.34f)
-                                         : window.removeFromBottom (window.getHeight() * 0.4f);
-        const auto outline = window.getUnion (panel);
-
-        if (getToggleState()) {
-            // rounded only at the window's own corners: the right pane has the two right ones, the bottom pane the two bottom ones
-            juce::Path filled;
-            const auto onTheRight = pane == Pane::right;
-            filled.addRoundedRectangle (panel.getX(), panel.getY(), panel.getWidth(), panel.getHeight(),
-                                        cornerSize, cornerSize,
-                                        false, onTheRight,        // top-left, top-right
-                                        ! onTheRight, true);      // bottom-left, bottom-right
-            g.setColour (colour.withAlpha (colour.getFloatAlpha() * 0.4f));   // a tint, the outline stays the shape
-            g.fillPath (filled);
-        }
-
-        g.setColour (colour);
-        g.drawRoundedRectangle (outline, cornerSize, lineThickness);
-
-        // the divider between the main area and the panel
-        if (pane == Pane::right)
-            g.drawLine (panel.getX(), outline.getY(), panel.getX(), outline.getBottom(), lineThickness);
-        else
-            g.drawLine (outline.getX(), panel.getY(), outline.getRight(), panel.getY(), lineThickness);
+        paintGlyph (g, shouldDrawButtonAsHighlighted || shouldDrawButtonAsDown);
     }
 
 private:
+    /// The window's rounded outline and a solid bar inset at the panel's side.
+    void paintGlyph (juce::Graphics& g, bool active) const
+    {
+        // the glyph's measurements, to tune by eye
+        const auto glyphWidth = 15.0f;
+        const auto glyphHeight = 14.0f;
+        const auto cornerSize = 1.5f;        ///< the window outline's corners
+        const auto lineThickness = 0.8f;     ///< the outline's stroke
+        const auto barInset = 2.75f;         ///< the gap between the outline and the bar
+        const auto barShare = 0.32f;         ///< the bar's share of the window's inside
+        const auto barCornerSize = 1.5f;
+
+        const auto on = getToggleState();
+        const auto colour = on ? juce::Colour (audium::toggledOnColour).brighter (active ? 0.2f : 0.0f)
+                               : findColour (audium::defaultTextColourId).withAlpha (active ? 0.9f : 0.6f);
+        const auto window = getLocalBounds().toFloat().withSizeKeepingCentre (glyphWidth, glyphHeight).reduced (lineThickness / 2.0f);
+
+        g.setColour (colour);
+        g.drawRoundedRectangle (window, cornerSize, lineThickness);
+
+        auto bar = window.reduced (barInset);
+        bar = pane == Pane::right ? bar.removeFromRight (bar.getWidth() * barShare)
+                                  : bar.removeFromBottom (bar.getHeight() * barShare);
+        g.fillRoundedRectangle (bar, barCornerSize);
+    }
+
     const Pane pane;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PanelToggleButton)
