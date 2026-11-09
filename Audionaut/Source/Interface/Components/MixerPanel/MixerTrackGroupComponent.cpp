@@ -11,7 +11,11 @@ using namespace audium;
 using namespace MixerLayout;
 
 //==============================================================================
-/// The coloured band over a track's strips with the track's name.
+/// The band over a track's strips with the track's name, drawn as the
+/// track's header in the arrangement: the name in the track's colour on the
+/// plain background, a tint of that colour when the track is selected. A
+/// click selects the track as a click on that header does: plain replaces
+/// the selection, Cmd adds or removes the track.
 class MixerTrackGroupComponent::Band : public juce::Component
 {
 public:
@@ -19,11 +23,29 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto& track = *owner.track;
-        g.fillAll (track.getViewState().getColour().withAlpha (0.35f));
-        g.setColour (findColour (audium::defaultTextColourId));
-        g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
-        g.drawText (track.getAudioTrackName(), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, true);
+        auto& audioTrack = *owner.track;
+        const auto colour = audioTrack.getViewState().getColour();
+        if (audioTrack.isSelected())
+            g.fillAll (colour.withAlpha (0.25f));   // the arrangement header's selection tint
+        g.setColour (juce::Colours::black);
+        g.drawRect (getLocalBounds(), 1);
+        g.setColour (colour);
+        g.setFont (juce::FontOptions (12.0f));
+        g.drawText (audioTrack.getAudioTrackName(), getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, true);
+    }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        if (e.mods.isPopupMenu())
+            return;
+
+        auto& audioTrack = *owner.track;
+        if (! e.mods.isAnyModifierKeyDown() && ! audioTrack.isSelected())
+            audioTrack.getSelectionManager()->deselectAll();
+        audioTrack.setSelected (e.mods.isCommandDown() ? ! audioTrack.isSelected() : true);
+
+        // updateAll: the arrangement rows, the channel view and the right panel's selected-track header follow
+        owner.context.container().sendActionMessage (audium::updateAll);
     }
 
     MixerTrackGroupComponent& owner;

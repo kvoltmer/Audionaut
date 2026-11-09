@@ -31,22 +31,21 @@ public:
                                                      juce::TableHeaderComponent::notResizableOrSortable);
         playListTableListBox->getHeader().setStretchToFitActive (true);
         
-        playListTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
+        playListTableListBox->setHeaderHeight(0);   // the table's header only lays out the column; the Header below shows the track
         playListTableListBox->setOutlineThickness (0);
         playListTableListBox->setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
         
         playListTableListBoxModel = std::make_unique<PlayListTableListBoxModel> (playListTableListBox, audiumEngine, track);
         playListTableListBox->setModel(playListTableListBoxModel.get());
 
-        // clicks on the header select this playlist's track (see mouseDown)
-        playListTableListBox->getHeader().addMouseListener(this, false);
+        header = std::make_unique<Header> (*this);
+        addAndMakeVisible (header.get());
 
         updateUI(track);
     }
 
     ~PlayListComponent() override
     {
-        playListTableListBox->getHeader().removeMouseListener(this);
         playListTableListBox->setModel(nullptr);
         playListTableListBox = nullptr;
         playListTableListBoxModel = nullptr;
@@ -54,22 +53,11 @@ public:
 
     void paint (juce::Graphics& g) override;
 
-    void mouseDown (const juce::MouseEvent& e) override
-    {
-        // only clicks on the table header select the track
-        if (e.eventComponent != &playListTableListBox->getHeader())
-            return;
-
-        if (!e.mods.isAnyModifierKeyDown() && !audioTrack->isSelected())
-            audioTrack->getSelectionManager()->deselectAll();
-
-        audioTrack->setSelected(e.mods.isCommandDown() ? !audioTrack->isSelected() : true);
-        audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateAll);
-    }
-
     void resized() override
     {
-        playListTableListBox->setBounds(getLocalBounds());
+        auto bounds = getLocalBounds();
+        header->setBounds (bounds.removeFromTop (AudiumLookAndFeel::tableHeaderHeight));
+        playListTableListBox->setBounds (bounds);
     }
     
     void handleAsyncUpdate() override
@@ -108,16 +96,7 @@ public:
         auto selectedRows = audioTrack->getPlayListContainer()->playListItems.getSelectedRows();
         playListTableListBox->setSelectedRows(selectedRows, juce::dontSendNotification);
 
-        // tint this playlist's header while its track is selected
-        auto& header = playListTableListBox->getHeader();
-        if (audioTrack->isSelected())
-            header.setColour(juce::TableHeaderComponent::backgroundColourId,
-                             audioTrack->getViewState().getColour().withAlpha(0.25f));
-        else
-            header.removeColour(juce::TableHeaderComponent::backgroundColourId);
-
-        // setColour/removeColour don't repaint the header by themselves
-        header.repaint();
+        header->repaint();   // the selection tint
     }
     
     void updateUI(std::shared_ptr<audium::AudioTrack> audioTrack_)
@@ -127,18 +106,55 @@ public:
         
         updateSelection();
         playListTableListBox->updateContent();
-        
-        auto columnName = audioTrack->getAudioTrackName() + " - Playlist";
-        playListTableListBox->getHeader().setColumnName(1, columnName);
-        playListTableListBox->getHeader().setColour(juce::TableHeaderComponent::textColourId, audioTrack->getViewState().getColour());
     }
     
     std::shared_ptr<audium::AudioTrack> getAudioTrack() const { return audioTrack; }
 
 private:
-    
+    /**
+     * The track's name over its playlist, drawn as the track's header in the
+     * arrangement and the band over its mixer strips: the name in the
+     * track's colour on the plain background, a tint of that colour while
+     * the track is selected. A click selects the track as those do: plain
+     * replaces the selection, Cmd adds or removes the track.
+     */
+    class Header : public juce::Component
+    {
+    public:
+        explicit Header (PlayListComponent& owner_) : owner (owner_) {}
+
+        void paint (juce::Graphics& g) override
+        {
+            auto& track = *owner.audioTrack;
+            const auto colour = track.getViewState().getColour();
+            if (track.isSelected())
+                g.fillAll (colour.withAlpha (0.25f));
+            g.setColour (juce::Colours::black);
+            g.drawRect (getLocalBounds(), 1);
+            g.setColour (colour);
+            g.setFont (juce::FontOptions (12.0f));
+            g.drawText (track.getAudioTrackName() + " - Playlist", getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, true);
+        }
+
+        void mouseDown (const juce::MouseEvent& e) override
+        {
+            if (e.mods.isPopupMenu())
+                return;
+
+            auto& track = *owner.audioTrack;
+            if (! e.mods.isAnyModifierKeyDown() && ! track.isSelected())
+                track.getSelectionManager()->deselectAll();
+            track.setSelected (e.mods.isCommandDown() ? ! track.isSelected() : true);
+            track.getAudioTrackContainer().sendActionMessage (audium::updateAll);
+        }
+
+    private:
+        PlayListComponent& owner;
+    };
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::AudioTrack> audioTrack;
+    std::unique_ptr<Header> header;
     std::shared_ptr<PlayListTableListBox> playListTableListBox;
     std::unique_ptr<PlayListTableListBoxModel> playListTableListBoxModel;
     
