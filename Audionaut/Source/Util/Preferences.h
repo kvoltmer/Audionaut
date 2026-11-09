@@ -90,7 +90,7 @@ namespace PreferenceKeys
     static const char* const rightPanelVisible      = "RightPanelVisible";
     static const char* const rightPanelWidth        = "RightPanelWidth";
     static const char* const mixerVisible           = "MixerVisible";
-    static const char* const mixerHeight            = "MixerHeight";
+    static const char* const mixerSections          = "MixerSections";
     static const char* const lastUpdateCheckTime    = "LastUpdateCheckTime";
     static const char* const lastNotifiedVersion    = "LastNotifiedVersion";
     static const char* const analyticsClientId      = "AnalyticsClientId";

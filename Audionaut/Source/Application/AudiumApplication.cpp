@@ -57,6 +57,11 @@ AudiumApplication& AudiumApplication::getApp()
     return *app;
 }
 
+juce::ApplicationCommandTarget* AudiumApplication::getNextCommandTarget()
+{
+    return mainWindow.get();
+}
+
 juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
 {
     auto* cm = AudiumApplication::getApp().commandManager.get();

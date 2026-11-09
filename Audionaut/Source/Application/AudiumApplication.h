@@ -32,6 +32,10 @@ public:
 
     static AudiumApplication& getApp();
     static juce::ApplicationCommandManager& getCommandManager();
+
+    /// After the application's own commands, the main window's: a shortcut pressed in a tool
+    /// window (an effect editor, say) still reaches undo, transport and the rest.
+    juce::ApplicationCommandTarget* getNextCommandTarget() override;
     static audium::Preferences& getPreferences();
 
     const juce::String getApplicationName() override       { return ProjectInfo::projectName; }

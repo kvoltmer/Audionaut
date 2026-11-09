@@ -28,14 +28,14 @@ public:
         snapToGridHandler.reset(new SnapToGridHandler(playListScheduler));
         zoomHandler.reset(new ZoomHandler(playListScheduler, snapToGridHandler));
 
-        // the mixer's height is at most half the panel; its open state and size
-        // are the user's and go to the owner for persisting
-        mixer.maximumSize = [this] { return getHeight() / 2; };
+        // the mixer's height is its content's (set by setFixedSize below); its open
+        // state is the user's and goes to the owner for persisting
+        mixer.maximumSize = [this] { return mixerComponent != nullptr ? mixerComponent->getPreferredHeight() : 0; };
         mixer.onRelayout = [this] { resized(); };
         mixer.onUserChange = [this] { NullCheckedInvocation::invoke (onMixerLayoutChanged); };
 
-        // the seam above the mixer: dragging it up makes the mixer taller, dragging
-        // it well past the minimum collapses the mixer until dragged back or released
+        // the seam above the mixer: dragging it well down collapses the mixer until
+        // dragged back or released; it cannot be made taller or shorter
         mixerResizerBar = std::make_unique<PanelResizerBar> (false);
         mixerResizerBar->onDragStart = [this] { mixer.dragStarted(); };
         mixerResizerBar->onDrag = [this] (int distance) { mixer.dragged (distance); };
@@ -60,6 +60,8 @@ public:
         addAndMakeVisible(arrangementComponent.get());
 
         mixerComponent.reset (new MixerComponent (audiumEngine));
+        mixerComponent->onPreferredHeightChanged = [this] { mixer.setFixedSize (mixerComponent->getPreferredHeight()); };
+        mixer.setFixedSize (mixerComponent->getPreferredHeight());
         addChildComponent (mixerComponent.get());    // shown by resized() while the mixer is open
         addChildComponent (mixerResizerBar.get());   // after its neighbours: it overlaps their edges
 
@@ -71,22 +73,17 @@ public:
     }
 
     //==============================================================================
-    // The mixer at the bottom. Whether it is open and how tall it is are app
-    // preferences, kept by the owner through onMixerLayoutChanged.
+    // The mixer at the bottom. Whether it is open is an app preference, kept by
+    // the owner through onMixerLayoutChanged; its height is its content's.
 
-    static constexpr int minMixerHeight = 180;
-    static constexpr int defaultMixerHeight = 300;
-
-    /// Fires after the user opened, closed, resized or reset the mixer (by its seam, a button or a command).
+    /// Fires after the user opened or closed the mixer (by its seam, a button or a command).
     std::function<void()> onMixerLayoutChanged;
 
     bool isMixerVisible() const noexcept { return mixer.isOpen(); }
     void setMixerVisible (bool visible) { mixer.setOpen (visible); }
 
-    int getMixerHeight() const noexcept { return mixer.getSize(); }
-
     /// From the preferences at start-up: no animation.
-    void restoreMixerLayout (bool visible, int height) { mixer.restore (visible, height); }
+    void restoreMixerLayout (bool visible) { mixer.restore (visible, mixerComponent->getPreferredHeight()); }
     
     enum UIContext {
         EntireContext,
@@ -261,7 +258,7 @@ private:
     std::unique_ptr<ArrangementComponent> arrangementComponent;
     std::unique_ptr<MixerComponent> mixerComponent;
     std::unique_ptr<PanelResizerBar> mixerResizerBar;
-    CollapsiblePanel mixer { minMixerHeight, defaultMixerHeight };
+    CollapsiblePanel mixer { 1, 1 };   // sized by setFixedSize from the mixer's content
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

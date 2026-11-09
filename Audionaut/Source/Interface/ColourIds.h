@@ -19,6 +19,7 @@ enum ColourIds
     gridColourId                      = 0x234000a,
     soloColourId                      = 0x234000b,
     muteColourId                      = 0x234000c,
+    panIndicatorColourId              = 0x234000d,   ///< the pan dial's value arc and centre mark
 };
 
 /// The accent colour of a toggled-on button: the header's Link, Play and

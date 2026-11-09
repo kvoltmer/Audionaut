@@ -86,6 +86,21 @@ public:
     
     bool audioInputAvailable(int channelNumber);
     void setRecordEnabled(int channelNumber, bool bEnabled);
+
+    /// The record toggle's rules, shared with the mixer strip: an input must be there, the
+    /// arming is one undo step, and a running armed transport starts or stops the take.
+    static bool audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                     const std::shared_ptr<audium::AudioTrack>& track, int channelNumber);
+    static void setRecordEnabled (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                  const std::shared_ptr<audium::AudioTrack>& track, int channelNumber, bool enabled);
+
+    /// The input or output routing menu of a channel, shared with the mixer strip: the default
+    /// route, the current device's channels by name, and a saved route the device lacks (disabled).
+    static juce::PopupMenu routingMenu (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                        const std::shared_ptr<audium::AudioTrack>& track, int channelNumber, bool input);
+
+    /// One undo step: -1 restores the default route.
+    static void setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& track, int channelNumber, bool isInput, int newChannel);
     
 private:
     /**

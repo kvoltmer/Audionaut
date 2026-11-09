@@ -651,8 +651,38 @@
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
           <GROUP id="{B7C1D2E3-4F50-6A7B-8C9D-0E1F2A3B4C5D}" name="MixerPanel">
+            <FILE id="EfEdtH" name="EffectEditorComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.h"/>
+            <FILE id="EfEdtC" name="EffectEditorComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.cpp"/>
+            <FILE id="InSLsH" name="InsertSlotListComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.h"/>
+            <FILE id="InSLsC" name="InsertSlotListComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp"/>
             <FILE id="MxrCmH" name="MixerComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerComponent.h"/>
+            <FILE id="MxrCmC" name="MixerComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.cpp"/>
+            <FILE id="MxCtxH" name="MixerContext.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerContext.h"/>
+            <FILE id="MxLayH" name="MixerLayout.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerLayout.h"/>
+            <FILE id="MxSBrH" name="MixerSectionBar.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerSectionBar.h"/>
+            <FILE id="MxSElC" name="MixerStripElements.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.cpp"/>
+            <FILE id="MxSElH" name="MixerStripElements.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.h"/>
+            <FILE id="MxStrH" name="MixerStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.h"/>
+            <FILE id="MxStrC" name="MixerStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.cpp"/>
+            <FILE id="MxGrpH" name="MixerTrackGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.h"/>
+            <FILE id="MxGrpC" name="MixerTrackGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.cpp"/>
+            <FILE id="SndRwH" name="SendKnobComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/SendKnobComponent.h"/>
           </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"

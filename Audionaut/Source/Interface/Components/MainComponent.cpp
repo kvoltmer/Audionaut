@@ -129,6 +129,7 @@ void MainComponent::updatePanelToggles()
 
 void MainComponent::readLayoutPreferences()
 {
+   #ifndef AUDIONAUT_HEADLESS   // the headless builds (tests, CLI) have no app preferences
     auto& preferences = AudiumApplication::getPreferences();
     const auto intValue = [&] (const char* key, int defaultValue)
     {
@@ -137,18 +138,19 @@ void MainComponent::readLayoutPreferences()
 
     rightPanel.restore (preferences.getValue (PreferenceKeys::rightPanelVisible, "true") == "true",
                         intValue (PreferenceKeys::rightPanelWidth, defaultRightPanelWidth));
-    middlePanelComponent->restoreMixerLayout (preferences.getValue (PreferenceKeys::mixerVisible, "false") == "true",
-                                              intValue (PreferenceKeys::mixerHeight, MiddlePanelComponent::defaultMixerHeight));
+    middlePanelComponent->restoreMixerLayout (preferences.getValue (PreferenceKeys::mixerVisible, "false") == "true");
+   #endif
     updatePanelToggles();
 }
 
 void MainComponent::writeLayoutPreferences()
 {
+   #ifndef AUDIONAUT_HEADLESS
     auto& preferences = AudiumApplication::getPreferences();
     preferences.setValue (PreferenceKeys::rightPanelVisible, rightPanel.isOpen() ? "true" : "false");
     preferences.setValue (PreferenceKeys::rightPanelWidth, std::to_string (rightPanel.getSize()));
     preferences.setValue (PreferenceKeys::mixerVisible, middlePanelComponent->isMixerVisible() ? "true" : "false");
-    preferences.setValue (PreferenceKeys::mixerHeight, std::to_string (middlePanelComponent->getMixerHeight()));
+   #endif
 }
 
 void MainComponent::actionListenerCallback (const juce::String& message)

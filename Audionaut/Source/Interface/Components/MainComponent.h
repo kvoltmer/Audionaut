@@ -55,8 +55,8 @@ public:
                                                bool& canMoveFiles) override;
 
     //==============================================================================
-    // Panel layout: the right panel's width and the mixer's height are the
-    // user's, dragged at the seams and kept as app preferences.
+    // Panel layout: the right panel's width and whether the mixer is open are
+    // the user's, set at the seams and kept as app preferences.
 
     static constexpr int minRightPanelWidth = 260;
     static constexpr int defaultRightPanelWidth = 400;

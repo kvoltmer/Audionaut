@@ -63,6 +63,14 @@ public:
         settle();
     }
 
+    /// A panel whose size is its content's, not the user's: the seam then only closes and reopens it.
+    void setFixedSize (int newSize)
+    {
+        minimum = preferred = size = juce::jmax (1, newSize);
+        if (open && ! dragging && ! isTimerRunning())
+            settle();
+    }
+
     /// A button or menu command.
     void setOpen (bool shouldBeOpen)
     {
@@ -184,8 +192,8 @@ private:
         juce::NullCheckedInvocation::invoke (onRelayout);
     }
 
-    const int minimum;
-    const int preferred;
+    int minimum;
+    int preferred;
 
     bool open = false;
     int size;

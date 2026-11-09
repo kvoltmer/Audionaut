@@ -147,6 +147,13 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         audioTrack->onDragEnd("Monitor");
     };
 
+    // console keys, as on the mixer strip: the shadow under a raised one is painted here, so a change of state
+    // repaints the strip
+    for (auto* button : std::initializer_list<juce::Button*> { recordButton.get(), monitorButton.get(), soloButton.get(), muteButton.get() }) {
+        button->getProperties().set (AudiumLookAndFeel::consoleButtonProperty, true);
+        button->onStateChange = [this] { repaint(); };
+    }
+
     setSize (AudiumLookAndFeel::channelsWidth, 100);
   
     startTimerHz(AudiumLookAndFeel::timerHz);
@@ -221,6 +228,12 @@ void ChannelComponent::paint (juce::Graphics& g)
     auto borderColour = juce::Colours::black.withAlpha(0.50f);
     g.setColour(borderColour);
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+
+    // a drop shadow under each raised button (see StripButtons::paint); a pressed-in one has none
+    g.setColour (juce::Colours::black.withAlpha (0.35f));
+    for (auto* button : std::initializer_list<juce::Button*> { recordButton.get(), monitorButton.get(), soloButton.get(), muteButton.get() })
+        if (! AudiumLookAndFeel::isConsoleButtonPressedIn (*button))
+            g.fillRoundedRectangle (button->getBounds().toFloat().translated (0.0f, 1.5f), 1.5f);
     
     g.setColour(audioTrack->getViewState().getColour());
     if( insertAfter )
@@ -259,6 +272,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     
     monitorButton->setToggleState(channelData.monitor, dontSendNotification);
     recordButton->setToggleState(channelData.record, dontSendNotification);
+    repaint();   // the button shadows follow the toggle states
     
 
     updateRoutingIndicator();
@@ -406,15 +420,50 @@ void ChannelComponent::setChannelHeight(int height)
 
 void ChannelComponent::setRoutingChannel(bool isInput, int newChannel)
 {
-    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [this, isInput, newChannel]
+    setRoutingChannel (audioTrack, rowNumber, isInput, newChannel);
+}
+
+void ChannelComponent::setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel)
+{
+    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [&]
     {
+        auto channel = audioTrack->getChannel (channelNumber);
+        if (channel == nullptr)
+            return false;
         if (isInput)
-            audioTrack->getChannel(rowNumber)->setInputChannel(newChannel);
+            channel->setInputChannel(newChannel);
         else
-            audioTrack->getChannel(rowNumber)->setOutputChannel(newChannel);
+            channel->setOutputChannel(newChannel);
         return true;
     },
     "Set channel routing", false);
+    audioTrack->getAudioTrackContainer().sendActionMessage (audium::updateChannelsAction);
+}
+
+juce::PopupMenu ChannelComponent::routingMenu (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                               const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool input)
+{
+    const auto channelData = audioTrack->getChannelData (channelNumber);
+    const auto selected = input ? channelData.inputChannel : channelData.outputChannel;
+
+    StringArray names;
+    if (auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice())
+        names = input ? device->getInputChannelNames() : device->getOutputChannelNames();
+
+    const auto pick = [audioTrack, channelNumber, input] (int route)
+    {
+        return [audioTrack, channelNumber, input, route] { setRoutingChannel (audioTrack, channelNumber, input, route); };
+    };
+
+    PopupMenu menu;
+    menu.addItem (input ? TRANS("Default (input ") + String (channelNumber + 1) + ")" : TRANS("Main Bus"), true, selected < 0, pick (-1));
+    for (auto i = 0; i < names.size(); ++i) {
+        const auto name = names[i].trim();
+        menu.addItem (name.isNotEmpty() ? name : String (i + 1), true, selected == i, pick (i));
+    }
+    if (selected >= names.size())
+        menu.addItem ((input ? TRANS("Input ") : TRANS("Output ")) + String (selected + 1) + TRANS(" (not available)"), false, true, nullptr);
+    return menu;
 }
 
 void ChannelComponent::timerCallback()
@@ -433,7 +482,10 @@ void ChannelComponent::timerCallback()
     levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);
     
-    recordButton->setToggleState(data.record, dontSendNotification);
+    if (recordButton->getToggleState() != data.record) {
+        recordButton->setToggleState(data.record, dontSendNotification);
+        repaint();   // the button's shadow
+    }
 
     // Once a second: the routing indication depends on the audio device,
     // which can change without this component being refreshed.
@@ -598,6 +650,12 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
 
 bool ChannelComponent::audioInputAvailable(int channelNumber)
 {
+    return audioInputAvailable (engine, audioTrack, channelNumber);
+}
+
+bool ChannelComponent::audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                            const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber)
+{
     auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
     if (currentDevice == nullptr)
         return false;
@@ -610,7 +668,13 @@ bool ChannelComponent::audioInputAvailable(int channelNumber)
 
 void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
 {
-    if (audioInputAvailable(channelNumber)) {
+    setRecordEnabled (engine, audioTrack, channelNumber, bEnabled);
+}
+
+void ChannelComponent::setRecordEnabled (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                         const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool bEnabled)
+{
+    if (audioInputAvailable(engine, audioTrack, channelNumber)) {
 
         // Undo: store old state
         auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(*engine->getAudioTrackContainer(), false) : nullptr;
@@ -646,6 +710,10 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
                                                         "Please check: Settings ... -> Audio Device Settings");
         }
     }
+
+    // the arrangement's channel strip and the mixer strip both show the arm: whichever was clicked, the other
+    // re-reads it (and a click the engine refused falls back to the channel's state)
+    audioTrack->getAudioTrackContainer().sendActionMessage (audium::updateChannelsAction);
 }
 
 //==============================================================================
