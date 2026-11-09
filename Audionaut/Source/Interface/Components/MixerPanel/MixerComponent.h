@@ -10,6 +10,7 @@
 #include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Interface/Components/MixerPanel/MixerTrackGroupComponent.h"
 #include "Interface/Components/MixerPanel/MixerSectionBar.h"
+#include "Interface/Components/MixerPanel/MixerBusGroupComponent.h"
 
 /**
  * The mixer at the bottom of the middle panel: one strip per channel,
@@ -17,8 +18,8 @@
  * section bar at the left that shows and hides strip sections (an app
  * preference). Its height is its own (MixerLayout, from the shown sections
  * and the send rows); the owner hears about a change through
- * onPreferredHeightChanged. (The aux buses and the master follow in the next
- * step of phase 5.)
+ * onPreferredHeightChanged. The bus section (the aux buses, hidden by
+ * setAuxBusesVisible, and the master) is pinned right of the scrolling strips.
  *
  * updateUI() re-reads the engine: when the structure changed (tracks,
  * channels, inserts, sends, aux buses) the groups are rebuilt, otherwise
@@ -40,6 +41,10 @@ public:
     /// The height the mixer wants: its strips with the shown sections, and the scroll bar.
     int getPreferredHeight() const;
 
+    /// Whether the bus section shows the aux buses' strips before the master (an app preference, View > Aux Buses).
+    bool areAuxBusesVisible() const noexcept { return auxBusesVisible; }
+    void setAuxBusesVisible (bool visible);
+
     /// Fires when getPreferredHeight() changed (a section toggled, the send rows changed).
     std::function<void()> onPreferredHeightChanged;
 
@@ -55,14 +60,18 @@ private:
     void closeEditorsWhoseSlotIsGone();
     juce::String structureSignature() const;
 
-    void readSectionPreference();
+    void readPreferences();
     void writeSectionPreference();
+    void rebuildBusGroup();
+    int busColumnWidth() const;
     void preferredHeightMayHaveChanged();
 
     MixerContext context;
     MixerSectionBar sectionBar;
     juce::Viewport viewport;
     std::unique_ptr<Content> content;
+    std::unique_ptr<MixerBusGroupComponent> buses;   ///< right of the viewport, so it stays while the strips scroll
+    bool auxBusesVisible = true;
     juce::String shownStructure;
     int lastPreferredHeight = 0;
 

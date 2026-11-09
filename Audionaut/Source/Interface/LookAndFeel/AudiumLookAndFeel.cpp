@@ -324,7 +324,7 @@ void AudiumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int w
             g.setFont (withTabularFigures (juce::FontOptions (7.5f)));
             const auto tickRight = slot.getX() - 2.0f;
             auto lastFigureY = -100.0f;   // a figure is drawn only where it does not run into the one above
-            for (const auto mark : { 12.0, 0.0, -12.0, -24.0, -36.0, -48.0, -60.0 }) {
+            for (const auto mark : { 12.0, 6.0, 0.0, -6.0, -12.0, -24.0, -36.0, -48.0, -60.0 }) {
                 if (mark > slider.getMaximum() || mark < slider.getMinimum())
                     continue;
                 const auto tickY = slider.getPositionOfValue (mark);

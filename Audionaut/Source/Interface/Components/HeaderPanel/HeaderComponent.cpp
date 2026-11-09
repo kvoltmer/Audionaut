@@ -174,11 +174,16 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
         this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);
     };
     volumeSlider->onDragStart = [this] {
-        // TODO: undo/redo
+        masterAtDragStart = audium::UndoableMasterAction::Values::of (*audiumEngine->getAudioTrackContainer());
     };
-    
     volumeSlider->onDragEnd = [this] {
-        // TODO: undo/redo
+        // one undo step for the drag, as on the mixer's master strip
+        auto& container = *audiumEngine->getAudioTrackContainer();
+        const auto now = audium::UndoableMasterAction::Values::of (container);
+        if (now == masterAtDragStart)
+            return;
+        container.getUndoManager()->beginNewTransaction();
+        container.getUndoManager()->perform (new audium::UndoableMasterAction (container, masterAtDragStart, now), "Set Master Gain");
     };
 
 
@@ -313,6 +318,10 @@ void HeaderComponent::timerCallback()
 
     for (auto c = 0; c < 2; ++c)
         stereoMeter->setLevel(c, scheduler->getAudioBusInterface()->getMasterLevel(c));
+
+    // the master gain changes elsewhere too (the mixer's master strip, undo, an agent): follow it between drags
+    if (! volumeSlider->isMouseButtonDown())
+        volumeSlider->setValue (LevelMeter::gainToDecebel (audiumEngine->getAudioTrackContainer()->getMasterGain()), dontSendNotification);
 
     if (auto linkAudioDevice = audiumEngine->getLinkAudioDevice()) {
         auto& dspLoad = linkAudioDevice->getDspLoadMeter();

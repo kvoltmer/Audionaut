@@ -1456,6 +1456,12 @@
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClCompile>
@@ -5413,6 +5419,12 @@
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h">

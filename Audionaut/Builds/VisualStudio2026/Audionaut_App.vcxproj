@@ -359,6 +359,8 @@
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerStripElements.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerStripComponent.cpp"/>
@@ -3664,6 +3666,8 @@
     <ClInclude Include="..\..\Source\Interface\Handlers\ZoomHandler.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h"/>

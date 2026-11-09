@@ -216,6 +216,8 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o \
   $(JUCE_OBJDIR)/EffectEditorComponent_b0bbd8ef.o \
   $(JUCE_OBJDIR)/InsertSlotListComponent_35ec7058.o \
+  $(JUCE_OBJDIR)/MixerBusGroupComponent_457128ef.o \
+  $(JUCE_OBJDIR)/MixerBusStripComponent_8c081cf6.o \
   $(JUCE_OBJDIR)/MixerComponent_f57aaa8e.o \
   $(JUCE_OBJDIR)/MixerStripElements_d1cc26c0.o \
   $(JUCE_OBJDIR)/MixerStripComponent_d232451e.o \
@@ -999,6 +1001,16 @@ $(JUCE_OBJDIR)/EffectEditorComponent_b0bbd8ef.o: ../../Source/Interface/Componen
 $(JUCE_OBJDIR)/InsertSlotListComponent_35ec7058.o: ../../Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling InsertSlotListComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/MixerBusGroupComponent_457128ef.o: ../../Source/Interface/Components/MixerPanel/MixerBusGroupComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling MixerBusGroupComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/MixerBusStripComponent_8c081cf6.o: ../../Source/Interface/Components/MixerPanel/MixerBusStripComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling MixerBusStripComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/MixerComponent_f57aaa8e.o: ../../Source/Interface/Components/MixerPanel/MixerComponent.cpp

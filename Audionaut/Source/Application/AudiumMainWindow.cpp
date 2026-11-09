@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Interface/Dialogs/NewRegionDialog.h"
 #include "Engine/Analysis/AnalysisProvider.h"
@@ -228,6 +229,13 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
                   newAudioTrackDialog = std::make_unique<NewAudioTrackDialog>();
               newAudioTrackDialog->createNewAudioTrack(getEngine());
           } },
+        { CommandIDs::createAuxBus, "Create Aux Bus", "Adds an aux bus; every channel gets a send into it", CommandCategories::create,
+          {}, {}, {}, {},
+          [this] {
+              auto& container = *getEngine()->getAudioTrackContainer();
+              if (audium::applyAsUndoableEdit (container, [&] { return container.addAuxBus() != nullptr; }, "Add Aux Bus", false))
+                  container.sendActionMessage (audium::updateChannelsAction);
+          } },
 
         { CommandIDs::zoomIn, "Zoom In", "Zoom in", CommandCategories::view,
           { KeyPress ('+', cmd, 0) }, {}, {}, {},
@@ -264,6 +272,10 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
           { KeyPress ('m', cmd | ModifierKeys::shiftModifier, 0) },
           {}, [this] { return mainComponent->isMixerVisible(); }, {},
           [this] { mainComponent->setMixerVisible (! mainComponent->isMixerVisible()); } },
+        { CommandIDs::showAuxBuses, "Aux Buses", "Shows the aux bus strips in the mixer's bus section", CommandCategories::view,
+          {},
+          {}, [this] { return mainComponent->areAuxBusesVisible(); }, {},
+          [this] { mainComponent->setAuxBusesVisible (! mainComponent->areAuxBusesVisible()); } },
 
         // The step's name follows the verb, as the undo history names it:
         // "Undo Move Clip", "Undo Agent: remove pauses". The menu is built

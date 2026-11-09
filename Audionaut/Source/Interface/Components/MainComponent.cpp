@@ -122,6 +122,16 @@ bool MainComponent::isMixerVisible() const
     return middlePanelComponent->isMixerVisible();
 }
 
+void MainComponent::setAuxBusesVisible (bool visible)
+{
+    middlePanelComponent->setAuxBusesVisible (visible);
+}
+
+bool MainComponent::areAuxBusesVisible() const
+{
+    return middlePanelComponent->areAuxBusesVisible();
+}
+
 void MainComponent::updatePanelToggles()
 {
     headerComponent->setPanelStates (rightPanel.isOpen(), isMixerVisible());

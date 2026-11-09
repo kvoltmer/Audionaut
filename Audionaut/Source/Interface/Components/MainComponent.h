@@ -68,6 +68,10 @@ public:
     void setMixerVisible (bool visible);
     bool isMixerVisible() const;
 
+    // The mixer's aux bus strips, an app preference the mixer keeps (View > Aux Buses).
+    void setAuxBusesVisible (bool visible);
+    bool areAuxBusesVisible() const;
+
 private:
 
     void readLayoutPreferences();

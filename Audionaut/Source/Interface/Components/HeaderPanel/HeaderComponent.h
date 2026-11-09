@@ -12,6 +12,7 @@
 #include "Interface/Controls/PanelToggleButton.h"
 
 #include "Engine/AudiumEngine.h"
+#include "Engine/Undo/UndoableSendAction.h"   // UndoableMasterAction
 
 class HeaderComponent  : public juce::Component,
                          private juce::Timer
@@ -61,6 +62,7 @@ private:
     std::unique_ptr<StereoMeter> stereoMeter;
     std::unique_ptr<LoadMeter> loadMeter;
     std::unique_ptr<juce::Slider> volumeSlider;
+    audium::UndoableMasterAction::Values masterAtDragStart;   ///< the master's values when a fader drag began, for its undo step
     
     
     /// A bars/beats/clicks slider: dragging it moves the play position by

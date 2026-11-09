@@ -84,10 +84,12 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
     viewport.setScrollBarThickness (8);
     addAndMakeVisible (viewport);
 
-    readSectionPreference();
+    readPreferences();
+    rebuildBusGroup();
     sectionBar.onChange = [this] (int sections)
     {
         content->setSections (sections);
+        buses->setSections (sections);
         writeSectionPreference();
         preferredHeightMayHaveChanged();
         resized();   // the fader moved with the sections, and with it the bar's toggles
@@ -110,13 +112,40 @@ void MixerComponent::preferredHeightMayHaveChanged()
     juce::NullCheckedInvocation::invoke (onPreferredHeightChanged);
 }
 
-void MixerComponent::readSectionPreference()
+void MixerComponent::readPreferences()
 {
     int sections = allSections;
    #ifndef AUDIONAUT_HEADLESS   // the headless builds (tests, CLI) have no app preferences
-    sections = juce::String (AudiumApplication::getPreferences().getValue (PreferenceKeys::mixerSections, std::to_string (allSections))).getIntValue();
+    auto& preferences = AudiumApplication::getPreferences();
+    sections = juce::String (preferences.getValue (PreferenceKeys::mixerSections, std::to_string (allSections))).getIntValue();
+    auxBusesVisible = preferences.getValue (PreferenceKeys::mixerAuxBuses, "true") == "true";
    #endif
     sectionBar.setSections (sections & allSections);
+}
+
+void MixerComponent::setAuxBusesVisible (bool visible)
+{
+    if (visible == auxBusesVisible)
+        return;
+    auxBusesVisible = visible;
+   #ifndef AUDIONAUT_HEADLESS
+    AudiumApplication::getPreferences().setValue (PreferenceKeys::mixerAuxBuses, visible ? "true" : "false");
+   #endif
+    rebuildBusGroup();
+    resized();
+    repaint();
+}
+
+void MixerComponent::rebuildBusGroup()
+{
+    buses = std::make_unique<MixerBusGroupComponent> (context, auxBusesVisible);
+    buses->setSections (sectionBar.getSections());
+    addAndMakeVisible (buses.get());
+}
+
+int MixerComponent::busColumnWidth() const
+{
+    return groupGap + buses->getPreferredWidth() + groupGap;
 }
 
 void MixerComponent::writeSectionPreference()
@@ -156,8 +185,11 @@ juce::String MixerComponent::structureSignature() const
         }
         signature << "|";
     }
-    for (const auto& bus : container.getAuxBuses().getBuses())
-        signature << "a" << bus->getId() << ",";
+    for (const auto& bus : container.getAuxBuses().getBuses()) {
+        signature << "a" << bus->getId() << ":";
+        appendChain (bus->getInserts());
+    }
+    appendChain (container.getMasterInserts());
     return signature;
 }
 
@@ -168,10 +200,13 @@ void MixerComponent::updateUI()
         shownStructure = structure;
         content->rebuild (context);
         content->setSections (sectionBar.getSections());
+        rebuildBusGroup();   // an aux bus came or went, or an insert of a bus
+        resized();           // the bus section's width follows its strips
     }
     else {
         content->refresh();
     }
+    buses->refresh();
 
     closeEditorsWhoseSlotIsGone();
     preferredHeightMayHaveChanged();
@@ -181,16 +216,22 @@ void MixerComponent::resized()
 {
     auto bounds = getLocalBounds();
     sectionBar.setBounds (bounds.removeFromLeft (MixerSectionBar::width));
-    viewport.setBounds (bounds);
     const auto sections = sectionBar.getSections();
     const auto numAuxBuses = static_cast<int> (context.container().getAuxBuses().size());
-    content->setSize (juce::jmax (content->getWidth(), viewport.getMaximumVisibleWidth()), groupHeight (sections, numAuxBuses));
+    const auto height = groupHeight (sections, numAuxBuses);
+    buses->setBounds (bounds.removeFromRight (busColumnWidth()).reduced (groupGap, 0).withHeight (height));
+    viewport.setBounds (bounds);
+    content->setSize (juce::jmax (content->getWidth(), viewport.getMaximumVisibleWidth()), height);
     sectionBar.setFaderRange (faderRange (sections, numAuxBuses));   // the content's top is the bar's top: the viewport scrolls only sideways
 }
 
 void MixerComponent::paint (juce::Graphics& g)
 {
     g.fillAll (findColour (audium::secondaryBackgroundColourId));
+
+    // a seam between the scrolling strips and the bus section
+    g.setColour (findColour (audium::backgroundColourId));
+    g.fillRect (getWidth() - busColumnWidth(), 0, 1, getHeight());
 }
 
 void MixerComponent::visibilityChanged()
@@ -203,8 +244,10 @@ void MixerComponent::visibilityChanged()
 
 void MixerComponent::timerCallback()
 {
-    if (isShowing())
+    if (isShowing()) {
         content->refreshLive();
+        buses->refreshLive();
+    }
 }
 
 //==============================================================================

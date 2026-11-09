@@ -158,4 +158,63 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableAuxAction)
 };
 
+/**
+ * Undo step for the master's values: gain, pan (balance) and mute, before
+ * and after a fader or pan drag or a mute click (the mixer's master strip,
+ * the header's fader), applied straight to the container, which hands them
+ * to the renderer without a new plan.
+ */
+struct UndoableMasterAction final : public juce::UndoableAction
+{
+    struct Values
+    {
+        float gain = 1.0f;
+        float pan = 0.0f;
+        bool mute = false;
+
+        static Values of (const AudioTrackContainer& container) noexcept
+        {
+            return { container.getMasterGain(), container.getMasterPan(), container.getMasterMute() };
+        }
+
+        void applyTo (AudioTrackContainer& container) const
+        {
+            container.setMasterGain (gain);
+            container.setMasterPan (pan);
+            container.setMasterMute (mute);
+        }
+
+        bool operator== (const Values& other) const noexcept
+        {
+            return juce::exactlyEqual (gain, other.gain) && juce::exactlyEqual (pan, other.pan) && mute == other.mute;
+        }
+        bool operator!= (const Values& other) const noexcept { return ! (*this == other); }
+    };
+
+    UndoableMasterAction (AudioTrackContainer& container_, Values oldValues_, Values newValues_) noexcept :
+        container (container_),
+        oldValues (oldValues_),
+        newValues (newValues_)
+    {
+    }
+
+    bool perform() override { return apply (newValues); }
+    bool undo() override { return apply (oldValues); }
+    int getSizeInUnits() override { return 1; }
+
+private:
+    bool apply (const Values& values)
+    {
+        values.applyTo (container);
+        container.sendActionMessage (updateChannelsAction);   // the master strip re-reads them; the header follows on its timer
+        return true;
+    }
+
+    AudioTrackContainer& container;
+    const Values oldValues;
+    const Values newValues;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableMasterAction)
+};
+
 } // namespace audium

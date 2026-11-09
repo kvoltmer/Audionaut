@@ -659,6 +659,14 @@
                   file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.h"/>
             <FILE id="InSLsC" name="InsertSlotListComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp"/>
+            <FILE id="MxBGrH" name="MixerBusGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.h"/>
+            <FILE id="MxBGrC" name="MixerBusGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.cpp"/>
+            <FILE id="MxBStH" name="MixerBusStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.h"/>
+            <FILE id="MxBStC" name="MixerBusStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.cpp"/>
             <FILE id="MxrCmH" name="MixerComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerComponent.h"/>
             <FILE id="MxrCmC" name="MixerComponent.cpp" compile="1" resource="0"

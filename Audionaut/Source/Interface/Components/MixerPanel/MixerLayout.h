@@ -40,6 +40,7 @@ namespace MixerLayout
     constexpr int meterY = 0;                  ///< the meter's top in the fader element; its bar starts getBarInset() below that
     constexpr int meterHeight = 156;           ///< the bar lines up with the fader's travel: the slider indents its slot by the thumb radius (12)
     constexpr int meterWidth = 7;
+    constexpr int stereoBarWidth = 6;           ///< a return strip's meter bars, left and right; narrower than a channel's one bar
     constexpr int sidePadding = 2;
     constexpr int sectionGap = 3;
     constexpr int scrollBarHeight = 8;         ///< the mixer's horizontal scroll bar, always given its room

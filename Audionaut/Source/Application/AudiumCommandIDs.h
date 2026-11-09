@@ -53,8 +53,10 @@ namespace CommandIDs
         showProcessingLoad      = 0x30007a,
         showLoadSimulator       = 0x30007b,   // debug builds only
         showMixer               = 0x30007c,
+        showAuxBuses            = 0x30007d,
         
         createAudioTrack     = 0x300085,
+        createAuxBus         = 0x300086,
 
         lastCommandIDEntry
     };

@@ -218,6 +218,10 @@ public:
     * @param newGain The new master gain value.
     */
     void setMasterGain(const float newGain);
+
+    /// The master balance and mute, to the renderer like the gain.
+    void setMasterPan (float newPan);
+    void setMasterMute (bool mute);
     
     void resetGains();
 

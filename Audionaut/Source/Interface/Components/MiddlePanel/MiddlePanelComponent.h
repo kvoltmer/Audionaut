@@ -84,6 +84,10 @@ public:
 
     /// From the preferences at start-up: no animation.
     void restoreMixerLayout (bool visible) { mixer.restore (visible, mixerComponent->getPreferredHeight()); }
+
+    /// The mixer's aux bus strips (an app preference the mixer keeps; View > Aux Buses).
+    bool areAuxBusesVisible() const noexcept { return mixerComponent->areAuxBusesVisible(); }
+    void setAuxBusesVisible (bool visible) { mixerComponent->setAuxBusesVisible (visible); }
     
     enum UIContext {
         EntireContext,

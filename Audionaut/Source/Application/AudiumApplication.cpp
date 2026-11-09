@@ -839,6 +839,7 @@ PopupMenu AudiumApplication::createCreateMenu()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::createAudioTrack);
+    menu.addCommandItem (commandManager.get(), CommandIDs::createAuxBus);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     return menu;
@@ -858,6 +859,7 @@ PopupMenu AudiumApplication::createViewMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showMixer);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAuxBuses);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showFileBrowser);
     menu.addCommandItem (commandManager.get(), CommandIDs::showProcessingLoad);

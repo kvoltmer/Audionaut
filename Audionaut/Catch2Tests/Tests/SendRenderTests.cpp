@@ -668,3 +668,98 @@ SCENARIO ("sends and aux buses save, reopen and undo", "[engine][effects][sends]
         }
     }
 }
+
+SCENARIO ("the master has a balance and a mute", "[engine][effects][master][undo]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("a session: channel 0 hard left into the main mix, channel 1 on the direct out 3")
+    {
+        Session plain;
+        Session session;
+        const auto reference = renderLive (*plain.engine);
+
+        WHEN ("the master is balanced hard right")
+        {
+            session.tracks().setMasterPan (1.0f);
+
+            THEN ("the main mix's left side goes silent, the direct out stays")
+            {
+                const auto live = renderLive (*session.engine);
+                requireSilent (live, 0);
+                requireScaled (live, reference, 3, 1.0f);
+            }
+
+            THEN ("a mono bounce takes the gain alone: its one side is the plain mix")
+            {
+                const auto plainMono = bounceProject (*plain.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
+                const auto mono = bounceProject (*session.engine, 0.0, kRenderSeconds, kBlockSize, kSampleRate, 1);
+                requireScaled (mono, plainMono, 0, 1.0f);
+            }
+        }
+
+        WHEN ("the master is balanced half left")
+        {
+            session.tracks().setMasterPan (-0.5f);
+
+            THEN ("the left side keeps its level: the aux returns' law, the far side drops")
+            {
+                requireScaled (renderLive (*session.engine), reference, 0, 1.0f);
+            }
+        }
+
+        WHEN ("the master is muted")
+        {
+            session.tracks().setMasterMute (true);
+
+            THEN ("the main mix is silent, the direct out stays")
+            {
+                const auto live = renderLive (*session.engine);
+                requireSilent (live, 0);
+                requireSilent (live, 1);
+                requireScaled (live, reference, 3, 1.0f);
+            }
+        }
+
+        WHEN ("gain, balance and mute are written and read into a fresh session")
+        {
+            session.tracks().setMasterGain (0.7f);
+            session.tracks().setMasterPan (0.25f);
+            session.tracks().setMasterMute (true);
+            json written;
+            session.tracks().writeToJson (written);
+            Session fresh;
+            fresh.tracks().readFromJson (written, true);
+
+            THEN ("the JSON carries them and the fresh container has them back")
+            {
+                REQUIRE (written["master_pan"].get<float>() == Approx (0.25f));
+                REQUIRE (written["master_mute"] == true);
+                REQUIRE (fresh.tracks().getMasterGain() == Approx (0.7f));
+                REQUIRE (fresh.tracks().getMasterPan() == Approx (0.25f));
+                REQUIRE (fresh.tracks().getMasterMute());
+            }
+        }
+
+        WHEN ("a balance move and a mute are recorded as one master step")
+        {
+            auto& tracks = session.tracks();
+            const auto before = UndoableMasterAction::Values::of (tracks);
+            tracks.setMasterPan (0.5f);
+            tracks.setMasterMute (true);
+            const auto after = UndoableMasterAction::Values::of (tracks);
+            tracks.getUndoManager()->beginNewTransaction();
+            tracks.getUndoManager()->perform (new UndoableMasterAction (tracks, before, after), "Master");
+
+            THEN ("undo restores both, redo applies them again")
+            {
+                REQUIRE (tracks.getUndoManager()->undo());
+                REQUIRE (tracks.getMasterPan() == Approx (0.0f));
+                REQUIRE_FALSE (tracks.getMasterMute());
+                REQUIRE (tracks.getUndoManager()->redo());
+                REQUIRE (tracks.getMasterPan() == Approx (0.5f));
+                REQUIRE (tracks.getMasterMute());
+            }
+        }
+    }
+}

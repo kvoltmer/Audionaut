@@ -112,6 +112,14 @@ public:
      */
     const float getMasterGain() const noexcept;
 
+    /// The master balance, -1 (left) .. 1 (right), the aux returns' law; a mono main mix ignores it.
+    void setMasterPan (float newPan);
+    float getMasterPan() const noexcept { return masterPan; }
+
+    /// The master mute: the main mix goes silent, the direct outs stay.
+    void setMasterMute (bool mute);
+    bool getMasterMute() const noexcept { return masterMute; }
+
     /**
      * @brief Creates a new audio track.
      * @param nameString The name of the new audio track.
@@ -324,6 +332,8 @@ private:
     std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).
 
     float masterGain = 1.f; ///< Master gain value.
+    float masterPan = 0.f; ///< Master balance, -1..1.
+    bool masterMute = false; ///< Master mute.
     std::shared_ptr<MixerPlanner> mixerPlanner; ///< Builds and publishes the mix plan; see setMixerPlanner().
     InsertChain masterInserts; ///< The main mix's insert effects.
     AuxBusContainer auxBuses; ///< The aux buses, in strip order.

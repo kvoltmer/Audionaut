@@ -159,6 +159,18 @@ void AudioBusInterface::setMasterGain(const float newGain)
     });
 }
 
+void AudioBusInterface::setMasterPan (const float newPan)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push ([ptr, newPan] { ptr->setMasterPan (newPan); });
+}
+
+void AudioBusInterface::setMasterMute (const bool mute)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push ([ptr, mute] { ptr->setMasterMute (mute); });
+}
+
 void AudioBusInterface::resetGains()
 {
     auto ptr = audioBusRenderer.get();
