@@ -224,8 +224,8 @@ void ChannelComponent::drawWaveformScale (juce::Graphics& g, juce::Rectangle<int
 
     // the centre line, then each amplitude above and below it: the quarters short, the half middling, full scale long
     struct Mark { float amplitude, length, alpha; };
-    tick (centreY, 8.0f, 0.5f);
-    for (const auto& mark : { Mark { 1.0f, 7.0f, 0.5f }, Mark { 0.5f, 4.0f, 0.35f }, Mark { 0.25f, 2.0f, 0.35f }, Mark { 0.75f, 2.0f, 0.35f } })
+    tick (centreY, 6.0f, 0.35f);
+    for (const auto& mark : { Mark { 1.0f, 5.0f, 0.35f }, Mark { 0.5f, 3.0f, 0.22f }, Mark { 0.25f, 2.0f, 0.22f }, Mark { 0.75f, 2.0f, 0.22f } })
         for (const auto sign : { -1.0f, 1.0f })
             tick (centreY + sign * mark.amplitude * fullScale, mark.length, mark.alpha);
 }

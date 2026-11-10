@@ -43,7 +43,7 @@ public:
         static constexpr int routingY = 73;       ///< the routing line, with the bars' air under the pan bar
         static constexpr int routingHeight = 12;
         static constexpr int meterInset = 3;      ///< the meter's top and bottom inside the row
-        static constexpr int scaleWidth = 10;     ///< the waveform scale down the right edge, the row's full height
+        static constexpr int scaleWidth = 7;      ///< the waveform scale down the right edge, the row's full height
         static constexpr int meterWidth = 7;      ///< the meter's bar, left of the scale
         static constexpr int meterGap = 3;        ///< the bar to the scale
     };
