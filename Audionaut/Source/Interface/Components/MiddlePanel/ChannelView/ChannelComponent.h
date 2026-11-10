@@ -13,13 +13,10 @@
 
 /**
  * One channel's strip in the arrangement's channel view, a row of its track's
- * channel list: the strip menu and the console keys across the top, the gain
- * and pan bars under them, the routing indication under those while the
- * channel is routed away from the defaults, the level meter, and down the
- * right edge the amplitude scale of the waveform in the clip row beside it.
- * The row's height (the track's waveform size) decides how far down the
- * stack reaches: micro shows the keys, small adds the gain bar, medium and up
- * the whole strip.
+ * channel list: the console keys across the top, the level meter, and down
+ * the right edge the amplitude scale of the waveform in the clip row beside
+ * it. Gain, pan and routing are set in the mixer, the waveform size in the
+ * track header's menu. A micro row shows the meter and the scale only.
  */
 class ChannelComponent  :   public juce::Component,
                             private juce::Timer,
@@ -35,13 +32,8 @@ public:
     struct Layout
     {
         static constexpr int padding = 7;         ///< the left edge to the controls, and between the keys
-        static constexpr int keysY = 5;           ///< the top row: the strip menu, then record, monitor, solo, mute
+        static constexpr int keysY = 9;           ///< the top row: record, monitor, solo, mute
         static constexpr int keySize = 15;
-        static constexpr int barHeight = 15;      ///< the gain and pan bars
-        static constexpr int gainY = 27;
-        static constexpr int panY = 50;
-        static constexpr int routingY = 73;       ///< the routing line, with the bars' air under the pan bar
-        static constexpr int routingHeight = 12;
         static constexpr int meterInset = 3;      ///< the meter's top and bottom inside the row
         static constexpr int scaleWidth = 7;      ///< the waveform scale down the right edge, the row's full height
         static constexpr int meterWidth = 7;      ///< the meter's bar, left of the scale
@@ -119,35 +111,22 @@ public:
     static void setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& track, int channelNumber, bool isInput, int newChannel);
     
 private:
-    void showStripMenu();
-
     /// The waveform's amplitude scale: ticks at the quarters of full scale, the centre line the
     /// longest, flush with the clip row the waveform is in. Full scale is where a full-scale
     /// sample reaches in that row (AudiumLookAndFeel::waveformScale).
     void drawWaveformScale (juce::Graphics& g, juce::Rectangle<int> area) const;
-    void setChannelHeight(int height);
-
-    // Syncs the routing indication under the pan slider and the pan
-    // slider's enablement with the channel's current routing.
-    void updateRoutingIndicator();
 
     std::shared_ptr<audium::AudioTrack> audioTrack;
     std::shared_ptr<audium::AudiumEngine> engine;
 
-    juce::DrawableButton menuButton { "Strip Menu", juce::DrawableButton::ImageOnButtonBackground };
     juce::DrawableButton recordButton { "Record", juce::DrawableButton::ImageOnButtonBackground };
     juce::TextButton monitorButton { "I" }, soloButton { "S" }, muteButton { "M" };
-    juce::Slider volumeSlider, panSlider;
-    juce::Label inputRoutingLabel, outputRoutingLabel;
     LevelMeter levelMeter { true, false };
     
     int rowNumber = 0;
     
     // used for timer updates
     int channelNumber = -1;
-    int routingRefreshTick = 0;
-
-    bool routingFits = true;   // the row is tall enough for the routing line
     
     bool insertAfter = false;
     bool insertBefore = false;

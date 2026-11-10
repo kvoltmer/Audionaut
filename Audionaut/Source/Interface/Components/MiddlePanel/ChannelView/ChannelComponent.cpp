@@ -24,49 +24,6 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     engine(engine_),
     rowNumber(rowNumber_)
 {
-    // strip menu: Waveform Size / Routing, behind the chevron the combo boxes wear
-    {
-        juce::Path chevron;
-        chevron.startNewSubPath (4.0f, 5.5f);
-        chevron.lineTo (7.5f, 9.5f);
-        chevron.lineTo (11.0f, 5.5f);
-        juce::DrawablePath image;
-        image.setPath (chevron);
-        image.setFill (juce::Colours::transparentBlack);
-        image.setStrokeFill (findColour (juce::ComboBox::arrowColourId).withAlpha (0.9f));
-        image.setStrokeThickness (2.0f);
-        menuButton.setImages (&image);
-    }
-    menuButton.setColour (juce::TextButton::buttonColourId, findColour (juce::ComboBox::backgroundColourId));
-    menuButton.setTooltip (TRANS ("Waveform Size / Routing"));
-    menuButton.onClick = [this] { showStripMenu(); };
-    addAndMakeVisible (menuButton);
-
-    // gain bar
-    AudiumLookAndFeel::configureVolumeSlider (&volumeSlider, 12.0);
-    volumeSlider.onValueChange = [this] { audioTrack->setGain (Decibels::decibelsToGain (static_cast<float> (volumeSlider.getValue())), rowNumber); };
-    volumeSlider.onDragStart = [this] { audioTrack->onDragStart (rowNumber); };
-    volumeSlider.onDragEnd = [this] { audioTrack->onDragEnd ("Set Gain"); };
-    addAndMakeVisible (volumeSlider);
-    
-    // pan bar
-    configurePanSlider (&panSlider);
-    panSlider.onValueChange = [this] { audioTrack->setPan (static_cast<float> (panSlider.getValue()), rowNumber); };
-    panSlider.onDragStart = [this] { audioTrack->onDragStart (rowNumber); };
-    panSlider.onDragEnd = [this] { audioTrack->onDragEnd ("Set Pan"); };
-    addAndMakeVisible (panSlider);
-
-    // Routing indication: only visible when the channel is routed away
-    // from the defaults; red when the current device cannot provide the
-    // route. Sits under the pan slider.
-    for (auto* label : { &inputRoutingLabel, &outputRoutingLabel }) {
-        label->setFont (juce::FontOptions (10.0f));
-        label->setInterceptsMouseClicks (false, false);
-        addAndMakeVisible (label);
-    }
-    inputRoutingLabel.setJustificationType (juce::Justification::centredLeft);
-    outputRoutingLabel.setJustificationType (juce::Justification::centredRight);
-
     // RECORD
     {
         juce::Path dot;
@@ -139,26 +96,15 @@ void ChannelComponent::resized()
 
     // down the right edge: the meter's bar, then the waveform scale
     const auto meterX = getWidth() - L::scaleWidth - L::meterGap - L::meterWidth;
-    const auto barWidth = meterX - 2 * L::padding;
 
+    // the keys, except in a micro row: too short for them, it shows the meter and the scale only
+    const auto keysShown = getHeight() > AudiumLookAndFeel::SizeIds::micro;
     auto x = L::padding;
-    for (auto* key : std::initializer_list<juce::Component*> { &menuButton, &recordButton, &monitorButton, &soloButton, &muteButton }) {
+    for (auto* key : std::initializer_list<juce::Component*> { &recordButton, &monitorButton, &soloButton, &muteButton }) {
         key->setBounds (x, L::keysY, L::keySize, L::keySize);
+        key->setVisible (keysShown);
         x += L::keySize + L::padding;
     }
-
-    volumeSlider.setBounds (L::padding, L::gainY, barWidth, L::barHeight);
-    panSlider.setBounds (L::padding, L::panY, barWidth, L::barHeight);
-    inputRoutingLabel.setBounds (L::padding, L::routingY, barWidth / 2, L::routingHeight);
-    outputRoutingLabel.setBounds (L::padding + barWidth / 2, L::routingY, barWidth - barWidth / 2, L::routingHeight);
-
-    // a row too short for a control leaves it out rather than cutting through it: micro shows the keys,
-    // small adds the gain bar
-    const auto fits = [this] (const juce::Component& control) { return control.getBottom() <= getHeight() - 2; };
-    volumeSlider.setVisible (fits (volumeSlider));
-    panSlider.setVisible (fits (panSlider));
-    routingFits = fits (inputRoutingLabel);
-    updateRoutingIndicator();
 
     levelMeter.setBounds (meterX, L::meterInset, L::meterWidth, getHeight() - 2 * L::meterInset);
 }
@@ -237,8 +183,6 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     
     auto channelData = audioTrack->getChannelData(rowNumber);
     
-    volumeSlider.setValue(LevelMeter::gainToDecebel(channelData.gain), dontSendNotification);
-    panSlider.setValue(channelData.pan, dontSendNotification);
     
     auto bMute = channelData.mute;
     auto bSolo = channelData.solo;
@@ -256,94 +200,11 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     monitorButton.setToggleState(channelData.monitor, dontSendNotification);
     recordButton.setToggleState(channelData.record, dontSendNotification);
     repaint();   // the button shadows follow the toggle states
-    
-
-    updateRoutingIndicator();
 
     if (not isTimerRunning()) {
         startTimerHz(AudiumLookAndFeel::timerHz);
     }
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
-}
-
-void ChannelComponent::updateRoutingIndicator()
-{
-    const auto channelData = audioTrack->getChannelData(rowNumber);
-    auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice();
-
-    const auto normalColour = getLookAndFeel().findColour (juce::Label::textColourId).withAlpha (0.7f);
-
-    auto apply = [this, &normalColour] (juce::Label& label, int routedChannel,
-                                        const juce::String& prefix, const juce::StringArray& names)
-    {
-        if (routedChannel < 0 || ! routingFits) {
-            label.setVisible (false);
-            return;
-        }
-
-        const auto available = routedChannel < names.size();
-
-        label.setText (prefix + " " + juce::String (routedChannel + 1), juce::dontSendNotification);
-        label.setColour (juce::Label::textColourId, available ? normalColour : juce::Colours::red);
-        label.setTooltip (available ? names[routedChannel]
-                                    : prefix + " " + juce::String (routedChannel + 1) + TRANS (" (not available)"));
-        label.setVisible (true);
-    };
-
-    apply (inputRoutingLabel, channelData.inputChannel, TRANS ("In"),
-           device != nullptr ? device->getInputChannelNames() : juce::StringArray());
-    apply (outputRoutingLabel, channelData.outputChannel, TRANS ("Out"),
-           device != nullptr ? device->getOutputChannelNames() : juce::StringArray());
-
-    // A direct out bypasses the pan into the main bus, so the pan slider
-    // has nothing to control.
-    panSlider.setEnabled (channelData.outputChannel < 0);
-}
-
-void ChannelComponent::showStripMenu()
-{
-    const auto currentHeight = audioTrack->getChannel(rowNumber)->getChannelHeight();
-    const auto safeThis = Component::SafePointer<ChannelComponent> (this);
-
-    // the waveform sizes (AudiumLookAndFeel::SizeIds, the height itself)
-    PopupMenu sizeMenu;
-    const auto addSize = [&] (const String& name, int height)
-    {
-        sizeMenu.addItem (name, true, currentHeight == height, [safeThis, height]
-        {
-            if (safeThis != nullptr)
-                safeThis->setChannelHeight (height);
-        });
-    };
-    addSize (TRANS ("micro"),  AudiumLookAndFeel::SizeIds::micro);
-    addSize (TRANS ("small"),  AudiumLookAndFeel::SizeIds::small);
-    addSize (TRANS ("medium"), AudiumLookAndFeel::SizeIds::medium);
-    addSize (TRANS ("large"),  AudiumLookAndFeel::SizeIds::large);
-    addSize (TRANS ("huge"),   AudiumLookAndFeel::SizeIds::huge);
-
-    // the routes as the mixer strip offers them
-    PopupMenu routing;
-    routing.addSubMenu(TRANS("Input"), routingMenu (engine, audioTrack, rowNumber, true));
-    routing.addSubMenu(TRANS("Output"), routingMenu (engine, audioTrack, rowNumber, false));
-
-    PopupMenu m;
-    m.addSubMenu(TRANS("Waveform Size"), sizeMenu);
-    m.addSubMenu(TRANS("Routing"), routing);
-
-    m.setLookAndFeel (&getLookAndFeel());
-    m.showMenuAsync (PopupMenu::Options()
-                         .withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight)
-                         .withTargetComponent(&menuButton));
-}
-
-void ChannelComponent::setChannelHeight(int height)
-{
-    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [this, height]
-    {
-        audioTrack->getChannel(rowNumber)->setChannelHeight(height);
-        return true;
-    },
-    "Set audio track height", false);
 }
 
 void ChannelComponent::setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel)
@@ -407,13 +268,6 @@ void ChannelComponent::timerCallback()
     if (recordButton.getToggleState() != data.record) {
         recordButton.setToggleState(data.record, dontSendNotification);
         repaint();   // the button's shadow
-    }
-
-    // Once a second: the routing indication depends on the audio device,
-    // which can change without this component being refreshed.
-    if (++routingRefreshTick >= AudiumLookAndFeel::timerHz) {
-        routingRefreshTick = 0;
-        updateRoutingIndicator();
     }
 }
 

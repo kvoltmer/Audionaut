@@ -227,7 +227,7 @@ public:
     }
     
     // Various statics
-    static const int channelsWidth = 140;
+    static const int channelsWidth = 112;
     /// How much of a clip row's half height a full-scale sample reaches: the waveform keeps the rest as headroom
     /// above and below, and the channel strip's scale beside the row is drawn to the same measure.
     static constexpr float waveformScale = 0.8f;

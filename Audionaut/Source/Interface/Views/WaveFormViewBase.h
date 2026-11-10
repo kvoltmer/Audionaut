@@ -51,6 +51,16 @@ public:
         }
     }
     
+    /// The track's colour, for the waveform and its background; the clip component hands a recoloured
+    /// track's colour down here, since the view took it at construction.
+    void setTrackColour (juce::Colour newColour)
+    {
+        if (colour == newColour)
+            return;
+        colour = newColour;
+        repaint();
+    }
+
     void paint (juce::Graphics& g) override;
 
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
