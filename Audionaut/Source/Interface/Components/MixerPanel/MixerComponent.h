@@ -44,6 +44,10 @@ public:
     /// Re-reads the engine: tracks, channels and their strips.
     void updateUI();
 
+    /// After the engine replaced its tracks (a project opened, an undo that rebuilt the structure): the strips are
+    /// built anew even where the structure reads the same; the editor windows stay as long as their slots live.
+    void rebuildUI();
+
     /// The height the mixer wants: the header bar, its strips with the shown sections, and the scroll bar.
     int getPreferredHeight() const;
 

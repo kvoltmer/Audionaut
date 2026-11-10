@@ -264,6 +264,12 @@ void MixerComponent::updateUI()
     buses->refresh();
 }
 
+void MixerComponent::rebuildUI()
+{
+    shownStructure.clear();   // the groups hold the tracks they were built from, which may be gone though the structure reads the same
+    updateUI();
+}
+
 void MixerComponent::resized()
 {
     auto bounds = getLocalBounds();

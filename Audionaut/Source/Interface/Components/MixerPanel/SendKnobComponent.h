@@ -257,32 +257,39 @@ private:
         auto state = sendState();
         juce::PopupMenu menu;
         const auto values = state != nullptr ? audium::UndoableSendAction::Values::of (*state) : audium::UndoableSendAction::Values();
-        menu.addItem (TRANS ("Pre-Fader"), state != nullptr, values.preFader, [this, values]
+
+        // the menu outlives a rebuild of the strips (an edit, an undo or a finished recording while it is open):
+        // the items hold the knob weakly, and the removal needs none
+        const juce::Component::SafePointer<SendKnobComponent> safeThis (this);
+        menu.addItem (TRANS ("Pre-Fader"), state != nullptr, values.preFader, [safeThis, values]
         {
-            if (auto s = sendState()) {
-                auto changed = values;
-                changed.preFader = ! values.preFader;
-                performChange (audium::UndoableSendAction::Values::of (*s), changed);
-            }
+            if (safeThis != nullptr)
+                safeThis->toggleFromMenu (values, &audium::UndoableSendAction::Values::preFader);
         });
-        menu.addItem (TRANS ("Mute"), state != nullptr, values.mute, [this, values]
+        menu.addItem (TRANS ("Mute"), state != nullptr, values.mute, [safeThis, values]
         {
-            if (auto s = sendState()) {
-                auto changed = values;
-                changed.mute = ! values.mute;
-                performChange (audium::UndoableSendAction::Values::of (*s), changed);
-            }
+            if (safeThis != nullptr)
+                safeThis->toggleFromMenu (values, &audium::UndoableSendAction::Values::mute);
         });
         menu.addSeparator();
-        menu.addItem (TRANS ("Remove"), state != nullptr, false, [this]
+        menu.addItem (TRANS ("Remove"), state != nullptr, false, [ctx = context, trackId = trackId, channelNumber = channelNumber, auxId = auxId]
         {
-            auto ch = channel();
+            auto track = ctx.container().getAudioTrack (trackId);
+            auto ch = track != nullptr ? track->getChannel (channelNumber) : nullptr;
             if (ch == nullptr)
                 return;
-            const auto id = auxId;
-            audium::applyAsUndoableEdit (context.container(), [&] { return ch->sends.remove (id); }, "Remove Send", false);   // the knobs re-read on its broadcast
+            audium::applyAsUndoableEdit (ctx.container(), [&] { return ch->sends.remove (auxId); }, "Remove Send", false);   // the knobs re-read on its broadcast
         });
         menu.showMenuAsync (MixerContext::menuOptions (this));
+    }
+
+    /// A menu item flipped one of the send's flags: one step from the values as they are now to the menu's with the flag turned.
+    void toggleFromMenu (audium::UndoableSendAction::Values values, bool audium::UndoableSendAction::Values::* flag)
+    {
+        if (auto s = sendState()) {
+            values.*flag = ! (values.*flag);
+            performChange (audium::UndoableSendAction::Values::of (*s), values);
+        }
     }
 
     MixerContext context;

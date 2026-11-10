@@ -33,6 +33,7 @@ public:
         mixer.onRelayout = [this] { resized(); };
         mixer.onUserChange = [this] { NullCheckedInvocation::invoke (onMixerLayoutChanged); };
 
+        createMixer();
         createComponents();
     }
 
@@ -50,19 +51,8 @@ public:
         arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
 
-        mixerComponent.reset (new MixerComponent (audiumEngine));
-        mixerComponent->onPreferredHeightChanged = [this] { mixer.setFixedSize (mixerComponent->getBodyHeight()); };
-        mixer.setFixedSize (mixerComponent->getBodyHeight());
-
-        // the mixer's header bar stays at the bottom and is its handle: pushed well down it
-        // collapses the mixer until pulled back or released, pulled up it opens it; the mixer
-        // cannot be made taller or shorter
-        auto& header = mixerComponent->getHeader();
-        header.onDragStart = [this] { mixer.dragStarted(); };
-        header.onDrag = [this] (int distance) { mixer.dragged (distance); };
-        header.onDragEnd = [this] { mixer.dragEnded(); };
-        header.onDoubleClick = [this] { mixer.resetToDefault(); };
-        header.onToggleClick = [this] { mixer.setOpen (! mixer.isOpen()); };
+        // the mixer stays through a rebuild: rebuildUI renews its strips from the engine, and its effect
+        // editor windows stay open as long as their slots live
         addAndMakeVisible (mixerComponent.get());
 
         const auto visibleRange = zoomHandler->getVisibleRange();
@@ -141,7 +131,7 @@ public:
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
-            mixerComponent->updateUI();
+            mixerComponent->rebuildUI();
             
             arrangementComponent->setVerticalScrollOffset(verticalScrollOffset);
             arrangementComponent->setHorizontalScrollOffset(horizontalScrollOffset);
@@ -251,6 +241,24 @@ public:
     }
     
 private:
+    /// Once, in the constructor: the mixer lives as long as the panel, a rebuild of the views renews its strips in place.
+    void createMixer()
+    {
+        mixerComponent.reset (new MixerComponent (audiumEngine));
+        mixerComponent->onPreferredHeightChanged = [this] { mixer.setFixedSize (mixerComponent->getBodyHeight()); };
+        mixer.setFixedSize (mixerComponent->getBodyHeight());
+
+        // the mixer's header bar stays at the bottom and is its handle: pushed well down it
+        // collapses the mixer until pulled back or released, pulled up it opens it; the mixer
+        // cannot be made taller or shorter
+        auto& header = mixerComponent->getHeader();
+        header.onDragStart = [this] { mixer.dragStarted(); };
+        header.onDrag = [this] (int distance) { mixer.dragged (distance); };
+        header.onDragEnd = [this] { mixer.dragEnded(); };
+        header.onDoubleClick = [this] { mixer.resetToDefault(); };
+        header.onToggleClick = [this] { mixer.setOpen (! mixer.isOpen()); };
+    }
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::shared_ptr<ZoomHandler> zoomHandler;

@@ -87,8 +87,11 @@ namespace InsertChainActions
     {
         return edit (ctx, address, "Replace Insert", [&] (InsertChain& chain)
         {
+            if (chain.getSlot (index) == nullptr)
+                return false;
             audium::MixerPlanner::ScopedBatch planBatch (ctx.planner());   // one plan for the swap
-            return chain.remove (index) && chain.add (typeId, index) != nullptr;
+            // the new one goes in ahead of the old, so a type that cannot be made leaves the chain as it was
+            return chain.add (typeId, index) != nullptr && chain.remove (index + 1);
         });
     }
 
