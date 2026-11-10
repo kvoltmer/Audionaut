@@ -229,6 +229,7 @@ public:
         const auto minimized = audioTrack->getViewState().getMinimized();
         minimizeButton.setToggleState (minimized, dontSendNotification);
         menuButton.setVisible (! minimized);   // size and overlays concern the rows a folded track hides
+        repaint();   // the selection tint is the track's colour too
     }
     
     void paint (juce::Graphics& g) override;
