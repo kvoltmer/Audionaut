@@ -875,19 +875,16 @@ server.registerTool(
     ]))
 );
 
-// Insert effects. A chain is one channel strip's (track + channel), a track's
-// own (track alone: it processes all the track's channels together, after the
-// strips' chains) or the master's (master: true); the CLI verbs take the same
-// three forms.
+// Insert effects. A chain is a track's (it processes all the track's channels
+// together), an aux bus's or the master's (master: true); the CLI verbs take
+// the same three forms.
 const chainParams = {
-  track: z.number().int().min(0).optional().describe("Track id (with channel: one strip's chain; alone: the track's chain)"),
-  channel: z.number().int().min(0).optional().describe("Channel strip (0-based) of the track"),
+  track: z.number().int().min(0).optional().describe("Track id: the track's chain, over all its channels"),
   aux: z.number().int().min(1).optional().describe("An aux bus's chain (its id, as get_project_info lists it)"),
   master: z.boolean().optional().describe("The master chain, before master gain"),
 };
-const chainArgs = ({ track, channel, aux, master }) => [
+const chainArgs = ({ track, aux, master }) => [
   ...(track !== undefined ? ["--track", String(track)] : []),
-  ...(channel !== undefined ? ["--channel", String(channel)] : []),
   ...(aux !== undefined ? ["--aux", String(aux)] : []),
   ...(master ? ["--master"] : []),
 ];
@@ -910,25 +907,23 @@ server.registerTool(
   {
     title: "Add an insert effect",
     description:
-      "Inserts an effect (a type id from list_effects, e.g. builtin:eq3) into a chain: a channel strip's " +
-      "(track + channel), a track's own (track alone), an aux bus's (aux) or the master's (master). Appends by default, or at " +
-      "position at; all_channels adds one to every strip of the track. Parameters start at their defaults: " +
+      "Inserts an effect (a type id from list_effects, e.g. builtin:eq3) into a chain: a track's (track; it " +
+      "processes all the track's channels together), an aux bus's (aux) or the master's (master). Appends by " +
+      "default, or at position at. Parameters start at their defaults: " +
       "set them with set_insert. Playback and export_audio both run the inserts; get_project_info lists them.",
     inputSchema: {
       project: projectParam,
       ...chainParams,
-      all_channels: z.boolean().optional().describe("With track: one insert on every strip of the track"),
       type: z.string().describe("Effect type id, e.g. builtin:trim, builtin:eq3, builtin:compressor, builtin:delay"),
       at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
       task: taskParam,
     },
   },
-  withTask(async ({ project, type, at, all_channels, ...chain }) =>
+  withTask(async ({ project, type, at, ...chain }) =>
     runCli([
       "add-insert",
       project,
       ...chainArgs(chain),
-      ...(all_channels ? ["--all-channels"] : []),
       "--type",
       type,
       ...(at !== undefined ? ["--at", String(at)] : []),

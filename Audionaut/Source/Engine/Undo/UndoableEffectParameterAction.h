@@ -16,23 +16,20 @@ namespace audium
 {
 
 /**
- * Where an insert chain lives: a bus channel of a track, a track's own
- * inserts, an aux bus or the master. Resolved against the container at
- * apply time, so the address stays valid across rebuilds that replace the
- * objects.
+ * Where an insert chain lives: a track, an aux bus or the master. Resolved
+ * against the container at apply time, so the address stays valid across
+ * rebuilds that replace the objects.
  */
 struct InsertChainAddress
 {
-    enum class Kind { channel, track, aux, master };
+    enum class Kind { track, aux, master };
 
     Kind kind = Kind::master;
-    int trackId = -1;        // the aux id for Kind::aux
-    int channelNumber = -1;
+    int id = -1;             // the track id for Kind::track, the aux id for Kind::aux
 
-    static InsertChainAddress ofChannel (int trackId, int channelNumber) { return { Kind::channel, trackId, channelNumber }; }
-    static InsertChainAddress ofTrack (int trackId) { return { Kind::track, trackId, -1 }; }
-    static InsertChainAddress ofAux (int auxId) { return { Kind::aux, auxId, -1 }; }
-    static InsertChainAddress ofMaster() { return { Kind::master, -1, -1 }; }
+    static InsertChainAddress ofTrack (int trackId) { return { Kind::track, trackId }; }
+    static InsertChainAddress ofAux (int auxId) { return { Kind::aux, auxId }; }
+    static InsertChainAddress ofMaster() { return { Kind::master, -1 }; }
 
     InsertChain* resolve (AudioTrackContainer& container) const
     {
@@ -41,18 +38,12 @@ struct InsertChainAddress
 
         if (kind == Kind::aux)
         {
-            auto bus = container.getAuxBuses().get (trackId);
+            auto bus = container.getAuxBuses().get (id);
             return bus != nullptr ? &bus->getInserts() : nullptr;
         }
 
-        auto track = container.getAudioTrack (trackId);
-        if (track == nullptr)
-            return nullptr;
-        if (kind == Kind::track)
-            return &track->getTrackInserts();
-
-        auto channel = track->getChannel (channelNumber);
-        return channel != nullptr ? &channel->inserts : nullptr;
+        auto track = container.getAudioTrack (id);
+        return track != nullptr ? &track->getTrackInserts() : nullptr;
     }
 };
 

@@ -391,9 +391,9 @@ SCENARIO ("a latent insert makes the whole output later and leaves the mix align
         const auto referenceBounce = bounce (*plain.engine);
         Session session;
 
-        WHEN ("track 0's channel 0 gets an insert with 480 samples of latency")
+        WHEN ("track 0 gets an insert with 480 samples of latency")
         {
-            session.addLatency (session.channel (0, 0)->inserts, 480);
+            session.addLatency (session.track (0)->getTrackInserts(), 480);
 
             THEN ("the plan says 480 at the fader point and nothing after it")
             {
@@ -403,14 +403,14 @@ SCENARIO ("a latent insert makes the whole output later and leaves the mix align
                 REQUIRE (plan.latency.master == 0);
                 REQUIRE (plan.latency.atMainOutput() == 480);
                 REQUIRE (plan.latency.atStemOutput() == 480);
-                REQUIRE (plan.channels[0].preFaderDelay == nullptr);      // the late channel itself waits for nobody
-                REQUIRE (plan.channels[1].preFaderDelay->getDelaySamples() == 480);
-                REQUIRE (plan.channels[2].preFaderDelay->getDelaySamples() == 480);
+                REQUIRE (plan.tracks[0].preFaderDelay == nullptr);      // the late track itself waits for nobody
+                REQUIRE (plan.tracks[1].preFaderDelay->getDelaySamples() == 480);
+                REQUIRE (plan.tracks[1].preFaderDelay->getNumChannels() == 2);   // one delay over all of the track's channels
                 REQUIRE (plan.mainDryDelay == nullptr);
                 REQUIRE (session.engine->getAudioBusInterface()->getOutputLatencySamples() == 480);   // adopted at once: no device runs
             }
 
-            THEN ("live, every output is the plain one 480 samples later: the other channels waited, the direct outs too")
+            THEN ("live, every output is the plain one 480 samples later: the other track waited, the direct outs too")
             {
                 const auto live = renderLive (*session.engine);
                 requireShifted (live, referenceLive, 0, 480);
@@ -435,20 +435,18 @@ SCENARIO ("a latent insert makes the whole output later and leaves the mix align
             }
         }
 
-        WHEN ("latency sits on a track chain and on a channel chain of the other track")
+        WHEN ("latency sits on both tracks, two latent slots on one of them")
         {
             session.addLatency (session.track (0)->getTrackInserts(), 300);
-            session.addLatency (session.channel (0, 0)->inserts, 200);   // track 0, channel 0: 500 in all
-            session.addLatency (session.channel (1, 1)->inserts, 480);   // track 1, channel 1: 480
+            session.addLatency (session.track (0)->getTrackInserts(), 200);   // track 0: 500 in all
+            session.addLatency (session.track (1)->getTrackInserts(), 480);   // track 1: 480
 
-            THEN ("latency adds along a path and the fader point is the longest one")
+            THEN ("latency adds along a chain and the fader point is the longest one")
             {
                 const auto& plan = session.preparedPlan();
                 REQUIRE (plan.latency.preFader == 500);
-                REQUIRE (plan.channels[0].preFaderDelay == nullptr);
-                REQUIRE (plan.channels[1].preFaderDelay->getDelaySamples() == 200);   // track 0, channel 1: only the track chain
-                REQUIRE (plan.channels[2].preFaderDelay->getDelaySamples() == 500);
-                REQUIRE (plan.channels[3].preFaderDelay->getDelaySamples() == 20);
+                REQUIRE (plan.tracks[0].preFaderDelay == nullptr);
+                REQUIRE (plan.tracks[1].preFaderDelay->getDelaySamples() == 20);
                 requireIdentical (bounce (*session.engine), referenceBounce);
                 requireShifted (renderLive (*session.engine), referenceLive, 0, 500);
             }
@@ -456,7 +454,7 @@ SCENARIO ("a latent insert makes the whole output later and leaves the mix align
 
         WHEN ("the latent insert is bypassed")
         {
-            auto slot = session.addLatency (session.channel (0, 0)->inserts, 480);
+            auto slot = session.addLatency (session.track (0)->getTrackInserts(), 480);
             slot->setEnabled (false);
 
             THEN ("the chain is as late as with the effect running, so the bounce is still the plain one")
@@ -550,9 +548,9 @@ SCENARIO ("aux and master chains compensate at their own summing points", "[engi
             }
         }
 
-        WHEN ("every point has latency: a channel 480, Aux 2 300, the master 256")
+        WHEN ("every point has latency: a track 480, Aux 2 300, the master 256")
         {
-            session.addLatency (session.channel (1, 0)->inserts, 480);
+            session.addLatency (session.track (1)->getTrackInserts(), 480);
             session.addLatency (session.auxes().get (2)->getInserts(), 300);
             session.addLatency (session.tracks().getMasterInserts(), 256);
 
@@ -583,7 +581,7 @@ SCENARIO ("a rebuild while playing carries the delay lines over", "[engine][effe
         const auto referenceLive = renderLive (*plain.engine);
 
         Session session;
-        session.addLatency (session.channel (0, 0)->inserts, 480);
+        session.addLatency (session.track (0)->getTrackInserts(), 480);
         FakeAudioIODevice device (kSampleRate, kBlockSize, 2, kNumOutputs);
         LiveBlockDriver driver (*session.engine, device);
         driver.play (0.0);
@@ -596,7 +594,7 @@ SCENARIO ("a rebuild while playing carries the delay lines over", "[engine][effe
 
         WHEN ("track 1 gets a unity trim, which rebuilds the plan")
         {
-            auto slot = session.channel (1, 0)->inserts.add (TrimEffect::typeInfo().id);
+            auto slot = session.track (1)->getTrackInserts().add (TrimEffect::typeInfo().id);
             REQUIRE (slot != nullptr);
             REQUIRE (session.planner().getNumRebuilds() == rebuilds + 1);
             const auto second = driver.render ((live.getNumSamples() - half) / kSampleRate);
@@ -604,7 +602,7 @@ SCENARIO ("a rebuild while playing carries the delay lines over", "[engine][effe
                 live.copyFrom (c, half, second, c, 0, live.getNumSamples() - half);
             driver.stop();
 
-            THEN ("the waiting channels keep their signal in flight: no gap, the whole render is the plain one shifted")
+            THEN ("the waiting track keeps its signal in flight: no gap, the whole render is the plain one shifted")
             {
                 requireShifted (live, referenceLive, 0, 480);
                 requireShifted (live, referenceLive, 3, 480);
@@ -620,7 +618,7 @@ SCENARIO ("Link and recording take the output latency into account", "[engine][e
     GIVEN ("a session with 480 samples of latency on a device with 64 samples in and 128 out")
     {
         Session session;
-        session.addLatency (session.channel (0, 0)->inserts, 480);
+        session.addLatency (session.track (0)->getTrackInserts(), 480);
         FakeAudioIODevice device (kSampleRate, kBlockSize, 2, kNumOutputs);
         device.inputLatency = 64;
         device.outputLatency = 128;

@@ -112,7 +112,7 @@ InsertSlotListComponent::~InsertSlotListComponent() = default;
 
 juce::String InsertSlotListComponent::keyFor (const InsertChainAddress& address)
 {
-    return juce::String (static_cast<int> (address.kind)) + ":" + juce::String (address.trackId) + ":" + juce::String (address.channelNumber);
+    return juce::String (static_cast<int> (address.kind)) + ":" + juce::String (address.id);
 }
 
 juce::var InsertSlotListComponent::dragDescription (const juce::String& chainKey, int index)

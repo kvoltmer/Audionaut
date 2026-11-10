@@ -287,25 +287,24 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runTrackPan },
 
         { "add-insert",
-          "add-insert <project.audium> (--track N [--channel C | --all-channels] | --master) --type T [--at I] [--json]",
-          "Adds an insert effect to a channel strip, a track or the master.",
+          "add-insert <project.audium> (--track N | --aux A | --master) --type T [--at I] [--json]",
+          "Adds an insert effect to a track, an aux bus or the master.",
           "Inserts an effect of type T (an id from list-effects, e.g. builtin:eq3) at the end of a "
-          "chain, or at position I with --at. --track N --channel C is one channel strip's chain, "
-          "--track N alone the track's own chain (it processes all the track's channels together, "
-          "after the strips' chains), --master the main mix's chain before master gain; "
-          "--all-channels adds one to every strip of the track. Parameters start at their "
-          "defaults: set them with set-insert. Playback and export both run the inserts.",
+          "chain, or at position I with --at. --track N is the track's chain (it processes all the "
+          "track's channels together, before their faders), --aux A an aux bus's chain, --master "
+          "the main mix's chain before master gain. Parameters start at their defaults: set them "
+          "with set-insert. Playback and export both run the inserts.",
           runAddInsert },
 
         { "remove-insert",
-          "remove-insert <project.audium> (--track N [--channel C] | --master) --index I [--json]",
+          "remove-insert <project.audium> (--track N | --aux A | --master) --index I [--json]",
           "Removes an insert effect from a chain.",
           "Removes the insert at index I (0-based, as info and add-insert list them) from the "
           "chain named like add-insert names it. The inserts after it move up.",
           runRemoveInsert },
 
         { "set-insert",
-          "set-insert <project.audium> (--track N [--channel C] | --master) --index I\n"
+          "set-insert <project.audium> (--track N | --aux A | --master) --index I\n"
           "                            [--param ID --value V] [--enabled on|off] [--json]",
           "Sets an insert's parameter, or enables / disables it.",
           "Sets parameter ID (an id from list-effects, e.g. gain_db) of the insert at index I to V, "

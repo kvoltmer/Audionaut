@@ -416,13 +416,13 @@ try {
 
   const inserted = await client.callTool({
     name: "add_insert",
-    arguments: { project, track: 0, channel: 0, type: "builtin:trim" },
+    arguments: { project, track: 0, type: "builtin:trim" },
   });
   check("add_insert", !inserted.isError && inserted.content[0].text.includes("builtin:trim"), inserted.content?.[0]?.text);
 
   const insertSet = await client.callTool({
     name: "set_insert",
-    arguments: { project, track: 0, channel: 0, index: 0, param: "gain_db", value: -6 },
+    arguments: { project, track: 0, index: 0, param: "gain_db", value: -6 },
   });
   check("set_insert", !insertSet.isError && insertSet.content[0].text.includes("-6"), insertSet.content?.[0]?.text);
 
@@ -435,7 +435,7 @@ try {
 
   const uninserted = await client.callTool({
     name: "remove_insert",
-    arguments: { project, track: 0, channel: 0, index: 0 },
+    arguments: { project, track: 0, index: 0 },
   });
   check("remove_insert", !uninserted.isError && uninserted.content[0].text.includes("removed"), uninserted.content?.[0]?.text);
 

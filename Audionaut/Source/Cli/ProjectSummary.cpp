@@ -86,7 +86,7 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
         trackJson["numChannels"] = numChannels;
 
         // the channel strips' mixer state an agent can set (track-pan,
-        // add-insert, set-send): pan, the strip's insert chain, its sends
+        // set-send): pan and sends; the inserts are the track's
         auto channels = nlohmann::json::array();
         for (int channel = 0; channel < numChannels; ++channel)
         {
@@ -94,7 +94,6 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
             for (const auto& send : track->getChannel (channel)->sends.getEntries())
                 sends.push_back (describeSend (send.auxId, *send.state));
             channels.push_back ({ { "pan", track->getPan (channel) },
-                                  { "inserts", describeInserts (track->getChannel (channel)->inserts) },
                                   { "sends", sends } });
         }
         trackJson["channels"] = channels;

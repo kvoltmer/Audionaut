@@ -62,7 +62,7 @@ struct TrackJobShare
  * what offline bounces use).
  *
  * Latency compensation is the plan's (MixPlan::Latency): where the plan hands
- * a signal a delay, the stage that owns the signal runs it - a bus channel's
+ * a signal a delay, the stage that owns the signal runs it - a track's
  * after its inserts, an aux return's after the aux inserts, the dry main
  * mix's before the returns join, a direct out's on its way to the output.
  * getOutputLatencySamples() says how late the output is as a whole.

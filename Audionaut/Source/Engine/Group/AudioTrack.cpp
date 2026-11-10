@@ -121,7 +121,6 @@ bool AudioTrack::writeChannelToJson (json& output, AudioChannel* audioChannel)
     for (auto channel : audioChannelContainer->getObjects()) {
         if (audioChannel == nullptr || channel.get() == audioChannel) {
             json element = channel->data;
-            channel->inserts.writeToJson(element);
             channel->sends.writeToJson(element);
             output["channels"] += element;
         }
@@ -150,7 +149,6 @@ void AudioTrack::mergeChannelFromJson(json& input)
         destChannel = channel->getChannelNumber();
         channel->data = jsonElement;
         channel->commitChannelData();
-        channel->inserts.readFromJson(jsonElement);
         channel->sends.readFromJson(jsonElement);
     }
     jassert(destChannel != -1);
@@ -215,7 +213,6 @@ bool AudioTrack::readFromJson (json& input, bool rebuild)
         if (channel != nullptr) {
             channel->data = jsonElement;
             channel->commitChannelData();
-            channel->inserts.readFromJson(jsonElement);
             channel->sends.readFromJson(jsonElement);
         }
         c++;
