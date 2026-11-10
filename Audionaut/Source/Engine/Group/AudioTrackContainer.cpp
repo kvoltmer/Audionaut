@@ -105,6 +105,10 @@ void AudioTrackContainer::cleanup()
     // the main mix's inserts go with the project they belong to: the plan
     // built when the batch closes has no master chain either
     masterInserts.clear();
+    // ... and so do its gain, balance and mute: the next project starts at unity, centred and unmuted
+    setMasterGain (1.f);
+    setMasterPan (0.f);
+    setMasterMute (false);
     // the next project starts with the two aux buses every project has
     auxBuses.resetToDefaults();
     publishNumAudioTrackChannels();

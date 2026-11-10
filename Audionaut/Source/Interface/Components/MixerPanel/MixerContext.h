@@ -35,9 +35,6 @@ struct MixerContext
     /// The chain an address names right now, nullptr once its owner is gone.
     audium::InsertChain* chain (const audium::InsertChainAddress& address) const { return address.resolve (container()); }
 
-    /// After a structural edit from the mixer: every view re-reads the channels.
-    void channelsChanged() const { container().sendActionMessage (audium::updateChannelsAction); }
-
     static juce::PopupMenu::Options menuOptions (juce::Component* target = nullptr)
     {
         auto options = juce::PopupMenu::Options().withStandardItemHeight (AudiumLookAndFeel::popupMenuItemHeight);
@@ -62,10 +59,7 @@ namespace InsertChainActions
         if (chain == nullptr)
             return false;
 
-        const auto applied = audium::applyAsUndoableEdit (ctx.container(), [&] { return mutate (*chain); }, name, false);
-        if (applied)
-            ctx.channelsChanged();
-        return applied;
+        return audium::applyAsUndoableEdit (ctx.container(), [&] { return mutate (*chain); }, name, false);   // the views re-read on its broadcast
     }
 
     inline bool add (const MixerContext& ctx, const InsertChainAddress& address, const std::string& typeId, int at = -1)

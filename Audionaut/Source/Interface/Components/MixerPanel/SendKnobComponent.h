@@ -18,12 +18,13 @@
  * aux's name over a dial on the fader's taper up to +6 dB (the arc from silence
  * up to the level, the mark at silence, the default). Every channel
  * has a knob for every aux: a channel that does not send to the aux yet
- * shows it at silence, and the first touch makes the send as part of that
- * same undo step (undo takes the send away again). Double-click: back to
- * silence, the default. Right-click: pre-fader, mute, remove.
+ * shows it at silence, and the first movement makes the send as part of
+ * that same undo step (undo takes the send away again). Double-click: back
+ * to silence, the default. Right-click: pre-fader, mute, remove.
  *
  * Undo: a drag is one step from the values before to the values after (the
  * level moves live meanwhile), the toggles and the removal are one step each.
+ * A click that moves nothing is no step and leaves no send behind.
  */
 class SendKnobComponent : public juce::Component,
                           public juce::SettableTooltipClient
@@ -176,20 +177,28 @@ private:
         return made;
     }
 
+    /// A gesture that changed nothing records no step, so an entry it made would stay as a silent leftover: it goes again.
+    void dropEntryMadeInThisStep()
+    {
+        if (! std::exchange (createdInThisStep, false))
+            return;
+        if (auto ch = channel())
+            ch->sends.remove (auxId);
+    }
+
+    /// The slider's mouse-down: a click without movement comes through here too, so nothing is made yet.
     void dragStarted()
     {
-        auto state = sendStateOrCreate();
-        if (state == nullptr)
-            return;
         dragging = true;
-        valuesAtDragStart = audium::UndoableSendAction::Values::of (*state);
+        auto state = sendState();
+        valuesAtDragStart = state != nullptr ? audium::UndoableSendAction::Values::of (*state) : audium::UndoableSendAction::Values();   // no send yet: silence
     }
 
     void dragged()
     {
         if (! dragging)
             return;
-        if (auto state = sendState()) {
+        if (auto state = sendStateOrCreate()) {   // the first movement makes the send
             shown.level = gainFor (knob.getValue());
             state->level.store (shown.level, std::memory_order_relaxed);   // live; the step comes at the drag's end
         }
@@ -202,22 +211,36 @@ private:
         dragging = false;
         auto state = sendState();
         if (state == nullptr)
-            return;
+            return;   // nothing was moved, or the channel is gone
         const auto newValues = audium::UndoableSendAction::Values::of (*state);
-        valuesAtDragStart.applyTo (*state);
+        if (newValues == valuesAtDragStart) {
+            dropEntryMadeInThisStep();   // back where it started: no step
+            refresh();
+            return;
+        }
+        // the send holds the new values already: perform() stores them again, a no-op, rather than this
+        // writing the old ones back first and handing the audio thread a block at the old level in between
         performChange (valuesAtDragStart, newValues);
     }
 
     /// The default, -inf: a send that is there goes silent as one undo step; one that is not stays as it is.
     void resetToSilence()
     {
-        if (auto state = sendState()) {
-            auto values = audium::UndoableSendAction::Values::of (*state);
-            if (values.level <= 0.0f)
-                return;
-            values.level = 0.0f;
-            performChange (audium::UndoableSendAction::Values::of (*state), values);
+        // a double-click's second mouse-down opened a drag bracket: it closes here without a step of its own, the
+        // reset is the one step, from the values before that click
+        const auto wasDragging = std::exchange (dragging, false);
+        auto state = sendState();
+        if (state == nullptr)
+            return;
+        const auto oldValues = wasDragging ? valuesAtDragStart : audium::UndoableSendAction::Values::of (*state);
+        if (oldValues.level <= 0.0f) {
+            dropEntryMadeInThisStep();
+            refresh();
+            return;
         }
+        auto values = oldValues;
+        values.level = 0.0f;
+        performChange (oldValues, values);
     }
 
     void performChange (const audium::UndoableSendAction::Values& oldValues, const audium::UndoableSendAction::Values& newValues)
@@ -257,8 +280,7 @@ private:
             if (ch == nullptr)
                 return;
             const auto id = auxId;
-            if (audium::applyAsUndoableEdit (context.container(), [&] { return ch->sends.remove (id); }, "Remove Send", false))
-                context.channelsChanged();
+            audium::applyAsUndoableEdit (context.container(), [&] { return ch->sends.remove (id); }, "Remove Send", false);   // the knobs re-read on its broadcast
         });
         menu.showMenuAsync (MixerContext::menuOptions (this));
     }

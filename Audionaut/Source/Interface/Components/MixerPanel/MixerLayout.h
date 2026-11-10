@@ -87,6 +87,33 @@ namespace MixerLayout
         return height + faderY + faderHeight + nameHeight + colourBarHeight;
     }
 
+    /// Where a strip's elements stand in the strip's bounds, each as tall as stripHeight() counts it: the name
+    /// bar at the bottom, then from the top the sends, the pan, the buttons and the fader. A hidden section's
+    /// rectangle is empty. The channel strips and the return strips both lay out from this, so their faders
+    /// line up across the mixer.
+    struct StripPlacement
+    {
+        juce::Rectangle<int> sendsArea, panArea, buttonsArea, faderArea, nameArea;
+    };
+
+    inline StripPlacement placeStrip (juce::Rectangle<int> bounds, int sections, int numAuxBuses) noexcept
+    {
+        StripPlacement placement;
+        placement.nameArea = bounds.removeFromBottom (nameHeight + colourBarHeight);
+        bounds.reduce (sidePadding, 0);
+        bounds.removeFromTop (sectionGap);
+        if ((sections & sends) != 0) {
+            placement.sendsArea = bounds.removeFromTop (sendsHeight (numAuxBuses));
+            bounds.removeFromTop (sectionGap);
+        }
+        if ((sections & pan) != 0)
+            placement.panArea = bounds.removeFromTop (panHeight);
+        if ((sections & buttons) != 0)
+            placement.buttonsArea = bounds.removeFromTop (buttonGap + 2 * (buttonRowHeight + buttonGap));
+        placement.faderArea = bounds.removeFromTop (faderY + faderHeight);
+        return placement;
+    }
+
     /// The I/O rows under the band, one per channel in its strip's column, with a gap above: shown by the group
     /// above the track's insert list, so the strips below start with their sends.
     inline int ioHeight (int sections) noexcept

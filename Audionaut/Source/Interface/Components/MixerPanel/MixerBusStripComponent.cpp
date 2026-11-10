@@ -7,7 +7,6 @@
 
 #include "Interface/ColourIds.h"
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
-#include "Interface/Components/MixerPanel/MixerStripElements.h"   // the channel strip's element heights, mirrored here
 #include "Engine/Playback/AudioBusInterface.h"
 
 using namespace audium;
@@ -234,30 +233,27 @@ void MixerBusStripComponent::resized()
     }
     stripTop = bounds.getY();
 
-    // then the strip, as MixerStripComponent stacks it, so the faders line up: the name bar at the bottom,
-    // the sections from the top, each keeping its room whether the return has the element or not
-    name->setBounds (bounds.removeFromBottom (StripName::height));
-    bounds.reduce (sidePadding, 0);
-    bounds.removeFromTop (sectionGap);
-    if (shows (Section::sends))
-        bounds.removeFromTop (StripSends::heightFor (context.container().getAuxBuses().size()) + sectionGap);
+    // then the strip where MixerLayout::placeStrip puts a channel strip's elements, so the faders line up: the
+    // sends' room stays empty (a return has none), the rest takes the channel strip's places
+    const auto placement = placeStrip (bounds, sections, static_cast<int> (context.container().getAuxBuses().size()));
+    name->setBounds (placement.nameArea);
 
-    panArea = shows (Section::pan) ? bounds.removeFromTop (StripPan::height) : juce::Rectangle<int>();
+    panArea = placement.panArea;
     pan.setVisible (! panArea.isEmpty());
     pan.setBounds (panArea.withTrimmedTop (knobNameHeight));
 
-    solo.setVisible (shows (Section::buttons) && ! isMaster());   // the master has no solo: nothing to solo it against
-    mute.setVisible (shows (Section::buttons));
-    if (shows (Section::buttons)) {
+    solo.setVisible (! placement.buttonsArea.isEmpty() && ! isMaster());   // the master has no solo: nothing to solo it against
+    mute.setVisible (! placement.buttonsArea.isEmpty());
+    {
         // solo over mute, each centred, in the channel strips' two button rows
-        auto area = bounds.removeFromTop (StripButtons::height);
+        auto area = placement.buttonsArea;
         area.removeFromTop (buttonGap);
         solo.setBounds (area.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
         area.removeFromTop (buttonGap);
         mute.setBounds (area.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
     }
 
-    auto faderArea = bounds.removeFromTop (StripFader::height);
+    auto faderArea = placement.faderArea;
     faderArea.removeFromTop (faderY);
     fader.setBounds (faderArea.withX (faderArea.getX() + faderX).withWidth (faderWidth));
 
@@ -282,11 +278,7 @@ void MixerBusStripComponent::paint (juce::Graphics& g)
         g.drawText (TRANS ("Pan"), panArea.withHeight (knobNameHeight), juce::Justification::centred, false);
     }
 
-    // a drop shadow under each raised solo / mute key, as under the channel strips' keys (StripButtons); a pressed-in one has none
-    g.setColour (juce::Colours::black.withAlpha (0.35f));
-    for (auto* button : { &solo, &mute })
-        if (button->isVisible() && ! AudiumLookAndFeel::isConsoleButtonPressedIn (*button))
-            g.fillRoundedRectangle (button->getBounds().toFloat().translated (0.0f, 1.5f), 1.5f);
+    AudiumLookAndFeel::drawConsoleButtonShadows (g, { &solo, &mute });
 }
 
 //==============================================================================
@@ -327,8 +319,7 @@ void MixerBusStripComponent::rename (const juce::String& newName)
         refresh();   // back to the name as it is
         return;
     }
-    if (applyAsUndoableEdit (context.container(), [&] { b->setName (trimmed.toStdString()); return true; }, "Rename Aux Bus", false))
-        context.channelsChanged();   // the send knobs carry the name too
+    applyAsUndoableEdit (context.container(), [&] { b->setName (trimmed.toStdString()); return true; }, "Rename Aux Bus", false);   // the send knobs re-read the name on its broadcast
 }
 
 void MixerBusStripComponent::showNameMenu()
@@ -345,8 +336,7 @@ void MixerBusStripComponent::showNameMenu()
         }
         else if (result == 2) {
             // the sends into the bus go with it, and come back with it through undo
-            if (applyAsUndoableEdit (ctx.container(), [&] { return ctx.container().removeAuxBus (id); }, "Remove Aux Bus", false))
-                ctx.channelsChanged();
+            applyAsUndoableEdit (ctx.container(), [&] { return ctx.container().removeAuxBus (id); }, "Remove Aux Bus", false);
         }
     });
 }

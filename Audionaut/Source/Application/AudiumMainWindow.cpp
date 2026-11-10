@@ -104,7 +104,9 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     setFullScreen (true);
 #else
     setResizable (true, true);
-    
+    // narrower than this and the arrangement would be squeezed under its minimum by an open right panel
+    setResizeLimits (MainComponent::minimumWidth, MainComponent::minimumHeight, 32768, 32768);
+
     String windowState;
     if (AudiumApplication::getPreferences().valueExists (PreferenceKeys::mainWindowState))
         windowState = AudiumApplication::getPreferences().getValue (PreferenceKeys::mainWindowState);
@@ -233,8 +235,7 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
           {}, {}, {}, {},
           [this] {
               auto& container = *getEngine()->getAudioTrackContainer();
-              if (audium::applyAsUndoableEdit (container, [&] { return container.addAuxBus() != nullptr; }, "Add Aux Bus", false))
-                  container.sendActionMessage (audium::updateChannelsAction);
+              audium::applyAsUndoableEdit (container, [&] { return container.addAuxBus() != nullptr; }, "Add Aux Bus", false);
           } },
 
         { CommandIDs::zoomIn, "Zoom In", "Zoom in", CommandCategories::view,

@@ -54,24 +54,18 @@ void MixerStripComponent::refreshLive()
 
 void MixerStripComponent::resized()
 {
-    // the elements from the top, each as tall as MixerLayout::stripHeight counts it; the name bar at the bottom, the fader above it
-    auto bounds = getLocalBounds();
-    name->setBounds (bounds.removeFromBottom (StripName::height));
-    bounds.reduce (sidePadding, 0);
-    bounds.removeFromTop (sectionGap);
-
-    const auto place = [&bounds] (juce::Component& element, bool shown, int height, int gapAfter)
+    // the elements where MixerLayout::placeStrip puts them, as tall as stripHeight counts them; a hidden section's element goes with its empty area
+    const auto placement = placeStrip (getLocalBounds(), sections, static_cast<int> (channel.context.container().getAuxBuses().size()));
+    const auto place = [] (juce::Component& element, juce::Rectangle<int> area)
     {
-        element.setVisible (shown);
-        if (! shown)
-            return;
-        element.setBounds (bounds.removeFromTop (height));
-        bounds.removeFromTop (gapAfter);
+        element.setVisible (! area.isEmpty());
+        element.setBounds (area);
     };
-    place (*sends, shows (Section::sends), StripSends::heightFor (channel.context.container().getAuxBuses().size()), sectionGap);
-    place (*pan, shows (Section::pan), StripPan::height, 0);
-    place (*buttons, shows (Section::buttons), StripButtons::height, 0);
-    fader->setBounds (bounds.removeFromTop (StripFader::height));
+    place (*sends, placement.sendsArea);
+    place (*pan, placement.panArea);
+    place (*buttons, placement.buttonsArea);
+    place (*fader, placement.faderArea);
+    place (*name, placement.nameArea);
 }
 
 void MixerStripComponent::paint (juce::Graphics& g)

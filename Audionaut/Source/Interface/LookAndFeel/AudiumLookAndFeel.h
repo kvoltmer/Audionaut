@@ -28,12 +28,23 @@ public:
                                bool shouldDrawButtonAsHighlighted,
                                bool shouldDrawButtonAsDown) override;
 
-    /// A button as a key on a console: raised over a drop shadow (its parent paints that, see StripButtons) and
-    /// pressed in while on or held down. Set the property on a button to draw it so.
+    /// A button as a key on a console: raised over a drop shadow (its parent paints that, see
+    /// drawConsoleButtonShadows) and pressed in while on or held down. Set the property on a button to draw it so.
     static constexpr const char* consoleButtonProperty = "consoleButton";
     static bool isConsoleButtonPressedIn (const juce::Button& button)
     {
         return button.getProperties().contains (consoleButtonProperty) && (button.getToggleState() || button.isDown());
+    }
+
+    /// The drop shadow under each raised console key, in the parent's paint(): the button is drawn half a pixel
+    /// inside its bounds, so the bounds themselves are the key's shadow outline, set a little down. A pressed-in
+    /// key sits in the panel and has none; a hidden one has none either.
+    static void drawConsoleButtonShadows (juce::Graphics& g, std::initializer_list<const juce::Button*> buttons)
+    {
+        g.setColour (juce::Colours::black.withAlpha (0.35f));
+        for (auto* button : buttons)
+            if (button->isVisible() && ! isConsoleButtonPressedIn (*button))
+                g.fillRoundedRectangle (button->getBounds().toFloat().translated (0.0f, 1.5f), 1.5f);
     }
 
 

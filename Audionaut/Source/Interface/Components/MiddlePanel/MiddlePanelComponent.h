@@ -109,9 +109,10 @@ public:
 
         // the mixer's header bar always; under it as much of the body as is open
         const auto bodyHeight = mixer.getShownSize();
-        if (bodyHeight > 0 && ! mixerComponent->isBodyShown())
-            mixerComponent->updateUI();   // coming back: what it shows may be stale
+        const auto bodyWasShown = mixerComponent->isBodyShown();
         mixerComponent->setBounds (localBounds.removeFromBottom (MixerLayout::headerHeight + bodyHeight));
+        if (mixerComponent->isBodyShown() && ! bodyWasShown)
+            mixerComponent->updateUI();   // coming back: it let its strips go while closed
         mixerComponent->getHeader().setOpen (mixer.isOpen());
 
         auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);

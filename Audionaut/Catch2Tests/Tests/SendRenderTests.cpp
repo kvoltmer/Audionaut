@@ -761,5 +761,20 @@ SCENARIO ("the master has a balance and a mute", "[engine][effects][master][undo
                 REQUIRE (tracks.getMasterMute());
             }
         }
+
+        WHEN ("the master is set and the project is cleaned up for the next one")
+        {
+            session.tracks().setMasterGain (0.7f);
+            session.tracks().setMasterPan (0.25f);
+            session.tracks().setMasterMute (true);
+            session.engine->getProjectSerializer()->cleanup();
+
+            THEN ("gain, balance and mute are back at their defaults, so the next project is not muted")
+            {
+                REQUIRE (session.tracks().getMasterGain() == Approx (1.0f));
+                REQUIRE (session.tracks().getMasterPan() == Approx (0.0f));
+                REQUIRE_FALSE (session.tracks().getMasterMute());
+            }
+        }
     }
 }

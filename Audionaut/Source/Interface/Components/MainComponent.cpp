@@ -199,7 +199,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == audium::updateSelection)
     {
+        // a clip, region or play list item was selected: that deselected any track, so the channel view's
+        // headers and the mixer's bands re-read the track selection along with the arrangement and the right panel
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+        middlePanelComponent->updateUI(MiddlePanelComponent::ChannelsContext);
         rightPanelComponent->updateUI(SelectionContext);
     }
     else if (message == audium::recordingFinishedAction) {

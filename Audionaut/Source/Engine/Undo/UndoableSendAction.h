@@ -51,6 +51,12 @@ struct UndoableSendAction final : public juce::UndoableAction
             state.preFader.store (preFader, std::memory_order_relaxed);
             state.mute.store (mute, std::memory_order_relaxed);
         }
+
+        bool operator== (const Values& other) const noexcept
+        {
+            return juce::exactlyEqual (level, other.level) && preFader == other.preFader && mute == other.mute;
+        }
+        bool operator!= (const Values& other) const noexcept { return ! (*this == other); }
     };
 
     UndoableSendAction (AudioTrackContainer& container_, int trackId_, int channelNumber_, int auxId_,

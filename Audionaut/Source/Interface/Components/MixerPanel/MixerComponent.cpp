@@ -31,6 +31,13 @@ public:
         layOut();
     }
 
+    /// No groups: nothing holds a track while the mixer is closed.
+    void clear()
+    {
+        groups.clear();
+        layOut();
+    }
+
     void refresh()
     {
         for (auto& group : groups)
@@ -82,7 +89,7 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
     viewport.setViewedComponent (content.get(), false);
     viewport.setScrollBarsShown (false, true, false, true);
     viewport.setScrollBarThickness (8);
-    addAndMakeVisible (viewport);
+    addChildComponent (viewport);   // the body shows once resized() gives it room; until then the mixer is closed
 
     readPreferences();
     rebuildBusGroup();
@@ -94,7 +101,7 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
         preferredHeightMayHaveChanged();
         resized();   // the fader moved with the sections, and with it the bar's toggles
     };
-    addAndMakeVisible (sectionBar);
+    addChildComponent (sectionBar);
     addAndMakeVisible (header);
     lastPreferredHeight = getPreferredHeight();
 }
@@ -141,7 +148,8 @@ void MixerComponent::rebuildBusGroup()
 {
     buses = std::make_unique<MixerBusGroupComponent> (context, auxBusesVisible);
     buses->setSections (sectionBar.getSections());
-    addAndMakeVisible (buses.get());
+    addChildComponent (buses.get());
+    buses->setVisible (isBodyShown());
 }
 
 int MixerComponent::busColumnWidth() const
@@ -196,6 +204,19 @@ juce::String MixerComponent::structureSignature() const
 
 void MixerComponent::updateUI()
 {
+    closeEditorsWhoseSlotIsGone();   // the editor windows stand on their own, mixer open or closed
+    preferredHeightMayHaveChanged();   // the body's height follows the aux buses, open or closed: the owner sizes it either way
+
+    // closed, the mixer shows nothing to refresh: the strips go (nothing holds a track that may be removed
+    // meanwhile) and the owner calls again when the body comes back, which rebuilds them from the engine
+    if (! isBodyShown()) {
+        if (shownStructure.isNotEmpty()) {
+            shownStructure.clear();
+            content->clear();
+        }
+        return;
+    }
+
     const auto structure = structureSignature();
     if (structure != shownStructure) {
         shownStructure = structure;
@@ -208,9 +229,6 @@ void MixerComponent::updateUI()
         content->refresh();
     }
     buses->refresh();
-
-    closeEditorsWhoseSlotIsGone();
-    preferredHeightMayHaveChanged();
 }
 
 void MixerComponent::resized()

@@ -137,10 +137,10 @@ void EffectEditorComponent::commit (int parameter, float oldValue, float newValu
 
     auto& effect = slot->getEffect();
 
-    // the value as the effect will hold it (clamped), then back, so the action performs the change
-    effect.setParameter (parameter, newValue);
-    const auto applied = effect.getParameter (parameter);
-    effect.setParameter (parameter, oldValue);
+    // the value as the effect will hold it, without touching the effect: after a drag it holds the new value
+    // already, and writing the old one back for the action to undo would give the audio thread a block at the
+    // old value between the two stores. perform() stores the new value, a no-op where it is there already.
+    const auto applied = effect.clampParameter (parameter, newValue);
     if (juce::approximatelyEqual (applied, oldValue)) {
         refresh();
         return;

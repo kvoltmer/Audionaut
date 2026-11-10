@@ -8,13 +8,13 @@
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
 #include "Interface/Controls/CollapsiblePanel.h"
+#include "Interface/Controls/PanelResizerBar.h"
 
 using namespace juce;
 
 class MiddlePanelComponent;
 class RightPanelComponent;
 class HeaderComponent;
-class PanelResizerBar;
 
 class MainComponent :   public juce::Component,
                         public juce::DragAndDropContainer,
@@ -61,6 +61,11 @@ public:
     static constexpr int minRightPanelWidth = 260;
     static constexpr int defaultRightPanelWidth = 400;
     static constexpr int minMiddlePanelWidth = 400;
+
+    /// The window's limits: the middle panel at its minimum beside an open right panel at its minimum and
+    /// their seam; enough height for the header and the mixer's header bar over some arrangement.
+    static constexpr int minimumWidth = minMiddlePanelWidth + PanelResizerBar::seamThickness + minRightPanelWidth;
+    static constexpr int minimumHeight = 480;
 
     void setRightPanelVisible (bool visible) { rightPanel.setOpen (visible); }
     bool isRightPanelVisible() const noexcept { return rightPanel.isOpen(); }

@@ -265,12 +265,7 @@ void StripButtons::refresh()
 
 void StripButtons::paint (juce::Graphics& g)
 {
-    // a drop shadow under each raised button, as under the fader's cap (the LookAndFeel draws the button half
-    // a pixel inside its bounds, so the bounds themselves are the cap's shadow outline); a pressed-in one has none
-    g.setColour (juce::Colours::black.withAlpha (0.35f));
-    for (auto* button : std::initializer_list<juce::Button*> { &record, &monitor, &solo, &mute })
-        if (! AudiumLookAndFeel::isConsoleButtonPressedIn (*button))
-            g.fillRoundedRectangle (button->getBounds().toFloat().translated (0.0f, 1.5f), 1.5f);
+    AudiumLookAndFeel::drawConsoleButtonShadows (g, { &record, &monitor, &solo, &mute });
 }
 
 void StripButtons::resized()
@@ -378,5 +373,6 @@ void StripName::mouseDown (const juce::MouseEvent& e)
         rows.addRange ({ channelNumber, channelNumber + 1 });
     track.audioChannelContainer->setSelectedRows (rows);
 
-    channel.context.container().sendActionMessage (audium::updateMiddlePanelAction);
+    // updateAll, as a track header click: the click deselected the track, and the right panel's selected-track header follows that too
+    channel.context.container().sendActionMessage (audium::updateAll);
 }
