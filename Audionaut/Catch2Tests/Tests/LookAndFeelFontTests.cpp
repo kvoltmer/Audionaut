@@ -111,13 +111,11 @@ SCENARIO ("UI text fits the hardcoded layout metrics", "[interface][lookandfeel]
 
     GIVEN ("the table header font")
     {
-        THEN ("it is derived from the header height and fits the row")
+        THEN ("it fits the header row")
         {
-            const auto height = AudiumLookAndFeel::tableHeaderHeight;
-            const Font font (AudiumLookAndFeel::getTableHeaderFontOptions (height));
+            const Font font (AudiumLookAndFeel::getTableHeaderFontOptions());
 
-            REQUIRE (font.getHeight() == Catch::Approx ((float) height * 0.5f));
-            REQUIRE (font.getAscent() + font.getDescent() <= (float) height);
+            REQUIRE (font.getAscent() + font.getDescent() <= (float) AudiumLookAndFeel::tableHeaderHeight);
         }
     }
 

@@ -72,6 +72,23 @@ const float AudioTrackContainer::getMasterGain() const noexcept
     return masterGain;
 }
 
+void AudioTrackContainer::setMasterPan (const float newPan)
+{
+    const auto clamped = juce::jlimit (-1.f, 1.f, newPan);
+    if (std::abs (clamped - masterPan) > 0.f) {
+        masterPan = clamped;
+        audioBusInterface->setMasterPan (clamped);
+    }
+}
+
+void AudioTrackContainer::setMasterMute (const bool mute)
+{
+    if (mute != masterMute) {
+        masterMute = mute;
+        audioBusInterface->setMasterMute (mute);
+    }
+}
+
 void AudioTrackContainer::cleanup()
 {
     MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
@@ -88,6 +105,10 @@ void AudioTrackContainer::cleanup()
     // the main mix's inserts go with the project they belong to: the plan
     // built when the batch closes has no master chain either
     masterInserts.clear();
+    // ... and so do its gain, balance and mute: the next project starts at unity, centred and unmuted
+    setMasterGain (1.f);
+    setMasterPan (0.f);
+    setMasterMute (false);
     // the next project starts with the two aux buses every project has
     auxBuses.resetToDefaults();
     publishNumAudioTrackChannels();
@@ -232,6 +253,8 @@ bool AudioTrackContainer::writeToJson (json& output)
         output["audio_tracks"] += j;
     }
     output["master_gain"] = getMasterGain();
+    output["master_pan"] = getMasterPan();
+    output["master_mute"] = getMasterMute();
     masterInserts.writeToJson(output, "master_inserts");
     auxBuses.writeToJson(output, "aux_buses");
     output["loop_data"] = transportLoop->getLoopData();
@@ -269,6 +292,8 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     else {
         setMasterGain(1.f);
     }
+    setMasterPan (input.contains ("master_pan") ? input.at ("master_pan").get<float>() : 0.f);
+    setMasterMute (input.contains ("master_mute") ? input.at ("master_mute").get<bool>() : false);
     masterInserts.readFromJson(input, "master_inserts");
     auxBuses.readFromJson(input, "aux_buses");
     

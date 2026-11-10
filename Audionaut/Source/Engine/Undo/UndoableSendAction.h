@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/ActionMessages.h"
 #include "Engine/Effects/AuxBus.h"
 #include "Engine/Effects/SendList.h"
 #include "Engine/Group/AudioTrack.h"
@@ -23,6 +24,11 @@ namespace audium
  * and resolved at apply time, so it stays valid across rebuilds. A send
  * that is not there any more (its aux removed, the channel gone) makes the
  * step a no-op rather than a failure, like the channel actions.
+ *
+ * A send the step itself brought into being (the mixer shows every aux as
+ * a knob at silence; the first touch makes the entry) is flagged
+ * `createdByThisStep`: redo makes the entry again and undo removes it, so
+ * a project keeps no silent leftovers.
  */
 struct UndoableSendAction final : public juce::UndoableAction
 {
@@ -45,24 +51,34 @@ struct UndoableSendAction final : public juce::UndoableAction
             state.preFader.store (preFader, std::memory_order_relaxed);
             state.mute.store (mute, std::memory_order_relaxed);
         }
+
+        bool operator== (const Values& other) const noexcept
+        {
+            return juce::exactlyEqual (level, other.level) && preFader == other.preFader && mute == other.mute;
+        }
+        bool operator!= (const Values& other) const noexcept { return ! (*this == other); }
     };
 
-    UndoableSendAction (AudioTrackContainer& container_, int trackId_, int channelNumber_, int auxId_, Values oldValues_, Values newValues_) noexcept :
+    UndoableSendAction (AudioTrackContainer& container_, int trackId_, int channelNumber_, int auxId_,
+                        Values oldValues_, Values newValues_, bool createdByThisStep_ = false) noexcept :
         container (container_),
         trackId (trackId_),
         channelNumber (channelNumber_),
         auxId (auxId_),
         oldValues (oldValues_),
-        newValues (newValues_)
+        newValues (newValues_),
+        createdByThisStep (createdByThisStep_)
     {
     }
 
-    bool perform() override { return apply (newValues); }
-    bool undo() override { return apply (oldValues); }
+    bool perform() override { return apply (newValues, createdByThisStep ? Entry::make : Entry::keep); }
+    bool undo() override { return apply (oldValues, createdByThisStep ? Entry::remove : Entry::keep); }
     int getSizeInUnits() override { return 1; }
 
 private:
-    bool apply (const Values& values)
+    enum class Entry { keep, make, remove };
+
+    bool apply (const Values& values, Entry entry)
     {
         auto track = container.getAudioTrack (trackId);
         if (track == nullptr)
@@ -70,8 +86,13 @@ private:
         auto channel = track->getChannel (channelNumber);
         if (channel == nullptr)
             return true;
-        if (auto state = channel->sends.get (auxId))
+
+        if (entry == Entry::remove)
+            channel->sends.remove (auxId);
+        else if (auto state = entry == Entry::make ? channel->sends.getOrAdd (auxId) : channel->sends.get (auxId))
             values.applyTo (*state);
+
+        container.sendActionMessage (updateChannelsAction);   // the strips re-read the send (undo and redo included)
         return true;
     }
 
@@ -81,6 +102,7 @@ private:
     const int auxId;
     const Values oldValues;
     const Values newValues;
+    const bool createdByThisStep;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableSendAction)
 };
@@ -130,6 +152,7 @@ private:
     {
         if (auto bus = container.getAuxBuses().get (auxId))
             values.applyTo (*bus);
+        container.sendActionMessage (updateChannelsAction);   // the strips re-read the bus (undo and redo included)
         return true;
     }
 
@@ -139,6 +162,65 @@ private:
     const Values newValues;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableAuxAction)
+};
+
+/**
+ * Undo step for the master's values: gain, pan (balance) and mute, before
+ * and after a fader or pan drag or a mute click (the mixer's master strip,
+ * the header's fader), applied straight to the container, which hands them
+ * to the renderer without a new plan.
+ */
+struct UndoableMasterAction final : public juce::UndoableAction
+{
+    struct Values
+    {
+        float gain = 1.0f;
+        float pan = 0.0f;
+        bool mute = false;
+
+        static Values of (const AudioTrackContainer& container) noexcept
+        {
+            return { container.getMasterGain(), container.getMasterPan(), container.getMasterMute() };
+        }
+
+        void applyTo (AudioTrackContainer& container) const
+        {
+            container.setMasterGain (gain);
+            container.setMasterPan (pan);
+            container.setMasterMute (mute);
+        }
+
+        bool operator== (const Values& other) const noexcept
+        {
+            return juce::exactlyEqual (gain, other.gain) && juce::exactlyEqual (pan, other.pan) && mute == other.mute;
+        }
+        bool operator!= (const Values& other) const noexcept { return ! (*this == other); }
+    };
+
+    UndoableMasterAction (AudioTrackContainer& container_, Values oldValues_, Values newValues_) noexcept :
+        container (container_),
+        oldValues (oldValues_),
+        newValues (newValues_)
+    {
+    }
+
+    bool perform() override { return apply (newValues); }
+    bool undo() override { return apply (oldValues); }
+    int getSizeInUnits() override { return 1; }
+
+private:
+    bool apply (const Values& values)
+    {
+        values.applyTo (container);
+        container.sendActionMessage (updateChannelsAction);   // the master strip re-reads them; the header follows on its timer
+        return true;
+    }
+
+    AudioTrackContainer& container;
+    const Values oldValues;
+    const Values newValues;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableMasterAction)
 };
 
 } // namespace audium

@@ -15,6 +15,8 @@
 #include "Interface/Components/HeaderPanel/HeaderComponent.h"
 #include "Interface/Components/MiddlePanel/MiddlePanelComponent.h"
 #include "Interface/Components/RightPanel/RightPanelComponent.h"
+#include "Interface/Controls/PanelResizerBar.h"
+#include "Util/Preferences.h"
 #include "Interface/Models/PlayListTableListBoxItem.h"
 
 #include "Application/AudiumApplication.h"
@@ -30,33 +32,38 @@ MainComponent::MainComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine
     audiumEngine(audiumEngine_)
 {
     headerComponent = std::make_unique<HeaderComponent>(audiumEngine);
-    headerComponent->onRightPanelButtonClick = [this]() {
-        rightPanelVisible = !rightPanelVisible;
-        resized();
-    };
-    
+    headerComponent->onRightPanelButtonClick = [this] { setRightPanelVisible (! isRightPanelVisible()); };
+
     middlePanelComponent.reset(new MiddlePanelComponent(audiumEngine));
+    middlePanelComponent->onMixerLayoutChanged = [this] { writeLayoutPreferences(); };
     rightPanelComponent.reset(new RightPanelComponent(audiumEngine));
-    stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
-    stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, true));
+
+    // the right panel leaves the middle panel its minimum width; its open state
+    // and width are the user's and are persisted
+    rightPanel.maximumSize = [this] { return getWidth() - minMiddlePanelWidth - PanelResizerBar::seamThickness; };
+    rightPanel.onRelayout = [this] { resized(); };
+    rightPanel.onUserChange = [this]
+    {
+        writeLayoutPreferences();
+        updatePanelToggles();
+    };
+
+    // the seam between the middle and the right panel: dragging it left widens the
+    // right panel, dragging it well past the minimum collapses the panel until dragged back or released
+    rightPanelResizerBar = std::make_unique<PanelResizerBar> (true);
+    rightPanelResizerBar->onDragStart = [this] { rightPanel.dragStarted(); };
+    rightPanelResizerBar->onDrag = [this] (int distance) { rightPanel.dragged (distance); };
+    rightPanelResizerBar->onDragEnd = [this] { rightPanel.dragEnded(); };
+    rightPanelResizerBar->onDoubleClick = [this] { rightPanel.resetToDefault(); };
+
+    readLayoutPreferences();
 
     setSize (1280, 800);
 
     addAndMakeVisible(headerComponent.get());
     addAndMakeVisible(middlePanelComponent.get());
-    addAndMakeVisible(stretchableLayoutResizerBar.get());
     addAndMakeVisible(rightPanelComponent.get());
-
-    stretchableLayoutManager->setItemLayout (0,          // for item 0
-                                             25, -1.0,    // size must be between 25pix and 100% of the available space
-                                             -0.8);      // and its preferred size in % of the total available space
-
-    stretchableLayoutManager->setItemLayout (1, // for item 1
-                                             3, 3, 3);
-
-    stretchableLayoutManager->setItemLayout (2,          // for item 2
-                                             25, -1.0, // size must be between 25pix and 50% of the available space
-                                             400);        // its preferred size in pixels
+    addAndMakeVisible(rightPanelResizerBar.get());   // after its neighbours: it overlaps their edges
 
     resized();
 
@@ -86,31 +93,69 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    const auto headerHeight = headerComponent->getHeight();
-    headerComponent->setBounds(0, 0, getWidth(), headerHeight);
-    
-    stretchableLayoutResizerBar->setVisible(rightPanelVisible);
-    rightPanelComponent->setVisible(rightPanelVisible);
-    
-    if (rightPanelVisible) {
-        
-        // the list of components that we want to reposition
-        Component* comps[] = {  middlePanelComponent.get(),
-                                stretchableLayoutResizerBar.get(),
-                                rightPanelComponent.get() };
-        
-        // this will position the 3 components, one above the other, to fit
-        // horizontically into the rectangle provided.
-        stretchableLayoutManager->layOutComponents (comps, 3,
-                                                    0, headerHeight, getWidth(), getHeight() - headerHeight,
-                                                    false, true);
-    }
-    else {
-        middlePanelComponent->setBounds(0,
-                                        headerHeight,
-                                        getWidth(),
-                                        getHeight() - headerHeight);
-    }
+    auto bounds = getLocalBounds();
+    headerComponent->setBounds (bounds.removeFromTop (HeaderComponent::preferredHeight));
+
+    const auto rightPanelWidth = rightPanel.getShownSize();
+    rightPanelComponent->setVisible (rightPanelWidth > 0);
+    rightPanelResizerBar->setVisible (rightPanelWidth > 0 || rightPanel.isDragging());   // a drag keeps its seam through a collapse
+    if (rightPanelWidth > 0)
+        rightPanelComponent->setBounds (bounds.removeFromRight (rightPanelWidth));
+    if (rightPanelResizerBar->isVisible())
+        rightPanelResizerBar->setBounds (PanelResizerBar::boundsForSeam (bounds.removeFromRight (PanelResizerBar::seamThickness), true));
+
+    middlePanelComponent->setBounds (bounds);
+}
+
+void MainComponent::setMixerVisible (bool visible)
+{
+    middlePanelComponent->setMixerVisible (visible);   // persists through onMixerLayoutChanged
+}
+
+bool MainComponent::isMixerVisible() const
+{
+    return middlePanelComponent->isMixerVisible();
+}
+
+void MainComponent::setAuxBusesVisible (bool visible)
+{
+    middlePanelComponent->setAuxBusesVisible (visible);
+}
+
+bool MainComponent::areAuxBusesVisible() const
+{
+    return middlePanelComponent->areAuxBusesVisible();
+}
+
+void MainComponent::updatePanelToggles()
+{
+    headerComponent->setPanelStates (rightPanel.isOpen());
+}
+
+void MainComponent::readLayoutPreferences()
+{
+   #ifndef AUDIONAUT_HEADLESS   // the headless builds (tests, CLI) have no app preferences
+    auto& preferences = AudiumApplication::getPreferences();
+    const auto intValue = [&] (const char* key, int defaultValue)
+    {
+        return String (preferences.getValue (key, std::to_string (defaultValue))).getIntValue();
+    };
+
+    rightPanel.restore (preferences.getValue (PreferenceKeys::rightPanelVisible, "true") == "true",
+                        intValue (PreferenceKeys::rightPanelWidth, defaultRightPanelWidth));
+    middlePanelComponent->restoreMixerLayout (preferences.getValue (PreferenceKeys::mixerVisible, "false") == "true");
+   #endif
+    updatePanelToggles();
+}
+
+void MainComponent::writeLayoutPreferences()
+{
+   #ifndef AUDIONAUT_HEADLESS
+    auto& preferences = AudiumApplication::getPreferences();
+    preferences.setValue (PreferenceKeys::rightPanelVisible, rightPanel.isOpen() ? "true" : "false");
+    preferences.setValue (PreferenceKeys::rightPanelWidth, std::to_string (rightPanel.getSize()));
+    preferences.setValue (PreferenceKeys::mixerVisible, middlePanelComponent->isMixerVisible() ? "true" : "false");
+   #endif
 }
 
 void MainComponent::actionListenerCallback (const juce::String& message)
@@ -154,7 +199,10 @@ void MainComponent::actionListenerCallback (const juce::String& message)
     }
     else if (message == audium::updateSelection)
     {
+        // a clip, region or play list item was selected: that deselected any track, so the channel view's
+        // headers and the mixer's bands re-read the track selection along with the arrangement and the right panel
         middlePanelComponent->updateUI(MiddlePanelComponent::ArrangementContext);
+        middlePanelComponent->updateUI(MiddlePanelComponent::ChannelsContext);
         rightPanelComponent->updateUI(SelectionContext);
     }
     else if (message == audium::recordingFinishedAction) {

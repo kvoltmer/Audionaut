@@ -75,8 +75,10 @@ void AudioBusRenderer<SampleType>::prepareToPlay (int samplesPerBlockExpected, d
     spec.numChannels = 2;
     dryGain.setRampDurationSeconds(0.01);
     dryGain.prepare(spec);
-    masterGain.setRampDurationSeconds(0.01);
-    masterGain.prepare(spec);
+    for (auto& side : masterGain) {
+        side.setRampDurationSeconds (0.01);
+        side.prepare (spec);
+    }
 }
 
 template <class SampleType>
@@ -322,7 +324,33 @@ const AudioChannelData AudioBusRenderer<SampleType>::getChannelData(const int ch
 template <class SampleType>
 void AudioBusRenderer<SampleType>::setMasterGain(const float newGain)
 {
-    masterGain.setGainLinear(newGain);
+    masterGainValue = newGain;
+    applyMasterGains (false);   // the block re-applies them knowing whether the main mix is mono
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::setMasterPan (const float newPan)
+{
+    masterPanValue = newPan;
+    applyMasterGains (false);
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::setMasterMute (const bool mute)
+{
+    masterMuted = mute;
+    applyMasterGains (false);
+}
+
+template <class SampleType>
+void AudioBusRenderer<SampleType>::applyMasterGains (const bool monoMain) noexcept
+{
+    // the aux returns' balance law: the far side stays at the gain, the near one drops; a mono main mix takes
+    // the gain alone, its two sides being one
+    const auto level = masterMuted ? static_cast<SampleType> (0) : static_cast<SampleType> (masterGainValue);
+    const auto balance = monoMain ? static_cast<SampleType> (0) : static_cast<SampleType> (masterPanValue);
+    masterGain[0].setGainLinear (level * juce::jmin (static_cast<SampleType> (1), static_cast<SampleType> (1) - balance));
+    masterGain[1].setGainLinear (level * juce::jmin (static_cast<SampleType> (1), static_cast<SampleType> (1) + balance));
 }
 
 template <class SampleType>
@@ -363,10 +391,12 @@ void AudioBusRenderer<SampleType>::resetGains()
         gains[i].setRampDurationSeconds(rampDuration);
     }
     
-    auto rampDuration = masterGain.getRampDurationSeconds();
-    masterGain.setRampDurationSeconds(0.0);
-    masterGain.setGainLinear(masterGain.getGainLinear());
-    masterGain.setRampDurationSeconds(rampDuration);
+    for (auto& side : masterGain) {
+        auto rampDuration = side.getRampDurationSeconds();
+        side.setRampDurationSeconds (0.0);
+        side.setGainLinear (side.getGainLinear());
+        side.setRampDurationSeconds (rampDuration);
+    }
 }
 
 template <class SampleType>
@@ -866,8 +896,13 @@ void AudioBusRenderer<SampleType>::renderMaster (AudioBlock<SampleType>& outputB
                 for (auto* slot : ctx.plan->master)
                     slot->process (mainMixBlock);
 
-        ProcessContextReplacing<SampleType> gainContext(mainMixBlock);
-        masterGain.process(gainContext);
+        // master gain by balance, or silence while muted, per side
+        applyMasterGains (monoMain);
+        for (size_t m = 0; m < 2; ++m) {
+            auto side = mainMixBlock.getSingleChannelBlock (m);
+            ProcessContextReplacing<SampleType> gainContext (side);
+            masterGain[m].process (gainContext);
+        }
 
         const auto mainOutputs = monoMain ? 1 : 2;
         for (auto m = 0; m < 2; ++m) {

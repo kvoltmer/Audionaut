@@ -73,6 +73,8 @@ nlohmann::json makeProjectSummary (AudiumEngine& engine)
     summary["projectFile"] = engine.getProjectFileStore()->getCurrentProjectFile().getFullPathName().toStdString();
     summary["tempoBpm"] = trackContainer->getTempoProvider()->getTempo();
     summary["masterGain"] = trackContainer->getMasterGain();
+    summary["masterPan"] = trackContainer->getMasterPan();
+    summary["masterMute"] = trackContainer->getMasterMute();
 
     auto tracks = nlohmann::json::array();
     for (auto& track : trackContainer->getAudioTracks()) {

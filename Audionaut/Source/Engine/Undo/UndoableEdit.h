@@ -27,6 +27,10 @@ namespace audium {
  * snapshots into the existing tracks instead of rebuilding them, for edits
  * that don't add or remove tracks, channels or resource groups.
  *
+ * The views hear about the edit from the container itself: applying the
+ * recorded state broadcasts updateAll (rebuildAll with @p rebuild), on the
+ * edit as on every undo and redo of it, so callers send no refresh of their own.
+ *
  * Message thread only, like every other container mutation.
  */
 inline bool applyAsUndoableEdit (AudioTrackContainer& container,

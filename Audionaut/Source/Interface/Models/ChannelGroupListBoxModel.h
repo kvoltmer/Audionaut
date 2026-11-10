@@ -65,7 +65,8 @@ public:
     {
         audiumEngine->getAudioTrackContainer()->getSelectionManager()->deselectAll();
         owner->deselectAllRows();
-        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateMiddlePanelAction);
+        // updateAll, as a header click: the arrangement rows, the mixer and the right panel's selected-track header follow the deselect
+        audiumEngine->getAudioTrackContainer()->sendActionMessage(audium::updateAll);
     }
         
 private:

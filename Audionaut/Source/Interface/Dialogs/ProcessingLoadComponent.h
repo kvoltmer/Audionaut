@@ -12,6 +12,8 @@
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Playback/RenderThreadPool.h"
+#include "Engine/Playback/Playback.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Interface/Controls/LoadMeter.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
@@ -29,7 +31,8 @@
  * bars are each thread's own share of the period, the audio thread first
  * (its callback time less the time it waited for the workers), then the
  * workers, each coloured by the tracks it rendered in the last block.
- * Overruns and stalls count since the audio device started.
+ * "Voices" is how many clip voices the playback holds right now. Overruns
+ * and stalls count since the audio device started.
  */
 class ProcessingLoadComponent : public juce::Component,
                                 private juce::Timer
@@ -41,7 +44,7 @@ public:
     explicit ProcessingLoadComponent (std::shared_ptr<audium::AudiumEngine> engine_) :
         engine (std::move (engine_))
     {
-        for (auto* readout : { &callback, &peak, &work, &threads, &overruns, &stalls })
+        for (auto* readout : { &callback, &peak, &work, &voices, &threads, &overruns, &stalls })
         {
             readout->name.setJustificationType (juce::Justification::centredLeft);
             readout->name.setColour (juce::Label::textColourId, findColour (juce::Label::textColourId).withAlpha (0.7f));
@@ -57,6 +60,7 @@ public:
         callback.name.setText ("Audio Callback", juce::dontSendNotification);
         peak.name.setText ("Peak", juce::dontSendNotification);
         work.name.setText ("Work of one core", juce::dontSendNotification);
+        voices.name.setText ("Voices", juce::dontSendNotification);
         threads.name.setText ("Threads", juce::dontSendNotification);
         overruns.name.setText ("Overruns", juce::dontSendNotification);
         stalls.name.setText ("Stalls", juce::dontSendNotification);
@@ -78,7 +82,7 @@ public:
     void resized() override
     {
         auto area = getLocalBounds().reduced (12);
-        auto readouts = area.removeFromBottom (rowHeight * 3);
+        auto readouts = area.removeFromBottom (rowHeight * numReadoutRows);
         area.removeFromBottom (12);
 
         auto names = area.removeFromTop (rowHeight);
@@ -102,8 +106,8 @@ public:
             percentLabels[static_cast<size_t> (i)]->setBounds (x, percents.getY(), column, percents.getHeight());
         }
 
-        // the readouts sit under the bars in two narrow columns of three, the
-        // callback's figures on the left, the pool's on the right, each a
+        // the readouts sit under the bars in two narrow columns, the callback's
+        // figures and the voices on the left, the pool's on the right, each a
         // label and a right-aligned value of fixed width; the left column
         // starts at the first bar's left edge and the right one ends at the
         // last bar's right edge where the bars are far enough apart, and
@@ -118,18 +122,19 @@ public:
         auto right = readouts.withX (rightX).withWidth (columnWidth);
         for (auto* columnArea : { &left, &right })
         {
-            auto* rows = columnArea == &left ? leftColumn : rightColumn;
-            for (auto i = 0; i < 3; ++i)
+            auto& rows = columnArea == &left ? leftColumn : rightColumn;
+            for (auto* readout : rows)
             {
                 auto row = columnArea->removeFromTop (rowHeight);
-                rows[i]->name.setBounds (row.removeFromLeft (nameWidth));
-                rows[i]->value.setBounds (row);
+                readout->name.setBounds (row.removeFromLeft (nameWidth));
+                readout->value.setBounds (row);
             }
         }
     }
 
 private:
     static constexpr int rowHeight = 20;
+    static constexpr int numReadoutRows = 4;   ///< the taller of the two readout columns
     static constexpr int nameWidth = 116;
     static constexpr int valueWidth = 76;
     static constexpr int columnGap = 16;
@@ -201,6 +206,7 @@ private:
         work.value.setText (percent (workLoad), juce::dontSendNotification);
         overruns.value.setText (juce::String (dspLoad.getOverrunCount()), juce::dontSendNotification);
         stalls.value.setText (juce::String (pool.getStallCount()), juce::dontSendNotification);
+        voices.value.setText (juce::String (engine->getPlayListScheduler()->getPlayback()->getNumVoices()), juce::dontSendNotification);
 
         const auto threadsText = pool.isRunning() ? juce::String (numWorkers + 1) : juce::String ("device stopped");
         threads.value.setText (threadsText, juce::dontSendNotification);
@@ -303,9 +309,9 @@ private:
         juce::Label name, value;
     };
 
-    Readout callback, peak, work, threads, overruns, stalls;
-    Readout* leftColumn[3] = { &callback, &peak, &work };
-    Readout* rightColumn[3] = { &threads, &overruns, &stalls };
+    Readout callback, peak, work, voices, threads, overruns, stalls;
+    std::vector<Readout*> leftColumn { &callback, &peak, &work, &voices };
+    std::vector<Readout*> rightColumn { &threads, &overruns, &stalls };
     std::vector<std::unique_ptr<LoadMeter>> meters;
     std::vector<std::unique_ptr<juce::Label>> percentLabels;
     std::vector<std::unique_ptr<juce::Label>> nameLabels;

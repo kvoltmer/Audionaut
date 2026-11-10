@@ -122,6 +122,9 @@
     <Filter Include="Audionaut\Source\Interface\Handlers">
       <UniqueIdentifier>{E9C21236-7FDD-1AD7-58E7-B76EEB2D75BD}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\Source\Interface\Components\MixerPanel">
+      <UniqueIdentifier>{97371869-A596-42A9-DA87-F960AF441807}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\Source\Interface\Components\MiddlePanel\ChannelView">
       <UniqueIdentifier>{3282F91C-8681-4BCC-7362-8D7AF9C276F2}</UniqueIdentifier>
     </Filter>
@@ -1446,6 +1449,30 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp">
       <Filter>Audionaut\Source\Interface\Handlers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerStripElements.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerStripComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerTrackGroupComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MiddlePanel\ChannelView\ChannelComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel\ChannelView</Filter>
@@ -5388,6 +5415,42 @@
     <ClInclude Include="..\..\Source\Interface\Handlers\ZoomHandler.h">
       <Filter>Audionaut\Source\Interface\Handlers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerContext.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerSectionBar.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripElements.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerTrackGroupComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\SendKnobComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\MiddlePanelComponent.h">
       <Filter>Audionaut\Source\Interface\Components\MiddlePanel</Filter>
     </ClInclude>
@@ -5423,9 +5486,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h">
       <Filter>Audionaut\Source\Interface\Components\HeaderPanel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
@@ -5509,6 +5569,18 @@
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\CollapsiblePanel.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelHeaderBar.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelResizerBar.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelToggleButton.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h">

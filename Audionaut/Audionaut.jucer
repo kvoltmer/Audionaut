@@ -650,6 +650,48 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <GROUP id="{B7C1D2E3-4F50-6A7B-8C9D-0E1F2A3B4C5D}" name="MixerPanel">
+            <FILE id="EfEdtH" name="EffectEditorComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.h"/>
+            <FILE id="EfEdtC" name="EffectEditorComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.cpp"/>
+            <FILE id="InSLsH" name="InsertSlotListComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.h"/>
+            <FILE id="InSLsC" name="InsertSlotListComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp"/>
+            <FILE id="MxBGrH" name="MixerBusGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.h"/>
+            <FILE id="MxBGrC" name="MixerBusGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.cpp"/>
+            <FILE id="MxBStH" name="MixerBusStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.h"/>
+            <FILE id="MxBStC" name="MixerBusStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.cpp"/>
+            <FILE id="MxrCmH" name="MixerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.h"/>
+            <FILE id="MxrCmC" name="MixerComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.cpp"/>
+            <FILE id="MxCtxH" name="MixerContext.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerContext.h"/>
+            <FILE id="MxLayH" name="MixerLayout.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerLayout.h"/>
+            <FILE id="MxSBrH" name="MixerSectionBar.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerSectionBar.h"/>
+            <FILE id="MxSElC" name="MixerStripElements.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.cpp"/>
+            <FILE id="MxSElH" name="MixerStripElements.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.h"/>
+            <FILE id="MxStrH" name="MixerStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.h"/>
+            <FILE id="MxStrC" name="MixerStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.cpp"/>
+            <FILE id="MxGrpH" name="MixerTrackGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.h"/>
+            <FILE id="MxGrpC" name="MixerTrackGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.cpp"/>
+            <FILE id="SndRwH" name="SendKnobComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/SendKnobComponent.h"/>
+          </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
@@ -697,8 +739,6 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
-            <FILE id="RBPpet" name="FooterComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/RightPanel/FooterComponent.h"/>
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
             <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"
@@ -782,6 +822,14 @@
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="LdMtrH" name="LoadMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LoadMeter.h"/>
           <FILE id="LdMtrC" name="LoadMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LoadMeter.cpp"/>
+          <FILE id="ClpPnl" name="CollapsiblePanel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/CollapsiblePanel.h"/>
+          <FILE id="PnlHdB" name="PanelHeaderBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelHeaderBar.h"/>
+          <FILE id="PnlRzB" name="PanelResizerBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelResizerBar.h"/>
+          <FILE id="PnlTgB" name="PanelToggleButton.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelToggleButton.h"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"

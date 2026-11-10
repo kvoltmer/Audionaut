@@ -141,15 +141,12 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     
     
     // RIGHT PANEL
-    rightPanelButton = std::make_unique<juce::ShapeButton>("Right Panel", Colours::transparentBlack, Colours::grey.withAlpha(0.25f), Colours::grey.withAlpha(0.25f));
-    rightPanelButton->setOutline(Colours::white.withAlpha(0.75f), 1.2f);
+    rightPanelButton = std::make_unique<PanelToggleButton>("Right Panel", PanelToggleButton::Pane::right);
     addAndMakeVisible(rightPanelButton.get());
-    auto path = getRightPanelButtonPath();
-    rightPanelButton->setShape(path, true, true, true);
     rightPanelButton->onClick = [this]() {
         NullCheckedInvocation::invoke(this->onRightPanelButtonClick);
     };
-    
+
     
     // master meter
     stereoMeter = std::make_unique<StereoMeter>();
@@ -158,27 +155,8 @@ HeaderComponent::HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEn
     // dsp load meter
     loadMeter = std::make_unique<LoadMeter>();
     addAndMakeVisible(loadMeter.get());
-    
-    // master volume
-    volumeSlider = std::make_unique<juce::Slider>("Master Volume Font 13");
-    addAndMakeVisible(volumeSlider.get());
-    AudiumLookAndFeel::configureVolumeSlider(volumeSlider.get());
-    volumeSlider->setColour (Slider::backgroundColourId, juce::Colours::grey);
 
-    volumeSlider->onValueChange = [this] {
-        auto gain = Decibels::decibelsToGain(volumeSlider->getValue());
-        this->audiumEngine->getAudioTrackContainer()->setMasterGain(gain);
-    };
-    volumeSlider->onDragStart = [this] {
-        // TODO: undo/redo
-    };
-    
-    volumeSlider->onDragEnd = [this] {
-        // TODO: undo/redo
-    };
-
-
-    setSize (1200, 40);
+    setSize (1200, preferredHeight);
     startTimerHz(AudiumLookAndFeel::timerHz);
 }
 
@@ -230,7 +208,7 @@ HeaderComponent::~HeaderComponent()
 
 void HeaderComponent::paint (juce::Graphics& g)
 {
-    g.fillAll (findColour (audium::secondaryBackgroundColourId));
+    g.fillAll (findColour (audium::dividerColourId));   // the same band as the mixer's and the region list's header bars
 }
 
 void HeaderComponent::resized()
@@ -252,19 +230,15 @@ void HeaderComponent::resized()
     loopButton->setBounds(x, 10, 35, 20);
     
     x += 100;
-    volumeSlider->setBounds(x, 10, 70, 20);
-    x += 100;
     stereoMeter->setBounds(x, 10, 110, 20);
     x += 116;
     loadMeter->setBounds(x, 10, 10, 20);
 
-    rightPanelButton->setBounds(getWidth() - 40, 10, 30, 20);
+    rightPanelButton->setBounds(getWidth() - 36, 10, 20, 20);
 }
 
 void HeaderComponent::updateUI()
 {
-    auto gain = audiumEngine->getAudioTrackContainer()->getMasterGain();
-    volumeSlider->setValue(LevelMeter::gainToDecebel(gain), dontSendNotification);
     auto loopActive = audiumEngine->getPlayListScheduler()->getTransportLoop()->isLoopActive();
     loopButton->setToggleState(loopActive, dontSendNotification);
     
@@ -326,30 +300,9 @@ void HeaderComponent::timerCallback()
     }
 }
 
-juce::Path HeaderComponent::getRightPanelButtonPath()
+void HeaderComponent::setPanelStates (bool rightPanelShown)
 {
-    juce::Path rightPanelPath;
-    auto w = 30;
-    auto h = 20;
-    auto b = 19;
-    
-    rightPanelPath.addRoundedRectangle(0, 0, w, h, 2.f);
-    rightPanelPath.startNewSubPath(b, 0);
-    rightPanelPath.lineTo(b, h);
-    rightPanelPath.closeSubPath();
-    
-    
-    
-    auto y = 5.f;
-    auto s = 3.f;
-    for (auto i = 0; i < 3; i++) {
-        rightPanelPath.startNewSubPath(b+s, y);
-        rightPanelPath.lineTo(w-s, y);
-        rightPanelPath.closeSubPath();
-        y += 4.f;
-    }
-    
-    return rightPanelPath;
+    rightPanelButton->setToggleState (rightPanelShown, dontSendNotification);
 }
 
 juce::Path HeaderComponent::getLoopButtonPath()

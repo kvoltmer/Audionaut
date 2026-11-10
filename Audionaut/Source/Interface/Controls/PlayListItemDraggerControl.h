@@ -45,8 +45,8 @@ public:
 
         // Polls the AnalysisWorker for this clip's pending analyses and
         // animates the "Analysing" label suffix while there are any - the
-        // worker has no per-file completion callback to listen to. 200ms
-        // matches the footer status line's animation step.
+        // worker has no per-file completion callback to listen to. 200ms per
+        // step reads as moving rather than flickering.
         startTimer(200);
     }
 

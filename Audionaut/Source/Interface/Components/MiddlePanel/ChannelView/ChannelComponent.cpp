@@ -147,6 +147,13 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         audioTrack->onDragEnd("Monitor");
     };
 
+    // console keys, as on the mixer strip: the shadow under a raised one is painted here, so a change of state
+    // repaints the strip
+    for (auto* button : std::initializer_list<juce::Button*> { recordButton.get(), monitorButton.get(), soloButton.get(), muteButton.get() }) {
+        button->getProperties().set (AudiumLookAndFeel::consoleButtonProperty, true);
+        button->onStateChange = [this] { repaint(); };
+    }
+
     setSize (AudiumLookAndFeel::channelsWidth, 100);
   
     startTimerHz(AudiumLookAndFeel::timerHz);
@@ -221,6 +228,8 @@ void ChannelComponent::paint (juce::Graphics& g)
     auto borderColour = juce::Colours::black.withAlpha(0.50f);
     g.setColour(borderColour);
     g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+
+    AudiumLookAndFeel::drawConsoleButtonShadows (g, { recordButton.get(), monitorButton.get(), soloButton.get(), muteButton.get() });
     
     g.setColour(audioTrack->getViewState().getColour());
     if( insertAfter )
@@ -259,6 +268,7 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     
     monitorButton->setToggleState(channelData.monitor, dontSendNotification);
     recordButton->setToggleState(channelData.record, dontSendNotification);
+    repaint();   // the button shadows follow the toggle states
     
 
     updateRoutingIndicator();
@@ -303,39 +313,11 @@ void ChannelComponent::updateRoutingIndicator()
     panSlider->setEnabled (channelData.outputChannel < 0);
 }
 
-namespace
-{
-// strip menu item ids. Waveform sizes use AudiumLookAndFeel::SizeIds (<= 400);
-// routing picks live above them: base id = default (auto input / Main out),
-// base + 1 + hardware channel = explicit pick
-constexpr int kInputMenuBase  = 1000;
-constexpr int kOutputMenuBase = 2000;
-constexpr int kMenuRange      = 1000;
-
-void addRoutingItems(PopupMenu& menu, int baseId, const String& defaultLabel,
-                     const StringArray& deviceChannelNames, int selectedChannel,
-                     const String& unavailableLabel)
-{
-    menu.addItem(baseId, defaultLabel, true, selectedChannel < 0);
-
-    for (auto i = 0; i < deviceChannelNames.size(); ++i) {
-        // the device's own channel name; a bare number when it has none
-        const auto name = deviceChannelNames[i].trim();
-        const auto label = name.isNotEmpty() ? name : String(i + 1);
-        menu.addItem(baseId + 1 + i, label, true, selectedChannel == i);
-    }
-
-    // a saved route the current device can't provide: show it, but it can't be re-picked
-    if (selectedChannel >= deviceChannelNames.size())
-        menu.addItem(baseId + 1 + selectedChannel, unavailableLabel, false, true);
-}
-} // namespace
-
 void ChannelComponent::showStripMenu()
 {
-    auto channelData = audioTrack->getChannelData(rowNumber);
     auto currentHeight = audioTrack->getChannel(rowNumber)->getChannelHeight();
 
+    // the waveform sizes by id (AudiumLookAndFeel::SizeIds, the height itself), picked in stripMenuCallback
     PopupMenu sizeMenu;
     sizeMenu.addItem (AudiumLookAndFeel::SizeIds::micro,  TRANS ("micro"),  true, currentHeight == AudiumLookAndFeel::SizeIds::micro);
     sizeMenu.addItem (AudiumLookAndFeel::SizeIds::small,  TRANS ("small"),  true, currentHeight == AudiumLookAndFeel::SizeIds::small);
@@ -343,30 +325,14 @@ void ChannelComponent::showStripMenu()
     sizeMenu.addItem (AudiumLookAndFeel::SizeIds::large,  TRANS ("large"),  true, currentHeight == AudiumLookAndFeel::SizeIds::large);
     sizeMenu.addItem (AudiumLookAndFeel::SizeIds::huge,   TRANS ("huge"),   true, currentHeight == AudiumLookAndFeel::SizeIds::huge);
 
-    StringArray inputNames, outputNames;
-    if (auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice()) {
-        inputNames = currentDevice->getInputChannelNames();
-        outputNames = currentDevice->getOutputChannelNames();
-    }
-
-    PopupMenu inputMenu;
-    addRoutingItems(inputMenu, kInputMenuBase,
-                    TRANS("Default (input ") + String(rowNumber + 1) + ")",
-                    inputNames, channelData.inputChannel,
-                    TRANS("Input ") + String(channelData.inputChannel + 1) + TRANS(" (not available)"));
-
-    PopupMenu outputMenu;
-    addRoutingItems(outputMenu, kOutputMenuBase, TRANS("Main Bus"),
-                    outputNames, channelData.outputChannel,
-                    TRANS("Output ") + String(channelData.outputChannel + 1) + TRANS(" (not available)"));
-
-    PopupMenu routingMenu;
-    routingMenu.addSubMenu(TRANS("Input"), inputMenu);
-    routingMenu.addSubMenu(TRANS("Output"), outputMenu);
+    // the routes as the mixer strip offers them: items with their own actions
+    PopupMenu routing;
+    routing.addSubMenu(TRANS("Input"), routingMenu (engine, audioTrack, rowNumber, true));
+    routing.addSubMenu(TRANS("Output"), routingMenu (engine, audioTrack, rowNumber, false));
 
     PopupMenu m;
     m.addSubMenu(TRANS("Waveform Size"), sizeMenu);
-    m.addSubMenu(TRANS("Routing"), routingMenu);
+    m.addSubMenu(TRANS("Routing"), routing);
 
     m.setLookAndFeel (&getLookAndFeel());
     m.showMenuAsync (PopupMenu::Options()
@@ -383,14 +349,8 @@ void ChannelComponent::stripMenuCallback (int result, ChannelComponent* componen
     // the combo box flagged itself as showing a popup when it handed over to showStripMenu
     component->channelSizeComboBox->hidePopup();
 
-    if (result == 0)
-        return;
-
-    if (result >= kOutputMenuBase && result < kOutputMenuBase + kMenuRange)
-        component->setRoutingChannel(false, result - kOutputMenuBase - 1); // base -> -1 (Main)
-    else if (result >= kInputMenuBase && result < kInputMenuBase + kMenuRange)
-        component->setRoutingChannel(true, result - kInputMenuBase - 1);   // base -> -1 (auto)
-    else
+    // 0 = dismissed; a routing item runs its own action and reports -1 here
+    if (result > 0)
         component->setChannelHeight(result);
 }
 
@@ -406,15 +366,49 @@ void ChannelComponent::setChannelHeight(int height)
 
 void ChannelComponent::setRoutingChannel(bool isInput, int newChannel)
 {
-    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [this, isInput, newChannel]
+    setRoutingChannel (audioTrack, rowNumber, isInput, newChannel);
+}
+
+void ChannelComponent::setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel)
+{
+    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [&]
     {
+        auto channel = audioTrack->getChannel (channelNumber);
+        if (channel == nullptr)
+            return false;
         if (isInput)
-            audioTrack->getChannel(rowNumber)->setInputChannel(newChannel);
+            channel->setInputChannel(newChannel);
         else
-            audioTrack->getChannel(rowNumber)->setOutputChannel(newChannel);
+            channel->setOutputChannel(newChannel);
         return true;
     },
-    "Set channel routing", false);
+    "Set channel routing", false);   // the strips re-read the route on its broadcast
+}
+
+juce::PopupMenu ChannelComponent::routingMenu (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                               const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool input)
+{
+    const auto channelData = audioTrack->getChannelData (channelNumber);
+    const auto selected = input ? channelData.inputChannel : channelData.outputChannel;
+
+    StringArray names;
+    if (auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice())
+        names = input ? device->getInputChannelNames() : device->getOutputChannelNames();
+
+    const auto pick = [audioTrack, channelNumber, input] (int route)
+    {
+        return [audioTrack, channelNumber, input, route] { setRoutingChannel (audioTrack, channelNumber, input, route); };
+    };
+
+    PopupMenu menu;
+    menu.addItem (input ? TRANS("Default (input ") + String (channelNumber + 1) + ")" : TRANS("Main Bus"), true, selected < 0, pick (-1));
+    for (auto i = 0; i < names.size(); ++i) {
+        const auto name = names[i].trim();
+        menu.addItem (name.isNotEmpty() ? name : String (i + 1), true, selected == i, pick (i));
+    }
+    if (selected >= names.size())
+        menu.addItem ((input ? TRANS("Input ") : TRANS("Output ")) + String (selected + 1) + TRANS(" (not available)"), false, true, nullptr);
+    return menu;
 }
 
 void ChannelComponent::timerCallback()
@@ -433,7 +427,10 @@ void ChannelComponent::timerCallback()
     levelMeter->setGrayscale(displayRecordingLevel);
     levelMeter->setLevel(lvl);
     
-    recordButton->setToggleState(data.record, dontSendNotification);
+    if (recordButton->getToggleState() != data.record) {
+        recordButton->setToggleState(data.record, dontSendNotification);
+        repaint();   // the button's shadow
+    }
 
     // Once a second: the routing indication depends on the audio device,
     // which can change without this component being refreshed.
@@ -497,7 +494,9 @@ void ChannelComponent::mouseDown (const juce::MouseEvent& e)
         m.showMenuAsync (PopupMenu::Options().withStandardItemHeight(AudiumLookAndFeel::popupMenuItemHeight));
     }
     
-    audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateMiddlePanelAction);
+    // updateAll, as a track header click: selecting a channel deselected the track, and the right panel's
+    // selected-track header and the mixer follow that, not only this view and the arrangement
+    audioTrack->getAudioTrackContainer().sendActionMessage(audium::updateAll);
 }
 
 void ChannelComponent::mouseUp (const juce::MouseEvent& e)
@@ -598,6 +597,12 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
 
 bool ChannelComponent::audioInputAvailable(int channelNumber)
 {
+    return audioInputAvailable (engine, audioTrack, channelNumber);
+}
+
+bool ChannelComponent::audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                            const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber)
+{
     auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
     if (currentDevice == nullptr)
         return false;
@@ -610,10 +615,19 @@ bool ChannelComponent::audioInputAvailable(int channelNumber)
 
 void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
 {
-    if (audioInputAvailable(channelNumber)) {
+    setRecordEnabled (engine, audioTrack, channelNumber, bEnabled);
+}
+
+void ChannelComponent::setRecordEnabled (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                         const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool bEnabled)
+{
+    auto& container = *engine->getAudioTrackContainer();
+    auto stepRecorded = false;
+
+    if (audioInputAvailable(engine, audioTrack, channelNumber)) {
 
         // Undo: store old state
-        auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(*engine->getAudioTrackContainer(), false) : nullptr;
+        auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(container, false) : nullptr;
         
         if (ModifierKeys::currentModifiers.isShiftDown())
             audioTrack->setRecordEnabled(-1, bEnabled);
@@ -632,11 +646,12 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
                 scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
         }
         
-        // Undo: store new state
+        // Undo: store new state; applying it tells the views
         if (action != nullptr) {
             action->storeNewState();
-            engine->getAudioTrackContainer()->getUndoManager()->perform(action.release(), "Record");
-            engine->getAudioTrackContainer()->getUndoManager()->beginNewTransaction();
+            container.getUndoManager()->perform(action.release(), "Record");
+            container.getUndoManager()->beginNewTransaction();
+            stepRecorded = true;
         }
     }
     else {
@@ -646,6 +661,12 @@ void ChannelComponent::setRecordEnabled(int channelNumber, bool bEnabled)
                                                         "Please check: Settings ... -> Audio Device Settings");
         }
     }
+
+    // a disarm records no step and a refused arm changed nothing, so no broadcast came from the container:
+    // the arrangement's channel strip and the mixer strip both show the arm, and the one not clicked (or a
+    // button the engine refused) re-reads the channel's state here
+    if (! stepRecorded)
+        container.sendActionMessage (audium::updateChannelsAction);
 }
 
 //==============================================================================

@@ -108,16 +108,24 @@ public:
         return isValidIndex (index) ? values[static_cast<size_t> (index)].load (std::memory_order_relaxed) : 0.0f;
     }
 
+    /// The value as setParameter() would store it: within the parameter's range, a boolean at 0 or 1.
+    float clampParameter (int index, float value) const noexcept
+    {
+        if (! isValidIndex (index))
+            return 0.0f;
+
+        const auto& info = parameters[static_cast<size_t> (index)];
+        return info.boolean ? (value >= 0.5f ? 1.0f : 0.0f)
+                            : juce::jlimit (info.min, info.max, value);
+    }
+
     /// Clamps to the parameter's range (a boolean to 0 or 1) and stores; the next block picks it up.
     void setParameter (int index, float value) noexcept
     {
         if (! isValidIndex (index))
             return;
 
-        const auto& info = parameters[static_cast<size_t> (index)];
-        const auto clamped = info.boolean ? (value >= 0.5f ? 1.0f : 0.0f)
-                                          : juce::jlimit (info.min, info.max, value);
-        values[static_cast<size_t> (index)].store (clamped, std::memory_order_relaxed);
+        values[static_cast<size_t> (index)].store (clampParameter (index, value), std::memory_order_relaxed);
         parameterVersion.fetch_add (1, std::memory_order_release);
     }
 

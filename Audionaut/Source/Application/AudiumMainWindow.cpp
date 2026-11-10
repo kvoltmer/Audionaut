@@ -15,6 +15,7 @@
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Interface/Dialogs/NewRegionDialog.h"
 #include "Engine/Analysis/AnalysisProvider.h"
@@ -103,7 +104,9 @@ AudiumMainWindow::AudiumMainWindow (juce::String name, std::shared_ptr<audium::A
     setFullScreen (true);
 #else
     setResizable (true, true);
-    
+    // narrower than this and the arrangement would be squeezed under its minimum by an open right panel
+    setResizeLimits (MainComponent::minimumWidth, MainComponent::minimumHeight, 32768, 32768);
+
     String windowState;
     if (AudiumApplication::getPreferences().valueExists (PreferenceKeys::mainWindowState))
         windowState = AudiumApplication::getPreferences().getValue (PreferenceKeys::mainWindowState);
@@ -228,6 +231,12 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
                   newAudioTrackDialog = std::make_unique<NewAudioTrackDialog>();
               newAudioTrackDialog->createNewAudioTrack(getEngine());
           } },
+        { CommandIDs::createAuxBus, "Create Aux Bus", "Adds an aux bus; every channel gets a send into it", CommandCategories::create,
+          {}, {}, {}, {},
+          [this] {
+              auto& container = *getEngine()->getAudioTrackContainer();
+              audium::applyAsUndoableEdit (container, [&] { return container.addAuxBus() != nullptr; }, "Add Aux Bus", false);
+          } },
 
         { CommandIDs::zoomIn, "Zoom In", "Zoom in", CommandCategories::view,
           { KeyPress ('+', cmd, 0) }, {}, {}, {},
@@ -260,6 +269,18 @@ std::vector<AudiumMainWindow::Command> AudiumMainWindow::makeCommands()
           { KeyPress ('f', cmd | ModifierKeys::ctrlModifier, 0) },
           {}, [this] { return isFullScreen(); }, {},
           [this] { setFullScreen (!isFullScreen()); } },
+        { CommandIDs::showMixer, "Mixer", "Shows the mixer below the arrangement", CommandCategories::view,
+          { KeyPress ('m', cmd | ModifierKeys::shiftModifier, 0) },
+          {}, [this] { return mainComponent->isMixerVisible(); }, {},
+          [this] { mainComponent->setMixerVisible (! mainComponent->isMixerVisible()); } },
+        { CommandIDs::showAuxBuses, "Aux Buses", "Shows the aux bus strips in the mixer's bus section", CommandCategories::view,
+          {},
+          {}, [this] { return mainComponent->areAuxBusesVisible(); }, {},
+          [this] { mainComponent->setAuxBusesVisible (! mainComponent->areAuxBusesVisible()); } },
+        { CommandIDs::showRightPanel, "Right Panel", "Shows the playlist and region panel right of the arrangement", CommandCategories::view,
+          { KeyPress ('p', cmd | ModifierKeys::shiftModifier, 0) },
+          {}, [this] { return mainComponent->isRightPanelVisible(); }, {},
+          [this] { mainComponent->setRightPanelVisible (! mainComponent->isRightPanelVisible()); } },
 
         // The step's name follows the verb, as the undo history names it:
         // "Undo Move Clip", "Undo Agent: remove pauses". The menu is built

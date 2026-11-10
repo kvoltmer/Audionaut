@@ -57,6 +57,11 @@ AudiumApplication& AudiumApplication::getApp()
     return *app;
 }
 
+juce::ApplicationCommandTarget* AudiumApplication::getNextCommandTarget()
+{
+    return mainWindow.get();
+}
+
 juce::ApplicationCommandManager& AudiumApplication::getCommandManager()
 {
     auto* cm = AudiumApplication::getApp().commandManager.get();
@@ -834,6 +839,7 @@ PopupMenu AudiumApplication::createCreateMenu()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::createAudioTrack);
+    menu.addCommandItem (commandManager.get(), CommandIDs::createAuxBus);
     menu.addSeparator();
     menu.addCommandItem(commandManager.get(), CommandIDs::createRegion);
     return menu;
@@ -851,6 +857,10 @@ PopupMenu AudiumApplication::createViewMenu()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::toggleFullScreen);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::showMixer);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAuxBuses);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showRightPanel);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showFileBrowser);
     menu.addCommandItem (commandManager.get(), CommandIDs::showProcessingLoad);
@@ -1482,7 +1492,7 @@ void AudiumApplication::showProcessingLoadWindow()
         new FloatingToolWindow ("Processing Load", audium::PreferenceKeys::loadWindowState,
                                 new ProcessingLoadComponent (audiumEngine),
                                 processingLoadView, true,
-                                ProcessingLoadComponent::minimumWidth, 260, ProcessingLoadComponent::minimumWidth, 180, 1600, 1000);
+                                ProcessingLoadComponent::minimumWidth, 280, ProcessingLoadComponent::minimumWidth, 200, 1600, 1000);
 }
 
 #if JUCE_DEBUG

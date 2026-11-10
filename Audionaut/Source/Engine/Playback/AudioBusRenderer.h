@@ -124,6 +124,13 @@ public:
 
     void setMasterGain(const float newGain);
 
+    /// The master balance (-1..1, the aux returns' law; a mono main mix ignores it) and mute, applied with the gain.
+    void setMasterPan (float newPan);
+    void setMasterMute (bool mute);
+
+    /// Sets the two sides' gain targets from the master values: gain by balance, or silence while muted; the ramps run from there.
+    void applyMasterGains (bool monoMain) noexcept;
+
     const float getChannelLevel(const int channelNumber) const;
 
     const float getRecordingLevel(const int channelNumber) const;
@@ -357,7 +364,10 @@ private:
     Panner<SampleType> panners[MAX_AUDIO_CHANNELS];
     Gain<SampleType> gains[MAX_AUDIO_CHANNELS];
     Gain<SampleType> dryGain;      ///< the dry main mix: unity, or silence while an aux return is soloed
-    Gain<SampleType> masterGain;
+    Gain<SampleType> masterGain[2];   ///< the main mix's two sides: gain by balance, or silence while muted; set per block from the values below
+    float masterGainValue = 1.0f;
+    float masterPanValue = 0.0f;
+    bool masterMuted = false;
 
     std::atomic<float> masterLevel[2];
     std::atomic<float> channelLevel[MAX_AUDIO_CHANNELS];
