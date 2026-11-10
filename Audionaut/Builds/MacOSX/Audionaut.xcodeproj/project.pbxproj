@@ -530,7 +530,6 @@
 		9417E0A325A6C950AFFE19F6 /* MixerStripComponent.cpp */ /* MixerStripComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MixerStripComponent.cpp; path = ../../Source/Interface/Components/MixerPanel/MixerStripComponent.cpp; sourceTree = SOURCE_ROOT; };
 		94B58655A219457B624D974B /* RenderThreadPool.cpp */ /* RenderThreadPool.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RenderThreadPool.cpp; path = ../../Source/Engine/Playback/RenderThreadPool.cpp; sourceTree = SOURCE_ROOT; };
 		9562C0F08BF2E2C80A3659FD /* LoadMeter.h */ /* LoadMeter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LoadMeter.h; path = ../../Source/Interface/Controls/LoadMeter.h; sourceTree = SOURCE_ROOT; };
-		959C9EE2E0644995C7EAD197 /* FooterComponent.h */ /* FooterComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FooterComponent.h; path = ../../Source/Interface/Components/RightPanel/FooterComponent.h; sourceTree = SOURCE_ROOT; };
 		95B1AAE6E9F4E3B758B1B6E3 /* AutoEditPreviewView.cpp */ /* AutoEditPreviewView.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AutoEditPreviewView.cpp; path = ../../Source/Interface/Views/AutoEditPreviewView.cpp; sourceTree = SOURCE_ROOT; };
 		963735C0B1CDBB40A2BD217B /* juce_graphics */ /* juce_graphics */ = {isa = PBXFileReference; lastKnownFileType = folder; name = juce_graphics; path = ../../../Submodules/JUCE/modules/juce_graphics; sourceTree = SOURCE_ROOT; };
 		9767D4BBA3D00798F2E0FFAF /* SincResampler.h */ /* SincResampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SincResampler.h; path = ../../Source/Engine/Analysis/Dsp/SincResampler.h; sourceTree = SOURCE_ROOT; };
@@ -611,6 +610,7 @@
 		BA5C39ABAF055C323410DE14 /* PlayListTableListBoxItem.h */ /* PlayListTableListBoxItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListTableListBoxItem.h; path = ../../Source/Interface/Models/PlayListTableListBoxItem.h; sourceTree = SOURCE_ROOT; };
 		BAA8A6836A43A0C76ECB6A52 /* include_juce_audio_processors_headless_lv2_libs.cpp */ /* include_juce_audio_processors_headless_lv2_libs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_audio_processors_headless_lv2_libs.cpp; path = ../../JuceLibraryCode/include_juce_audio_processors_headless_lv2_libs.cpp; sourceTree = SOURCE_ROOT; };
 		BADBB9D9AEAFBB0D593D7915 /* AudioBusInterface.h */ /* AudioBusInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusInterface.h; path = ../../Source/Engine/Playback/AudioBusInterface.h; sourceTree = SOURCE_ROOT; };
+		BB1BD6D3A4504739F3306B4E /* PanelHeaderBar.h */ /* PanelHeaderBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PanelHeaderBar.h; path = ../../Source/Interface/Controls/PanelHeaderBar.h; sourceTree = SOURCE_ROOT; };
 		BB501D85FE0011009FA48B05 /* MixerStripElements.h */ /* MixerStripElements.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MixerStripElements.h; path = ../../Source/Interface/Components/MixerPanel/MixerStripElements.h; sourceTree = SOURCE_ROOT; };
 		BB6CB1DC10B4B00E57A46C62 /* ProjectSummary.cpp */ /* ProjectSummary.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectSummary.cpp; path = ../../Source/Cli/ProjectSummary.cpp; sourceTree = SOURCE_ROOT; };
 		BC325BA600975DA123084DA3 /* AudioToolbox.framework */ /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -745,7 +745,6 @@
 		F8E23A04EB8ABD66140B0153 /* BeatSegmenter.cpp */ /* BeatSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = BeatSegmenter.cpp; path = ../../Source/Engine/Analysis/BeatSegmenter.cpp; sourceTree = SOURCE_ROOT; };
 		F90F2071384136BFA9D5AC6B /* AudioClipContainer.h */ /* AudioClipContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipContainer.h; path = ../../Source/Engine/Core/AudioClipContainer.h; sourceTree = SOURCE_ROOT; };
 		F92285741D1FC2129C528C37 /* SBicSegmenter.cpp */ /* SBicSegmenter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SBicSegmenter.cpp; path = ../../Source/Engine/Analysis/SBicSegmenter.cpp; sourceTree = SOURCE_ROOT; };
-		F94069E058CFC56B7F0B4BFB /* MixerHeaderBar.h */ /* MixerHeaderBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MixerHeaderBar.h; path = ../../Source/Interface/Components/MixerPanel/MixerHeaderBar.h; sourceTree = SOURCE_ROOT; };
 		F9816C9AA6BF2BC4109172C2 /* include_juce_data_structures.mm */ /* include_juce_data_structures.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = include_juce_data_structures.mm; path = ../../JuceLibraryCode/include_juce_data_structures.mm; sourceTree = SOURCE_ROOT; };
 		F98594A24820592F045D6479 /* AudioBusRenderer.h */ /* AudioBusRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioBusRenderer.h; path = ../../Source/Engine/Playback/AudioBusRenderer.h; sourceTree = SOURCE_ROOT; };
 		F986B76C535362EA061CA277 /* AudioExporter.h */ /* AudioExporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioExporter.h; path = ../../Source/Engine/Export/AudioExporter.h; sourceTree = SOURCE_ROOT; };
@@ -1046,7 +1045,6 @@
 				CC6EF76FE6F4370B201E9A1E,
 				264D7DD68B4444EB842000C7,
 				E1744EE445689826558CB311,
-				F94069E058CFC56B7F0B4BFB,
 				5A8EE50C773ABC7A824A8218,
 				22132B59738F3486E8451818,
 				BB501D85FE0011009FA48B05,
@@ -1062,7 +1060,6 @@
 		34EAA30F05FBFF3FC6733E4C /* RightPanel */ = {
 			isa = PBXGroup;
 			children = (
-				959C9EE2E0644995C7EAD197,
 				BE87328F6D75995A9B23C9EF,
 				03DF3A11364360FFACBE47A6,
 				EDD9561EE704339EB0B3F25B,
@@ -1438,6 +1435,7 @@
 				9562C0F08BF2E2C80A3659FD,
 				30722D1A7A30DD9F1336E1B2,
 				6305E026C62F21E4B2BCC233,
+				BB1BD6D3A4504739F3306B4E,
 				50AC9F067763DEE7CC59875C,
 				B85A662D6F9F50CFDA9356FA,
 				9A9AA9F5A0AC2B81BCF919E8,

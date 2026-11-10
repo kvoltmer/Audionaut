@@ -5436,9 +5436,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerHeaderBar.h">
-      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerSectionBar.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
@@ -5489,9 +5486,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h">
       <Filter>Audionaut\Source\Interface\Components\HeaderPanel</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h">
-      <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h">
       <Filter>Audionaut\Source\Interface\Components\RightPanel</Filter>
@@ -5578,6 +5572,9 @@
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\CollapsiblePanel.h">
+      <Filter>Audionaut\Source\Interface\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelHeaderBar.h">
       <Filter>Audionaut\Source\Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Controls\PanelResizerBar.h">

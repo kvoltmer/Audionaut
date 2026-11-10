@@ -9,9 +9,9 @@
 
 #include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Interface/Components/MixerPanel/MixerTrackGroupComponent.h"
-#include "Interface/Components/MixerPanel/MixerHeaderBar.h"
 #include "Interface/Components/MixerPanel/MixerSectionBar.h"
 #include "Interface/Components/MixerPanel/MixerBusGroupComponent.h"
+#include "Interface/Controls/PanelHeaderBar.h"
 
 /**
  * The mixer at the bottom of the middle panel: one strip per channel,
@@ -61,7 +61,7 @@ public:
     std::function<void()> onPreferredHeightChanged;
 
     /// The band across the top: the owner wires its drag callbacks to the panel the mixer opens and closes in.
-    MixerHeaderBar& getHeader() noexcept { return header; }
+    PanelHeaderBar& getHeader() noexcept { return header; }
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -85,7 +85,7 @@ private:
     void applyShown();
 
     MixerContext context;
-    MixerHeaderBar header;
+    PanelHeaderBar header { "Mixer", TRANS ("Show or hide the mixer") };
     MixerSectionBar sectionBar;
     MixerLayout::Shown shown;             ///< how far each section is open right now: the bar's mask once settled, in between while animating
     MixerLayout::Shown animationFrom;     ///< the sections as they were when the last toggle began

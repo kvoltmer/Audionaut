@@ -675,8 +675,6 @@
                   file="Source/Interface/Components/MixerPanel/MixerContext.h"/>
             <FILE id="MxLayH" name="MixerLayout.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerLayout.h"/>
-            <FILE id="MxHdrB" name="MixerHeaderBar.h" compile="0" resource="0"
-                  file="Source/Interface/Components/MixerPanel/MixerHeaderBar.h"/>
             <FILE id="MxSBrH" name="MixerSectionBar.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/MixerSectionBar.h"/>
             <FILE id="MxSElC" name="MixerStripElements.cpp" compile="1" resource="0"
@@ -741,8 +739,6 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
-            <FILE id="RBPpet" name="FooterComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/RightPanel/FooterComponent.h"/>
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
             <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"
@@ -828,6 +824,8 @@
           <FILE id="LdMtrC" name="LoadMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LoadMeter.cpp"/>
           <FILE id="ClpPnl" name="CollapsiblePanel.h" compile="0" resource="0"
                 file="Source/Interface/Controls/CollapsiblePanel.h"/>
+          <FILE id="PnlHdB" name="PanelHeaderBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelHeaderBar.h"/>
           <FILE id="PnlRzB" name="PanelResizerBar.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PanelResizerBar.h"/>
           <FILE id="PnlTgB" name="PanelToggleButton.h" compile="0" resource="0"

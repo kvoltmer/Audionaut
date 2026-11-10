@@ -95,7 +95,7 @@ void AudiumLookAndFeel::setupColours()
     
     // Table
     setColour(TableListBox::backgroundColourId, findColour(secondaryBackgroundColourId));
-    setColour(TableHeaderComponent::backgroundColourId, findColour(backgroundColourId));
+    setColour(TableHeaderComponent::backgroundColourId, findColour(secondaryBackgroundColourId));   // the window's, as under the playlists' headers
     setColour(TableHeaderComponent::highlightColourId, Colours::transparentBlack);
     setColour(TableHeaderComponent::textColourId, findColour(audium::defaultTextColourId));
     
@@ -278,21 +278,6 @@ Label* AudiumLookAndFeel::createSliderTextBox (Slider& slider)
     return l;
 }
 
-void AudiumLookAndFeel::drawStretchableLayoutResizerBar (juce::Graphics& g, int w, int h, bool isVerticalBar,
-                                                         bool isMouseOver, bool isMouseDragging)
-{
-    const auto active = isMouseOver || isMouseDragging;
-    const auto thickness = active ? 3.0f : 1.0f;
-
-    auto line = juce::Rectangle<float> (0.0f, 0.0f, static_cast<float> (w), static_cast<float> (h));
-    line = isVerticalBar ? line.withSizeKeepingCentre (thickness, line.getHeight())
-                         : line.withSizeKeepingCentre (line.getWidth(), thickness);
-
-    g.setColour (active ? juce::Colour (audium::toggledOnColour).withAlpha (0.85f)
-                        : findColour (audium::backgroundColourId));
-    g.fillRect (line);
-}
-
 void AudiumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, int width, int height,
                                        float sliderPos,
                                        float minSliderPos,
@@ -471,7 +456,7 @@ void AudiumLookAndFeel::drawTableHeaderColumn (Graphics& g, TableHeaderComponent
     }
 
     g.setColour (header.findColour (TableHeaderComponent::textColourId));
-    g.setFont (withDefaultMetrics (getTableHeaderFontOptions (height)));
+    g.setFont (withDefaultMetrics (getTableHeaderFontOptions()));
     g.drawFittedText (columnName, area, Justification::centredLeft, 1, 1.f);
 }
 

@@ -89,6 +89,8 @@ namespace PreferenceKeys
     static const char* const snapToGridEnabled      = "SnapToGridEnabled";
     static const char* const rightPanelVisible      = "RightPanelVisible";
     static const char* const rightPanelWidth        = "RightPanelWidth";
+    static const char* const regionListVisible      = "RegionListVisible";
+    static const char* const regionListHeight       = "RegionListHeight";
     static const char* const mixerVisible           = "MixerVisible";
     static const char* const mixerSections          = "MixerSections";
     static const char* const mixerAuxBuses          = "MixerAuxBuses";

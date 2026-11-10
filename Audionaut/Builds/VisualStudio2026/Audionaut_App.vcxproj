@@ -3671,7 +3671,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerContext.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerLayout.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerHeaderBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerSectionBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripElements.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerStripComponent.h"/>
@@ -3689,7 +3688,6 @@
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\ArrangementEditBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MiddlePanel\AudioTrackBaseComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\HeaderPanel\HeaderComponent.h"/>
-    <ClInclude Include="..\..\Source\Interface\Components\RightPanel\FooterComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\PlayListContainerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\RightPanel\RegionComponent.h"/>
@@ -3719,6 +3717,7 @@
     <ClInclude Include="..\..\Source\Interface\Controls\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\LoadMeter.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\CollapsiblePanel.h"/>
+    <ClInclude Include="..\..\Source\Interface\Controls\PanelHeaderBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PanelResizerBar.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PanelToggleButton.h"/>
     <ClInclude Include="..\..\Source\Interface\Controls\PlayListTableListBox.h"/>

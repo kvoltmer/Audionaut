@@ -132,7 +132,7 @@ private:
             g.setColour (juce::Colours::black);
             g.drawRect (getLocalBounds(), 1);
             g.setColour (colour);
-            g.setFont (juce::FontOptions (12.0f));
+            g.setFont (AudiumLookAndFeel::getTableHeaderFontOptions());   // as the region list's header under it
             g.drawText (track.getAudioTrackName() + " - Playlist", getLocalBounds().reduced (4, 0), juce::Justification::centredLeft, true);
         }
 

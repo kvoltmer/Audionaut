@@ -11,38 +11,38 @@
 #include "Interface/Components/RightPanel/PlayListComponent.h"
 #include "Interface/Components/RightPanel/PlayListContainerComponent.h"
 #include "Interface/Components/RightPanel/RegionComponent.h"
-#include "Interface/Components/RightPanel/FooterComponent.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#ifndef AUDIONAUT_HEADLESS
+ #include "Application/AudiumApplication.h"
+ #include "Util/Preferences.h"
+#endif
 
 RightPanelComponent::RightPanelComponent(std::shared_ptr<audium::AudiumEngine> audiumEngine) :
     audiumEngine(audiumEngine)
 {
-
     playListContainerComponent.reset(new PlayListContainerComponent(audiumEngine));
     regionComponent.reset(new RegionComponent(audiumEngine));
-    stretchableLayoutManager.reset(new juce::StretchableLayoutManager());
-    stretchableLayoutResizerBar.reset(new juce::StretchableLayoutResizerBar(stretchableLayoutManager.get(), 1, false));
-    footerComponent.reset(new FooterComponent(audiumEngine));
-    
-    addAndMakeVisible(regionComponent.get());
-    addAndMakeVisible(stretchableLayoutResizerBar.get());
+
+    // the region list leaves the playlists their minimum height; its open state and
+    // height are the user's and are persisted
+    regionList.maximumSize = [this] { return getHeight() - minPlayListsHeight - AudiumLookAndFeel::dividerHeight; };
+    regionList.onRelayout = [this] { resized(); };
+    regionList.onUserChange = [this] { writeLayoutPreferences(); };
+
+    // the region list's header bar stays at the bottom and is its handle, as the mixer's
+    // header bar is the mixer's: dragged up it makes the list taller, pushed well past the
+    // minimum it collapses the list until pulled back or released, pulled up while closed it opens it
+    regionListHeader.onDragStart = [this] { regionList.dragStarted(); };
+    regionListHeader.onDrag = [this] (int distance) { regionList.dragged (distance); };
+    regionListHeader.onDragEnd = [this] { regionList.dragEnded(); };
+    regionListHeader.onDoubleClick = [this] { regionList.resetToDefault(); };
+    regionListHeader.onToggleClick = [this] { regionList.setOpen (! regionList.isOpen()); };
+
+    readLayoutPreferences();
+
     addAndMakeVisible(playListContainerComponent.get());
-    addAndMakeVisible(footerComponent.get());
-    
-    auto footerHeight = AudiumLookAndFeel::dividerHeight;   // the same band as the mixer's header bar
-    
-    stretchableLayoutManager->setItemLayout (0,          // for item 0
-                                             25, -1.0,    // size must be between 0% and 100% of the available space
-                                             -0.5);      // and its preferred size in % of the total available space
-
-    stretchableLayoutManager->setItemLayout (1, // for item 1
-                                             3, 3, 3);
-
-    stretchableLayoutManager->setItemLayout (2,          // for item 2
-                                             25, -1.0, // size must be between 0% and 50% of the available space
-                                             -0.5);        // its preferred size in pixels
-    
-    stretchableLayoutManager->setItemLayout (3, // for item 3
-                                             footerHeight, footerHeight, footerHeight);
+    addAndMakeVisible(regionListHeader);
+    addAndMakeVisible(regionComponent.get());
 
     resized();
 }
@@ -59,20 +59,17 @@ void RightPanelComponent::paint (juce::Graphics& g)
 
 void RightPanelComponent::resized()
 {
+    auto bounds = getLocalBounds();
 
-    // the list of components that we want to reposition
-    Component* comps[] = {  playListContainerComponent.get(),
-                            stretchableLayoutResizerBar.get(),
-                            regionComponent.get(),
-                            footerComponent.get()
-                             };
+    // the region list's header bar always; under it as much of the list as is open
+    const auto regionListHeight = regionList.getShownSize();
+    regionComponent->setVisible (regionListHeight > 0);
+    if (regionListHeight > 0)
+        regionComponent->setBounds (bounds.removeFromBottom (regionListHeight));
+    regionListHeader.setBounds (bounds.removeFromBottom (AudiumLookAndFeel::dividerHeight));
+    regionListHeader.setOpen (regionList.isOpen());
 
-    // this will position the 3 components, one above the other, to fit
-    // horizontically into the rectangle provided.
-    stretchableLayoutManager->layOutComponents (comps, 4,
-                                                0, 0, getWidth(), getHeight(),
-                                                true, true);
-
+    playListContainerComponent->setBounds (bounds);
 }
 
 void RightPanelComponent::updateUI(UIContext context)
@@ -81,4 +78,25 @@ void RightPanelComponent::updateUI(UIContext context)
     regionComponent->updateUI(context);
 
     resized();
+}
+
+void RightPanelComponent::readLayoutPreferences()
+{
+    auto visible = true;
+    auto height = defaultRegionListHeight;
+   #ifndef AUDIONAUT_HEADLESS   // the headless builds (tests, CLI) have no app preferences
+    auto& preferences = AudiumApplication::getPreferences();
+    visible = preferences.getValue (audium::PreferenceKeys::regionListVisible, "true") == "true";
+    height = juce::String (preferences.getValue (audium::PreferenceKeys::regionListHeight, std::to_string (defaultRegionListHeight))).getIntValue();
+   #endif
+    regionList.restore (visible, height);
+}
+
+void RightPanelComponent::writeLayoutPreferences()
+{
+   #ifndef AUDIONAUT_HEADLESS
+    auto& preferences = AudiumApplication::getPreferences();
+    preferences.setValue (audium::PreferenceKeys::regionListVisible, regionList.isOpen() ? "true" : "false");
+    preferences.setValue (audium::PreferenceKeys::regionListHeight, std::to_string (regionList.getSize()));
+   #endif
 }

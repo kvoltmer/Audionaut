@@ -262,7 +262,7 @@ public:
         m1 << std::setw(2) << std::setfill('0') << m;
         std::string mm1 = m1.str();
         
-        juce::String timeFormated = "Total Length: " + juce::String(h) + ":" + mm1 + ":" + ss1;
+        juce::String timeFormated = juce::String(h) + ":" + mm1 + ":" + ss1;
         return timeFormated;
     }
     

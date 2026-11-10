@@ -208,7 +208,7 @@ HeaderComponent::~HeaderComponent()
 
 void HeaderComponent::paint (juce::Graphics& g)
 {
-    g.fillAll (findColour (audium::dividerColourId));   // the same band as the mixer's header bar and the right panel's footer
+    g.fillAll (findColour (audium::dividerColourId));   // the same band as the mixer's and the region list's header bars
 }
 
 void HeaderComponent::resized()

@@ -18,9 +18,8 @@
 const juce::String PlayListItemDraggerControl::getLabelSuffix() const
 {
     // Progress takes the BPM's spot while the analyses are still running, and
-    // unlike the BPM it is not gated on selection: the footer status line is
-    // easy to miss, and an unselected clip otherwise gives no hint that its
-    // estimate is still being computed.
+    // unlike the BPM it is not gated on selection: an unselected clip otherwise
+    // gives no hint that its estimate is still being computed.
     auto suffix = getAnalysisProgressSuffix();
 
     if (suffix.isEmpty())
@@ -72,8 +71,8 @@ juce::String PlayListItemDraggerControl::getAnalysisProgressSuffix() const
     if (getAnalysisRemainingCount() == 0)
         return {};
 
-    // The footer status line's sweep animation, advanced one frame per
-    // timerCallback(). One pass serves all of a file's analyses, so while
+    // A small ASCII sweep animation, advanced one frame per timerCallback().
+    // One pass serves all of a file's analyses, so while
     // this clip's file is the one running, the pass's own progress is shown;
     // until then the clip is waiting its turn.
     static constexpr const char* sweepFrames[] = { "[=   ]", "[ =  ]", "[  = ]", "[   =]",

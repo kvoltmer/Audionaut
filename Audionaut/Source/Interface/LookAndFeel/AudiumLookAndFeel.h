@@ -68,11 +68,6 @@ public:
     // PopupMenu
     juce::Font getPopupMenuFont() override;
     
-    // Resizer bar between two panels (the right panel's split): the same
-    // seam line as PanelResizerBar draws for the main panels.
-    void drawStretchableLayoutResizerBar (juce::Graphics& g, int w, int h, bool isVerticalBar,
-                                          bool isMouseOver, bool isMouseDragging) override;
-
     // Slider
     juce::Label* createSliderTextBox (juce::Slider& slider) override;
     void drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional,
@@ -215,10 +210,10 @@ public:
                                                 int width, int height, bool isMouseOver, bool isMouseDown,
                                                 int columnFlags) override;
 
-    // Header text is sized from the header height.
-    static juce::FontOptions getTableHeaderFontOptions (int height)
+    // The text of a table header and of the headers drawn in its place (the playlists' track headers).
+    static juce::FontOptions getTableHeaderFontOptions()
     {
-        return juce::FontOptions ((float) height * 0.5f, juce::Font::bold);
+        return juce::FontOptions (12.0f);
     }
 
     // Tabular figures, for readouts whose digits change while the user watches
@@ -238,7 +233,7 @@ public:
     static const int dragZoomControlHeight = standardItemHeight;
     static const int transportPositionControlHeight = standardItemHeight;
     static const int tableHeaderHeight = standardItemHeight;
-    static const int dividerHeight = 24;   ///< the bands in dividerColourId: the mixer's header bar, the right panel's footer
+    static const int dividerHeight = 24;   ///< the bands in dividerColourId: the mixer's and the region list's header bars
     static const float defaultFontSize;
     static const int extraSpaceAtBottom = 200;
     static const int maxTrackColours = 256;
