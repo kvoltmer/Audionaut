@@ -51,6 +51,16 @@ public:
         }
     }
     
+    /// The track's colour, for the waveform and its background; the clip component hands a recoloured
+    /// track's colour down here, since the view took it at construction.
+    void setTrackColour (juce::Colour newColour)
+    {
+        if (colour == newColour)
+            return;
+        colour = newColour;
+        repaint();
+    }
+
     void paint (juce::Graphics& g) override;
 
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
@@ -87,8 +97,6 @@ protected:
     // the thumbnail is shared per file; this view's columns live here
     audium::AudioThumbnail::DrawCache drawCache;
 
-    static constexpr float verticalZoomFactor = 1.f;
-    
     int channelNumber = 0;
     
     void createThumbnailCache();

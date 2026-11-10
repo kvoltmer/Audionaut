@@ -55,6 +55,7 @@ public:
      *        currently visible channel row, without rebuilding waveforms.
      */
     void refreshAnalysisDisplay();
+    void refreshTrackColour();   ///< the waveforms follow a recoloured track
 
     /**
      * @brief Repaints every currently visible channel row of the clip

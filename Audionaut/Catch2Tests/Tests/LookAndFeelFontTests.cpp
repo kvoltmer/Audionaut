@@ -9,6 +9,7 @@
 
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/DraggerControl.h"
+#include "Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h"
 
 using namespace juce;
 
@@ -98,13 +99,13 @@ SCENARIO ("UI text fits the hardcoded layout metrics", "[interface][lookandfeel]
 
     GIVEN ("a channel strip track name")
     {
-        THEN ("a representative name fits the label width")
+        THEN ("the app's own names fit the label between the fold and the menu button")
         {
-            // channelsWidth minus the 25px cleared for the minimise button.
-            const auto budget = (float) AudiumLookAndFeel::channelsWidth - 25.0f;
+            // the label's width as the header lays it out; longer, imported names ellipsise there
+            const auto budget = (float) ChannelGroupHeaderComponent::nameWidth;
             const auto font = DraggerControl::getLabelFont();
 
-            for (const String name : { "TRK-18-epy-jul.wav", "120-funk-1-sec.wav" })
+            for (const String name : { "Track 1", "Track 99", "Track 128" })
                 REQUIRE (GlyphArrangement::getStringWidth (font, name) <= budget);
         }
     }

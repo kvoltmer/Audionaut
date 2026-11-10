@@ -6,7 +6,7 @@
 #include "MixerBusStripComponent.h"
 
 #include "Interface/ColourIds.h"
-#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
+#include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Engine/Playback/AudioBusInterface.h"
 
 using namespace audium;
@@ -73,7 +73,7 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
     addAndMakeVisible (insertsRoom);
 
     // the pan, a dial like a channel's: the return's, or the master's balance
-    ChannelComponent::configurePanSlider (&pan);
+    ChannelActions::configurePanSlider (&pan);
     pan.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     pan.setRotaryParameters (AudiumLookAndFeel::dialStartAngle, AudiumLookAndFeel::dialEndAngle, true);
     pan.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);

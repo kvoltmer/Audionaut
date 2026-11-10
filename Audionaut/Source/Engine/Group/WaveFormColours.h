@@ -7,6 +7,9 @@
 
 #include <JuceHeader.h>
 
+#include <array>
+#include <vector>
+
 namespace audium {
 
 /**
@@ -24,6 +27,10 @@ public:
 
     static void resetWaveFormColour();
     static juce::Colour getNewWaveFormColour();
+
+    /// The two palettes the rotation runs through, for picking a colour by hand: the first few strong
+    /// colours, then the pastels.
+    static std::array<std::vector<juce::Colour>, 2> getPalettes();
     static juce::Colour getComplementaryColour(juce::Colour c);
 };
 

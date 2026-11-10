@@ -376,6 +376,7 @@ void PlayListItemComponent::updateUI(std::shared_ptr<audium::PlayListItem> item)
     // waveform (see "bugfix: wrong waveform in clip"). refreshAnalysisDisplay()
     // updates the analysis overlay on the existing row components instead.
     refreshAnalysisDisplay();
+    refreshTrackColour();
 
     attachHandlesToLane();
     syncFadeControls();
@@ -406,6 +407,14 @@ void PlayListItemComponent::refreshAnalysisDisplay()
 
     refreshAutoEditPreview();
     refreshStretchOverlay();
+}
+
+void PlayListItemComponent::refreshTrackColour()
+{
+    const auto colour = audioTrack->getViewState().getColour();
+    for (int row = 0; row < playListItemListBoxModel->getNumRows(); ++row)
+        if (auto* clipView = dynamic_cast<AudioClipView*>(playListItemListBox->getComponentForRowNumber(row)))
+            clipView->setTrackColour (colour);
 }
 
 void PlayListItemComponent::refreshStretchOverlay()

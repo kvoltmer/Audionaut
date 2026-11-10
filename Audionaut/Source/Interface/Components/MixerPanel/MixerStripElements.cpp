@@ -6,7 +6,6 @@
 #include "MixerStripElements.h"
 
 #include "Interface/ColourIds.h"
-#include "Interface/Components/MiddlePanel/ChannelView/ChannelComponent.h"
 #include "Engine/Playback/AudioBusInterface.h"
 
 using namespace audium;
@@ -99,12 +98,12 @@ StripIo::StripIo (StripChannel channel_) : channel (std::move (channel_))
     // the channel view's routing menus
     input = std::make_unique<RouteButton> ([this]
     {
-        ChannelComponent::routingMenu (channel.context.engine, channel.track, channel.channelNumber, true).showMenuAsync (MixerContext::menuOptions (input.get()));
+        ChannelActions::routingMenu (channel.context.engine, channel.track, channel.channelNumber, true).showMenuAsync (MixerContext::menuOptions (input.get()));
     });
     addAndMakeVisible (input.get());
     output = std::make_unique<RouteButton> ([this]
     {
-        ChannelComponent::routingMenu (channel.context.engine, channel.track, channel.channelNumber, false).showMenuAsync (MixerContext::menuOptions (output.get()));
+        ChannelActions::routingMenu (channel.context.engine, channel.track, channel.channelNumber, false).showMenuAsync (MixerContext::menuOptions (output.get()));
     });
     addAndMakeVisible (output.get());
 }
@@ -155,7 +154,7 @@ void StripIo::resized()
 StripPan::StripPan (StripChannel channel_) : channel (std::move (channel_))
 {
     // a dial with a pointer and a centre mark, configured like a send knob
-    ChannelComponent::configurePanSlider (&slider);
+    ChannelActions::configurePanSlider (&slider);
     slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setRotaryParameters (AudiumLookAndFeel::dialStartAngle, AudiumLookAndFeel::dialEndAngle, true);
     slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
@@ -211,7 +210,7 @@ StripButtons::StripButtons (StripChannel channel_) : channel (std::move (channel
     record.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
     record.onClick = [this]
     {
-        ChannelComponent::setRecordEnabled (channel.context.engine, channel.track, channel.channelNumber, record.getToggleState());   // tells the strips to re-read
+        ChannelActions::setRecordEnabled (channel.context.engine, channel.track, channel.channelNumber, record.getToggleState());   // tells the strips to re-read
     };
     addAndMakeVisible (record);
 

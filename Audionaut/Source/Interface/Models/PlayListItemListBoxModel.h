@@ -71,6 +71,7 @@ public:
                 jassert(owner.getParentComponent()->getParentComponent() == parentComponent);
                 component->setParentComponent(parentComponent);
                 component->setPlayListItem(playListItem, volumeControlVisible);
+                component->setTrackColour(audioTrack->getViewState().getColour());
                 component->updateUI(audioResource, rowNumber);
                 return component;
             }

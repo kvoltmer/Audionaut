@@ -5,6 +5,8 @@
 
 #include "WaveFormViewBase.h"
 
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+
 
 void WaveFormViewBase::paint (juce::Graphics& g)
 {
@@ -74,7 +76,7 @@ void WaveFormViewBase::paint (juce::Graphics& g)
                                         startSeconds,
                                         endSeconds,
                                         channel,
-                                        verticalZoomFactor * getClipGain(),
+                                        AudiumLookAndFeel::waveformScale * getClipGain(),   // 80 % of the row, as the strip's scale beside it
                                         envelopePtr,
                                         drawCache);
         }
@@ -104,6 +106,16 @@ void WaveFormViewBase::paintBackground (juce::Graphics& g)
                                                          bottomColour, getLocalBounds().getBottomLeft().getY());
     g.setGradientFill(colourGradient);
     g.fillAll();
+
+    // a faint line above and below the centre where a full-scale sample reaches, the long
+    // ticks of the channel strip's scale beside the row; only in the huge waveform size
+    if (getHeight() < AudiumLookAndFeel::SizeIds::huge)
+        return;
+    const auto centreY = static_cast<float> (getHeight()) * 0.5f;
+    const auto reach = centreY * AudiumLookAndFeel::waveformScale;
+    g.setColour (colour.withAlpha (0.1f));
+    for (const auto y : { centreY - reach, centreY + reach })
+        g.fillRect (0.0f, y - 0.5f, static_cast<float> (getWidth()), 1.0f);
 }
 
 void WaveFormViewBase::paintFileNameLabel (juce::Graphics& g)
