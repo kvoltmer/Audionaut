@@ -14,6 +14,9 @@
 #include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Undo/UndoableEdit.h"
 #include "Engine/Undo/UndoableEffectParameterAction.h"
+#include "Engine/Undo/UndoableContainerAction.h"
+#include "Engine/Channel/AudioChannel.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 /**
@@ -147,5 +150,150 @@ namespace InsertChainActions
         }
         menu.addSubMenu (TRANS ("Add"), typesMenu (ctx, [ctx, address] (const std::string& id) { add (ctx, address, id); }));
         return menu;
+    }
+}
+
+/**
+ * What a channel strip does to its bus channel, in the mixer and the arrangement
+ * alike: the pan dial's set-up, the record arm with its rules (an input must be
+ * there, the arming is one undo step, a running armed transport starts or stops
+ * the take), and the input / output routing menu with its one-step route change.
+ */
+namespace ChannelActions
+{
+    inline bool audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                     const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber);
+    inline void setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel);
+
+    inline void setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel)
+    {
+        audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [&]
+        {
+            auto channel = audioTrack->getChannel (channelNumber);
+            if (channel == nullptr)
+                return false;
+            if (isInput)
+                channel->setInputChannel(newChannel);
+            else
+                channel->setOutputChannel(newChannel);
+            return true;
+        },
+        "Set channel routing", false);   // the strips re-read the route on its broadcast
+    }
+
+    inline juce::PopupMenu routingMenu (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                                   const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool input)
+    {
+        const auto channelData = audioTrack->getChannelData (channelNumber);
+        const auto selected = input ? channelData.inputChannel : channelData.outputChannel;
+
+        StringArray names;
+        if (auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice())
+            names = input ? device->getInputChannelNames() : device->getOutputChannelNames();
+
+        const auto pick = [audioTrack, channelNumber, input] (int route)
+        {
+            return [audioTrack, channelNumber, input, route] { setRoutingChannel (audioTrack, channelNumber, input, route); };
+        };
+
+        PopupMenu menu;
+        menu.addItem (input ? TRANS("Default (input ") + String (channelNumber + 1) + ")" : TRANS("Main Bus"), true, selected < 0, pick (-1));
+        for (auto i = 0; i < names.size(); ++i) {
+            const auto name = names[i].trim();
+            menu.addItem (name.isNotEmpty() ? name : String (i + 1), true, selected == i, pick (i));
+        }
+        if (selected >= names.size())
+            menu.addItem ((input ? TRANS("Input ") : TRANS("Output ")) + String (selected + 1) + TRANS(" (not available)"), false, true, nullptr);
+        return menu;
+    }
+
+    inline void configurePanSlider (juce::Slider* slider)
+    {
+        slider->setSliderStyle(juce::Slider::LinearBar);
+        slider->setColour(Slider::textBoxTextColourId, juce::Colours::white);
+        slider->setColour(Slider::trackColourId, juce::Colours::grey.withAlpha(0.5f));
+
+        slider->setDoubleClickReturnValue(true, 0.0);
+
+        slider->setNormalisableRange(NormalisableRange<double>(-1.0, 1.0));
+
+        slider->textFromValueFunction = [](auto val) {
+            auto intVal = static_cast<int>(val * 50.0);
+            if (intVal == 0) {
+                return String("C");
+            }
+            else if (intVal < 0) {
+                return String(abs(intVal)) + String(" L");
+            }
+            else if (intVal > 0) {
+                return String(intVal) + String(" R");
+            }
+            return String("");
+        };
+        slider->updateText();
+    }
+
+    inline bool audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                                const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber)
+    {
+        auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+        if (currentDevice == nullptr)
+            return false;
+
+        auto channelData = audioTrack->getChannelData(channelNumber);
+        auto effectiveInput = channelData.inputChannel >= 0 ? channelData.inputChannel : channelNumber;
+
+        return effectiveInput < currentDevice->getActiveInputChannels().countNumberOfSetBits();
+    }
+
+    inline void setRecordEnabled (const std::shared_ptr<audium::AudiumEngine>& engine,
+                                             const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool bEnabled)
+    {
+        auto& container = *engine->getAudioTrackContainer();
+        auto stepRecorded = false;
+
+        if (audioInputAvailable(engine, audioTrack, channelNumber)) {
+
+            // Undo: store old state
+            auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(container, false) : nullptr;
+
+            if (ModifierKeys::currentModifiers.isShiftDown())
+                audioTrack->setRecordEnabled(-1, bEnabled);
+            else
+                audioTrack->setRecordEnabled(channelNumber, bEnabled);
+
+            auto scheduler = engine->getPlayListScheduler();
+
+            // start recording on the fly ?
+            if (scheduler->isPlaying() &&
+                scheduler->isRecordingArmed()) {
+
+                if (bEnabled)
+                    scheduler->startRecording(channelNumber + audioTrack->getChannelOffset());
+                else
+                    scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
+            }
+
+            // Undo: store new state; applying it tells the views
+            if (action != nullptr) {
+                action->storeNewState();
+                container.getUndoManager()->perform(action.release(), "Record");
+                container.getUndoManager()->beginNewTransaction();
+                stepRecorded = true;
+            }
+        }
+        else {
+            if (bEnabled) {
+                juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
+                                                            "No audio input available at this channel.",
+                                                            "Please check: Settings ... -> Audio Device Settings");
+            }
+        }
+
+        // a disarm records no step and a refused arm changed nothing, so no broadcast came from the container:
+        // the arrangement's channel strip and the mixer strip both show the arm, and the one not clicked (or a
+        // button the engine refused) re-reads the channel's state here
+        if (! stepRecorded)
+            container.sendActionMessage (audium::updateChannelsAction);
     }
 }

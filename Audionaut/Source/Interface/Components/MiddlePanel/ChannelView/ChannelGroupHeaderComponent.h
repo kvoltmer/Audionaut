@@ -20,6 +20,7 @@
 
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Controls/AudiumLabel.h"
+#include "Interface/Dialogs/AnalysisSettingsComponent.h"
 
 /**
  * A round button as the combo boxes draw their arrow zone: a disc in their
@@ -144,6 +145,11 @@ class ChannelGroupHeaderComponent : public juce::Component,
                                     public juce::DragAndDropTarget
 {
 public:
+    /// The header's columns: the fold button's on the left, the menu button's on the right, the name between.
+    static constexpr int foldColumnWidth = 25;
+    static constexpr int menuColumnWidth = 22;
+    static constexpr int nameWidth = AudiumLookAndFeel::channelsWidth - 2 - foldColumnWidth - menuColumnWidth;
+
     ChannelGroupHeaderComponent(std::shared_ptr<audium::AudioTrack> audioTrack, std::shared_ptr<audium::AudiumEngine> engine_) :
         audioTrack(audioTrack),
         engine(std::move (engine_))
@@ -194,8 +200,8 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds().reduced(1, 1);
-        bounds.removeFromLeft(25);
-        menuButton.setBounds (bounds.removeFromRight (22).withSizeKeepingCentre (15, 15).translated (-1, 0));   // the fold arrow's size, at the right
+        bounds.removeFromLeft (foldColumnWidth);
+        menuButton.setBounds (bounds.removeFromRight (menuColumnWidth).withSizeKeepingCentre (15, 15).translated (-1, 0));   // the fold arrow's size, at the right
         audioTrackNameLabel->setBounds(bounds);
     }
     
@@ -273,16 +279,6 @@ public:
     }
     
     
-    static juce::String analysisTypeName (audium::AnalysisType type)
-    {
-        switch (type) {
-            case audium::AnalysisType::Segments: return TRANS ("Segments");
-            case audium::AnalysisType::Onsets:   return TRANS ("Onsets");
-            case audium::AnalysisType::Beats:    return TRANS ("Beats");
-        }
-        return juce::String (audium::analysisTypeToString (type));
-    }
-
     /// Size / Analysis, under the drop-down button.
     void showMenu()
     {
@@ -313,11 +309,17 @@ public:
         m.addSubMenu("Size", sizeMenu);
         
         // one toggle per analysis the preferences have switched on (the worker's default types mirror
-        // them), ticked while its overlay shows; no submenu when none is on
+        // them), and per overlay still showing from before, so it can be switched off; ticked while
+        // its overlay shows; no submenu when there is none
         PopupMenu showMenu;
-        if (auto worker = engine->getAudioResourceContainer()->getAnalysisWorker()) {
-            for (const auto type : worker->getDefaultAnalysisTypes()) {
-                showMenu.addItem (analysisTypeName (type), true, audioTrack->getViewState().isAnalysisTypeVisible (type), [safeThis, type] {
+        {
+            const auto worker = engine->getAudioResourceContainer()->getAnalysisWorker();
+            const auto enabled = worker != nullptr ? worker->getDefaultAnalysisTypes() : std::vector<audium::AnalysisType>();
+            for (const auto type : audium::AnalysisWorker::canonicalAnalysisTypes()) {
+                const auto shown = audioTrack->getViewState().isAnalysisTypeVisible (type);
+                if (! shown && std::find (enabled.begin(), enabled.end(), type) == enabled.end())
+                    continue;
+                showMenu.addItem (AnalysisSettingsComponent::displayName (type), true, shown, [safeThis, type] {
                     if (safeThis != nullptr)
                         safeThis->toggleAnalysisVisibility (type);
                 });

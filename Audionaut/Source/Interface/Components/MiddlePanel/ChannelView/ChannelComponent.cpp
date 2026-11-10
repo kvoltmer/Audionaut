@@ -10,6 +10,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Undo/UndoableContainerAction.h"
+#include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Engine/Undo/UndoableEdit.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/Playback/AudioBusInterface.h"
@@ -36,7 +37,7 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
     recordButton.setClickingTogglesState (true);
     recordButton.setColour (TextButton::buttonOnColourId, Colours::red.brighter().withAlpha (0.8f));
     recordButton.setColour (TextButton::buttonColourId, Colours::grey);
-    recordButton.onClick = [this] { setRecordEnabled (engine, audioTrack, rowNumber, recordButton.getToggleState()); };
+    recordButton.onClick = [this] { ChannelActions::setRecordEnabled (engine, audioTrack, rowNumber, recordButton.getToggleState()); };
     addAndMakeVisible (recordButton);
 
     // MONITOR
@@ -81,6 +82,13 @@ ChannelComponent::ChannelComponent (std::shared_ptr<audium::AudioTrack> audioTra
         button->onStateChange = [this] { repaint(); };
     }
 
+    // a route the current device cannot provide, in red under the keys; nothing while the routes are there
+    routingWarning.setFont (juce::FontOptions (10.0f));
+    routingWarning.setColour (juce::Label::textColourId, juce::Colours::red);
+    routingWarning.setJustificationType (juce::Justification::centredLeft);
+    routingWarning.setInterceptsMouseClicks (false, false);
+    addAndMakeVisible (routingWarning);
+
     levelMeter.setInterceptsMouseClicks (false, false);   // the row takes the clicks, for the list's selection
     addAndMakeVisible (levelMeter);
 
@@ -105,6 +113,10 @@ void ChannelComponent::resized()
         key->setVisible (keysShown);
         x += L::keySize + L::padding;
     }
+
+    routingWarning.setBounds (L::padding, L::warningY, meterX - 2 * L::padding, L::warningHeight);
+    warningFits = keysShown && routingWarning.getBottom() <= getHeight() - 2;
+    updateRoutingWarning();
 
     levelMeter.setBounds (meterX, L::meterInset, L::meterWidth, getHeight() - 2 * L::meterInset);
 }
@@ -200,53 +212,12 @@ void ChannelComponent::refreshComponent(std::shared_ptr<audium::AudioTrack> audi
     monitorButton.setToggleState(channelData.monitor, dontSendNotification);
     recordButton.setToggleState(channelData.record, dontSendNotification);
     repaint();   // the button shadows follow the toggle states
+    updateRoutingWarning();
 
     if (not isTimerRunning()) {
         startTimerHz(AudiumLookAndFeel::timerHz);
     }
     channelNumber = audioTrack->getChannel(rowNumber)->getChannelNumber() + audioTrack->getChannelOffset();
-}
-
-void ChannelComponent::setRoutingChannel (const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool isInput, int newChannel)
-{
-    audium::applyAsUndoableEdit(audioTrack->getAudioTrackContainer(), [&]
-    {
-        auto channel = audioTrack->getChannel (channelNumber);
-        if (channel == nullptr)
-            return false;
-        if (isInput)
-            channel->setInputChannel(newChannel);
-        else
-            channel->setOutputChannel(newChannel);
-        return true;
-    },
-    "Set channel routing", false);   // the strips re-read the route on its broadcast
-}
-
-juce::PopupMenu ChannelComponent::routingMenu (const std::shared_ptr<audium::AudiumEngine>& engine,
-                                               const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool input)
-{
-    const auto channelData = audioTrack->getChannelData (channelNumber);
-    const auto selected = input ? channelData.inputChannel : channelData.outputChannel;
-
-    StringArray names;
-    if (auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice())
-        names = input ? device->getInputChannelNames() : device->getOutputChannelNames();
-
-    const auto pick = [audioTrack, channelNumber, input] (int route)
-    {
-        return [audioTrack, channelNumber, input, route] { setRoutingChannel (audioTrack, channelNumber, input, route); };
-    };
-
-    PopupMenu menu;
-    menu.addItem (input ? TRANS("Default (input ") + String (channelNumber + 1) + ")" : TRANS("Main Bus"), true, selected < 0, pick (-1));
-    for (auto i = 0; i < names.size(); ++i) {
-        const auto name = names[i].trim();
-        menu.addItem (name.isNotEmpty() ? name : String (i + 1), true, selected == i, pick (i));
-    }
-    if (selected >= names.size())
-        menu.addItem ((input ? TRANS("Input ") : TRANS("Output ")) + String (selected + 1) + TRANS(" (not available)"), false, true, nullptr);
-    return menu;
 }
 
 void ChannelComponent::timerCallback()
@@ -269,32 +240,31 @@ void ChannelComponent::timerCallback()
         recordButton.setToggleState(data.record, dontSendNotification);
         repaint();   // the button's shadow
     }
+
+    // once a second: whether a route is there depends on the audio device, which changes without a refresh
+    if (++routingRefreshTick >= AudiumLookAndFeel::timerHz) {
+        routingRefreshTick = 0;
+        updateRoutingWarning();
+    }
 }
 
-void ChannelComponent::configurePanSlider(juce::Slider *slider)
+void ChannelComponent::updateRoutingWarning()
 {
-    slider->setSliderStyle(juce::Slider::LinearBar);
-    slider->setColour(Slider::textBoxTextColourId, juce::Colours::white);
-    slider->setColour(Slider::trackColourId, juce::Colours::grey.withAlpha(0.5f));
-    
-    slider->setDoubleClickReturnValue(true, 0.0);
-    
-    slider->setNormalisableRange(NormalisableRange<double>(-1.0, 1.0));
+    const auto channelData = audioTrack->getChannelData (rowNumber);
+    auto* device = engine->getAudioDeviceManager()->getCurrentAudioDevice();
+    const auto numInputs = device != nullptr ? device->getInputChannelNames().size() : 0;
+    const auto numOutputs = device != nullptr ? device->getOutputChannelNames().size() : 0;
 
-    slider->textFromValueFunction = [](auto val) {
-        auto intVal = static_cast<int>(val * 50.0);
-        if (intVal == 0) {
-            return String("C");
-        }
-        else if (intVal < 0) {
-            return String(abs(intVal)) + String(" L");
-        }
-        else if (intVal > 0) {
-            return String(intVal) + String(" R");
-        }
-        return String("");
-    };
-    slider->updateText();
+    // only a route chosen by hand can be missing; the defaults always resolve
+    juce::StringArray missing;
+    if (channelData.inputChannel >= numInputs)
+        missing.add (TRANS ("In ") + juce::String (channelData.inputChannel + 1));
+    if (channelData.outputChannel >= numOutputs)
+        missing.add (TRANS ("Out ") + juce::String (channelData.outputChannel + 1));
+
+    routingWarning.setText (missing.joinIntoString (", "), juce::dontSendNotification);
+    routingWarning.setTooltip (missing.isEmpty() ? juce::String() : missing.joinIntoString (", ") + TRANS (" not available on this audio device"));
+    routingWarning.setVisible (warningFits && ! missing.isEmpty());
 }
 
 void ChannelComponent::mouseDown (const juce::MouseEvent& e)
@@ -424,68 +394,4 @@ void ChannelComponent::itemDropped (const SourceDetails &dragSourceDetails)
         
     }
     hideInsertLines();
-}
-
-bool ChannelComponent::audioInputAvailable (const std::shared_ptr<audium::AudiumEngine>& engine,
-                                            const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber)
-{
-    auto currentDevice = engine->getAudioDeviceManager()->getCurrentAudioDevice();
-    if (currentDevice == nullptr)
-        return false;
-
-    auto channelData = audioTrack->getChannelData(channelNumber);
-    auto effectiveInput = channelData.inputChannel >= 0 ? channelData.inputChannel : channelNumber;
-
-    return effectiveInput < currentDevice->getActiveInputChannels().countNumberOfSetBits();
-}
-
-void ChannelComponent::setRecordEnabled (const std::shared_ptr<audium::AudiumEngine>& engine,
-                                         const std::shared_ptr<audium::AudioTrack>& audioTrack, int channelNumber, bool bEnabled)
-{
-    auto& container = *engine->getAudioTrackContainer();
-    auto stepRecorded = false;
-
-    if (audioInputAvailable(engine, audioTrack, channelNumber)) {
-
-        // Undo: store old state
-        auto action = bEnabled ? std::make_unique<audium::UndoableContainerAction>(container, false) : nullptr;
-        
-        if (ModifierKeys::currentModifiers.isShiftDown())
-            audioTrack->setRecordEnabled(-1, bEnabled);
-        else
-            audioTrack->setRecordEnabled(channelNumber, bEnabled);
-        
-        auto scheduler = engine->getPlayListScheduler();
-        
-        // start recording on the fly ?
-        if (scheduler->isPlaying() &&
-            scheduler->isRecordingArmed()) {
-            
-            if (bEnabled)
-                scheduler->startRecording(channelNumber + audioTrack->getChannelOffset());
-            else
-                scheduler->stopRecording(channelNumber + audioTrack->getChannelOffset());
-        }
-        
-        // Undo: store new state; applying it tells the views
-        if (action != nullptr) {
-            action->storeNewState();
-            container.getUndoManager()->perform(action.release(), "Record");
-            container.getUndoManager()->beginNewTransaction();
-            stepRecorded = true;
-        }
-    }
-    else {
-        if (bEnabled) {
-            juce::NativeMessageBox::showMessageBoxAsync(MessageBoxIconType::WarningIcon,
-                                                        "No audio input available at this channel.",
-                                                        "Please check: Settings ... -> Audio Device Settings");
-        }
-    }
-
-    // a disarm records no step and a refused arm changed nothing, so no broadcast came from the container:
-    // the arrangement's channel strip and the mixer strip both show the arm, and the one not clicked (or a
-    // button the engine refused) re-reads the channel's state here
-    if (! stepRecorded)
-        container.sendActionMessage (audium::updateChannelsAction);
 }
