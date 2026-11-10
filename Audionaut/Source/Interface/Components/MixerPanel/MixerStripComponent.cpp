@@ -18,7 +18,10 @@ MixerStripComponent::MixerStripComponent (MixerContext context, std::shared_ptr<
     buttons = std::make_unique<StripButtons> (channel);
     fader = std::make_unique<StripFader> (channel);
     name = std::make_unique<StripName> (channel);
-    for (auto* element : std::initializer_list<juce::Component*> { sends.get(), pan.get(), buttons.get(), fader.get(), name.get() })
+    sendsRoom.hold (*sends);
+    panRoom.hold (*pan);
+    buttonsRoom.hold (*buttons);
+    for (auto* element : std::initializer_list<juce::Component*> { &sendsRoom, &panRoom, &buttonsRoom, fader.get(), name.get() })
         addAndMakeVisible (element);
 
     refresh();
@@ -26,11 +29,11 @@ MixerStripComponent::MixerStripComponent (MixerContext context, std::shared_ptr<
 
 MixerStripComponent::~MixerStripComponent() = default;
 
-void MixerStripComponent::setSections (int newSections)
+void MixerStripComponent::setShown (const Shown& newShown)
 {
-    if (sections == newSections)
+    if (shown == newShown)
         return;
-    sections = newSections;
+    shown = newShown;
     resized();
 }
 
@@ -54,18 +57,15 @@ void MixerStripComponent::refreshLive()
 
 void MixerStripComponent::resized()
 {
-    // the elements where MixerLayout::placeStrip puts them, as tall as stripHeight counts them; a hidden section's element goes with its empty area
-    const auto placement = placeStrip (getLocalBounds(), sections, static_cast<int> (channel.context.container().getAuxBuses().size()));
-    const auto place = [] (juce::Component& element, juce::Rectangle<int> area)
-    {
-        element.setVisible (! area.isEmpty());
-        element.setBounds (area);
-    };
-    place (*sends, placement.sendsArea);
-    place (*pan, placement.panArea);
-    place (*buttons, placement.buttonsArea);
-    place (*fader, placement.faderArea);
-    place (*name, placement.nameArea);
+    // the elements where MixerLayout::placeStrip puts them, as tall as stripHeight counts them; a section's room
+    // has as much of its element's height as the section is open (none while hidden)
+    const auto numAuxBuses = static_cast<int> (channel.context.container().getAuxBuses().size());
+    const auto placement = placeStrip (getLocalBounds(), shown, numAuxBuses);
+    sendsRoom.setRoom (placement.sendsArea, StripSends::heightFor (numAuxBuses));
+    panRoom.setRoom (placement.panArea, StripPan::height);
+    buttonsRoom.setRoom (placement.buttonsArea, StripButtons::height);
+    fader->setBounds (placement.faderArea);
+    name->setBounds (placement.nameArea);
 }
 
 void MixerStripComponent::paint (juce::Graphics& g)

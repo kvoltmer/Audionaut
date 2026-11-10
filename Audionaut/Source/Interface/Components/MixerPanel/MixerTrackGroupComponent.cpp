@@ -60,12 +60,23 @@ MixerTrackGroupComponent::MixerTrackGroupComponent (MixerContext context_, std::
     addAndMakeVisible (band.get());
 
     inserts = std::make_unique<InsertSlotListComponent> (context, chainAddress(), [this] (int index) { return editorTitle (index); });
-    addAndMakeVisible (inserts.get());
+    insertsRoom.hold (*inserts);
+    addAndMakeVisible (insertsRoom);
+
+    // each channel's I/O in its strip's column, all in one room
+    ioRoom.layOut = [this] (juce::Rectangle<int> full)
+    {
+        for (auto& io : ios) {
+            io->setBounds (full.removeFromLeft (stripWidth).reduced (sidePadding, 0));
+            full.removeFromLeft (stripGap);
+        }
+    };
+    addAndMakeVisible (ioRoom);
 
     const auto numChannels = static_cast<int> (track->audioChannelContainer->size());
     for (int channel = 0; channel < numChannels; ++channel) {
         ios.push_back (std::make_unique<StripIo> (StripChannel { context, track, channel }));
-        addAndMakeVisible (ios.back().get());
+        ioRoom.addAndMakeVisible (ios.back().get());
         strips.push_back (std::make_unique<MixerStripComponent> (context, track, channel));
         addAndMakeVisible (strips.back().get());
     }
@@ -94,11 +105,11 @@ int MixerTrackGroupComponent::getPreferredWidth() const
     return static_cast<int> (strips.size()) * (stripWidth + stripGap) - stripGap;
 }
 
-void MixerTrackGroupComponent::setSections (int newSections)
+void MixerTrackGroupComponent::setShown (const Shown& newShown)
 {
-    sections = newSections;
+    shown = newShown;
     for (auto& strip : strips)
-        strip->setSections (sections);
+        strip->setShown (shown);
     resized();
 }
 
@@ -124,26 +135,16 @@ void MixerTrackGroupComponent::resized()
     auto bounds = getLocalBounds();
     band->setBounds (bounds.removeFromTop (bandHeight));
 
-    // each channel's I/O under the band, in its strip's column
-    const auto showIo = (sections & Section::io) != 0;
-    if (showIo) {
-        bounds.removeFromTop (sectionGap);
-        auto row = bounds.removeFromTop (StripIo::height);
-        for (auto& io : ios) {
-            io->setBounds (row.removeFromLeft (stripWidth).reduced (sidePadding, 0));
-            row.removeFromLeft (stripGap);
-        }
-    }
-    for (auto& io : ios)
-        io->setVisible (showIo);
+    // the I/O rows under the band with their gap above, as far as their section is open
+    auto ioArea = bounds.removeFromTop (ioHeight (shown));
+    ioArea.removeFromTop (juce::jmin (sectionGap, ioArea.getHeight()));
+    ioRoom.setRoom (ioArea, StripIo::height);
 
-    // the track's inserts across the group
-    inserts->setVisible ((sections & Section::inserts) != 0);
-    if (inserts->isVisible()) {
-        bounds.removeFromTop (1);
-        inserts->setBounds (bounds.removeFromTop (InsertSlotListComponent::heightForRows (insertRows)).reduced (2, 0));
-        bounds.removeFromTop (1);
-    }
+    // the track's inserts across the group, a line's gap above and below
+    auto insertsArea = bounds.removeFromTop (insertsHeight (shown));
+    insertsArea.removeFromTop (juce::jmin (1, insertsArea.getHeight()));
+    insertsArea.removeFromBottom (juce::jmin (1, insertsArea.getHeight()));
+    insertsRoom.setRoom (insertsArea.reduced (2, 0), InsertSlotListComponent::heightForRows (insertRows));
 
     for (auto& strip : strips) {
         strip->setBounds (bounds.removeFromLeft (stripWidth));

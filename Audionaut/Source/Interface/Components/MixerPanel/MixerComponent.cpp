@@ -51,10 +51,10 @@ public:
             group->refreshLive();
     }
 
-    void setSections (int sections)
+    void setShown (const Shown& shown)
     {
         for (auto& group : groups)
-            group->setSections (sections);
+            group->setShown (shown);
     }
 
     /// Lays the groups out left to right and sizes itself to them.
@@ -93,13 +93,10 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
 
     readPreferences();
     rebuildBusGroup();
-    sectionBar.onChange = [this] (int sections)
+    sectionBar.onChange = [this] (int)
     {
-        content->setSections (sections);
-        buses->setSections (sections);
         writeSectionPreference();
-        preferredHeightMayHaveChanged();
-        resized();   // the fader moved with the sections, and with it the bar's toggles
+        animateSections();
     };
     addChildComponent (sectionBar);
     addAndMakeVisible (header);
@@ -108,7 +105,7 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
 
 int MixerComponent::getPreferredHeight() const
 {
-    return mixerHeight (sectionBar.getSections(), context.container().getAuxBuses().size());
+    return mixerHeight (shown, context.container().getAuxBuses().size());
 }
 
 void MixerComponent::preferredHeightMayHaveChanged()
@@ -129,6 +126,42 @@ void MixerComponent::readPreferences()
     auxBusesVisible = preferences.getValue (PreferenceKeys::mixerAuxBuses, "true") == "true";
    #endif
     sectionBar.setSections (sections & allSections);
+    shown = Shown::of (sectionBar.getSections());   // from the preferences: no animation
+}
+
+//==============================================================================
+// A toggle eases every section from where it is on screen to the bar's new mask over a short moment, the
+// panels' easing (CollapsiblePanel); a toggle mid-animation starts the moment over from what is on screen.
+void MixerComponent::animateSections()
+{
+    animationFrom = shown;
+    animationStart = juce::Time::getMillisecondCounterHiRes();
+    animating = true;
+    stepSectionAnimation();
+}
+
+void MixerComponent::stepSectionAnimation()
+{
+    constexpr double animationMilliseconds = 200.0;
+    const auto t = juce::jlimit (0.0, 1.0, (juce::Time::getMillisecondCounterHiRes() - animationStart) / animationMilliseconds);
+    const auto eased = static_cast<float> (1.0 - std::pow (1.0 - t, 3.0));   // fast out, settling in
+    const auto target = Shown::of (sectionBar.getSections());
+    for (size_t i = 0; i < shown.amounts.size(); ++i)
+        shown.amounts[i] = animationFrom.amounts[i] + (target.amounts[i] - animationFrom.amounts[i]) * eased;
+
+    if (t >= 1.0) {
+        shown = target;
+        animating = false;
+    }
+    applyShown();
+}
+
+void MixerComponent::applyShown()
+{
+    content->setShown (shown);
+    buses->setShown (shown);
+    preferredHeightMayHaveChanged();   // the owner sizes the body to it, frame by frame
+    resized();   // the fader moved with the sections, and with it the bar's toggles
 }
 
 void MixerComponent::setAuxBusesVisible (bool visible)
@@ -147,7 +180,7 @@ void MixerComponent::setAuxBusesVisible (bool visible)
 void MixerComponent::rebuildBusGroup()
 {
     buses = std::make_unique<MixerBusGroupComponent> (context, auxBusesVisible);
-    buses->setSections (sectionBar.getSections());
+    buses->setShown (shown);
     addChildComponent (buses.get());
     buses->setVisible (isBodyShown());
 }
@@ -221,7 +254,7 @@ void MixerComponent::updateUI()
     if (structure != shownStructure) {
         shownStructure = structure;
         content->rebuild (context);
-        content->setSections (sectionBar.getSections());
+        content->setShown (shown);
         rebuildBusGroup();   // an aux bus came or went, or an insert of a bus
         resized();           // the bus section's width follows its strips
     }
@@ -243,13 +276,12 @@ void MixerComponent::resized()
     buses->setVisible (bodyShown);
 
     sectionBar.setBounds (bounds.removeFromLeft (MixerSectionBar::width));
-    const auto sections = sectionBar.getSections();
     const auto numAuxBuses = static_cast<int> (context.container().getAuxBuses().size());
-    const auto height = groupHeight (sections, numAuxBuses);
+    const auto height = groupHeight (shown, numAuxBuses);
     buses->setBounds (bounds.removeFromRight (busColumnWidth()).reduced (groupGap, 0).withHeight (height));
     viewport.setBounds (bounds);
     content->setSize (juce::jmax (content->getWidth(), viewport.getMaximumVisibleWidth()), height);
-    sectionBar.setFaderRange (faderRange (sections, numAuxBuses));   // the content's top is the bar's top: the viewport scrolls only sideways
+    sectionBar.setFaderRange (faderRange (shown, numAuxBuses));   // the content's top is the bar's top: the viewport scrolls only sideways
 }
 
 void MixerComponent::paint (juce::Graphics& g)
@@ -271,6 +303,8 @@ void MixerComponent::visibilityChanged()
 
 void MixerComponent::timerCallback()
 {
+    if (animating)
+        stepSectionAnimation();
     if (isShowing() && isBodyShown()) {
         content->refreshLive();
         buses->refreshLive();

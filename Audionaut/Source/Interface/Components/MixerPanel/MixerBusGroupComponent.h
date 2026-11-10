@@ -24,7 +24,7 @@ public:
 
     int getPreferredWidth() const;
 
-    void setSections (int sections);
+    void setShown (const MixerLayout::Shown& shown);
     void refresh();
     void refreshLive();
 

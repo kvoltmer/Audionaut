@@ -69,7 +69,8 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
                 effectName = slot->getEffect().getType().name;
         return busName() + " / " + effectName;
     });
-    addAndMakeVisible (inserts.get());
+    insertsRoom.hold (*inserts);
+    addAndMakeVisible (insertsRoom);
 
     // the pan, a dial like a channel's: the return's, or the master's balance
     ChannelComponent::configurePanSlider (&pan);
@@ -87,16 +88,36 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
             b->setPan (value);
     };
     pan.onDragEnd = [this] { endValueEdit (isMaster() ? "Set Master Pan" : "Set Aux Pan"); };
-    addAndMakeVisible (pan);
 
-    // solo (an aux only) and mute, console keys as the channel strips': raised over the shadow paint() draws
+    // "Pan" over the dial, captioned as a channel's pan
+    panRoom.addAndMakeVisible (pan);
+    panRoom.layOut = [this] (juce::Rectangle<int> full) { pan.setBounds (full.withTrimmedTop (knobNameHeight)); };
+    panRoom.paintBehind = [this] (juce::Graphics& g, juce::Rectangle<int> full)
+    {
+        g.setColour (findColour (audium::defaultTextColourId).withAlpha (0.85f));
+        g.setFont (juce::FontOptions (8.0f));
+        g.drawText (TRANS ("Pan"), full.withHeight (knobNameHeight), juce::Justification::centred, false);
+    };
+    addAndMakeVisible (panRoom);
+
+    // solo (an aux only) and mute, console keys as the channel strips': raised over the shadows their room draws
     for (auto* button : { &solo, &mute }) {
         button->setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
         button->setClickingTogglesState (true);
         button->getProperties().set (AudiumLookAndFeel::consoleButtonProperty, true);
-        button->onStateChange = [this] { repaint(); };
-        addAndMakeVisible (button);
+        button->onStateChange = [this] { buttonsRoom.repaint(); };
+        buttonsRoom.addAndMakeVisible (button);
     }
+    buttonsRoom.layOut = [this] (juce::Rectangle<int> full)
+    {
+        // solo over mute, each centred, in the channel strips' two button rows
+        full.removeFromTop (buttonGap);
+        solo.setBounds (full.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
+        full.removeFromTop (buttonGap);
+        mute.setBounds (full.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
+    };
+    buttonsRoom.paintBehind = [this] (juce::Graphics& g, juce::Rectangle<int>) { AudiumLookAndFeel::drawConsoleButtonShadows (g, { &solo, &mute }); };
+    addAndMakeVisible (buttonsRoom);
     solo.setColour (juce::TextButton::buttonOnColourId, findColour (audium::soloColourId));
     mute.setColour (juce::TextButton::buttonOnColourId, findColour (audium::muteColourId));
     solo.onClick = [this]
@@ -168,11 +189,11 @@ juce::String MixerBusStripComponent::busName() const
     return b != nullptr ? juce::String (b->getName()) : juce::String();
 }
 
-void MixerBusStripComponent::setSections (int newSections)
+void MixerBusStripComponent::setShown (const Shown& newShown)
 {
-    if (sections == newSections)
+    if (shown == newShown)
         return;
-    sections = newSections;
+    shown = newShown;
     resized();
 }
 
@@ -224,34 +245,20 @@ void MixerBusStripComponent::resized()
 {
     // under the band, as a track group stacks it: the I/O rows' room (a return has no routing), then the inserts
     auto bounds = getLocalBounds();
-    bounds.removeFromTop (ioHeight (sections));
-    inserts->setVisible (shows (Section::inserts));
-    if (inserts->isVisible()) {
-        bounds.removeFromTop (1);
-        inserts->setBounds (bounds.removeFromTop (InsertSlotListComponent::heightForRows (insertRows)));
-        bounds.removeFromTop (1);
-    }
+    bounds.removeFromTop (ioHeight (shown));
+    auto insertsArea = bounds.removeFromTop (insertsHeight (shown));
+    insertsArea.removeFromTop (juce::jmin (1, insertsArea.getHeight()));
+    insertsArea.removeFromBottom (juce::jmin (1, insertsArea.getHeight()));
+    insertsRoom.setRoom (insertsArea, InsertSlotListComponent::heightForRows (insertRows));
     stripTop = bounds.getY();
 
     // then the strip where MixerLayout::placeStrip puts a channel strip's elements, so the faders line up: the
     // sends' room stays empty (a return has none), the rest takes the channel strip's places
-    const auto placement = placeStrip (bounds, sections, static_cast<int> (context.container().getAuxBuses().size()));
+    const auto placement = placeStrip (bounds, shown, static_cast<int> (context.container().getAuxBuses().size()));
     name->setBounds (placement.nameArea);
-
-    panArea = placement.panArea;
-    pan.setVisible (! panArea.isEmpty());
-    pan.setBounds (panArea.withTrimmedTop (knobNameHeight));
-
-    solo.setVisible (! placement.buttonsArea.isEmpty() && ! isMaster());   // the master has no solo: nothing to solo it against
-    mute.setVisible (! placement.buttonsArea.isEmpty());
-    {
-        // solo over mute, each centred, in the channel strips' two button rows
-        auto area = placement.buttonsArea;
-        area.removeFromTop (buttonGap);
-        solo.setBounds (area.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
-        area.removeFromTop (buttonGap);
-        mute.setBounds (area.removeFromTop (buttonRowHeight).withSizeKeepingCentre (buttonWidth, buttonRowHeight));
-    }
+    panRoom.setRoom (placement.panArea, panHeight);
+    solo.setVisible (! isMaster());   // the master has no solo: nothing to solo it against
+    buttonsRoom.setRoom (placement.buttonsArea, buttonsHeight);
 
     auto faderArea = placement.faderArea;
     faderArea.removeFromTop (faderY);
@@ -270,15 +277,6 @@ void MixerBusStripComponent::paint (juce::Graphics& g)
     g.fillAll (findColour (audium::secondaryBackgroundColourId));
     g.setColour (findColour (audium::backgroundColourId).darker (0.35f));
     g.fillRect (getLocalBounds().withTop (stripTop));
-
-    const auto text = findColour (audium::defaultTextColourId);
-    if (pan.isVisible()) {
-        g.setColour (text.withAlpha (0.85f));
-        g.setFont (juce::FontOptions (8.0f));
-        g.drawText (TRANS ("Pan"), panArea.withHeight (knobNameHeight), juce::Justification::centred, false);
-    }
-
-    AudiumLookAndFeel::drawConsoleButtonShadows (g, { &solo, &mute });
 }
 
 //==============================================================================

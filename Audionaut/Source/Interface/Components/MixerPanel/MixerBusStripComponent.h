@@ -44,8 +44,8 @@ public:
     /// The colour of an aux bus's band and name bar, or the master's (masterBus).
     static juce::Colour busColour (int auxId) noexcept;
 
-    /// Which sections to show (MixerLayout::Section flags); the hidden ones leave their room empty, as in the strips.
-    void setSections (int sections);
+    /// How far each section is open (MixerLayout::Shown); a hidden one leaves its room empty, as in the channel strips.
+    void setShown (const MixerLayout::Shown& shown);
 
     /// Re-reads the bus: name, values, inserts.
     void refresh();
@@ -59,7 +59,6 @@ public:
 private:
     class NameBar;
 
-    bool shows (MixerLayout::Section section) const noexcept { return (sections & section) != 0; }
     std::shared_ptr<audium::AuxBus> bus() const;   ///< the aux bus, nullptr for the master or once it is gone
     audium::InsertChainAddress address() const;
     juce::String busName() const;
@@ -71,13 +70,15 @@ private:
 
     MixerContext context;
     const int auxId;
-    int sections = MixerLayout::allSections;
+    MixerLayout::Shown shown = MixerLayout::Shown::of (MixerLayout::allSections);
     int stripTop = 0;   ///< where the strip's dark plate begins, under the inserts
-    juce::Rectangle<int> panArea;   ///< the pan's caption and dial, empty while hidden
 
     std::unique_ptr<InsertSlotListComponent> inserts;
+    MixerLayout::SectionRoom insertsRoom;
     juce::Slider pan;
+    MixerLayout::SectionRoom panRoom;       ///< the "Pan" caption and the dial
     juce::TextButton solo { "S" }, mute { "M" };
+    MixerLayout::SectionRoom buttonsRoom;   ///< solo over mute, with their shadows
     juce::Slider fader;
     LevelMeter meterLeft { true, false }, meterRight { true, false };
     std::unique_ptr<NameBar> name;

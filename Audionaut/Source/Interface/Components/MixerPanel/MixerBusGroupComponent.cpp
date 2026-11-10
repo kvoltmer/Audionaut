@@ -29,10 +29,10 @@ int MixerBusGroupComponent::getPreferredWidth() const
     return static_cast<int> (strips.size()) * (stripWidth + stripGap) - stripGap;
 }
 
-void MixerBusGroupComponent::setSections (int sections)
+void MixerBusGroupComponent::setShown (const Shown& shown)
 {
     for (auto& strip : strips)
-        strip->setSections (sections);
+        strip->setShown (shown);
 }
 
 void MixerBusGroupComponent::refresh()

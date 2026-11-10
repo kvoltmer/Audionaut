@@ -27,7 +27,8 @@ public:
 
     int getPreferredWidth() const;
 
-    void setSections (int sections);
+    /// How far each section is open (MixerLayout::Shown), for the I/O rows, the inserts and the strips.
+    void setShown (const MixerLayout::Shown& shown);
     void refresh();
     void refreshLive();
 
@@ -42,11 +43,13 @@ private:
 
     MixerContext context;
     std::shared_ptr<audium::AudioTrack> track;
-    int sections = MixerLayout::allSections;
+    MixerLayout::Shown shown = MixerLayout::Shown::of (MixerLayout::allSections);
 
     std::unique_ptr<Band> band;
     std::vector<std::unique_ptr<StripIo>> ios;   ///< one per channel, in the strips' columns
+    MixerLayout::SectionRoom ioRoom;               ///< holds the I/O rows: they open and close together
     std::unique_ptr<InsertSlotListComponent> inserts;
+    MixerLayout::SectionRoom insertsRoom;
     std::vector<std::unique_ptr<MixerStripComponent>> strips;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixerTrackGroupComponent)

@@ -7,6 +7,9 @@
 
 #include <JuceHeader.h>
 
+#include <array>
+#include <bit>
+
 #include "Interface/Components/MixerPanel/InsertSlotListComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
@@ -15,6 +18,9 @@
  * the mixer's height follows from what is shown (the sections the user has
  * switched on in the section bar, and the number of send rows) rather than
  * from a drag: dragging the header bar only closes and opens the mixer.
+ * A section's room is its full height scaled by how far the section is open
+ * (Shown): the mixer animates a toggle by moving that amount, and the strips,
+ * the groups and the mixer's height all follow it frame by frame.
  */
 namespace MixerLayout
 {
@@ -32,6 +38,7 @@ namespace MixerLayout
     constexpr int buttonRowHeight = 15;
     constexpr int buttonWidth = 15;
     constexpr int buttonGap = 5;
+    constexpr int buttonsHeight = buttonGap + 2 * (buttonRowHeight + buttonGap);   ///< the two button rows with their gaps
     constexpr int faderX = -3;                 ///< the fader's left edge in the strip; the slider centres its slot in its width
     constexpr int faderY = 0;                  ///< the fader's top in the fader element
     constexpr int faderWidth = 42;
@@ -57,6 +64,37 @@ namespace MixerLayout
         buttons = 1 << 4,
     };
     constexpr int allSections = inserts | sends | io | pan | buttons;
+    constexpr int numSections = 5;
+
+    /// How far each section is open: 1 shown, 0 hidden, in between while the mixer animates a toggle. The
+    /// layout gives a section that much of its full height, so every measurement below moves with the animation.
+    struct Shown
+    {
+        std::array<float, numSections> amounts {};   ///< by the section's bit index
+
+        /// Open or closed, no animation: the sections in the mask open, the rest closed.
+        static Shown of (int sections) noexcept
+        {
+            Shown shown;
+            for (int i = 0; i < numSections; ++i)
+                shown.amounts[static_cast<size_t> (i)] = (sections & (1 << i)) != 0 ? 1.0f : 0.0f;
+            return shown;
+        }
+
+        float of (Section section) const noexcept { return amounts[indexOf (section)]; }
+        float& of (Section section) noexcept { return amounts[indexOf (section)]; }
+
+        bool operator== (const Shown&) const noexcept = default;
+
+    private:
+        static size_t indexOf (Section section) noexcept { return static_cast<size_t> (std::countr_zero (static_cast<unsigned> (section))); }
+    };
+
+    /// As much of a full height as a section is open.
+    inline int heightShown (int fullHeight, float amount) noexcept
+    {
+        return juce::roundToInt (fullHeight * amount);
+    }
 
     constexpr int sendKnobsPerRow = 1;
 
@@ -74,71 +112,138 @@ namespace MixerLayout
         return rows * (knobNameHeight + knobHeight) + (rows - 1) * sectionGap;
     }
 
-    /// A strip's height with these sections shown (the I/O rows are not the strip's: see ioHeight).
-    inline int stripHeight (int sections, int numAuxBuses) noexcept
+    /// The sends' room when open: the rows and the gap to the next section.
+    inline int sendsRoomHeight (int numAuxBuses) noexcept
     {
-        int height = sectionGap;
-        if ((sections & sends) != 0)
-            height += sendsHeight (numAuxBuses) + sectionGap;
-        if ((sections & pan) != 0)
-            height += panHeight;
-        if ((sections & buttons) != 0)
-            height += buttonGap + 2 * (buttonRowHeight + buttonGap);
-        return height + faderY + faderHeight + nameHeight + colourBarHeight;
+        return sendsHeight (numAuxBuses) + sectionGap;
+    }
+
+    /// A strip's height with the sections this far open (the I/O rows are not the strip's: see ioHeight).
+    inline int stripHeight (const Shown& shown, int numAuxBuses) noexcept
+    {
+        return sectionGap
+             + heightShown (sendsRoomHeight (numAuxBuses), shown.of (sends))
+             + heightShown (panHeight, shown.of (pan))
+             + heightShown (buttonsHeight, shown.of (buttons))
+             + faderY + faderHeight + nameHeight + colourBarHeight;
     }
 
     /// Where a strip's elements stand in the strip's bounds, each as tall as stripHeight() counts it: the name
     /// bar at the bottom, then from the top the sends, the pan, the buttons and the fader. A hidden section's
-    /// rectangle is empty. The channel strips and the return strips both lay out from this, so their faders
-    /// line up across the mixer.
+    /// rectangle is empty; one on its way open or closed has as much height as the animation has reached, for
+    /// the strip to clip its element to (SectionRoom). The channel strips and the return strips both lay out
+    /// from this, so their faders line up across the mixer.
     struct StripPlacement
     {
         juce::Rectangle<int> sendsArea, panArea, buttonsArea, faderArea, nameArea;
     };
 
-    inline StripPlacement placeStrip (juce::Rectangle<int> bounds, int sections, int numAuxBuses) noexcept
+    inline StripPlacement placeStrip (juce::Rectangle<int> bounds, const Shown& shown, int numAuxBuses) noexcept
     {
         StripPlacement placement;
         placement.nameArea = bounds.removeFromBottom (nameHeight + colourBarHeight);
         bounds.reduce (sidePadding, 0);
         bounds.removeFromTop (sectionGap);
-        if ((sections & sends) != 0) {
-            placement.sendsArea = bounds.removeFromTop (sendsHeight (numAuxBuses));
-            bounds.removeFromTop (sectionGap);
-        }
-        if ((sections & pan) != 0)
-            placement.panArea = bounds.removeFromTop (panHeight);
-        if ((sections & buttons) != 0)
-            placement.buttonsArea = bounds.removeFromTop (buttonGap + 2 * (buttonRowHeight + buttonGap));
+        placement.sendsArea = bounds.removeFromTop (heightShown (sendsRoomHeight (numAuxBuses), shown.of (sends)));
+        placement.sendsArea.removeFromBottom (juce::jmin (sectionGap, placement.sendsArea.getHeight()));   // the gap to the next section, as far as the room has it
+        placement.panArea = bounds.removeFromTop (heightShown (panHeight, shown.of (pan)));
+        placement.buttonsArea = bounds.removeFromTop (heightShown (buttonsHeight, shown.of (buttons)));
         placement.faderArea = bounds.removeFromTop (faderY + faderHeight);
         return placement;
     }
 
-    /// The I/O rows under the band, one per channel in its strip's column, with a gap above: shown by the group
-    /// above the track's insert list, so the strips below start with their sends.
-    inline int ioHeight (int sections) noexcept
+    /// The I/O rows' room when open: a gap under the band, then one row per channel in its strip's column.
+    /// The group shows them above the track's insert list, so the strips below start with their sends.
+    constexpr int ioRoomHeight = sectionGap + 2 * ioRowHeight;
+
+    inline int ioHeight (const Shown& shown) noexcept
     {
-        return (sections & io) != 0 ? sectionGap + 2 * ioRowHeight : 0;
+        return heightShown (ioRoomHeight, shown.of (io));
+    }
+
+    /// The insert list's room when open: the list with a line's gap above and below.
+    inline int insertsRoomHeight() noexcept
+    {
+        return 2 + InsertSlotListComponent::heightForRows (insertRows);
+    }
+
+    inline int insertsHeight (const Shown& shown) noexcept
+    {
+        return heightShown (insertsRoomHeight(), shown.of (inserts));
     }
 
     /// A track group's height: the band, the I/O rows, the insert list and the strips.
-    inline int groupHeight (int sections, int numAuxBuses) noexcept
+    inline int groupHeight (const Shown& shown, int numAuxBuses) noexcept
     {
-        const auto insertList = (sections & inserts) != 0 ? 2 + InsertSlotListComponent::heightForRows (insertRows) : 0;
-        return bandHeight + ioHeight (sections) + insertList + stripHeight (sections, numAuxBuses);
+        return bandHeight + ioHeight (shown) + insertsHeight (shown) + stripHeight (shown, numAuxBuses);
     }
 
     /// The mixer's height: the header bar, a group and the scroll bar under it.
-    inline int mixerHeight (int sections, int numAuxBuses) noexcept
+    inline int mixerHeight (const Shown& shown, int numAuxBuses) noexcept
     {
-        return headerHeight + groupHeight (sections, numAuxBuses) + scrollBarHeight;
+        return headerHeight + groupHeight (shown, numAuxBuses) + scrollBarHeight;
     }
 
     /// The fader's travel area in a group's y, faderHeight tall: above the name bar at the group's bottom,
     /// under the fader element's faderY of headroom. The section bar lines its toggles up with it.
-    inline juce::Range<int> faderRange (int sections, int numAuxBuses) noexcept
+    inline juce::Range<int> faderRange (const Shown& shown, int numAuxBuses) noexcept
     {
-        const auto bottom = groupHeight (sections, numAuxBuses) - nameHeight - colourBarHeight;
+        const auto bottom = groupHeight (shown, numAuxBuses) - nameHeight - colourBarHeight;
         return { bottom - faderHeight, bottom };
     }
+
+    /**
+     * The room a strip gives one section: the section's elements laid out at
+     * their full height inside, anchored at the top. While the mixer animates
+     * the section open or closed the room grows or shrinks over them, so they
+     * are clipped rather than squashed, and they fade with the room. setRoom()
+     * takes the area the layout gives the section (empty while hidden) and
+     * the elements' full height.
+     */
+    class SectionRoom : public juce::Component
+    {
+    public:
+        SectionRoom() { setInterceptsMouseClicks (false, true); }
+
+        /// Lays the elements out in the room's full height; the room shows as much of them as it has.
+        std::function<void (juce::Rectangle<int> full)> layOut;
+
+        /// Paints under the elements across the room's full height: a caption, the buttons' shadows.
+        std::function<void (juce::Graphics& g, juce::Rectangle<int> full)> paintBehind;
+
+        /// Holds one element, laid out across the room's full height.
+        void hold (juce::Component& element)
+        {
+            addAndMakeVisible (element);
+            layOut = [&element] (juce::Rectangle<int> full) { element.setBounds (full); };
+        }
+
+        void setRoom (juce::Rectangle<int> area, int fullHeight_)
+        {
+            const auto fullHeightChanged = fullHeight != fullHeight_;
+            fullHeight = fullHeight_;
+            setVisible (! area.isEmpty());
+            setAlpha (fullHeight > 0 ? juce::jlimit (0.0f, 1.0f, static_cast<float> (area.getHeight()) / static_cast<float> (fullHeight)) : 1.0f);
+            setBounds (area);
+            if (fullHeightChanged)
+                resized();
+        }
+
+        void resized() override
+        {
+            if (layOut != nullptr)
+                layOut (getLocalBounds().withHeight (fullHeight));
+        }
+
+        void paint (juce::Graphics& g) override
+        {
+            if (paintBehind != nullptr)
+                paintBehind (g, getLocalBounds().withHeight (fullHeight));
+        }
+
+    private:
+        int fullHeight = 0;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SectionRoom)
+    };
 }

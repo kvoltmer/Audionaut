@@ -17,7 +17,8 @@
  * The mixer at the bottom of the middle panel: one strip per channel,
  * grouped by track in arrangement order, scrolling horizontally, with the
  * section bar at the left that shows and hides strip sections (an app
- * preference), under the header bar that is the handle the owner lets the
+ * preference; a toggle animates the section's room open or closed, and the
+ * mixer's height with it), under the header bar that is the handle the owner lets the
  * mixer be dragged open and closed by (getHeader). Closed, the mixer is
  * the header bar alone: the owner sizes
  * it to the bar plus as much of the body as is open. The body's height is
@@ -28,7 +29,8 @@
  * updateUI() re-reads the engine: when the structure changed (tracks,
  * channels, inserts, sends, aux buses) the groups are rebuilt, otherwise
  * refreshed in place, so a drag on a strip survives the refreshes its own
- * edits cause. The meters run on a timer while the mixer is showing. The
+ * edits cause. The meters run on a timer while the mixer is showing, and
+ * the section animation steps on it. The
  * effect editor windows are owned here, one per slot, and closed once
  * their slot is gone.
  */
@@ -55,7 +57,7 @@ public:
     bool areAuxBusesVisible() const noexcept { return auxBusesVisible; }
     void setAuxBusesVisible (bool visible);
 
-    /// Fires when getPreferredHeight() changed (a section toggled, the send rows changed).
+    /// Fires when getPreferredHeight() changed (each frame of a section's animation, the send rows changed).
     std::function<void()> onPreferredHeightChanged;
 
     /// The band across the top: the owner wires its drag callbacks to the panel the mixer opens and closes in.
@@ -78,10 +80,17 @@ private:
     void rebuildBusGroup();
     int busColumnWidth() const;
     void preferredHeightMayHaveChanged();
+    void animateSections();
+    void stepSectionAnimation();
+    void applyShown();
 
     MixerContext context;
     MixerHeaderBar header;
     MixerSectionBar sectionBar;
+    MixerLayout::Shown shown;             ///< how far each section is open right now: the bar's mask once settled, in between while animating
+    MixerLayout::Shown animationFrom;     ///< the sections as they were when the last toggle began
+    double animationStart = 0.0;
+    bool animating = false;
     juce::Viewport viewport;
     std::unique_ptr<Content> content;
     std::unique_ptr<MixerBusGroupComponent> buses;   ///< right of the viewport, so it stays while the strips scroll
