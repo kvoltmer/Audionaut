@@ -13,6 +13,7 @@
 #include "Engine/Group/ResourceGroup.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/PlayList/PlayListContainer.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/Region/AudioRegion.h"
 #include "Engine/Resource/AudioResource.h"
@@ -220,7 +221,7 @@ void ClipFadeOverlay::paintItemExtensions (juce::Graphics& g,
                     if (auto thumbnail = getOrCreateThumbnail(resource)) {
                         if (thumbnail->getTotalLength() > 0.0) {
 
-                            auto gain = static_cast<float>(dynamics.getGain(ch));
+                            auto gain = static_cast<float>(dynamics.getGain(ch)) * AudiumLookAndFeel::waveformScale;   // as the clip's row view draws it
 
                             g.saveState();
                             // clip-local x space, so the envelope applies
