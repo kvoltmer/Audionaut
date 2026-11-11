@@ -216,7 +216,7 @@ public:
     int getAudioRegionId(std::shared_ptr<const AudioRegion> searchRegion) const;
     
     std::shared_ptr<AnalysisProvider> getAnalysisProvider() const { return analysisProvider; }
-    /** The track's own inserts: they see all its bus channels at once, after the channels' inserts. */
+    /** The track's inserts: they see all its bus channels at once, at the track's channel count. */
     InsertChain& getTrackInserts() noexcept { return trackInserts; }
     
 private:

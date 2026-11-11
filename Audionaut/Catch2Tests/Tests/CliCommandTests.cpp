@@ -1797,31 +1797,31 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
         const auto plainPeak = exportPeak ("plain.wav");
         REQUIRE (plainPeak > 0.5f);
 
-        WHEN ("a trim is added to the stem's strip and set to -6 dB")
+        WHEN ("a trim is added to the stem's track and set to -6 dB")
         {
-            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --channel 0 --type builtin:trim"), context)
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --type builtin:trim"), context)
                      == cli::exitOk);
             REQUIRE (envelope["result"]["type"] == "builtin:trim");
-            REQUIRE (envelope["result"]["added"].size() == 1);
-            REQUIRE (envelope["result"]["added"][0]["index"] == 0);
-            REQUIRE (envelope["result"]["added"][0]["inserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
+            REQUIRE (envelope["result"]["track"] == 1);
+            REQUIRE (envelope["result"]["index"] == 0);
+            REQUIRE (envelope["result"]["inserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
 
-            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --channel 0 --index 0 --param gain_db --value -6"), context)
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --index 0 --param gain_db --value -6"), context)
                      == cli::exitOk);
             REQUIRE (envelope["result"]["insert"]["state"]["gain_db"].get<double>() == Catch::Approx (-6.0));
 
             THEN ("the summary, the saved project and the export carry it")
             {
                 REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
-                auto strip = envelope["result"]["tracks"][1]["channels"][0];
-                REQUIRE (strip["inserts"].size() == 1);
-                REQUIRE (strip["inserts"][0]["type"] == "builtin:trim");
-                REQUIRE (strip["inserts"][0]["enabled"] == true);
-                REQUIRE (envelope["result"]["tracks"][1]["inserts"].size() == 0);
+                auto track = envelope["result"]["tracks"][1];
+                REQUIRE (track["inserts"].size() == 1);
+                REQUIRE (track["inserts"][0]["type"] == "builtin:trim");
+                REQUIRE (track["inserts"][0]["enabled"] == true);
+                REQUIRE_FALSE (track["channels"][0].contains ("inserts"));
                 REQUIRE (envelope["result"]["masterInserts"].size() == 0);
 
                 auto json = readProjectJson (project);
-                auto stored = json["audium"]["audio_tracks"][1]["channels"][0]["inserts"];
+                auto stored = json["audium"]["audio_tracks"][1]["inserts"];
                 REQUIRE (stored.size() == 1);
                 REQUIRE (stored[0]["state"]["gain_db"].get<double>() == Catch::Approx (-6.0));
 
@@ -1830,16 +1830,16 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
 
             THEN ("disabled, the export is as before; removed, the chain is empty")
             {
-                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --channel 0 --index 0 --enabled off"), context)
+                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --index 0 --enabled off"), context)
                          == cli::exitOk);
                 REQUIRE (envelope["result"]["insert"]["enabled"] == false);
                 REQUIRE (exportPeak ("bypassed.wav") == Catch::Approx (plainPeak).margin (0.01f));
 
-                REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --track 1 --channel 0 --index 0"), context)
+                REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --track 1 --index 0"), context)
                          == cli::exitOk);
                 REQUIRE (envelope["result"]["removed"]["type"] == "builtin:trim");
                 REQUIRE (envelope["result"]["inserts"].size() == 0);
-                REQUIRE_FALSE (readProjectJson (project)["audium"]["audio_tracks"][1]["channels"][0].contains ("inserts"));
+                REQUIRE_FALSE (readProjectJson (project)["audium"]["audio_tracks"][1].contains ("inserts"));
             }
         }
 
@@ -1847,7 +1847,7 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
         {
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:eq3"), context)
                      == cli::exitOk);
-            REQUIRE (envelope["result"]["added"][0]["master"] == true);
+            REQUIRE (envelope["result"]["master"] == true);
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --type builtin:compressor"), context)
                      == cli::exitOk);
 
@@ -1881,18 +1881,21 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
             REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
         }
 
-        THEN ("a track, channel or value that is not a number is a usage error, not 0")
+        THEN ("a track or value that is not a number is a usage error, not 0; a channel is no chain")
         {
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim"), context) == cli::exitOk);
             REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track one --type builtin:trim"), context) == cli::exitUsage);
             REQUIRE (envelope["error"]["message"].get<std::string>().find ("--track") != std::string::npos);
-            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --channel c0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --channel 0 --type builtin:trim"), context) == cli::exitUsage);
             REQUIRE (envelope["error"]["message"].get<std::string>().find ("--channel") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --all-channels --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --channel 0 --index 0 --enabled off"), context) == cli::exitUsage);
+            REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --track 1 --channel 0 --index 0"), context) == cli::exitUsage);
             REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value x4"), context) == cli::exitUsage);
             REQUIRE (envelope["error"]["message"].get<std::string>().find ("--value") != std::string::npos);
             REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value -6.5"), context) == cli::exitOk);
             REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
-            REQUIRE (envelope["result"]["tracks"][1]["channels"][0]["inserts"].size() == 0);
+            REQUIRE (envelope["result"]["tracks"][1]["inserts"].size() == 0);
             REQUIRE (envelope["result"]["tracks"][0]["inserts"].size() == 0);
             REQUIRE (envelope["result"]["masterInserts"].size() == 1);
             REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (-6.5));
@@ -2002,7 +2005,7 @@ SCENARIO ("cli aux buses and sends", "[cli][effects][sends]")
                 REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 0 --aux 1 --mute off"), context) == cli::exitOk);
 
                 REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --type builtin:trim"), context) == cli::exitOk);
-                REQUIRE (envelope["result"]["added"][0]["aux"] == 1);
+                REQUIRE (envelope["result"]["aux"] == 1);
                 REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --aux 1 --index 0 --param gain_db --value -6"), context) == cli::exitOk);
                 REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
                 REQUIRE (envelope["result"]["auxBuses"][0]["inserts"][0]["type"] == "builtin:trim");

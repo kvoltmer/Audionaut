@@ -28,38 +28,31 @@ struct ChainTarget
 {
     InsertChain* chain = nullptr;
     InsertChainAddress address;
-    nlohmann::json where;   // {"track": N, "channel": C} / {"track": N} / {"master": true}
+    nlohmann::json where;   // {"track": N} / {"aux": A} / {"master": true}
 };
 
 /**
- * Resolves `--master`, `--aux ID` (an aux bus's inserts), `--track N` (the
- * track's inserts) or `--track N --channel C` (a channel's) to a chain.
- * With allChannels, every channel of the track is returned. Reports a usage
- * or lookup failure through the context and returns an empty vector.
+ * Resolves `--master`, `--aux ID` (an aux bus's inserts) or `--track N` (the
+ * track's inserts) to a chain. Reports a usage or lookup failure through the
+ * context and returns false.
  */
-std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContainer& container,
-                                         const juce::String& trackValue, const juce::String& channelValue,
-                                         const juce::String& auxValue, bool master, bool allChannels, int& failure)
+bool resolveTarget (CliContext& context, AudioTrackContainer& container,
+                    const juce::String& trackValue, const juce::String& auxValue, bool master,
+                    ChainTarget& target, int& failure)
 {
-    std::vector<ChainTarget> targets;
     failure = exitOk;
 
     const auto named = (master ? 1 : 0) + (trackValue.isNotEmpty() ? 1 : 0) + (auxValue.isNotEmpty() ? 1 : 0);
     if (named != 1)
     {
-        failure = context.fail (exitUsage, "usage", "name the chain: --master, --aux <id>, or --track <id> with or without --channel <index>");
-        return {};
-    }
-    if (channelValue.isNotEmpty() && trackValue.isEmpty())
-    {
-        failure = context.fail (exitUsage, "usage", "--channel goes with --track <id>, not with --master or --aux");
-        return {};
+        failure = context.fail (exitUsage, "usage", "name the chain: --master, --aux <id> or --track <id>");
+        return false;
     }
 
     if (master)
     {
-        targets.push_back ({ &container.getMasterInserts(), InsertChainAddress::ofMaster(), { { "master", true } } });
-        return targets;
+        target = { &container.getMasterInserts(), InsertChainAddress::ofMaster(), { { "master", true } } };
+        return true;
     }
 
     if (auxValue.isNotEmpty())
@@ -67,23 +60,23 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
         if (! isIndexValue (auxValue))
         {
             failure = context.fail (exitUsage, "usage", "--aux must be an aux bus id (a number from 1, as info lists them)");
-            return {};
+            return false;
         }
         const auto auxId = auxValue.getIntValue();
         auto bus = container.getAuxBuses().get (auxId);
         if (bus == nullptr)
         {
             failure = context.fail (exitFailure, "aux_not_found", "no aux bus with id " + auxValue.toStdString());
-            return {};
+            return false;
         }
-        targets.push_back ({ &bus->getInserts(), InsertChainAddress::ofAux (auxId), { { "aux", auxId } } });
-        return targets;
+        target = { &bus->getInserts(), InsertChainAddress::ofAux (auxId), { { "aux", auxId } } };
+        return true;
     }
 
     if (! isIndexValue (trackValue))
     {
         failure = context.fail (exitUsage, "usage", "--track must be a track id (a number from 0)");
-        return {};
+        return false;
     }
 
     const auto trackId = trackValue.getIntValue();
@@ -91,38 +84,20 @@ std::vector<ChainTarget> resolveTargets (CliContext& context, AudioTrackContaine
     if (track == nullptr)
     {
         failure = context.fail (exitFailure, "track_not_found", "no track with id " + trackValue.toStdString());
-        return {};
+        return false;
     }
 
-    const auto numChannels = static_cast<int> (track->audioChannelContainer->objects.size());
-
-    if (allChannels)
-    {
-        for (auto c = 0; c < numChannels; ++c)
-            targets.push_back ({ &track->getChannel (c)->inserts, InsertChainAddress::ofChannel (trackId, c),
-                                 { { "track", trackId }, { "channel", c } } });
-        if (targets.empty())
-            failure = context.fail (exitFailure, "no_channels", "track " + trackValue.toStdString() + " has no audio channels");
-        return targets;
-    }
-
-    if (channelValue.isEmpty())
-    {
-        targets.push_back ({ &track->getTrackInserts(), InsertChainAddress::ofTrack (trackId), { { "track", trackId } } });
-        return targets;
-    }
-
-    const auto channel = isIndexValue (channelValue) ? channelValue.getIntValue() : -1;
-    if (channel < 0 || channel >= numChannels)
-    {
-        failure = context.fail (exitUsage, "usage", "--channel must be 0.." + std::to_string (numChannels - 1));
-        return {};
-    }
-
-    targets.push_back ({ &track->getChannel (channel)->inserts, InsertChainAddress::ofChannel (trackId, channel),
-                         { { "track", trackId }, { "channel", channel } } });
-    return targets;
+    target = { &track->getTrackInserts(), InsertChainAddress::ofTrack (trackId), { { "track", trackId } } };
+    return true;
 }
+
+/// Inserts are the track's, at its channel count: a channel option would otherwise be ignored and land on the track's chain.
+bool namesAChannel (const juce::ArgumentList& args)
+{
+    return args.containsOption ("--channel") || args.containsOption ("--all-channels");
+}
+
+constexpr auto channelOptionMessage = "inserts belong to the track and process all its channels together: drop --channel / --all-channels";
 
 /// Takes a flag option (present or not) out of the list.
 bool takeFlag (juce::ArgumentList& args, juce::StringRef option)
@@ -139,17 +114,15 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
     auto trackValue = takeOptionValue (working, "--track");
-    auto channelValue = takeOptionValue (working, "--channel");
     auto auxValue = takeOptionValue (working, "--aux");
     auto typeValue = takeOptionValue (working, "--type");
     auto atValue = takeOptionValue (working, "--at");
     const auto master = takeFlag (working, "--master");
-    const auto allChannels = takeFlag (working, "--all-channels");
 
+    if (namesAChannel (working))
+        return context.fail (exitUsage, "usage", channelOptionMessage);
     if (typeValue.isEmpty())
         return context.fail (exitUsage, "usage", "add-insert requires --type <effect type id> (see list-effects)");
-    if (allChannels && (trackValue.isEmpty() || channelValue.isNotEmpty()))
-        return context.fail (exitUsage, "usage", "--all-channels goes with --track <id> and without --channel");
     if (atValue.isNotEmpty() && ! isIndexValue (atValue))
         return context.fail (exitUsage, "usage", "--at must be a slot position (a number from 0)");
 
@@ -161,35 +134,22 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
             return context.fail (exitFailure, "unknown_effect", "no effect of type " + typeValue.toStdString() + " (see list-effects)");
 
         int failure = exitOk;
-        auto targets = resolveTargets (context, container, trackValue, channelValue, auxValue, master, allChannels, failure);
-        if (targets.empty())
+        ChainTarget target;
+        if (! resolveTarget (context, container, trackValue, auxValue, master, target, failure))
             return failure;
 
         const auto at = atValue.isEmpty() ? -1 : atValue.getIntValue();
-        auto added = nlohmann::json::array();
-
-        const auto applied = applyAsUndoableEdit (container, [&]
-        {
-            // every chain of --all-channels in one plan, built when the batch closes
-            MixerPlanner::ScopedBatch planBatch (planner);
-            for (auto& target : targets)
-            {
-                auto slot = target.chain->add (typeValue.toStdString(), at);
-                if (slot == nullptr)
-                    return false;
-                auto entry = target.where;
-                entry["index"] = at < 0 || at > target.chain->size() - 1 ? target.chain->size() - 1 : at;
-                entry["inserts"] = describeInserts (*target.chain);
-                added.push_back (entry);
-            }
-            return true;
-        }, "Add Insert", false);
-
+        const auto applied = applyAsUndoableEdit (container, [&] { return target.chain->add (typeValue.toStdString(), at) != nullptr; },
+                                                  "Add Insert", false);
         if (! applied)
             return context.fail (exitFailure, "add_failed", "could not add the insert");
 
-        outcome.log = "added " + typeValue + " to " + juce::String (static_cast<int> (added.size())) + " chain(s)";
-        outcome.result = { { "type", typeValue.toStdString() }, { "added", added } };
+        const auto index = at < 0 || at > target.chain->size() - 1 ? target.chain->size() - 1 : at;
+        outcome.log = "added " + typeValue + " at " + juce::String (index);
+        outcome.result = target.where;
+        outcome.result["type"] = typeValue.toStdString();
+        outcome.result["index"] = index;
+        outcome.result["inserts"] = describeInserts (*target.chain);
         return exitOk;
     });
 }
@@ -198,11 +158,12 @@ int runRemoveInsert (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
     auto trackValue = takeOptionValue (working, "--track");
-    auto channelValue = takeOptionValue (working, "--channel");
     auto auxValue = takeOptionValue (working, "--aux");
     auto indexValue = takeOptionValue (working, "--index");
     const auto master = takeFlag (working, "--master");
 
+    if (namesAChannel (working))
+        return context.fail (exitUsage, "usage", channelOptionMessage);
     if (indexValue.isEmpty())
         return context.fail (exitUsage, "usage", "remove-insert requires --index <slot index>");
     if (! isIndexValue (indexValue))
@@ -212,11 +173,10 @@ int runRemoveInsert (const juce::ArgumentList& args, CliContext& context)
     {
         auto& container = *session->getAudioTrackContainer();
         int failure = exitOk;
-        auto targets = resolveTargets (context, container, trackValue, channelValue, auxValue, master, false, failure);
-        if (targets.empty())
+        ChainTarget target;
+        if (! resolveTarget (context, container, trackValue, auxValue, master, target, failure))
             return failure;
 
-        auto& target = targets.front();
         const auto index = indexValue.getIntValue();
         if (index < 0 || index >= target.chain->size())
             return context.fail (exitUsage, "usage", "--index must be 0.." + std::to_string (target.chain->size() - 1));
@@ -237,7 +197,6 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
 {
     auto working = args;
     auto trackValue = takeOptionValue (working, "--track");
-    auto channelValue = takeOptionValue (working, "--channel");
     auto auxValue = takeOptionValue (working, "--aux");
     auto indexValue = takeOptionValue (working, "--index");
     auto paramValue = takeOptionValue (working, "--param");
@@ -245,6 +204,8 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
     auto enabledValue = takeOptionValue (working, "--enabled");
     const auto master = takeFlag (working, "--master");
 
+    if (namesAChannel (working))
+        return context.fail (exitUsage, "usage", channelOptionMessage);
     if (indexValue.isEmpty())
         return context.fail (exitUsage, "usage", "set-insert requires --index <slot index>");
     if (! isIndexValue (indexValue))
@@ -260,11 +221,10 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
     {
         auto& container = *session->getAudioTrackContainer();
         int failure = exitOk;
-        auto targets = resolveTargets (context, container, trackValue, channelValue, auxValue, master, false, failure);
-        if (targets.empty())
+        ChainTarget target;
+        if (! resolveTarget (context, container, trackValue, auxValue, master, target, failure))
             return failure;
 
-        auto& target = targets.front();
         const auto index = indexValue.getIntValue();
         auto slot = target.chain->getSlot (index);
         if (slot == nullptr)

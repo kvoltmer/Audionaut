@@ -499,34 +499,22 @@ void AudioBusRenderer<SampleType>::renderTrack (TrackJob& job, int jobIndex, int
             addVoiceOutput (audioBusBlock.getChannelPointer (static_cast<size_t> (busChannel)), output, ctx.numSamples);
     }
 
-    // the inserts: each bus channel's own, then the track's over all of its channels
+    // the track's inserts, over all of its bus channels at once
     if constexpr (std::is_same_v<SampleType, float>)
     {
         if (const auto* plan = ctx.plan)
         {
-            for (auto k = job.firstChannel; k < channelEnd && k < static_cast<int> (plan->channels.size()); ++k)
-            {
-                auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
-                for (auto* slot : plan->channels[static_cast<size_t> (k)].inserts)
-                    slot->process (channelBlock);
-            }
-
             const auto trackIndex = plan->trackAtChannel[static_cast<size_t> (job.firstChannel)];
             if (trackIndex >= 0 && plan->tracks[static_cast<size_t> (trackIndex)].numChannels == job.numChannels)
             {
+                const auto& track = plan->tracks[static_cast<size_t> (trackIndex)];
                 auto trackBlock = audioBusBlock.getSubsetChannelBlock (static_cast<size_t> (job.firstChannel), static_cast<size_t> (job.numChannels));
-                for (auto* slot : plan->tracks[static_cast<size_t> (trackIndex)].inserts)
+                for (auto* slot : track.inserts)
                     slot->process (trackBlock);
-            }
 
-            // the fader point: a bus channel quicker than the latest one waits here
-            for (auto k = job.firstChannel; k < channelEnd && k < static_cast<int> (plan->channels.size()); ++k)
-            {
-                if (auto* delay = plan->channels[static_cast<size_t> (k)].preFaderDelay.get())
-                {
-                    auto channelBlock = audioBusBlock.getSingleChannelBlock (static_cast<size_t> (k));
-                    delay->process (channelBlock);
-                }
+                // the fader point: a track quicker than the latest one waits here
+                if (auto* delay = track.preFaderDelay.get())
+                    delay->process (trackBlock);
             }
 
             // the pre-fader sends tap here: after the inserts, before the gain

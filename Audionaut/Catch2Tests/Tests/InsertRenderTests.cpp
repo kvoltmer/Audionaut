@@ -184,16 +184,16 @@ SCENARIO ("inserts render where their chain sits", "[engine][effects][inserts]")
         REQUIRE (reference.getMagnitude (3, 0, reference.getNumSamples()) > 0.1f);
         REQUIRE (reference.getMagnitude (1, 0, reference.getNumSamples()) == 0.0f);
 
-        WHEN ("channel 0 gets a -6 dB trim")
+        WHEN ("the track gets a -6 dB trim")
         {
             Session session;
-            addTrim (session.track (0)->getChannel (0)->inserts, -6.0f);
+            addTrim (session.track (0)->getTrackInserts(), -6.0f);
             const auto live = renderLive (*session.engine);
 
-            THEN ("the main mix is halved and the direct out of channel 1 is untouched")
+            THEN ("both channels are halved: the main mix and the direct out")
             {
                 requireScaled (live, reference, 0, kMinus6);
-                requireScaled (live, reference, 3, 1.0f, 0.0f);
+                requireScaled (live, reference, 3, kMinus6);
             }
 
             THEN ("the offline bounce renders the insert the same way")
@@ -206,19 +206,6 @@ SCENARIO ("inserts render where their chain sits", "[engine][effects][inserts]")
                 CAPTURE (diff.maxAbs, diff.atSample, diff.atChannel, diff.referenceMagnitude);
                 REQUIRE (diff.referenceMagnitude > 0.1f);
                 REQUIRE (diff.maxAbs <= 1.0e-6f);
-            }
-        }
-
-        WHEN ("the track gets a -6 dB trim")
-        {
-            Session session;
-            addTrim (session.track (0)->getTrackInserts(), -6.0f);
-            const auto live = renderLive (*session.engine);
-
-            THEN ("both channels are halved: the main mix and the direct out")
-            {
-                requireScaled (live, reference, 0, kMinus6);
-                requireScaled (live, reference, 3, kMinus6);
             }
         }
 
@@ -246,7 +233,7 @@ SCENARIO ("inserts render where their chain sits", "[engine][effects][inserts]")
         WHEN ("a trim is added but disabled")
         {
             Session session;
-            auto slot = addTrim (session.track (0)->getChannel (0)->inserts, -6.0f);
+            auto slot = addTrim (session.track (0)->getTrackInserts(), -6.0f);
             slot->setEnabled (false);
             const auto live = renderLive (*session.engine);
 
@@ -262,13 +249,13 @@ SCENARIO ("the live mix with inserts is the same for any number of render worker
 {
     MessageThread messageThread;
 
-    GIVEN ("two tracks with channel, track and master inserts")
+    GIVEN ("two tracks with track and master inserts")
     {
         const auto render = [] (int numWorkers)
         {
             Session session (2);
-            addTrim (session.track (0)->getChannel (0)->inserts, -6.0f);
-            addTrim (session.track (1)->getChannel (0)->inserts, -3.0f);
+            addTrim (session.track (0)->getTrackInserts(), -6.0f);
+            addTrim (session.track (1)->getTrackInserts(), -3.0f);
             addTrim (session.track (1)->getTrackInserts(), -2.0f);
             addTrim (session.tracks().getMasterInserts(), -1.0f);
             return renderLive (*session.engine, numWorkers);
@@ -303,9 +290,9 @@ SCENARIO ("an insert added or removed while playing takes effect from the next b
         const auto before = level (driver.render (0.2));
         REQUIRE (before > 0.1f);
 
-        WHEN ("a -12 dB trim is added to channel 0")
+        WHEN ("a -12 dB trim is added to the track")
         {
-            auto& chain = session.track (0)->getChannel (0)->inserts;
+            auto& chain = session.track (0)->getTrackInserts();
             addTrim (chain, -12.0f);
             const auto with = level (driver.render (0.2));
 
@@ -325,12 +312,12 @@ SCENARIO ("insert edits are undoable and keep their effect instances", "[engine]
 {
     MessageThread messageThread;
 
-    GIVEN ("a track whose channel 0 got a trim as an undoable edit")
+    GIVEN ("a track that got a trim as an undoable edit")
     {
         Session session;
         auto& container = session.tracks();
         auto undoManager = session.engine->getUndoManager();
-        auto& chain = session.track (0)->getChannel (0)->inserts;
+        auto& chain = session.track (0)->getTrackInserts();
 
         json before;
         container.writeToJson (before);
@@ -342,12 +329,12 @@ SCENARIO ("insert edits are undoable and keep their effect instances", "[engine]
         json withInsert;
         container.writeToJson (withInsert);
         REQUIRE (withInsert != before);
-        REQUIRE (withInsert["audio_tracks"][0]["channels"][0]["inserts"][0]["type"] == "builtin:trim");
-        REQUIRE (withInsert["audio_tracks"][0]["channels"][0]["inserts"][0]["state"]["gain_db"].get<float>() == Approx (-6.0f));
+        REQUIRE (withInsert["audio_tracks"][0]["inserts"][0]["type"] == "builtin:trim");
+        REQUIRE (withInsert["audio_tracks"][0]["inserts"][0]["state"]["gain_db"].get<float>() == Approx (-6.0f));
 
         WHEN ("a parameter is changed as its own undo step")
         {
-            const auto address = InsertChainAddress::ofChannel (0, 0);
+            const auto address = InsertChainAddress::ofTrack (session.track (0)->getId());
             undoManager->perform (new UndoableEffectParameterAction (container, address, 0, TrimEffect::gainDb, -6.0f, -12.0f), "Trim gain");
             undoManager->beginNewTransaction();
             REQUIRE (slot->getEffect().getParameter (TrimEffect::gainDb) == Approx (-12.0f));
@@ -379,7 +366,7 @@ SCENARIO ("insert edits are undoable and keep their effect instances", "[engine]
         {
             json state;
             container.writeToJson (state);
-            state["audio_tracks"][0]["channels"][0]["inserts"][0]["state"]["gain_db"] = -9.0;
+            state["audio_tracks"][0]["inserts"][0]["state"]["gain_db"] = -9.0;
             REQUIRE (container.restoreFromJson (state, false));
 
             THEN ("the instance stays and carries the new value")
@@ -426,11 +413,10 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
     const auto package = testOutputDirectory().getChildFile ("inserts-reopen.audium");
     const auto projectFile = package.getChildFile (ProjectFileStore::projectFileName);
 
-    GIVEN ("a session with a channel, a track and a master insert, saved")
+    GIVEN ("a session with a track and a master insert, saved")
     {
         {
             Session session;
-            addTrim (session.track (0)->getChannel (0)->inserts, -6.0f);
             auto trackSlot = addTrim (session.track (0)->getTrackInserts(), -3.0f);
             trackSlot->setEnabled (false);
             addTrim (session.tracks().getMasterInserts(), -1.0f);
@@ -447,7 +433,7 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
             auto& container = *engine->getAudioTrackContainer();
             REQUIRE (container.getNumItems() == 1);
 
-            THEN ("the load built a plan for the clear and one for the read, not one per channel and chain")
+            THEN ("the load built a plan for the clear and one for the read, not one per chain")
             {
                 REQUIRE (planner.getNumRebuilds() - rebuildsBefore <= 2);
                 REQUIRE (planner.getPlans().getNumRetired() == 0);
@@ -455,11 +441,6 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
 
             THEN ("every chain is back with its state and enabled flag")
             {
-                auto& channelChain = container.getAudioTrack (0)->getChannel (0)->inserts;
-                REQUIRE (channelChain.size() == 1);
-                REQUIRE (channelChain.getSlot (0)->getEffect().getParameter (TrimEffect::gainDb) == Approx (-6.0f));
-                REQUIRE (channelChain.getSlot (0)->isEnabled());
-
                 auto& trackChain = container.getAudioTrack (0)->getTrackInserts();
                 REQUIRE (trackChain.size() == 1);
                 REQUIRE (trackChain.getSlot (0)->getEffect().getParameter (TrimEffect::gainDb) == Approx (-3.0f));
@@ -475,9 +456,7 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
                 container.writeToJson (state);
                 state.erase ("master_inserts");
                 state["audio_tracks"][0].erase ("inserts");
-                state["audio_tracks"][0]["channels"][0].erase ("inserts");
                 REQUIRE (container.restoreFromJson (state, false));
-                REQUIRE (container.getAudioTrack (0)->getChannel (0)->inserts.isEmpty());
                 REQUIRE (container.getAudioTrack (0)->getTrackInserts().isEmpty());
                 REQUIRE (container.getMasterInserts().isEmpty());
 
@@ -485,6 +464,18 @@ SCENARIO ("a project with inserts saves and reopens, one without loads empty cha
                 container.writeToJson (written);
                 REQUIRE_FALSE (written.contains ("master_inserts"));
                 REQUIRE_FALSE (written["audio_tracks"][0].contains ("inserts"));
+            }
+
+            THEN ("a channel chain of an earlier development build is dropped: inserts are the track's")
+            {
+                json state;
+                container.writeToJson (state);
+                state["audio_tracks"][0]["channels"][0]["inserts"] = state["audio_tracks"][0]["inserts"];
+                REQUIRE (container.restoreFromJson (state, false));
+                REQUIRE (container.getAudioTrack (0)->getTrackInserts().size() == 1);
+
+                json written;
+                container.writeToJson (written);
                 REQUIRE_FALSE (written["audio_tracks"][0]["channels"][0].contains ("inserts"));
             }
         }

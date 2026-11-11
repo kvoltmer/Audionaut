@@ -21,8 +21,8 @@ namespace audium
 
 /**
  * What the renderer runs on top of the mixer's fixed topology: the insert
- * slots of every bus channel, every track and the master, as plain lists
- * of pointers. Built on the message thread from the model, immutable once
+ * slots of every track, every aux bus and the master, as plain lists of
+ * pointers. Built on the message thread from the model, immutable once
  * published, adopted by the render thread through a command in the same
  * queue as the channel data, so a block sees the plan together with the
  * layout it was built for (see MixPlanContainer). The plan keeps every
@@ -67,11 +67,8 @@ struct MixPlan
 
     struct Channel
     {
-        std::vector<EffectSlot*> inserts;
         std::vector<Send> sends;
 
-        /// Waits after the inserts (the channel's and its track's) for the latest bus channel; nullptr when none is needed.
-        std::shared_ptr<PdcDelay> preFaderDelay;
         /// Waits on the way to a direct out for the main mix's aux and master stages, which the direct out skips; nullptr when none is needed.
         std::shared_ptr<PdcDelay> directOutDelay;
     };
@@ -81,7 +78,10 @@ struct MixPlan
         int id = -1;              ///< the AudioTrack's id, the key the delays are carried over by
         int firstChannel = 0;
         int numChannels = 0;
-        std::vector<EffectSlot*> inserts;
+        std::vector<EffectSlot*> inserts;   ///< over all of the track's bus channels at once
+
+        /// Waits after the inserts for the latest track, on all of its bus channels; nullptr when none is needed.
+        std::shared_ptr<PdcDelay> preFaderDelay;
     };
 
     /**
@@ -107,9 +107,9 @@ struct MixPlan
      * How late the signal is at the points of the topology where it is
      * summed, in samples, all from the slots' latencies alone:
      *
-     *  - preFader: after the channel and track inserts, every bus channel is
-     *    as late as the latest one (the fader point, where the sends, the
-     *    direct outs and the main mix branch off);
+     *  - preFader: after the track inserts, every track is as late as the
+     *    latest one (the fader point, where the sends, the direct outs and
+     *    the main mix branch off);
      *  - aux: the aux returns join the dry main mix as late as the latest aux
      *    chain, the dry mix and the quicker returns having waited for it;
      *  - master: what the master inserts add on top.
@@ -163,11 +163,7 @@ struct MixPlan
 
         auto beforeFader = 0.0;
         for (const auto& track : tracks)
-        {
-            const auto trackTail = tailOf (track.inserts);
-            for (auto k = track.firstChannel; k < track.firstChannel + track.numChannels && k < static_cast<int> (channels.size()); ++k)
-                beforeFader = std::max (beforeFader, tailOf (channels[static_cast<size_t> (k)].inserts) + trackTail);
-        }
+            beforeFader = std::max (beforeFader, tailOf (track.inserts));
         if (stemExport)
             return beforeFader;
 
@@ -209,13 +205,12 @@ struct MixPlan
     {
         for (auto& slot : keepAlive)
             slot->reset();
+        for (const auto& track : tracks)
+            if (track.preFaderDelay != nullptr)
+                track.preFaderDelay->reset();
         for (const auto& channel : channels)
-        {
-            if (channel.preFaderDelay != nullptr)
-                channel.preFaderDelay->reset();
             if (channel.directOutDelay != nullptr)
                 channel.directOutDelay->reset();
-        }
         for (const auto& aux : auxes)
             if (aux.returnDelay != nullptr)
                 aux.returnDelay->reset();

@@ -17,7 +17,7 @@ namespace audium
 class MixerPlanner;
 
 /**
- * The ordered inserts of one bus channel, track, aux bus or the master: a
+ * The ordered inserts of one track, aux bus or the master: a
  * list of effect slots the mix plan is built from. Every change of the
  * structure (add, remove, move) asks the planner for a new plan; enabling
  * and parameter changes are atomics the running plan picks up.

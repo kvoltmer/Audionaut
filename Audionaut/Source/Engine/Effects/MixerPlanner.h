@@ -48,7 +48,7 @@ class InsertChain;
  * slots' latencies summed along each path, the waits at the three summing
  * points worked out from them, and a PdcDelay for every wait. A delay is
  * signal in flight, so a rebuild hands the new plan the previous plan's
- * delay for the same wait - the same bus channel, aux or stage, needing
+ * delay for the same wait - the same track, bus channel, aux or stage, needing
  * the same length - and makes a fresh one only where the wait changed.
  */
 class MixerPlanner
@@ -133,8 +133,8 @@ private:
     {
         enum class Kind { preFader, directOut, auxReturn, mainDry };
         Kind kind;
-        int trackId;    ///< preFader, directOut: the track whose channel waits
-        int channel;    ///< preFader, directOut: the channel within the track
+        int trackId;    ///< preFader, directOut: the track that waits, or whose channel waits
+        int channel;    ///< directOut: the channel within the track; -1 for preFader (the whole track)
         int auxId;      ///< auxReturn: the aux whose return waits
         std::shared_ptr<PdcDelay> delay;
     };
