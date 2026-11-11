@@ -15,8 +15,8 @@ applies gain (mute/solo folded in), pan into a stereo main mix or a direct devic
 master gain. All mixer state lives in the renderer and is written only through `LockFreeCommander`
 lambdas.
 
-This plan adds **insert effects** (per bus channel, console style, plus an optional per-track block that
-sees all bus channels of a track at once) and **send effects** (per-channel aux sends into dedicated FX buses
+This plan adds **insert effects** (per track, one chain that sees all bus channels of the track at once,
+plus aux and master chains) and **send effects** (per-channel aux sends into dedicated FX buses
 that return to the main mix), in phases, and a **multithreaded renderer** that runs tracks and
 aux buses in parallel inside the audio callback without adding latency (2.9). The renderer comes
 first: it needs no effect code, fixes the stretched-track overruns on its own, and leaves the
@@ -26,8 +26,9 @@ Decisions taken (2026-10-25):
 
 - Built-in effects first (juce_dsp, already a project module, no new dependencies). VST3/AU
   hosting implements the same interface in a later phase.
-- Inserts per bus channel, like an analog console; optionally a per-track insert block processing all
-  bus channels of a track together (stereo effects on a stereo track).
+- Inserts per track, processing all bus channels of the track together (stereo effects on a stereo
+  track). The first design also had mono inserts per bus channel, console style; they were dropped
+  on 2026-11-07 (phase 5) and removed from the engine in PR #254.
 - Send destinations are dedicated FX buses shown as strips in the channel view, not tracks. The
   master bus gets an insert chain too.
 
@@ -40,11 +41,11 @@ lists where this design differs and why.
 
 ```
 hardware input (monitor) ─┐
-voices (clips) ───────────┴─► bus channel k ─► [channel inserts k] ─┐
+voices (clips) ───────────┴─► bus channel k ─────────────────────────┐
                                                           │ for each track t: bus channels [off..off+n)
                                            [track inserts t] (n-channel block, in place)
                                                           │
-                                                   PDC delay (pre-fader align)
+                                         PDC delay (pre-fader align, n-channel, per track)
                                                           │
                                  ┌── pre-fader send taps ──┤
                                  │                     channel gain (mute/solo) ─► channel meter
@@ -57,9 +58,9 @@ aux bus a (stereo): Σ sends ─► [aux inserts a] ─► PDC ─► return gai
 main mix ─► PDC (dry delay) ─► + aux returns ─► [master inserts] ─► master gain ─► master meter ─► device out 0/1
 ```
 
-- **Channel insert**: mono chain on one bus channel, pre-fader. The console-strip model.
 - **Track insert**: n-channel chain over the contiguous bus channels of one track (n = track channel
-  count), after the channel inserts, before the fader. Contiguity holds because
+  count), before the fader. The only insert stage on the tracks; there are no per-channel inserts.
+  Contiguity holds because
   `commitChannelData()` places bus channels at `channelOffset + index`. Processed with
   `AudioBlock::getSubsetChannelBlock(offset, n)` in place, no copy.
 - **Sends** are per bus channel: each bus channel has 0..N entries `{auxId, level, preFader, mute}`. A send is
@@ -117,11 +118,11 @@ public:
 };
 ```
 
-- Channel support: `EffectTypeInfo::supportsChannels(int n)`. Channel inserts need mono; track, aux
-  and master inserts need n-channel. Built-ins support 1..n generically.
+- Channel support: `EffectTypeInfo::supportsChannels(int n)`. Track, aux and master inserts need
+  n-channel (a track's chain runs at the track's channel count). Built-ins support 1..n generically.
 - `EffectSlot` (`shared_ptr`-owned): `{type, enabled, shared_ptr<Effect>, bypass crossfade +
   bypass delay runtime}`. `InsertChain` = vector of `shared_ptr<EffectSlot>` + JSON in/out +
-  add/remove/move/enable. One `InsertChain` type serves channel, track, aux and master.
+  add/remove/move/enable. One `InsertChain` type serves track, aux and master.
 - `EffectRegistry`: engine service injected via
   [`AudiumFactory`](../../../Audionaut/Source/Engine/Factory/AudiumFactory.cpp), **no statics**
   (several engines per process). Maps type id → factory + `EffectTypeInfo`. Built-ins register in
@@ -145,13 +146,13 @@ audio thread without locks; values keep flowing through atomics and commander la
 ```cpp
 struct MixPlan {                       // immutable once published; built on the message thread
     struct Send { int aux; SendState* state; juce::SmoothedValue<float> level; bool preFader; };
-    struct Channel { std::vector<EffectSlot*> inserts; std::vector<Send> sends; int preFaderDelay; };
-    struct Track { int firstChannel, numChannels; std::vector<EffectSlot*> inserts; };
+    struct Channel { std::vector<Send> sends; int directOutDelay; };
+    struct Track { int firstChannel, numChannels; std::vector<EffectSlot*> inserts; int preFaderDelay; };
     struct Aux   { AuxState* state; std::vector<EffectSlot*> inserts; int returnDelay; juce::dsp::Gain<float> gain; };
     std::vector<Channel> channels; std::vector<Track> tracks; std::vector<Aux> auxes; std::vector<EffectSlot*> master;
     int mainDryDelay, totalLatency; double sampleRate; int maxBlockSize;   // the spec it was prepared for
     std::vector<std::shared_ptr<EffectSlot>> keepAlive;   // every slot the plan references: survives model rebuilds
-    std::vector<std::unique_ptr<PdcDelay>> channelDelays, auxDelays; PdcDelay mainDelay, directOutDelay; // carried over by id
+    std::vector<std::unique_ptr<PdcDelay>> trackDelays, channelDelays, auxDelays; PdcDelay mainDelay, directOutDelay; // carried over by id
     juce::AudioBuffer<float> auxBuffers;     // numAux * 2 channels, maxBlockSize
 };
 ```
@@ -221,7 +222,7 @@ The topology has exactly three summing points, so the delays are computed arithm
 
 | Point | Inputs aligned | Delay inserted |
 |---|---|---|
-| Fader (per bus channel) | channel inserts + its track inserts | `preFaderDelay[k] = Lpre − (channelLat[k] + trackLat[t(k)])`, `Lpre = max over bus channels` |
+| Fader (per track) | each track's inserts | `preFaderDelay[t] = Lpre − trackLat[t]` (one n-channel delay over the track's bus channels), `Lpre = max over tracks` |
 | Main mix + aux returns | dry main vs. each aux chain | `mainDryDelay = Laux = max auxLat[a]`, `returnDelay[a] = Laux − auxLat[a]` |
 | Device output | main path vs. direct outs | direct outs delayed by `Laux + Lmaster` |
 
@@ -245,7 +246,7 @@ count and consumed in three places:
   `getTailSeconds()` when "include effect tails" is set (config flag, default on for project
   bounces).
 
-Delay lines carry over between plans by channel/aux id. Hosted plugins that change latency at
+Delay lines carry over between plans by track/aux id (direct-out delays by track id + channel in track). Hosted plugins that change latency at
 runtime trigger a rebuild.
 
 ### 2.5 Persistence, undo, agents
@@ -259,10 +260,12 @@ runtime trigger a rebuild.
   [`AudioTrack.cpp:206`](../../../Audionaut/Source/Engine/Group/AudioTrack.cpp#L206),
   [`:144`](../../../Audionaut/Source/Engine/Group/AudioTrack.cpp#L144),
   [`UndoableChannelAction.h:92`](../../../Audionaut/Source/Engine/Undo/UndoableChannelAction.h#L92)),
-  which would recreate any chain stored inside it. Instead `AudioChannel` gains sibling members
-  `InsertChain inserts; SendList sends;` with their own `writeToJson`/`readFromJson`.
+  which would recreate any chain stored inside it. Instead `AudioChannel` gains a sibling member
+  `SendList sends;` with its own `writeToJson`/`readFromJson` (it also had `InsertChain inserts`
+  until PR #254).
   [`AudioTrack::writeChannelToJson`](../../../Audionaut/Source/Engine/Group/AudioTrack.cpp#L116)
-  writes `channel->data` into the element and then `"inserts"` / `"sends"` keys next to it;
+  writes `channel->data` into the element and then a `"sends"` key next to it (an `"inserts"` key
+  written by an earlier development build is ignored on read);
   `from_json` ignores unknown keys, so legacy and new files both load.
 - **Instance-preserving `InsertChain::readFromJson`**: if sizes match and every
   `slots[i].type == j[i].type`, read in place (`setEnabled`, `effect->setState`), no rebuild.
@@ -277,9 +280,8 @@ runtime trigger a rebuild.
 
 ```json
 "channels": [ { "gain": 1.0, "pan": 0.0, "mute": false,
-                "inserts": [ { "type": "builtin:eq3", "enabled": true, "state": { "hp_hz": 80 } } ],
                 "sends":   [ { "aux": 1, "level": 0.5, "pre_fader": false, "mute": false } ] } ],
-"inserts": [ ],
+"inserts": [ { "type": "builtin:eq3", "enabled": true, "state": { "hp_hz": 80 } } ],
 "aux_buses":      [ { "id": 1, "name": "Aux 1", "gain": 1.0, "balance": 0.0, "mute": false, "solo": false, "inserts": [ ] },
                     { "id": 2, "name": "Aux 2", "gain": 1.0, "balance": 0.0, "mute": false, "solo": false, "inserts": [ ] } ],
 "master_inserts": [ ]
@@ -325,15 +327,16 @@ runtime trigger a rebuild.
 - CLI verbs follow `runTrackPan`
   ([`TrackCommands.cpp:102`](../../../Audionaut/Source/Cli/Commands/TrackCommands.cpp#L102)) and
   the `getCliCommands()` table in `CliDispatch.cpp`. `info` extends the per-channel object in
-  `ProjectSummary.cpp` with `inserts`/`sends` and adds `track_inserts`, `master_inserts`,
-  `aux_buses`.
+  `ProjectSummary.cpp` with `sends`, each track with `inserts`, and adds `masterInserts` and
+  `auxBuses`.
 - MCP: `Tools/audionaut-mcp/index.js` `registerTool` wrappers; `test.mjs` asserts the exact
   sorted tool-name list and the count word, update both.
 - New `.cpp` files: `<FILE>` entries in `Audionaut/Audionaut.jucer`, then Projucer resave;
   reconfigure CMake after adding files.
-- UI (phase 5): `ChannelComponent` strip menu (`showStripMenu`) gets Add Insert ▸ / Sends ▸;
-  `ChannelGroupHeaderComponent` gets track inserts; aux strips are appended in
-  `ChannelsComponent`; generic `EffectEditorComponent` from `EffectParameterInfo`.
+- UI (phase 5): a mixer at the bottom of `MiddlePanelComponent` (`MixerComponent` under a
+  `PanelResizerBar`), strips per channel grouped by track, aux and master strips, generic
+  `EffectEditorComponent` from `EffectParameterInfo`; the arrangement's channel strips stay as
+  they are. See phase 5.
 
 ### 2.8 What is taken from Tracktion, what is not
 
@@ -375,7 +378,7 @@ its biggest win before the first effect exists; inserts are one more step inside
 audio thread, serial:  invoke commander, pull plan, schedule pass (start/stop voices, PlayListScheduler::process),
                        input monitor + recorder pass (unchanged), bucket active voices by track
 stage A, parallel over tracks (longest first):
-   job(t) = voices of t into its bus channels → channel inserts → track inserts → PDC → gain + channel meter
+   job(t) = voices of t into its bus channels → track inserts → PDC → gain + channel meter
             → pan into trackOut[t] (stereo) and send taps into sendOut[t][a]
 ── barrier ──
 stage B, parallel over aux buses (skipped when no aux has inserts; the sums then fold into C):
@@ -401,8 +404,8 @@ stage C, audio thread, serial:
   is per voice and only ever touched by the one job that owns its track, so its per-instance
   locks (`ClipResamplingSource::callbackLock`, `BufferingAudioSource`'s range lock) are never
   contended between jobs.
-- Per-channel state (`gains[i]`, `panners[i]`, `channelLevel[i]`, channel inserts, PDC delays) is
-  owned by exactly one job. A job writes only its track's bus channels, its partial buffers and its own
+- Per-channel state (`gains[i]`, `panners[i]`, `channelLevel[i]`) and the track's inserts and PDC
+  delay are owned by exactly one job. A job writes only its track's bus channels, its partial buffers and its own
   effects.
 - Partial buffers replace today's shared `stereoBuffer`/`mainMixBuffer` adds: `trackOut`
   (tracks × 2 × maxBlock, sized to the channel maximum at prepare, 512 KB in Release) plus, from
@@ -564,6 +567,9 @@ renderer in job form for the effect phases.
 
 ### Phase 2: Effect interface, built-ins, inserts (channel, track, master), MixPlan
 
+(Built with channel chains too; PR #254 removed them, see the phase 5 decision. The steps below
+are kept as built.)
+
 Built on `feature/effects-inserts` (2026-10-30). As built: the `MixPlan` lists `Channel`, `Track`
 and `master` slots plus a `trackAtChannel` lookup; the renderer keeps its per-block job table
 from the channel data and finds a job's track inserts by the job's first bus channel, skipping
@@ -666,16 +672,21 @@ is made on first set), `remove-send`; the insert verbs take `--aux ID` as a chai
 
 Built on `feature/effects-pdc` (2026-10-31, off `feature/effects-sends`). As built: `PdcDelay` is a
 fixed whole-sample delay for N channels (a ring of delay + block length, written then read, so any
-block length up to the prepared one works), with `replayHistory()` handing out the last `delay`
-samples. `EffectSlot` reads `getLatencySamples()` once at `prepare()`, and a latent slot owns a
-`bypassDelay` of that length for its dry signal: bypassed it is as late as running, the crossfade
-mixes aligned signals, and on the return from a bypass the effect is first fed the dry line's
-history so it has caught up when the crossfade starts (no hole of its latency). `MixPlan::Latency
+block length up to the prepared one works). `EffectSlot` reads `getLatencySamples()` once at
+`prepare()`, and a latent slot owns a `bypassDelay` of that length for its dry signal: bypassed it is
+as late as running, the crossfade mixes aligned signals, and on the return from a bypass the delayed
+dry carries on alone for the effect's latency (its first output is the pre-roll of a signal it has
+not heard yet), then the crossfade starts aligned - so a latent effect comes back its latency later
+than switched on, and the block that switches it does no extra work (review of PR #250: replaying
+the dry line's history into the effect was a burst of ceil(latency / block) effect calls in one
+callback). `MixPlan::Latency
 {preFader, aux, master}` carries the arithmetic of 2.4 (`atMainOutput()`, `atStemOutput()`), the
-plan owns `mainDryDelay` and per-channel `preFaderDelay`/`directOutDelay`, per-aux `returnDelay`,
-and `tailSeconds` (Effect::getTailSeconds summed along a path, the longest path at each point).
+plan owns `mainDryDelay`, per-track `preFaderDelay` (per-channel until PR #254 removed the channel
+chains), per-channel `directOutDelay`, per-aux `returnDelay`,
+and `tailSeconds(stemExport)` (Effect::getTailSeconds of the enabled slots summed along a path, the longest path at each point, up to the fader point for stems; read from the effects on demand so a bounce takes the current delay time, not the one at plan build - value changes rebuild no plan).
 `MixerPlanner::planLatency` computes them after the chains are collected; `delayFor()` carries a
-delay over from the previous plan by (kind, track id, channel in track | aux id) when the wait is
+delay over from the previous plan by (kind, track id, channel in track | aux id; a track's pre-fader
+delay since PR #254 by track id alone) when the wait is
 unchanged, so a rebuild while playing leaves the signal in flight intact (tested). The renderer runs
 the delays on the stage that owns the signal: the fader point after the track inserts (stage A),
 the return delay after the aux inserts (stage B), the dry delay before the returns join and the
@@ -693,13 +704,14 @@ first `L` (the stems' `L` for a stem export), appends the tail for a bounce to t
 unless `ExportAudioConfig::includeEffectTails` is off (CLI `export --no-tails`, MCP `include_tails`),
 and resets the chains when it ends as well as when it starts, so live playback never hears its
 tail. `LatencyCompensationTests` ([latency]): `PdcDelay` with mixed block lengths; a 480-sample
-channel insert shifts live outputs (main and direct outs) exactly and the bounce equals the plain
-one sample for sample, for 0 and 3 workers, stems and mono too; track + channel chains add; bypassed
+insert shifts live outputs (main and direct outs) exactly and the bounce equals the plain
+one sample for sample, for 0 and 3 workers, stems and mono too; track chains of different latency
+align (since PR #254; channel + track chains added up before); bypassed
 and toggled while playing; aux and master points alone and all three together (1036); a rebuild
 while playing carries the delay lines over; Link term and recording placement with a fake device of
 64/128 samples; the tail extension.
 
-- `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per channel/aux/main/direct;
+- `getLatencySamples()` honoured; `PdcDelay` (fixed integer delay FIFO) per track/aux/main/direct out;
   arithmetic from 2.4 in `MixerPlanner::build`; delay state carried over by id; bypass delay in
   the slot.
 - Planner publishes `totalLatency` (atomic samples). `LinkAudioDevice` adds it to the output-time
@@ -712,15 +724,65 @@ while playing carries the delay lines over; Link term and recording placement wi
   1 leaves the output at the same device sample as without the insert (Link compensation); a
   recorded click lands at the position it was played.
 
-### Phase 5: Channel view UI
+### Phase 5: Mixer view
 
-- `ChannelComponent`: "Inserts" rows (name, enable toggle, click → editor) and "Sends" rotaries;
-  strip menu Add Insert ▸ (types from the registry) and Sends ▸.
-- `ChannelGroupHeaderComponent`: track inserts entry. `AuxStripComponent`s appended in
-  `ChannelsComponent`; master insert row.
-- Generic `EffectEditorComponent` from `EffectParameterInfo` (sliders/toggles, drag → gesture
-  undo), non-modal window per slot. Observes `updateChannelsAction` / `rebuildAll`; commands go
-  straight to the engine.
+Decided with Klaus 2026-11-06, replacing the earlier idea of effects rows inside the arrangement's
+channel strips: effects get a **mixer at the bottom of the middle panel**, under the channel column
+and the arrangement, with the right panel untouched. The arrangement's channel view stays the
+compact strip it is. Whether the mixer is open and how tall it is are app preferences
+(`MixerVisible`, `MixerHeight`), default closed; View ▸ Mixer (Cmd+Shift+M) and a header button
+next to the right-panel button toggle it.
+
+- **Frame (5a, first step, built 2026-11-06):** `PanelResizerBar` (shared with the right panel
+  seam, which it replaces: one pixel seam line, wider grab zone, highlighted under the mouse,
+  double-click resets the size) above a `MixerComponent` in `MiddlePanelComponent`. Height 180
+  min, 300 default, half the panel max. Open state, size and the open/close animation live in
+  `CollapsiblePanel`, one per panel: like Xcode's debug area, dragging the seam past the minimum
+  collapses the panel while the drag goes on, dragging back brings it back, the release decides,
+  and a panel closed by a drag keeps its previous size for reopening. The right panel got the
+  same treatment (explicit, persisted width `RightPanelWidth` and `RightPanelVisible` instead of
+  the proportional `StretchableLayoutManager` split).
+- **Strips (5a, built 2026-11-06):** as designed below, in `Interface/Components/MixerPanel/`:
+  `MixerComponent` (viewport of track groups; a structure signature decides rebuild vs. refresh;
+  owns the editor windows), `MixerTrackGroupComponent` (band + strips), `MixerStripComponent`,
+  `MixerStripElements` (StripSends / StripIo / StripPan / StripButtons / StripFader / StripName, one
+  component per strip element), `MixerLayout.h`, `MixerSectionBar.h`, `InsertSlotListComponent`, `SendRowComponent`, `EffectEditorComponent`, and `MixerContext.h`
+  with the undoable chain edits and menus (`InsertChainActions`, address-resolved at callback
+  time). Lessons: app-shell calls in interface code stay behind `#ifndef AUDIONAUT_HEADLESS` (the
+  tests and the CLI compile every interface source); the application's `getNextCommandTarget()`
+  now hands commands on to the main window so shortcuts work from tool windows.
+  Design: one 76 px strip per channel grouped per track under a coloured track band
+  (name only; the arrangement's minimize does not apply to the mixer). Strip top to bottom: name, insert slots
+  (click = editor window, right-click = Bypass / Remove / Replace ▸ / Move, drag reorders, "+" adds
+  from the registry), one send row per aux (mini level bar, a send that does not exist yet is dim
+  and created by the first drag, right-click = Pre-Fader / Mute / Remove), pan, R I S M, vertical
+  fader with level meter, dB readout, routing. Fixed heights (2026-11-08, `MixerLayout.h`): every
+  element has one height, the mixer's height follows from the shown sections and the send rows
+  (`MixerLayout::mixerHeight`), the seam above it only closes and reopens it (`CollapsiblePanel::
+  setFixedSize`), the `MixerHeight` preference is gone; no height tiers any more. Values and meters refresh on the 60 Hz timer; structure follows
+  `updateChannelsAction` / `rebuildAll`. Undo: structural changes through `applyAsUndoableEdit`,
+  values through `UndoableEffectParameterAction` / `UndoableSendAction` on drag end.
+- **Decision (2026-11-07): no per-channel inserts.** Insert effects belong to the track and run at
+  the track's channel count; the mixer shows one insert list per track (across the group, under
+  the band, `InsertChainAddress::ofTrack`), the channel strips carry sends, I/O, pan, buttons and
+  fader only. The engine followed in PR #254 (merged 2026-11-11): `AudioChannel::inserts`,
+  `InsertChainAddress::ofChannel`, the planner's channel stage and the CLI/MCP channel addressing
+  are gone, the pre-fader PDC delay is one n-channel delay per track, and `add-insert` /
+  `remove-insert` / `set-insert` reject `--channel` / `--all-channels` with a usage error.
+  Editor windows are titled "Track 2 / EQ3".
+- **Section bar (2026-11-08):** a 30 px bar at the mixer's left (`MixerSectionBar`) with five
+  icon toggles that show or hide strip sections in every strip: inserts, sends, I/O, pan, the
+  R I S M buttons (fader, meter and name always show). The mask is the app preference
+  `MixerSections` (flags of `MixerLayout::Section`); hidden sections give their height to the fader.
+- **Editor (5a):** generic `EffectEditorComponent` from `EffectParameterInfo` (one row per
+  parameter: label, slider with unit, toggle for booleans; bypass in the header) in a non-modal
+  `FloatingToolWindow` per slot, titled "Track 2 / ch 1 / EQ3", closing itself when its slot,
+  channel or project goes away.
+- **Aux and master (5b):** after a divider one strip per aux bus (editable name, inserts, pan, S M,
+  fader, stereo meter, remove via the name's menu) and a "+" column that adds one; the master strip
+  pinned right of the scrolling area (inserts, the master fader of the header, stereo meter).
+- Open: a visible output latency figure (header) and an `info` latency field, carried over from
+  phase 4.
 
 ### Phase 6: Remaining built-ins
 
