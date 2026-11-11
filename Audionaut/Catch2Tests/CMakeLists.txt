@@ -136,6 +136,11 @@ file(GLOB_RECURSE SRC_AUDIUM CONFIGURE_DEPENDS
         ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Cli/*.cpp)
 list(FILTER SRC_AUDIUM EXCLUDE REGEX "/Engine/Separation/Demucs/")
+if(APPLE)
+    # the macOS halves of interface classes (FloatingPanel_mac.mm), whose .cpp halves the glob above takes
+    file(GLOB_RECURSE SRC_AUDIUM_MAC CONFIGURE_DEPENDS ${SRC_PATH}/Interface/*.mm)
+    list(APPEND SRC_AUDIUM ${SRC_AUDIUM_MAC})
+endif()
 file(GLOB SRC_UTIL CONFIGURE_DEPENDS ${SRC_PATH}/Util/*.cpp)
 list(APPEND SRC_AUDIUM
         ${SRC_UTIL}
