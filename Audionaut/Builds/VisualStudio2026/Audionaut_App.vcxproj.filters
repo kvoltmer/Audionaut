@@ -1441,6 +1441,12 @@
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp">
       <Filter>Audionaut\Source\Interface\LookAndFeel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Dialogs\FloatingPanel.cpp">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Dialogs\FloatingPanel_mac.mm">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp">
       <Filter>Audionaut\Source\Interface\Widgets</Filter>
     </ClCompile>
@@ -5380,6 +5386,9 @@
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingPanel.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h">

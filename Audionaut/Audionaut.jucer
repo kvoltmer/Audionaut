@@ -619,6 +619,12 @@
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FileBrowserView.h"/>
+          <FILE id="FltPn1" name="FloatingPanel.cpp" compile="1" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel.cpp"/>
+          <FILE id="FltPn2" name="FloatingPanel.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel.h"/>
+          <FILE id="FltPn3" name="FloatingPanel_mac.mm" compile="1" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel_mac.mm"/>
           <FILE id="fltTlW" name="FloatingToolWindow.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FloatingToolWindow.h"/>
           <FILE id="vHwlEq" name="NewAudioTrackDialog.h" compile="0" resource="0"

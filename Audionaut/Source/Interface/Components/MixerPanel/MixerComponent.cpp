@@ -7,8 +7,8 @@
 
 #include "Interface/ColourIds.h"
 #include "Interface/Components/MixerPanel/EffectEditorComponent.h"
+#include "Interface/Dialogs/FloatingPanel.h"
 #ifndef AUDIONAUT_HEADLESS
- #include "Interface/Dialogs/FloatingToolWindow.h"
  #include "Application/AudiumApplication.h"
  #include "Util/Preferences.h"
 #endif
@@ -327,8 +327,8 @@ void MixerComponent::openEditor (const InsertChainAddress& address, std::shared_
     juce::ignoreUnused (address, title);   // no windows without the app shell (tests, CLI)
    #else
     auto& holder = editorWindows[slot.get()];
-    if (holder != nullptr) {
-        holder->toFront (true);
+    if (auto* panel = dynamic_cast<FloatingPanel*> (holder.get())) {
+        panel->bringToFront();
         return;
     }
 
@@ -339,13 +339,8 @@ void MixerComponent::openEditor (const InsertChainAddress& address, std::shared_
             safeThis->editorWindows.erase (key);
     };
 
-    const auto width = EffectEditorComponent::width;
-    const auto height = editor->getPreferredHeight();
-    const auto titleBarAllowance = 64;   // the window's limits count the native title bar, the content wants its full height
-    auto* window = new FloatingToolWindow (title.toStdString(), {}, editor, holder, false,
-                                           width, height, width, height, width, height + titleBarAllowance);
-    window->setContentComponentSize (width, height);
-    window->addKeyListener (AudiumApplication::getCommandManager().getKeyMappings());   // undo and the other shortcuts work with the editor in front
+    new FloatingPanel (title, editor, holder,
+                       AudiumApplication::getCommandManager().getKeyMappings());   // undo and the other shortcuts work with the editor in front
    #endif
 }
 
@@ -353,7 +348,7 @@ void MixerComponent::closeEditorsWhoseSlotIsGone()
 {
     for (auto it = editorWindows.begin(); it != editorWindows.end();)
     {
-        auto* window = dynamic_cast<juce::DialogWindow*> (it->second.get());
+        auto* window = dynamic_cast<FloatingPanel*> (it->second.get());
         auto* editor = window != nullptr ? dynamic_cast<EffectEditorComponent*> (window->getContentComponent()) : nullptr;
         if (it->second == nullptr || editor == nullptr || ! editor->isStillValid())
             it = editorWindows.erase (it);
