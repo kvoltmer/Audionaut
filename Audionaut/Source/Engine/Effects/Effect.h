@@ -32,11 +32,14 @@ struct EffectParameterInfo
     bool boolean = false;   ///< 0 or 1, shown as a toggle
 };
 
-/// What an effect type is called: the id is what projects store ("builtin:eq3"), the name what menus show.
+/// What an effect type is called: the id is what projects store ("builtin:eq3"), the name what menus show,
+/// the category the submenu it is listed in ("Reverb"), the description a sentence on what it does.
 struct EffectTypeInfo
 {
     std::string id;
     std::string name;
+    std::string category = {};
+    std::string description = {};
 };
 
 /**
@@ -101,6 +104,22 @@ public:
             if (id == parameters[i].id)
                 return static_cast<int> (i);
         return -1;
+    }
+
+    /// Message thread: the value as the effect itself reads it ("-6.00 dB", "Nuke"), for editors and agents;
+    /// empty when the plain number with the parameter's unit says it.
+    virtual juce::String getParameterText (int index, float value) const
+    {
+        juce::ignoreUnused (index, value);
+        return {};
+    }
+
+    /// Message thread: typed text back to a value, the inverse of getParameterText(); false when the effect
+    /// has no reading of its own (the text is then taken as the plain number).
+    virtual bool parseParameterText (int index, const juce::String& text, float& value) const
+    {
+        juce::ignoreUnused (index, text, value);
+        return false;
     }
 
     float getParameter (int index) const noexcept

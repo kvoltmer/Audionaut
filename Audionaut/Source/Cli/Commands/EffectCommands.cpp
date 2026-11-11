@@ -303,9 +303,15 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
                                     { "min", info.min },
                                     { "max", info.max },
                                     { "default", info.def },
-                                    { "boolean", info.boolean } });
+                                    { "boolean", info.boolean },
+                                    // the effect's own reading of the default, where it has one ("0.00 dB")
+                                    { "default_text", effect->getParameterText (static_cast<int> (&info - effect->getParameters().data()), info.def).toStdString() } });
         }
-        types.push_back ({ { "type", type.id }, { "name", type.name }, { "parameters", parameters } });
+        types.push_back ({ { "type", type.id },
+                           { "name", type.name },
+                           { "category", type.category },
+                           { "description", type.description },
+                           { "parameters", parameters } });
     }
 
     context.log (juce::String (static_cast<int> (types.size())) + " effect types");

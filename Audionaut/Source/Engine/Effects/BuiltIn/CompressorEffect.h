@@ -27,7 +27,7 @@ public:
         { "makeup_db",    "Make-up",   "dB",   0.0f,   24.0f,    0.0f },
     }};
 
-    static EffectTypeInfo typeInfo() { return { "builtin:compressor", "Compressor" }; }
+    static EffectTypeInfo typeInfo() { return { "builtin:compressor", "Compressor", "Dynamics", "A compressor with threshold, ratio, attack, release and make-up gain." }; }
 
     CompressorEffect() : Effect (typeInfo(), parameterInfos) {}
 

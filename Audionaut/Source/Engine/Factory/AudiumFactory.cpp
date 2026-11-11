@@ -89,6 +89,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
     // container, which gets the planner right after its construction
     auto effectRegistry             = std::make_shared<EffectRegistry>();
     effectRegistry->addBuiltInEffects();
+    effectRegistry->addAirwindowsEffects();
     auto mixPlans                   = std::make_shared<MixPlanContainer>();
     auto mixerPlanner               = std::make_shared<MixerPlanner>(effectRegistry, mixPlans);
 

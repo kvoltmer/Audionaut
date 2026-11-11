@@ -35,6 +35,9 @@ public:
     /// Registers Trim, EQ, Compressor and Delay.
     void addBuiltInEffects();
 
+    /// Registers the curated Airwindows effects (ThirdParty/airwindows), after the built-ins.
+    void addAirwindowsEffects();
+
     /// A new instance of the type, nullptr for an unknown id.
     std::unique_ptr<Effect> create (const std::string& typeId) const;
 

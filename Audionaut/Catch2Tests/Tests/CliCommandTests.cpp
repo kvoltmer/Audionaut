@@ -6,6 +6,7 @@
 #include <sstream>
 #include <nlohmann/json.hpp>
 
+#include "Engine/Effects/Airwindows/AirwindowsEffect.h"
 #include "Cli/Commands/Commands.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/AudiumEngine.h"
@@ -1759,14 +1760,22 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
     nlohmann::json envelope;
     context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
 
-    THEN ("list-effects names the built-ins with their parameters, without a project")
+    THEN ("list-effects names the built-ins and the Airwindows effects with their parameters, without a project")
     {
         REQUIRE (cli::runListEffects (makeArgs ("list-effects"), context) == cli::exitOk);
         auto effects = envelope["result"]["effects"];
-        REQUIRE (effects.size() == 4);
+        REQUIRE (effects.size() == 4 + audium::airwindows::getDescriptors().size());
         REQUIRE (effects[0]["type"] == "builtin:trim");
+        REQUIRE (effects[0]["category"] == "Utility");
         REQUIRE (effects[0]["parameters"][0]["id"] == "gain_db");
         REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (-24.0));
+
+        const auto plate = std::find_if (effects.begin(), effects.end(), [] (const auto& e) { return e["type"] == "airwindows:kplated"; });
+        REQUIRE (plate != effects.end());
+        REQUIRE ((*plate)["category"] == "Reverb");
+        REQUIRE_FALSE ((*plate)["description"].get<std::string>().empty());
+        REQUIRE ((*plate)["parameters"][4]["id"] == "wetness");
+        REQUIRE ((*plate)["parameters"][4]["default_text"] == "0.25");
     }
 
     GIVEN ("a project whose track 1 is a mono stem holding a 0 dB sine")

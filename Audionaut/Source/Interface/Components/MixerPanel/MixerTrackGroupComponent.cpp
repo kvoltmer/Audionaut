@@ -76,6 +76,7 @@ MixerTrackGroupComponent::MixerTrackGroupComponent (MixerContext context_, std::
     const auto numChannels = static_cast<int> (track->audioChannelContainer->size());
     for (int channel = 0; channel < numChannels; ++channel) {
         ios.push_back (std::make_unique<StripIo> (StripChannel { context, track, channel }));
+        ios.back()->refresh();   // as the strips and the insert list do: a group rebuilt on a change of structure is not refreshed after
         ioRoom.addAndMakeVisible (ios.back().get());
         strips.push_back (std::make_unique<MixerStripComponent> (context, track, channel));
         addAndMakeVisible (strips.back().get());

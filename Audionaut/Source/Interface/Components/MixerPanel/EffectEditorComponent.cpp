@@ -59,6 +59,26 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
             slider->setColour (juce::Slider::textBoxTextColourId, juce::Colours::white);
             if (info.unit != nullptr && info.unit[0] != 0)
                 slider->setTextValueSuffix (" " + juce::String (info.unit));
+
+            // an effect with its own reading of the values (Airwindows' 0..1 shown as dB, seconds,
+            // a mode's name) shows that, and takes a typed value the same way
+            if (effect.getParameterText (i, info.def).isNotEmpty())
+            {
+                slider->textFromValueFunction = [weak = slotRef, i] (double value)
+                {
+                    if (auto owner = weak.lock())
+                        return owner->getEffect().getParameterText (i, static_cast<float> (value));
+                    return juce::String (value, 2);
+                };
+                slider->valueFromTextFunction = [weak = slotRef, i] (const juce::String& text)
+                {
+                    auto value = 0.0f;
+                    if (auto owner = weak.lock(); owner != nullptr && owner->getEffect().parseParameterText (i, text, value))
+                        return static_cast<double> (value);
+                    return text.getDoubleValue();
+                };
+                slider->updateText();
+            }
             addAndMakeVisible (slider.get());
 
             auto* rowPtr = row.get();

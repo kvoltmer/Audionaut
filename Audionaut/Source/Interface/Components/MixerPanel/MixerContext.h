@@ -7,6 +7,8 @@
 
 #include <JuceHeader.h>
 
+#include <algorithm>
+
 #include "Engine/AudiumEngine.h"
 #include "Engine/ActionMessages.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -99,11 +101,31 @@ namespace InsertChainActions
     }
 
     /// One item per registered effect type.
+    /// The effect types by category, a submenu each, in the order the registry first lists one of the
+    /// category (the built-ins' categories first); a type without a category goes on the top level.
     inline juce::PopupMenu typesMenu (const MixerContext& ctx, std::function<void (const std::string& typeId)> onPick)
     {
         juce::PopupMenu menu;
-        if (auto* planner = ctx.planner())
-            for (const auto& type : planner->getRegistry().getTypes())
+        auto* planner = ctx.planner();
+        if (planner == nullptr)
+            return menu;
+
+        const auto& types = planner->getRegistry().getTypes();
+        std::vector<std::string> categories;
+        for (const auto& type : types)
+            if (! type.category.empty() && std::find (categories.begin(), categories.end(), type.category) == categories.end())
+                categories.push_back (type.category);
+
+        for (const auto& category : categories)
+        {
+            juce::PopupMenu submenu;
+            for (const auto& type : types)
+                if (type.category == category)
+                    submenu.addItem (type.name, [onPick, id = type.id] { onPick (id); });
+            menu.addSubMenu (juce::String (category), submenu);
+        }
+        for (const auto& type : types)
+            if (type.category.empty())
                 menu.addItem (type.name, [onPick, id = type.id] { onPick (id); });
         return menu;
     }

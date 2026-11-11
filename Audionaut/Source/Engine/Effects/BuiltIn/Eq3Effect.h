@@ -36,7 +36,7 @@ public:
         { "high_hz", "High freq",      "Hz", 1500.0f, 16000.0f, 6000.0f },
     }};
 
-    static EffectTypeInfo typeInfo() { return { "builtin:eq3", "EQ" }; }
+    static EffectTypeInfo typeInfo() { return { "builtin:eq3", "EQ", "EQ", "A high-pass, low and high bands and a parametric mid." }; }
 
     Eq3Effect() : Effect (typeInfo(), parameterInfos) {}
 

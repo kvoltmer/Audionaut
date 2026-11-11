@@ -24,7 +24,7 @@ public:
         { "polarity", "Polarity", "",     0.0f,  1.0f, 0.0f, true },
     }};
 
-    static EffectTypeInfo typeInfo() { return { "builtin:trim", "Trim" }; }
+    static EffectTypeInfo typeInfo() { return { "builtin:trim", "Trim", "Utility", "Gain in dB and a polarity flip." }; }
 
     TrimEffect() : Effect (typeInfo(), parameterInfos) {}
 

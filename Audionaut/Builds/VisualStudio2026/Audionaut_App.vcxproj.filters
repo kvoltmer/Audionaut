@@ -11,6 +11,12 @@
     <Filter Include="Audionaut\Submodules">
       <UniqueIdentifier>{C466D4A6-ED53-DDE5-2A30-37BD2DF4AB9A}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Audionaut\ThirdParty\airwindows\autogen_airwin">
+      <UniqueIdentifier>{BF398E55-963C-7B07-29C2-E8379EB3CF37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\ThirdParty\airwindows">
+      <UniqueIdentifier>{C388883A-8A6C-369C-FCAE-26AC7B302503}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Audionaut\ThirdParty\lame">
       <UniqueIdentifier>{350540AA-61D0-4528-AF92-EF9460BB0FD8}</UniqueIdentifier>
     </Filter>
@@ -52,6 +58,9 @@
     </Filter>
     <Filter Include="Audionaut\Source\Engine\Selection">
       <UniqueIdentifier>{D2016120-F9C6-E02F-2F1D-88DEB1BCFBCE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audionaut\Source\Engine\Effects\Airwindows">
+      <UniqueIdentifier>{AB9F0954-5BE0-E4BF-E910-CCB1E3631162}</UniqueIdentifier>
     </Filter>
     <Filter Include="Audionaut\Source\Engine\Effects\BuiltIn">
       <UniqueIdentifier>{217F8248-F4E8-B449-51DF-BD7D48706997}</UniqueIdentifier>
@@ -1054,6 +1063,147 @@
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <Filter>Audionaut\Submodules\rubberband</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\airwin_consolidated_base.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockParty.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockPartyProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Doublelay.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\DoublelayProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Mackity.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\MackityProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDrive.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDriveProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEcho.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEchoProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquish.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquishProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pyewacket.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PyewacketProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3Proc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateD.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateDProc.cpp">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\VbrTag.c">
       <Filter>Audionaut\ThirdParty\lame</Filter>
     </ClCompile>
@@ -1293,6 +1443,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsCatalog.cpp">
+      <Filter>Audionaut\Source\Engine\Effects\Airwindows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsEffect.cpp">
+      <Filter>Audionaut\Source\Engine\Effects\Airwindows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\AuxBus.cpp">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
@@ -4872,6 +5028,78 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\airwin_consolidated_base.h">
+      <Filter>Audionaut\ThirdParty\airwindows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockParty.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Doublelay.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Mackity.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDrive.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEcho.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquish.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pyewacket.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateD.h">
+      <Filter>Audionaut\ThirdParty\airwindows\autogen_airwin</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\ThirdParty\lame\audionaut\lame_config.h">
       <Filter>Audionaut\ThirdParty\lame</Filter>
     </ClInclude>
@@ -5063,6 +5291,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsEffect.h">
+      <Filter>Audionaut\Source\Engine\Effects\Airwindows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>

@@ -32,7 +32,7 @@ public:
         { "mix",      "Mix",      "",   0.0f,    1.0f,   0.5f },
     }};
 
-    static EffectTypeInfo typeInfo() { return { "builtin:delay", "Delay" }; }
+    static EffectTypeInfo typeInfo() { return { "builtin:delay", "Delay", "Delay", "A feedback delay with time, feedback and mix." }; }
 
     DelayEffect() : Effect (typeInfo(), parameterInfos) {}
 
