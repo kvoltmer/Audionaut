@@ -497,6 +497,7 @@
     <ClCompile Include="..\..\Source\Engine\Project\ProjectSerializer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\AudiumEngine.cpp"/>
     <ClCompile Include="..\..\Source\Interface\LookAndFeel\AudiumLookAndFeel.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Dialogs\FloatingPanel.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Widgets\audium_ListBox.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\SnapToGridHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp"/>
@@ -3821,6 +3822,7 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\PrivacySettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AssembleDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FileBrowserView.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingPanel.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\FloatingToolWindow.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\NewAudioTrackDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AboutWindowComponent.h"/>
