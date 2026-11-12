@@ -30,6 +30,8 @@ struct EffectParameterInfo
     float max;
     float def;
     bool boolean = false;   ///< 0 or 1, shown as a toggle
+    const char* group = nullptr;   ///< the section an editor shows it in ("Mid"); consecutive parameters share one
+    const char* label = nullptr;   ///< its name within that section ("Freq"); the name when unset
 };
 
 /// What an effect type is called: the id is what projects store ("builtin:eq3"), the name what menus show,

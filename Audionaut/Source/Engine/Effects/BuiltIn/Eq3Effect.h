@@ -13,8 +13,8 @@ namespace audium
 {
 
 /**
- * EQ: a high-pass, a low shelf, a peaking mid band and a high shelf, each a
- * biquad per channel. The coefficients come from juce_dsp's array makers
+ * EQ: a high-pass, a low shelf, a peaking mid band at a fixed width and a
+ * high shelf, each a biquad per channel. The coefficients come from juce_dsp's array makers
  * (no allocation) and are recomputed on the render thread when a parameter
  * changed; a band at 0 dB, or the high-pass while off, is skipped, and
  * starts from a cleared delay line when it comes back.
@@ -22,21 +22,20 @@ namespace audium
 class Eq3Effect final : public Effect
 {
 public:
-    enum Parameter { hpOn = 0, hpHz, lowDb, lowHz, midDb, midHz, midQ, highDb, highHz };
+    enum Parameter { lowDb = 0, lowHz, midDb, midHz, highDb, highHz, hpOn, hpHz };
 
-    static constexpr std::array<EffectParameterInfo, 9> parameterInfos {{
-        { "hp_on",   "High-pass",      "",      0.0f,     1.0f,    0.0f, true },
-        { "hp_hz",   "High-pass freq", "Hz",   10.0f,  1000.0f,   80.0f },
-        { "low_db",  "Low",            "dB",  -18.0f,    18.0f,    0.0f },
-        { "low_hz",  "Low freq",       "Hz",   40.0f,   600.0f,  120.0f },
-        { "mid_db",  "Mid",            "dB",  -18.0f,    18.0f,    0.0f },
-        { "mid_hz",  "Mid freq",       "Hz",  200.0f,  6000.0f, 1000.0f },
-        { "mid_q",   "Mid Q",          "",      0.3f,     6.0f,    1.0f },
-        { "high_db", "High",           "dB",  -18.0f,    18.0f,    0.0f },
-        { "high_hz", "High freq",      "Hz", 1500.0f, 16000.0f, 6000.0f },
+    static constexpr std::array<EffectParameterInfo, 8> parameterInfos {{
+        { "low_db",  "Low",            "dB",  -18.0f,    18.0f,    0.0f, false, "Low",       "Gain" },
+        { "low_hz",  "Low freq",       "Hz",   40.0f,   600.0f,  120.0f, false, "Low",       "Freq" },
+        { "mid_db",  "Mid",            "dB",  -18.0f,    18.0f,    0.0f, false, "Mid",       "Gain" },
+        { "mid_hz",  "Mid freq",       "Hz",  200.0f,  6000.0f, 1000.0f, false, "Mid",       "Freq" },
+        { "high_db", "High",           "dB",  -18.0f,    18.0f,    0.0f, false, "High",      "Gain" },
+        { "high_hz", "High freq",      "Hz", 1500.0f, 16000.0f, 6000.0f, false, "High",      "Freq" },
+        { "hp_on",   "High-pass",      "",      0.0f,     1.0f,    0.0f, true,  "High-pass", "On" },
+        { "hp_hz",   "High-pass freq", "Hz",   10.0f,  1000.0f,   80.0f, false, "High-pass", "Freq" },
     }};
 
-    static EffectTypeInfo typeInfo() { return { "builtin:eq3", "EQ", "EQ", "A high-pass, low and high bands and a parametric mid." }; }
+    static EffectTypeInfo typeInfo() { return { "builtin:eq3", "EQ", "EQ", "A high-pass, low and high shelves and a mid band." }; }
 
     Eq3Effect() : Effect (typeInfo(), parameterInfos) {}
 
@@ -138,7 +137,7 @@ private:
 
         bands[2].active = false;
         if (getParameter (midDb) != 0.0f)
-            bands[2].set (Makers::makePeakFilter (sampleRate, hz (getParameter (midHz)), getParameter (midQ), gainOf (getParameter (midDb))));
+            bands[2].set (Makers::makePeakFilter (sampleRate, hz (getParameter (midHz)), midQ, gainOf (getParameter (midDb))));
 
         bands[3].active = false;
         if (getParameter (highDb) != 0.0f)
@@ -153,6 +152,7 @@ private:
     }
 
     static constexpr float shelfQ = 0.7071f;
+    static constexpr float midQ = 1.0f;   ///< about 1.4 octaves wide; old projects' "mid_q" is ignored
 
     double sampleRate = 0.0;
     std::array<Band, 4> bands;

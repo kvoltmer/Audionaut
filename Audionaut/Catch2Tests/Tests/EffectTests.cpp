@@ -154,7 +154,7 @@ SCENARIO ("effect parameters and state round trip deterministically", "[engine][
             REQUIRE (eq.getParameter (Eq3Effect::lowDb) == Approx (18.0f));
             eq.setParameter (Eq3Effect::hpOn, 0.3f);
             REQUIRE (eq.getParameter (Eq3Effect::hpOn) == Approx (0.0f));
-            REQUIRE (eq.getParameterIndex ("mid_q") == Eq3Effect::midQ);
+            REQUIRE (eq.getParameterIndex ("mid_hz") == Eq3Effect::midHz);
             REQUIRE (eq.getParameterIndex ("nope") == -1);
             REQUIRE (eq.getParameter (99) == Approx (0.0f));
         }
