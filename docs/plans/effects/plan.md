@@ -26,6 +26,11 @@ Decisions taken (2026-10-25):
 
 - Built-in effects first (juce_dsp, already a project module, no new dependencies). VST3/AU
   hosting implements the same interface in a later phase.
+- Revised 2026-11-13: the built-in effects (Trim, EQ, Compressor, Delay) are development tools
+  only, registered in debug builds and the CMake test/CLI targets (`AUDIONAUT_BUILT_IN_EFFECTS`);
+  a release app registers none. Effects for users come with plugin hosting (phase 7). Effects
+  that sound good but not exceptional would hurt Audionaut more than missing ones: a set of 23
+  vendored Airwindows effects was built and removed again (PR #257), and phase 6 is dropped.
 - Inserts per track, processing all bus channels of the track together (stereo effects on a stereo
   track). The first design also had mono inserts per bus channel, console style; they were dropped
   on 2026-11-07 (phase 5) and removed from the engine in PR #254.
@@ -247,7 +252,9 @@ count and consumed in three places:
   bounces).
 
 Delay lines carry over between plans by track/aux id (direct-out delays by track id + channel in track). Hosted plugins that change latency at
-runtime trigger a rebuild.
+runtime trigger a rebuild. Built in PR #257 with the compressor's look-ahead as the first such
+parameter: `EffectSlot::hasStaleLatency()` makes the planner re-prepare the slot like a format
+change, and `InsertChain::setParameter()` is the one write path that requests the rebuild.
 
 ### 2.5 Persistence, undo, agents
 
@@ -784,12 +791,12 @@ next to the right-panel button toggle it.
 - Open: a visible output latency figure (header) and an `info` latency field, carried over from
   phase 4.
 
-### Phase 6: Remaining built-ins
+### Phase 6: Remaining built-ins (dropped 2026-11-13)
 
-- Limiter, Gate, Reverb, Delay, Chorus, Phaser; tail reporting for Reverb/Delay; bench case;
-  manual chapter + `features.md` move the item out of *Not yet*.
+- Was: Limiter, Gate, Reverb, Delay, Chorus, Phaser. Dropped with the decision in section 1: the
+  built-ins stay development tools, so phase 7 comes next.
 
-### Phase 7: Plugin hosting (VST3 / AU; LV2 on Linux)
+### Phase 7: Plugin hosting (VST3 / AU; LV2 on Linux), next
 
 - Jucer: `JUCE_PLUGINHOST_VST3=1`, `JUCE_PLUGINHOST_AU=1` (macOS, `AudioUnit` framework),
   `JUCE_PLUGINHOST_LV2=1` (Linux). MAS build: sandbox allows AU only (sandbox-safe AUs); VST3
@@ -803,6 +810,10 @@ next to the right-panel button toggle it.
   change, `getStateInformation` base64 in the slot JSON, missing-plugin placeholder.
 - Editor window (`createEditorIfNeeded`) in Interface; settings page for scan paths and rescan;
   CLI `scan-plugins`; hosted plugins process headless.
+- The runtime latency rebuild exists (PR #257): a hosted plugin's latency change only has to
+  mark its slot stale.
+- Release builds: the mixer's insert slots and menu list hosted plugins (empty until then).
+- Manual chapter on effects; `features.md` moves the item out of *Not yet*.
 
 ### Phase 8: Track-to-track recording
 
