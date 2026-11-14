@@ -145,6 +145,7 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
                                                   "Add Insert", false);
         if (! applied)
             return context.fail (exitFailure, "add_failed", "could not add the insert");
+        session.settlePlugins();   // a plugin that loads asynchronously is reported loaded, with its parameters
 
         const auto index = at < 0 || at > target.chain->size() - 1 ? target.chain->size() - 1 : at;
         outcome.log = "added " + typeValue + " at " + juce::String (index);
@@ -345,6 +346,7 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
         if (! plugin.has_value() || ! typeFilter.empty())
         {
             auto effect = registry.create (type.id);
+            session.settlePlugins();   // the parameters are the plugin's, which may still be on its way
             if (effect != nullptr)
                 entry["parameters"] = describeParameters (*effect);
         }

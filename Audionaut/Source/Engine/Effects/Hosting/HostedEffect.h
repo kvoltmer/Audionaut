@@ -38,7 +38,9 @@ namespace audium
  * Without an instance the effect is a placeholder: it keeps the blob it is
  * given, runs nothing and reports why (the plugin failed to load, or this
  * engine lists plugins without loading them, as the scratch engine of a
- * hosted edit does). The project keeps the element either way.
+ * hosted edit does). The project keeps the element either way. A plugin
+ * that is created asynchronously (one that runs in a process of its own)
+ * starts as a loading placeholder and adopt()s the plugin when it arrives.
  *
  * Threads: as Effect says - prepare, release and the state on the message
  * thread, process on a render thread, one at a time. The plugin's own
@@ -52,6 +54,7 @@ public:
     enum class Status
     {
         loaded,              ///< the plugin runs
+        loading,             ///< placeholder: the plugin is being created (asynchronously, in a process of its own); passes through meanwhile
         notLoaded,           ///< placeholder: no instance (getError says why)
         incompatibleLayout   ///< loaded, but the plugin refuses the chain's channel count: passes through
     };
@@ -59,13 +62,28 @@ public:
     /// `instance` may be nullptr: a placeholder with `error` as the reason.
     HostedEffect (EffectTypeInfo type, juce::PluginDescription description,
                   std::unique_ptr<juce::AudioPluginInstance> instance, juce::String error = {});
+    /// A placeholder waiting for its plugin: adopt() brings it.
+    struct Loading {};
+    HostedEffect (EffectTypeInfo type, juce::PluginDescription description, Loading);
     ~HostedEffect() override;
+
+    /**
+     * Message thread: the plugin a loading placeholder waited for, or nullptr
+     * with the reason it did not come. The state the placeholder kept goes
+     * into the plugin; the slot prepares it before the next plan runs it
+     * (needsPrepare), and the chain hears of it through onLatencyChanged.
+     */
+    void adopt (std::unique_ptr<juce::AudioPluginInstance> instance, juce::String error);
+    /// Expires with the effect: a posted callback checks it before touching the effect.
+    std::weak_ptr<const int> getAliveToken() const noexcept { return aliveToken; }
 
     const juce::PluginDescription& getDescription() const noexcept { return description; }
     juce::AudioPluginInstance* getInstance() const noexcept { return instance.get(); }
-    bool isLoaded() const noexcept { return status != Status::notLoaded; }
-    Status getStatus() const noexcept { return status; }
+    /// Whether the plugin is there (running or refusing the layout); false for a placeholder of either kind.
+    bool isLoaded() const noexcept { return instance != nullptr; }
+    Status getStatus() const noexcept { return status.load (std::memory_order_relaxed); }
     const juce::String& getError() const noexcept { return error; }
+    bool needsPrepare() const noexcept override { return prepareNeeded; }
 
     void prepare (double sampleRate, int maxBlockSize, int numChannels) override;
     void release() override;
@@ -93,13 +111,16 @@ private:
     juce::AudioProcessorParameter* parameterAt (int index) const noexcept;
     static std::string blobOf (const json& state);
 
+    void takeInstance (std::unique_ptr<juce::AudioPluginInstance> created);
+
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override;
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details) override;
 
     juce::PluginDescription description;
     std::unique_ptr<juce::AudioPluginInstance> instance;
-    Status status;
+    std::atomic<Status> status;   // read on the render thread, written on the message thread
     juce::String error;
+    bool prepareNeeded = false;   // message thread: the plugin arrived into a slot prepared without it
 
     // the parameter table: the infos point into these, which live as long as the effect
     std::vector<std::string> ids, names, units;
@@ -120,7 +141,7 @@ private:
     int preparedBlockSize = 0;
     bool foldMono = false;   // a mono chain run through a stereo-only plugin
 
-    std::shared_ptr<int> aliveToken = std::make_shared<int> (0);   // a posted callback checks the effect still lives
+    std::shared_ptr<const int> aliveToken = std::make_shared<const int> (0);   // a posted callback checks the effect still lives
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostedEffect)
 };

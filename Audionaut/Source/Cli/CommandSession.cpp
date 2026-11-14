@@ -44,12 +44,20 @@ HostedContext& hostedContext()
 struct ProjectSession::Impl
 {
     /** File mode: owns an engine of its own and opens the project into it. */
-    Impl (juce::File projectFile_, CommandAccess access_, std::shared_ptr<PluginHost> pluginHost) :
+    Impl (juce::File projectFile_, CommandAccess access_, std::shared_ptr<PluginHost> pluginHost_) :
+        pluginHost (std::move (pluginHost_)),
         projectFile (std::move (projectFile_)),
         access (access_)
     {
-        engineSession.emplace (std::move (pluginHost));
+        engineSession.emplace (pluginHost);
         configureRendering (*engineSession->get(), access);
+    }
+
+    /** File mode: the plugins that load asynchronously have arrived before the verb reads or writes the project. */
+    void settlePlugins() const
+    {
+        if (pluginHost != nullptr && ! hosted)
+            pluginHost->waitForPendingLoads();
     }
 
     /** Only an isolated verb (export) renders; every other session edits or
@@ -123,6 +131,7 @@ struct ProjectSession::Impl
         return borrowedEngine != nullptr ? borrowedEngine : engineSession->get();
     }
 
+    std::shared_ptr<PluginHost> pluginHost;   // file mode: the process's plugins, for settlePlugins()
     std::optional<HeadlessEngineSession> engineSession;
     std::shared_ptr<AudiumEngine> borrowedEngine;
     juce::File projectFile;
@@ -218,8 +227,15 @@ bool ProjectSession::commit (std::string& error)
         return false;
     }
 
+    impl->settlePlugins();   // a plugin added by the verb writes its own state, not the placeholder's
     return (*impl->engineSession)->getProjectFileStore()
                ->save (impl->projectFile, [&error] (std::string message) { error = message; });
+}
+
+void ProjectSession::settlePlugins() const
+{
+    if (impl != nullptr)
+        impl->settlePlugins();
 }
 
 bool ProjectSession::isHosted() const noexcept
@@ -278,6 +294,7 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         return {};
     }
 
+    impl->settlePlugins();   // the project's plugins are there when the verb looks at them
     return ProjectSession (std::move (impl));
 }
 

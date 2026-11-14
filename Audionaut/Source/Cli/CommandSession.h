@@ -70,6 +70,10 @@ public:
      */
     bool commit (std::string& error);
 
+    /** File mode: waits for the plugins that load asynchronously (a verb that reports or saves them calls it);
+        nothing to wait for in a hosted session. */
+    void settlePlugins() const;
+
     /** @brief Whether the work is being applied to a project someone else owns. */
     bool isHosted() const noexcept;
 

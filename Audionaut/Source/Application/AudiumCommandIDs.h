@@ -55,6 +55,7 @@ namespace CommandIDs
         showMixer               = 0x30007c,
         showAuxBuses            = 0x30007d,
         showRightPanel          = 0x30007e,
+        showPluginManager       = 0x30007f,
         
         createAudioTrack     = 0x300085,
         createAuxBus         = 0x300086,

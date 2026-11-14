@@ -384,6 +384,76 @@ SCENARIO ("a hosted effect's state is the plugin's chunk, read when it changed",
             REQUIRE (placeholder.getPluginInfo()["name"] == "Test Gain");
         }
     }
+
+    GIVEN ("a placeholder waiting for its plugin, in a prepared slot")
+    {
+        MessageThread messageThread;
+        auto description = TestPluginInstance::describe ({});
+        auto loading = std::make_unique<HostedEffect> (PluginTypeId::typeInfo (description), description, HostedEffect::Loading {});
+        auto* effect = loading.get();
+        auto latencyReports = 0;
+        effect->onLatencyChanged = [&latencyReports] { ++latencyReports; };
+        EffectSlot slot (std::move (loading));
+        slot.prepare (kSampleRate, kBlockSize, 2);
+
+        THEN ("it is loading, not loaded, and passes the signal through")
+        {
+            REQUIRE (effect->getStatus() == HostedEffect::Status::loading);
+            REQUIRE_FALSE (effect->isLoaded());
+            REQUIRE (effect->getNumParameters() == 0);
+            REQUIRE_FALSE (effect->needsPrepare());
+            REQUIRE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+            auto buffer = makeDc (2, 0.5f);
+            run (*effect, buffer);
+            REQUIRE (buffer.getSample (1, 5) == Approx (0.5f));
+        }
+
+        WHEN ("the plugin arrives, with a state the placeholder kept")
+        {
+            effect->setState ({ { "blob", juce::MemoryBlock ("1.500000|0|0", 12).toBase64Encoding().toStdString() } });
+            auto instance = std::make_unique<TestPluginInstance> (TestPluginInstance::Options {});
+            auto* plugin = instance.get();
+            effect->adopt (std::move (instance), {});
+
+            THEN ("it is loaded with the kept state, and the slot has to prepare it before it runs")
+            {
+                REQUIRE (effect->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (effect->isLoaded());
+                REQUIRE (effect->getNumParameters() == 2);
+                REQUIRE (plugin->setStateCount == 1);
+                REQUIRE (plugin->gain->get() == Approx (1.5f));
+                REQUIRE (latencyReports == 1);
+
+                REQUIRE (effect->needsPrepare());
+                REQUIRE_FALSE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+                auto buffer = makeDc (2, 0.5f);
+                run (*effect, buffer);
+                REQUIRE (buffer.getSample (1, 5) == Approx (0.5f));   // unprepared: still passing through
+                REQUIRE (plugin->processCount == 0);
+
+                slot.prepare (kSampleRate, kBlockSize, 2);
+                REQUIRE_FALSE (effect->needsPrepare());
+                REQUIRE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+                REQUIRE (plugin->prepareCount == 1);
+                run (*effect, buffer);
+                REQUIRE (plugin->processCount == 1);
+                REQUIRE (buffer.getSample (1, 5) == Approx (0.75f));   // gain 1.5
+            }
+        }
+
+        WHEN ("the plugin does not come")
+        {
+            effect->adopt (nullptr, "the hosting service refused it");
+
+            THEN ("it is a plain placeholder with the reason")
+            {
+                REQUIRE (effect->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE_FALSE (effect->isLoaded());
+                REQUIRE (effect->getError() == "the hosting service refused it");
+                REQUIRE (latencyReports == 0);
+            }
+        }
+    }
 }
 
 SCENARIO ("a plugin that moves its own latency gets the chain a new plan", "[engine][effects][hosting][latency]")

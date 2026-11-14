@@ -37,6 +37,7 @@ nlohmann::json describeInsert (const EffectSlot& slot, int index)
         insert["plugin"] = hosted->getPluginInfo();
         insert["loaded"] = hosted->isLoaded();
         insert["status"] = hosted->getStatus() == HostedEffect::Status::loaded ? "loaded"
+                         : hosted->getStatus() == HostedEffect::Status::loading ? "loading"
                          : hosted->getStatus() == HostedEffect::Status::incompatibleLayout ? "incompatible_layout"
                                                                                            : "not_loaded";
         if (hosted->getError().isNotEmpty())
