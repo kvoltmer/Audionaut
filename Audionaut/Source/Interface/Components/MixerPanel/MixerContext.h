@@ -100,7 +100,6 @@ namespace InsertChainActions
         });
     }
 
-    /// One item per registered effect type.
     /// The effect types by category, a submenu each, in the order the registry first lists one of the
     /// category (the built-ins' categories first); a type without a category goes on the top level.
     inline juce::PopupMenu typesMenu (const MixerContext& ctx, std::function<void (const std::string& typeId)> onPick)

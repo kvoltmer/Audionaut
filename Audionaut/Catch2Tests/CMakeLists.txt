@@ -212,7 +212,6 @@ function(audionaut_configure_common target)
             AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
             JUCE_WEB_BROWSER=0  # removing either needs NEEDS_WEB_BROWSER / NEEDS_CURL on juce_add_console_app
             JUCE_USE_CURL=0
-            AUDIONAUT_BUILT_IN_EFFECTS=1 # the development effects, in Release too (a release app has none)
             DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
 
     target_link_libraries(${target}

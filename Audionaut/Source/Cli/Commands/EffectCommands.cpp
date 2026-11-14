@@ -294,9 +294,13 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
     for (const auto& type : planner->getRegistry().getTypes())
     {
         auto effect = planner->getRegistry().create (type.id);
+        if (effect == nullptr)
+            continue;   // registered but cannot be made: nothing add-insert could use
+
         auto parameters = nlohmann::json::array();
-        for (const auto& info : effect->getParameters())
+        for (int index = 0; index < effect->getNumParameters(); ++index)
         {
+            const auto& info = effect->getParameters()[static_cast<size_t> (index)];
             parameters.push_back ({ { "id", info.id },
                                     { "name", info.name },
                                     { "unit", info.unit },
@@ -305,7 +309,7 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
                                     { "default", info.def },
                                     { "boolean", info.boolean },
                                     // the effect's own reading of the default, where it has one ("0.00 dB")
-                                    { "default_text", effect->getParameterText (static_cast<int> (&info - effect->getParameters().data()), info.def).toStdString() } });
+                                    { "default_text", effect->getParameterText (index, info.def).toStdString() } });
         }
         types.push_back ({ { "type", type.id },
                            { "name", type.name },

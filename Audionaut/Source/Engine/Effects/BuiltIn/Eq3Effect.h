@@ -152,7 +152,7 @@ private:
     }
 
     static constexpr float shelfQ = 0.7071f;
-    static constexpr float midQ = 1.0f;   ///< about 1.4 octaves wide; old projects' "mid_q" is ignored
+    static constexpr float midQ = 1.0f;   ///< about 1.4 octaves wide
 
     double sampleRate = 0.0;
     std::array<Band, 4> bands;

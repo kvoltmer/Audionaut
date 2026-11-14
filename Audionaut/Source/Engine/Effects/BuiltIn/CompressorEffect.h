@@ -20,8 +20,10 @@ namespace audium
  * The gain computer is the one of juce_dsp's Compressor - a peak envelope
  * through a ballistics filter, the gain from the ratio where the envelope is
  * over the threshold - written out here because that class keeps its gain
- * to itself. The reduction reported is the compressor's alone, before the
- * make-up gain.
+ * to itself. The channels are linked, unlike there: one envelope follows the
+ * loudest channel and every channel gets its gain, so a hit on one side
+ * turns both down and the stereo image stays put. The reduction reported is
+ * the compressor's alone, before the make-up gain.
  *
  * The look-ahead delays the signal, not the detector: the gain worked out
  * from a sample is applied to the sample that went in the look-ahead
@@ -56,7 +58,7 @@ public:
         sampleRate = sampleRate_;
         juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (maxBlockSize), static_cast<juce::uint32> (numChannels) };
         envelope.setLevelCalculationType (juce::dsp::BallisticsFilterLevelCalculationType::peak);
-        envelope.prepare (spec);
+        envelope.prepare ({ spec.sampleRate, spec.maximumBlockSize, 1 });   // one detector for the linked channels
         makeup.setRampDurationSeconds (0.01);
         makeup.prepare (spec);
 
@@ -99,26 +101,28 @@ public:
             applyParameters();
 
         const auto numSamples = static_cast<int> (block.getNumSamples());
+        const auto numChannels = std::min (block.getNumChannels(), lines.size());
         auto leastGain = 1.0f;
-        for (size_t channel = 0; channel < block.getNumChannels() && channel < lines.size(); ++channel)
+        for (auto i = 0; i < numSamples; ++i)
         {
-            auto* samples = block.getChannelPointer (channel);
-            auto* line = lines[channel].data();
-            auto write = writeIndex;
-            for (auto i = 0; i < numSamples; ++i)
-            {
-                const auto in = samples[i];
-                const auto level = envelope.processSample (static_cast<int> (channel), in);
-                const auto gain = level < threshold ? 1.0f : std::pow (level * thresholdInverse, ratioInverse - 1.0f);
-                leastGain = std::min (leastGain, gain);
+            // linked: the loudest channel drives the one gain all of them get
+            auto loudest = 0.0f;
+            for (size_t channel = 0; channel < numChannels; ++channel)
+                loudest = std::max (loudest, std::abs (block.getSample (static_cast<int> (channel), i)));
+            const auto level = envelope.processSample (0, loudest);
+            const auto gain = level < threshold ? 1.0f : std::pow (level * thresholdInverse, ratioInverse - 1.0f);
+            leastGain = std::min (leastGain, gain);
 
-                // the gain of this sample goes onto the one that went in the look-ahead earlier
-                line[write] = in;
-                samples[i] = gain * line[(write - lookaheadSamples) & mask];
-                write = (write + 1) & mask;
+            // the gain of this sample goes onto the one that went in the look-ahead earlier
+            for (size_t channel = 0; channel < numChannels; ++channel)
+            {
+                auto* samples = block.getChannelPointer (channel);
+                auto* line = lines[channel].data();
+                line[writeIndex] = samples[i];
+                samples[i] = gain * line[(writeIndex - lookaheadSamples) & mask];
             }
+            writeIndex = (writeIndex + 1) & mask;
         }
-        writeIndex = (writeIndex + numSamples) & mask;
 
         // the block's deepest reduction joins the peak the editor has not taken yet
         const auto reductionDb = -juce::Decibels::gainToDecibels (leastGain, -200.0f);

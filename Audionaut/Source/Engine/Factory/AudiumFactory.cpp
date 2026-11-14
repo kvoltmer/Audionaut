@@ -86,14 +86,9 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
 
     // the effects this engine can create, and the mix plan that tells the
     // renderer which ones run where: built by the planner from the track
-    // container, which gets the planner right after its construction. The
-    // built-in effects are for development only: debug builds and the CMake
-    // targets (tests, CLI) have them, a release app has none - a project's
-    // inserts then stay in the file without running
+    // container, which gets the planner right after its construction
     auto effectRegistry             = std::make_shared<EffectRegistry>();
-   #if JUCE_DEBUG || defined (AUDIONAUT_BUILT_IN_EFFECTS)
     effectRegistry->addBuiltInEffects();
-   #endif
     auto mixPlans                   = std::make_shared<MixPlanContainer>();
     auto mixerPlanner               = std::make_shared<MixerPlanner>(effectRegistry, mixPlans);
 

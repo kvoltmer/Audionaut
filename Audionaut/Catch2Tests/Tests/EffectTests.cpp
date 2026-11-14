@@ -395,6 +395,19 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             REQUIRE (juce::Decibels::gainToDecibels (settledPeak (quiet)) == Approx (-30.0f).margin (0.2f));
         }
 
+        THEN ("the channels are linked: a loud left turns a quiet right down by as much")
+        {
+            compressor.prepare (kSampleRate, kBlockSize, 2);
+            auto stereo = makeSine (2, 32, 1000.0, 1.0f);
+            stereo.applyGain (1, 0, stereo.getNumSamples(), juce::Decibels::decibelsToGain (-30.0f));
+            run (compressor, stereo);
+
+            // the left's 15 dB of reduction on both sides: the right, under the threshold alone, at -45 dBFS
+            REQUIRE (juce::Decibels::gainToDecibels (settledPeak (stereo, 0)) == Approx (-15.0f).margin (1.5f));
+            REQUIRE (juce::Decibels::gainToDecibels (settledPeak (stereo, 1)) == Approx (-45.0f).margin (1.5f));
+            REQUIRE (settledPeak (stereo, 0) / settledPeak (stereo, 1) == Approx (juce::Decibels::decibelsToGain (30.0f)).epsilon (0.001));
+        }
+
         THEN ("make-up gain lifts the result")
         {
             compressor.setParameter (CompressorEffect::makeupDb, 6.0f);
