@@ -49,8 +49,10 @@ struct InsertChainAddress
 
 /**
  * Undo step for one effect parameter: the old and the new value, applied
- * straight into the effect's atomics, so no plan is rebuilt and playback
- * continues undisturbed. A drag records one step from its start to its end.
+ * through the chain into the effect's atomics, so no plan is rebuilt and
+ * playback continues undisturbed - unless the value moves the effect's
+ * latency, which the chain answers with a new plan. A drag records one
+ * step from its start to its end.
  */
 struct UndoableEffectParameterAction final : public juce::UndoableAction
 {
@@ -74,11 +76,7 @@ private:
         auto* chain = address.resolve (container);
         if (chain == nullptr)
             return false;
-        auto slot = chain->getSlot (slotIndex);
-        if (slot == nullptr)
-            return false;
-        slot->getEffect().setParameter (parameterIndex, value);
-        return true;
+        return chain->setParameter (slotIndex, parameterIndex, value);
     }
 
     AudioTrackContainer& container;

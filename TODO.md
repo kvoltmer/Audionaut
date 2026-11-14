@@ -449,6 +449,36 @@ the one-gesture crossfade UX on top:
   feature/effects-pdc), which both touch the same passes: one of the three
   first, the others on top, not interleaved.
 
+- [ ] **Save the effect editor windows with the project: which are open,
+  where they sit on the screen, and their z-order.** Today the editors are
+  session-only: `MixerComponent::editorWindows` keys them by `EffectSlot*`,
+  a `FloatingPanel` opens centred and nothing is written down, so reopening
+  a project starts with every editor closed. Store per project (not in the
+  preferences - the layout belongs to the arrangement) a list of the open
+  editors, each as the slot's address (`InsertChainAddress` + slot index,
+  since the pointer does not survive a reload), the window frame in screen
+  coordinates, and its position in the stacking order; on open, restore
+  the frames (clamped to the screens present, like the main window) and
+  bring the panels to front in saved order so the topmost one ends up on
+  top. `FloatingPanel` needs to expose and accept the native frame and
+  report moves/closes so the model stays current without polling; the
+  closed state is simply absence from the list. Not part of the undo
+  history, and the layout does not dirty the document on its own - it is
+  written along with the next save.
+
+## Export
+
+- [ ] **Track export: one file per track.** Today an export is the main
+  mix, the multi-mono variant (`ExportAudioConfig::multiMono`: one mono
+  file per bus channel, dry) or one region (`export --region`, dry). What
+  is missing is the per-track bounce: every track, or the selected ones,
+  as its own file in the track's width, named after the track, over the
+  export range. To decide: what a track file contains - the track as it
+  sounds in the mix (inserts, gain, pan, with or without its share of the
+  aux returns and the master chain) or the dry track - and whether mute
+  and solo apply. Surfaces: the export dialog, CLI `export --tracks`, the
+  MCP `export_audio` tool, the manual.
+
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
 - [ ] **Each undo step keeps two container snapshots.** An

@@ -28,11 +28,15 @@ namespace audium
  * it crossfades the dry and the processed signal over about ten
  * milliseconds.
  *
- * A slot is as late as its effect says (getLatencySamples, read once at
+ * A slot is as late as its effect says (getLatencySamples, read at
  * prepare), whether the effect runs or not: bypassed, the slot delays the
  * dry signal by the same amount, and the crossfade mixes the delayed dry
  * with the processed signal. So toggling an effect never shifts what comes
  * after it, and the planner's latency figures depend on the chain alone.
+ * An effect whose latency follows a parameter (the compressor's look-ahead)
+ * makes the slot stale when that changes: isPreparedFor() says no, and the
+ * planner prepares it again, as after a format change, before it enters
+ * the next plan (see InsertChain::setParameter, which asks for that plan).
  * Coming back from a bypass, a latent effect's first latency's worth of
  * output is the pre-roll of a signal it has not heard yet: the delayed dry
  * carries on for that long, and the crossfade starts once the effect's
@@ -75,9 +79,16 @@ public:
     /// How many samples later the slot's output is than its input, enabled or bypassed; 0 before prepare().
     int getLatencySamples() const noexcept { return latencySamples; }
 
+    /// Message thread: the effect's latency moved since prepare() (a parameter changed it); the slot needs preparing again.
+    bool hasStaleLatency() const noexcept
+    {
+        return prepared && latencySamples != std::max (0, effect->getLatencySamples());
+    }
+
     bool isPreparedFor (double sampleRate_, int maxBlockSize_, int numChannels_) const noexcept
     {
-        return prepared && sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_ && numChannels == numChannels_;
+        return prepared && sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_ && numChannels == numChannels_
+            && ! hasStaleLatency();
     }
 
     bool isPrepared() const noexcept { return prepared; }
@@ -197,7 +208,7 @@ private:
     int planReferences = 0;   // message thread: plans alive that point at this slot
 
     juce::AudioBuffer<float> dry;   // the unprocessed block, for the crossfade
-    int latencySamples = 0;         // the effect's, as read at prepare()
+    int latencySamples = 0;         // the effect's, as read at prepare(); hasStaleLatency() when it moved since
     std::unique_ptr<PdcDelay> bypassDelay;   // the dry signal's share of that latency; nullptr for a prompt effect
     bool returning = false;         // render thread: on the way back from a bypass, the reset done
     int catchingUp = 0;             // render thread: samples of pre-roll the effect still owes before the crossfade starts
