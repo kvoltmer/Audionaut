@@ -39,9 +39,12 @@ void MixerPlanner::setSource (AudioTrackContainer* container) noexcept
     audioTrackContainer = container;
 }
 
-std::shared_ptr<EffectSlot> MixerPlanner::createSlot (const std::string& typeId) const
+std::shared_ptr<EffectSlot> MixerPlanner::createSlot (const std::string& typeId, const json* insertElement) const
 {
     auto effect = registry->create (typeId);
+    if (effect == nullptr && insertElement != nullptr)
+        if (const auto substitute = registry->resolveSubstitute (*insertElement); ! substitute.empty())
+            effect = registry->create (substitute);
     if (effect == nullptr)
         return nullptr;
     return std::make_shared<EffectSlot> (std::move (effect));

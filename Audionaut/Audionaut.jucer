@@ -105,6 +105,8 @@
                 file="Source/Cli/Commands/EffectCommands.cpp"/>
           <FILE id="CliAxC" name="AuxCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/AuxCommands.cpp"/>
+          <FILE id="CliPlC" name="PluginCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/PluginCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
@@ -332,6 +334,22 @@
           <FILE id="EfAxCH" name="AuxBusContainer.h" compile="0" resource="0"
                 file="Source/Engine/Effects/AuxBusContainer.h"/>
           <FILE id="EfEffH" name="Effect.h" compile="0" resource="0" file="Source/Engine/Effects/Effect.h"/>
+          <GROUP id="{9A4C7E21-3B5D-4F86-A0C9-7D2E8B1F6A53}" name="Hosting">
+            <FILE id="EfHoCS" name="ChildProcessScanner.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/ChildProcessScanner.cpp"/>
+            <FILE id="EfHoSH" name="ChildProcessScanner.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ChildProcessScanner.h"/>
+            <FILE id="EfHoEC" name="HostedEffect.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/HostedEffect.cpp"/>
+            <FILE id="EfHoEH" name="HostedEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/HostedEffect.h"/>
+            <FILE id="EfHoPC" name="PluginHost.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginHost.cpp"/>
+            <FILE id="EfHoPH" name="PluginHost.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginHost.h"/>
+            <FILE id="EfHoTI" name="PluginTypeId.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginTypeId.h"/>
+          </GROUP>
           <FILE id="EfRegC" name="EffectRegistry.cpp" compile="1" resource="0"
                 file="Source/Engine/Effects/EffectRegistry.cpp"/>
           <FILE id="EfRegH" name="EffectRegistry.h" compile="0" resource="0"
@@ -910,7 +928,8 @@
     <FILE id="VlxEsb" name="LICENSE.md" compile="0" resource="0" file="../LICENSE.md"/>
     <FILE id="dvvj4K" name="README.md" compile="0" resource="0" file="../README.md"/>
   </MAINGROUP>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_PLUGINHOST_AU="1" JUCE_PLUGINHOST_VST3="1"
+               JUCE_PLUGINHOST_LV2="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" rubberband="-O3 -w" lame="-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"

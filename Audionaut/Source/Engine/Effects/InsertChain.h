@@ -32,12 +32,27 @@ class MixerPlanner;
  * changes a value does not rebuild the chain. An element of a type this
  * engine cannot create (a project from a newer build) is kept as it was
  * read and written back in its place, so saving the project does not lose
- * it; it is not a slot and nothing runs for it.
+ * it; it is not a slot and nothing runs for it. A hosted plugin's element
+ * carries a "plugin" block beside the type (name, manufacturer, format,
+ * file), and an element whose type id this machine lacks may be read with
+ * the same plugin in another format - the planner asks the registry.
+ *
+ * A hosted plugin can move its own latency (a look-ahead switched on in its
+ * own window): the chain hears of it through Effect::onLatencyChanged and
+ * asks for a plan, as setParameter() does for a built-in.
  */
 class InsertChain
 {
 public:
     explicit InsertChain (MixerPlanner* planner_ = nullptr) : planner (planner_) {}
+    ~InsertChain();
+
+    /// An element read from JSON that no slot could be made for, kept for the file.
+    struct Unresolved
+    {
+        int index;      // position in the array it was read from
+        json element;
+    };
 
     /// The planner that creates effects and rebuilds the plan; nullptr makes the chain inert (tests without one).
     void setPlanner (MixerPlanner* planner_) noexcept { planner = planner_; }
@@ -46,6 +61,9 @@ public:
     bool isEmpty() const noexcept { return slots.empty(); }
     /// Elements read from JSON that no slot could be made for; written back as they were.
     int getNumUnresolved() const noexcept { return static_cast<int> (unresolved.size()); }
+    const std::vector<Unresolved>& getUnresolved() const noexcept { return unresolved; }
+    /// Drops the unresolved element at the position in that list (not a slot index); false out of range.
+    bool removeUnresolved (int position);
     const std::vector<std::shared_ptr<EffectSlot>>& getSlots() const noexcept { return slots; }
 
     /// The slot at the index, nullptr out of range.
@@ -69,12 +87,8 @@ public:
 
 private:
     void changed();
-
-    struct Unresolved
-    {
-        int index;      // position in the array it was read from
-        json element;
-    };
+    void adopt (EffectSlot& slot);     // the slot's effect reports latency moves to this chain
+    void release (EffectSlot& slot);   // ... until it leaves
 
     MixerPlanner* planner = nullptr;
     std::vector<std::shared_ptr<EffectSlot>> slots;

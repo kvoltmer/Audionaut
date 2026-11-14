@@ -85,8 +85,29 @@ clip-speed      set a clip's speed (ratio, semitones or target length)
 remove-track    remove a whole track (channels, clips and regions)
 remove-channel  remove one channel from a track
 track-pan       pan a track's channel strips (-1 left .. 1 right)
+add-insert      put an effect on a track, an aux bus or the master
+remove-insert   take an insert off a chain
+set-insert      set an insert's parameter, or bypass it
+list-effects    the effect types: built-ins and this machine's plugins
+scan-plugins    find the plugins installed on this machine
+add-aux         add an aux bus
+remove-aux      remove an aux bus and the sends into it
+set-aux         name, gain, pan, mute, solo of an aux bus
+set-send        a channel's send into an aux bus
+remove-send     take a send away
 separate        split a clip into Drums/Bass/Other/Vocals tracks (Demucs)
 ```
+
+Effects come as the built-ins (`builtin:trim`, `builtin:eq3`, `builtin:compressor`,
+`builtin:delay`) and as plugins: Audio Units on macOS, VST3 on Windows, VST3 and
+LV2 on Linux. `scan-plugins` looks through the platform's plugin folders and
+writes what it finds to the list the app and the verbs share; each plugin is
+loaded in a process of its own, so one that crashes is blacklisted and the scan
+goes on. `list-effects` then names the plugins by type id (`au:…`, `vst3:…`,
+`lv2:…`) with format and manufacturer; `list-effects --type ID` loads one and
+lists its parameters, normalised 0 to 1. A project saved with a plugin in one
+format opens with the same plugin in another installed format when the name and
+manufacturer match; a plugin nobody has stays in the file as a missing insert.
 
 Run `audionaut-cli --help` for each verb's options. Positions and durations
 are musical by default — `--unit bars|beats|seconds|clocks`, bars and beats

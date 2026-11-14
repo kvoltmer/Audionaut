@@ -29,6 +29,20 @@ void EffectRegistry::add (EffectTypeInfo type, Factory factory)
     factories.push_back (std::move (factory));
 }
 
+bool EffectRegistry::remove (const std::string& typeId)
+{
+    for (size_t i = 0; i < types.size(); ++i)
+    {
+        if (types[i].id == typeId)
+        {
+            types.erase (types.begin() + static_cast<std::ptrdiff_t> (i));
+            factories.erase (factories.begin() + static_cast<std::ptrdiff_t> (i));
+            return true;
+        }
+    }
+    return false;
+}
+
 void EffectRegistry::addBuiltInEffects()
 {
     add (TrimEffect::typeInfo(), [] { return std::make_unique<TrimEffect>(); });
@@ -51,6 +65,15 @@ bool EffectRegistry::hasType (const std::string& typeId) const noexcept
         if (type.id == typeId)
             return true;
     return false;
+}
+
+std::string EffectRegistry::resolveSubstitute (const nlohmann::json& insertElement) const
+{
+    if (! substituteResolver)
+        return {};
+
+    auto typeId = substituteResolver (insertElement);
+    return hasType (typeId) ? typeId : std::string();
 }
 
 } // namespace audium

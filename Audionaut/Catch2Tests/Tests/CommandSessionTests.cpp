@@ -103,7 +103,8 @@ SCENARIO("a command session hands a verb an engine and owns the lifecycle",
     }
 
     GIVEN("a session with no project at all") {
-        auto session = cli::openEngineSession();
+        cli::CliContext bare;
+        auto session = cli::openEngineSession (bare);
 
         THEN("it still hands over an engine, but will not commit") {
             REQUIRE (static_cast<bool> (session));

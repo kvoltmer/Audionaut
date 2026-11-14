@@ -26,6 +26,7 @@ class AudioBusInterface;
 class RecordingActionHandler;
 class ProjectFileStore;
 class ProjectSerializer;
+class PluginHost;
 
 /**
  * @class AudiumEngine
@@ -55,7 +56,8 @@ public:
                  std::shared_ptr<RecordingActionHandler> recordingActionHandler_,
                  std::shared_ptr<ProjectFileStore> projectFileStore_,
                  std::shared_ptr<ProjectSerializer> projectSerializer_,
-                 std::shared_ptr<UserPrompter> userPrompter_) :
+                 std::shared_ptr<UserPrompter> userPrompter_,
+                 std::shared_ptr<PluginHost> pluginHost_ = nullptr) :
         audioDeviceManager(audioDeviceManager_),
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
@@ -66,7 +68,8 @@ public:
         recordingActionHandler(recordingActionHandler_),
         projectFileStore(projectFileStore_),
         projectSerializer(projectSerializer_),
-        userPrompter(userPrompter_)
+        userPrompter(userPrompter_),
+        pluginHost(pluginHost_)
     {
         jassert(userPrompter != nullptr);
     }
@@ -101,6 +104,15 @@ public:
     std::shared_ptr<UserPrompter> getUserPrompter() const
     {
         return userPrompter;
+    }
+
+    /**
+     * @brief The plugins this process hosts, registered in this engine's
+     *        effect registry; nullptr for an engine without plugins (tests).
+     */
+    std::shared_ptr<PluginHost> getPluginHost() const
+    {
+        return pluginHost;
     }
 
     /**
@@ -201,6 +213,7 @@ private:
     std::shared_ptr<ProjectFileStore> projectFileStore;
     std::shared_ptr<ProjectSerializer> projectSerializer;
     std::shared_ptr<UserPrompter> userPrompter;
+    std::shared_ptr<PluginHost> pluginHost;
 
     //==============================================================================
     /**

@@ -31,7 +31,9 @@
 
 namespace audium {
 
-std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter)
+std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter,
+                                                                std::shared_ptr<PluginHost> pluginHost,
+                                                                PluginHost::Mode pluginMode)
 {
     if (userPrompter == nullptr)
         userPrompter = std::make_shared<HeadlessUserPrompter>();
@@ -86,9 +88,13 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
 
     // the effects this engine can create, and the mix plan that tells the
     // renderer which ones run where: built by the planner from the track
-    // container, which gets the planner right after its construction
+    // container, which gets the planner right after its construction. The
+    // built-ins first, then the plugins the host knows, which it keeps
+    // registering as its list changes
     auto effectRegistry             = std::make_shared<EffectRegistry>();
     effectRegistry->addBuiltInEffects();
+    if (pluginHost != nullptr)
+        pluginHost->attach(effectRegistry, pluginMode);
     auto mixPlans                   = std::make_shared<MixPlanContainer>();
     auto mixerPlanner               = std::make_shared<MixerPlanner>(effectRegistry, mixPlans);
 
@@ -163,7 +169,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                      recordingActionHandler,
                                                                      projectFileStore,
                                                                      projectSerializer,
-                                                                     userPrompter);
+                                                                     userPrompter,
+                                                                     pluginHost);
 
     return audiumEngine;
 }

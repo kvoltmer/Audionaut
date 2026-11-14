@@ -8,6 +8,7 @@
 #include <memory>
 #include <JuceHeader.h>
 #include "Engine/AudiumEngine.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 #include "Engine/Region/AudioRegionContainer.h"
 
@@ -33,9 +34,17 @@ public:
      * @param userPrompter The host's channel to the user (see UserPrompter);
      *        nullptr for a session without one, which gets the headless
      *        prompter that logs and declines.
+     * @param pluginHost The process's plugins, registered as effect types in
+     *        the engine's registry beside the built-ins; nullptr for an
+     *        engine without plugins (tests).
+     * @param pluginMode Whether the engine runs the plugins or lists them as
+     *        placeholders carrying a project's plugin state (the scratch
+     *        engine of a hosted edit).
      * @return A shared pointer to the created `AudiumEngine` instance.
      */
-    static std::shared_ptr<AudiumEngine> createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter = nullptr);
+    static std::shared_ptr<AudiumEngine> createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter = nullptr,
+                                                            std::shared_ptr<PluginHost> pluginHost = nullptr,
+                                                            PluginHost::Mode pluginMode = PluginHost::Mode::full);
     
 private:
     

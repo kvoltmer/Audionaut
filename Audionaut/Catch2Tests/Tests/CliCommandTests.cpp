@@ -7,7 +7,9 @@
 #include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Project/ProjectFileStore.h"
+#include "TestPluginInstance.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Playback/PlaybackDefines.h"
 
@@ -1904,6 +1906,139 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
     }
 
     workDir.deleteRecursively();
+}
+
+SCENARIO ("cli plugin effects", "[cli][effects][hosting]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("plugins.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+    context.json = true;
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    // the machine's plugins: one test format with one gain plugin, listed
+    auto plugin = TestPluginInstance::Options {};
+    plugin.format = "TestA";
+    plugin.uid = 0x1111;
+    context.pluginHost = std::make_shared<PluginHost> (workDir.getChildFile ("data"), false);
+    context.pluginHost->getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { plugin }));
+    context.pluginHost->getList().addType (TestPluginInstance::describe (plugin));
+    const auto instancesBefore = TestPluginInstance::instances();
+
+    THEN ("list-effects names the plugin with its format, without loading it")
+    {
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects"), context) == cli::exitOk);
+        auto effects = envelope["result"]["effects"];
+        REQUIRE (effects.size() == 5);
+        REQUIRE (effects[0]["type"] == "builtin:trim");
+        REQUIRE (effects[0].contains ("parameters"));
+        REQUIRE (effects[4]["type"] == "testa:00001111");
+        REQUIRE (effects[4]["name"] == "Test Gain");
+        REQUIRE (effects[4]["category"] == "Audionaut Tests");
+        REQUIRE (effects[4]["format"] == "TestA");
+        REQUIRE (effects[4]["manufacturer"] == "Audionaut Tests");
+        REQUIRE_FALSE (effects[4].contains ("parameters"));
+        REQUIRE (TestPluginInstance::instances() == instancesBefore);
+    }
+
+    THEN ("list-effects --type loads the one plugin and lists its parameters, normalised")
+    {
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type testa:00001111"), context) == cli::exitOk);
+        auto effects = envelope["result"]["effects"];
+        REQUIRE (effects.size() == 1);
+        REQUIRE (effects[0]["type"] == "testa:00001111");
+        REQUIRE (effects[0]["parameters"].size() == 2);
+        REQUIRE (effects[0]["parameters"][0]["id"] == "gain");
+        REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (0.0));
+        REQUIRE (effects[0]["parameters"][0]["max"].get<double>() == Catch::Approx (1.0));
+        REQUIRE (effects[0]["parameters"][1]["boolean"] == true);
+        REQUIRE (TestPluginInstance::instances() == instancesBefore);   // let go with the engine
+
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type builtin:trim"), context) == cli::exitOk);
+        REQUIRE (envelope["result"]["effects"].size() == 1);
+        REQUIRE (envelope["result"]["effects"][0]["parameters"][0]["id"] == "gain_db");
+
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type nope:0"), context) == cli::exitFailure);
+        REQUIRE (envelope["error"]["code"] == "unknown_effect");
+    }
+
+    GIVEN ("a project")
+    {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 2"), context) == cli::exitOk);
+        const auto projectArg = project.getFullPathName();
+
+        WHEN ("the plugin is inserted on the track")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 0 --type testa:00001111"), context)
+                     == cli::exitOk);
+
+            THEN ("the summary and the file carry the plugin block, the state as a blob")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto inserts = envelope["result"]["tracks"][0]["inserts"];
+                REQUIRE (inserts.size() == 1);
+                REQUIRE (inserts[0]["type"] == "testa:00001111");
+                REQUIRE (inserts[0]["plugin"]["manufacturer"] == "Audionaut Tests");
+                REQUIRE (inserts[0]["loaded"] == true);
+                REQUIRE (inserts[0]["status"] == "loaded");
+                REQUIRE_FALSE (inserts[0].contains ("state"));
+
+                auto json = readProjectJson (project);
+                auto stored = json["audium"]["audio_tracks"][0]["inserts"][0];
+                REQUIRE (stored["type"] == "testa:00001111");
+                REQUIRE (stored["plugin"]["format"] == "TestA");
+                REQUIRE (stored["state"]["blob"].is_string());
+            }
+
+            THEN ("set-insert takes the plugin's parameter id and a normalised value")
+            {
+                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 0 --index 0 --param gain --value 0.25"), context)
+                         == cli::exitOk);
+                REQUIRE (envelope["result"]["insert"]["plugin"]["name"] == "Test Gain");
+                REQUIRE (cli::runListEffects (makeArgs ("list-effects --type testa:00001111"), context) == cli::exitOk);
+
+                auto json = readProjectJson (project);
+                juce::MemoryBlock chunk;
+                REQUIRE (chunk.fromBase64Encoding (json["audium"]["audio_tracks"][0]["inserts"][0]["state"]["blob"].get<std::string>()));
+                REQUIRE (chunk.toString().startsWith ("0.5"));   // gain 0.25 of 0..2
+            }
+        }
+
+        WHEN ("the file names a plugin nobody here has")
+        {
+            auto json = readProjectJson (project);
+            auto missing = TestPluginInstance::Options {};
+            missing.name = "Nope";
+            missing.uid = 0x9999;
+            json["audium"]["audio_tracks"][0]["inserts"] = nlohmann::json::array ({
+                { { "type", "testa:00009999" }, { "enabled", true },
+                  { "plugin", { { "name", "Nope" }, { "manufacturer", "Nobody" }, { "format", "TestA" }, { "file", "/test/nope.testa" }, { "version", "1.0" } } },
+                  { "state", { { "blob", "QUJD" } } } } });
+            REQUIRE (project.getChildFile ("Project.json").replaceWithText (juce::String (json.dump (2))));
+
+            THEN ("info lists it as missing, without a slot index, and an edit keeps it in the file")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto inserts = envelope["result"]["tracks"][0]["inserts"];
+                REQUIRE (inserts.size() == 1);
+                REQUIRE (inserts[0]["missing"] == true);
+                REQUIRE (inserts[0]["position"] == 0);
+                REQUIRE (inserts[0]["plugin"]["name"] == "Nope");
+                REQUIRE_FALSE (inserts[0].contains ("index"));
+
+                REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 0 --type builtin:trim"), context)
+                         == cli::exitOk);
+                auto stored = readProjectJson (project)["audium"]["audio_tracks"][0]["inserts"];
+                REQUIRE (stored.size() == 2);
+                REQUIRE (stored[0]["type"] == "testa:00009999");
+                REQUIRE (stored[0]["state"]["blob"] == "QUJD");
+                REQUIRE (stored[1]["type"] == "builtin:trim");
+            }
+        }
+    }
 }
 
 SCENARIO ("cli aux buses and sends", "[cli][effects][sends]")
