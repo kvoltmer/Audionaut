@@ -115,6 +115,7 @@ void InsertChain::readFromJson (const json& input, const char* key)
     unresolved.clear();
 
     auto index = -1;
+    auto latencyMoved = false;
     for (const auto& element : inserts)
     {
         ++index;
@@ -150,12 +151,25 @@ void InsertChain::readFromJson (const json& input, const char* key)
             slot->setEnabled (element["enabled"].get<bool>());
         if (element.contains ("state"))
             slot->getEffect().setState (element["state"]);
+        latencyMoved = latencyMoved || slot->hasStaleLatency();   // a kept instance whose state moved its latency
 
         slots.push_back (std::move (slot));
     }
 
-    if (slots != previous)
+    if (slots != previous || latencyMoved)
         changed();
+}
+
+bool InsertChain::setParameter (int index, int parameter, float value)
+{
+    auto slot = getSlot (index);
+    if (slot == nullptr)
+        return false;
+
+    slot->getEffect().setParameter (parameter, value);
+    if (slot->hasStaleLatency())
+        changed();   // the plan around the slot is built for its old latency
+    return true;
 }
 
 void InsertChain::changed()

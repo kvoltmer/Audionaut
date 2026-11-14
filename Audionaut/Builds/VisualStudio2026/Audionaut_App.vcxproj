@@ -67,7 +67,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;../../../ThirdParty/airwindows/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.7.0;JUCE_APP_VERSION_HEX=0x10700;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -81,7 +81,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;../../../ThirdParty/airwindows/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;DEBUG;_DEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.7.0;JUCE_APP_VERSION_HEX=0x10700;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -113,7 +113,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;../../../ThirdParty/airwindows/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=&quot;1.0.0&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.7.0;JUCE_APP_VERSION_HEX=0x10700;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -127,7 +127,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;../../../ThirdParty/airwindows/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\JuceLibraryCode;..\..\..\Submodules\JUCE\modules;../../Source;../../../Submodules/json/include/;../../../Submodules/link/include/;../../../Submodules/link/modules/asio-standalone/include;../../../Submodules/farbot/include/;../../../Submodules/rubberband/;../../../ThirdParty/lame/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_WINDOWS;NDEBUG;JUCE_PROJUCER_VERSION=0x90002;JUCE_MODULE_AVAILABLE_juce_analytics=1;JUCE_MODULE_AVAILABLE_juce_audio_basics=1;JUCE_MODULE_AVAILABLE_juce_audio_devices=1;JUCE_MODULE_AVAILABLE_juce_audio_formats=1;JUCE_MODULE_AVAILABLE_juce_audio_processors=1;JUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1;JUCE_MODULE_AVAILABLE_juce_audio_utils=1;JUCE_MODULE_AVAILABLE_juce_core=1;JUCE_MODULE_AVAILABLE_juce_cryptography=1;JUCE_MODULE_AVAILABLE_juce_data_structures=1;JUCE_MODULE_AVAILABLE_juce_dsp=1;JUCE_MODULE_AVAILABLE_juce_events=1;JUCE_MODULE_AVAILABLE_juce_graphics=1;JUCE_MODULE_AVAILABLE_juce_gui_basics=1;JUCE_MODULE_AVAILABLE_juce_gui_extra=1;JUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\&quot;1.0.0\&quot;;JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1;JUCE_STRICT_REFCOUNTEDPOINTER=1;JUCE_STANDALONE_APPLICATION=1;JUCE_MODAL_LOOPS_PERMITTED=1;DEMUCS_ENABLED=1;GA4_MEASUREMENT_ID=\&quot;G-Q6904SZWWY\&quot;;LINK_PLATFORM_WINDOWS=1;_WIN32_WINNT=0x0A00;NOMINMAX;WIN32_LEAN_AND_MEAN;JUCER_VS2026_78A5042=1;JUCE_APP_VERSION=1.7.0;JUCE_APP_VERSION_HEX=0x10700;JucePlugin_Build_VST=0;JucePlugin_Build_VST3=0;JucePlugin_Build_AU=0;JucePlugin_Build_AUv3=0;JucePlugin_Build_AAX=0;JucePlugin_Build_Standalone=0;JucePlugin_Build_Unity=0;JucePlugin_Build_LV2=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <Link>
@@ -178,147 +178,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\Submodules\rubberband\single\RubberBandSingle.cpp">
       <AdditionalOptions>/w %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\airwin_consolidated_base.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockParty.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockPartyProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Doublelay.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\DoublelayProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Mackity.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\MackityProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDrive.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDriveProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEcho.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEchoProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquish.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquishProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pyewacket.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PyewacketProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3Proc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateD.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateDProc.cpp">
-      <AdditionalOptions>/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="..\..\..\ThirdParty\lame\libmp3lame\VbrTag.c">
       <AdditionalOptions>/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h %(AdditionalOptions)</AdditionalOptions>
@@ -444,8 +303,6 @@
     <ClCompile Include="..\..\Source\Engine\Export\Mp3AudioFormat.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Export\AudioExportThread.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Selection\SelectionManager.cpp"/>
-    <ClCompile Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsCatalog.cpp"/>
-    <ClCompile Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsEffect.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\AuxBus.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\AuxBusContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp"/>
@@ -3627,30 +3484,6 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_gui_extra.cpp"/>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\airwin_consolidated_base.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ADClip8.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Air3.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Baxandall2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\BlockParty.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ButterComp2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Chamber2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ClipOnly2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Density2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Doublelay.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Galactic3.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Logical4.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Mackity.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pear2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pressure4.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestDrive.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestEcho.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\PurestSquish.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Pyewacket.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\TapeDelay2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\ToTape6.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\Verbity2.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kCathedral3.h"/>
-    <ClInclude Include="..\..\..\ThirdParty\airwindows\src\autogen_airwin\kPlateD.h"/>
     <ClInclude Include="..\..\..\ThirdParty\lame\audionaut\lame_config.h"/>
     <ClInclude Include="..\..\Source\Cli\Commands\Commands.h"/>
     <ClInclude Include="..\..\Source\Cli\CliContext.h"/>
@@ -3715,7 +3548,6 @@
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionContext.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\SelectionManager.h"/>
     <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h"/>
-    <ClInclude Include="..\..\Source\Engine\Effects\Airwindows\AirwindowsEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\DelayEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Eq3Effect.h"/>

@@ -6,6 +6,7 @@
 #include "EffectEditorComponent.h"
 
 #include "Interface/ColourIds.h"
+#include "Interface/Controls/LevelMeter.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 using namespace audium;
@@ -18,6 +19,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
     jassert (slot != nullptr);
     auto& effect = slot->getEffect();
     effectName = effect.getType().name;
+    meterShown = effect.hasGainReductionMeter();
 
     bypassKey.setButtonText (TRANS ("Bypass"));
     bypassKey.getProperties().set (AudiumLookAndFeel::consoleButtonProperty, true);
@@ -39,6 +41,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         const auto& info = parameters[static_cast<size_t> (i)];
         auto cell = std::make_unique<Cell>();
         cell->parameter = i;
+        cell->heldWhileDragging = info.movesLatency;
         cell->name = juce::String (info.group != nullptr && info.label != nullptr ? info.label : info.name);
         auto* cellPtr = cell.get();
 
@@ -77,8 +80,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         dial->getProperties().set (AudiumLookAndFeel::dialArcFromProperty, info.min < 0.0f && info.max > 0.0f ? range.convertTo0to1 (0.0) : 0.0);
         dial->getProperties().set (AudiumLookAndFeel::dialMarkProperty, range.convertTo0to1 (info.def));
 
-        // an effect with its own reading of the values (Airwindows' 0..1 shown as dB, seconds,
-        // a mode's name) shows that, and takes a typed value the same way
+        // an effect with its own reading of the values (a mode's name, say) shows that, and takes a typed value the same way
         if (effect.getParameterText (i, info.def).isNotEmpty())
         {
             dial->textFromValueFunction = [weak = slotRef, i] (double value)
@@ -111,18 +113,20 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
                 return;
             const auto value = static_cast<float> (cellPtr->dial->getValue());
             showValue (*cellPtr);
-            if (cellPtr->dragging)
-                slot->getEffect().setParameter (cellPtr->parameter, value);   // live, the step comes at the drag's end
-            else
+            if (! cellPtr->dragging)
                 commit (cellPtr->parameter, slot->getEffect().getParameter (cellPtr->parameter), value);
+            else if (cellPtr->heldWhileDragging)
+                return;   // the dial shows it, the effect gets it at the drag's end
+            else if (auto* chain = context.chain (address))
+                chain->setParameter (slotIndex(), cellPtr->parameter, value);   // live, the step comes at the drag's end
         };
         dial->onDragEnd = [this, cellPtr]
         {
             if (! cellPtr->dragging)
                 return;
             cellPtr->dragging = false;
-            if (auto slot = slotRef.lock())
-                commit (cellPtr->parameter, cellPtr->valueAtDragStart, slot->getEffect().getParameter (cellPtr->parameter));
+            if (slotRef.lock() != nullptr)
+                commit (cellPtr->parameter, cellPtr->valueAtDragStart, static_cast<float> (cellPtr->dial->getValue()));   // what the dial shows: the effect's value live, the held one otherwise
         };
         cell->dial = std::move (dial);
 
@@ -146,7 +150,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
     arrange();
     setSize (getPreferredWidth(), getPreferredHeight());
     refresh();
-    startTimerHz (10);
+    startTimerHz (meterShown ? 25 : 10);   // the meter wants a smoother fall than the dials need
 }
 
 EffectEditorComponent::~EffectEditorComponent()
@@ -200,7 +204,7 @@ juce::Rectangle<int> EffectEditorComponent::gridArea() const
 
 int EffectEditorComponent::getPreferredWidth() const
 {
-    return juce::jmax (minimumWidth, columns * cellWidth + 2 * margin);
+    return juce::jmax (meterShown ? minimumWidthWithMeter : minimumWidth, columns * cellWidth + 2 * margin);
 }
 
 int EffectEditorComponent::getPreferredHeight() const
@@ -285,6 +289,21 @@ void EffectEditorComponent::refresh()
     }
 }
 
+void EffectEditorComponent::refreshMeter()
+{
+    auto slot = slotRef.lock();
+    if (! meterShown || slot == nullptr)
+        return;
+
+    // the interval's peak takes the bar up at once; between peaks it falls at a steady rate
+    const auto reading = slot->getEffect().takeGainReductionDb();
+    const auto shown = juce::jmax (reading, meterDb - meterFallDbPerTick, 0.0f);
+    if (juce::approximatelyEqual (shown, meterDb))
+        return;
+    meterDb = shown;
+    repaint (meterArea);
+}
+
 void EffectEditorComponent::timerCallback()
 {
     if (! isStillValid()) {
@@ -294,6 +313,7 @@ void EffectEditorComponent::timerCallback()
         return;
     }
     refresh();
+    refreshMeter();
 }
 
 void EffectEditorComponent::resized()
@@ -301,6 +321,7 @@ void EffectEditorComponent::resized()
     auto bounds = getLocalBounds();
     auto header = bounds.removeFromTop (headerHeight).reduced (margin, 0);
     bypassKey.setBounds (header.removeFromLeft (56).withSizeKeepingCentre (56, 18));
+    meterArea = meterShown ? header.withTrimmedLeft (margin) : juce::Rectangle<int>();
 
     const auto grid = gridArea();
     for (auto& cellPtr : cells)
@@ -349,8 +370,66 @@ void EffectEditorComponent::paint (juce::Graphics& g)
     for (const auto& cell : cells)
         g.drawText (cell->name, cell->nameArea, juce::Justification::centredBottom, true);
 
+    if (meterShown)
+        paintMeter (g);
+
     AudiumLookAndFeel::drawConsoleButtonShadows (g, { &bypassKey });
     for (const auto& cell : cells)
         if (cell->key != nullptr)
             AudiumLookAndFeel::drawConsoleButtonShadows (g, { cell->key.get() });
+}
+
+void EffectEditorComponent::paintMeter (juce::Graphics& g) const
+{
+    auto slot = slotRef.lock();
+    const auto dimmed = slot == nullptr || ! slot->isEnabled();
+    const auto textColour = findColour (audium::defaultTextColourId);
+
+    // the name at the left, as a dial's; then the bar in a recessed slot like the strips' meters, lying
+    // down, the scale's ticks and figures under it
+    auto band = meterArea;
+    g.setColour (textColour.withAlpha (0.75f));
+    g.setFont (juce::FontOptions (10.0f));
+    const auto name = TRANS ("Gain Reduction");
+    const auto nameWidth = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), name);
+    g.drawText (name, band.removeFromLeft (nameWidth), juce::Justification::centredLeft, false);
+    band.removeFromLeft (8);
+
+    constexpr int barHeight = 9;
+    constexpr int endInset = 6;   // room for the end figures, which sit centred on their ticks
+    band.reduce (endInset, 0);
+    const auto slotArea = juce::Rectangle<int> (band.getX(), band.getY() + 6, band.getWidth(), barHeight).toFloat();
+    g.setColour (juce::Colours::black.withAlpha (0.55f));
+    g.fillRoundedRectangle (slotArea, 2.0f);
+    g.setColour (juce::Colours::white.withAlpha (0.08f));
+    g.drawRoundedRectangle (slotArea.expanded (0.5f), 2.5f, 1.0f);
+
+    // the lit part grows from the left, the unlit remainder shows the colour faintly
+    const auto inner = slotArea.reduced (1.0f);
+    const auto colour = MeterColours::orange.withMultipliedAlpha (dimmed ? 0.45f : 1.0f);
+    g.setColour (colour.withMultipliedAlpha (0.16f));
+    g.fillRect (inner);
+    const auto lit = juce::jlimit (0.0f, 1.0f, meterDb / meterRangeDb) * inner.getWidth();
+    g.setColour (colour);
+    g.fillRect (inner.withWidth (lit));
+
+    // ticks and figures on a linear law; a figure only where it does not run into the one before
+    g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (7.5f)));
+    const auto tickTop = slotArea.getBottom() + 1.0f;
+    const auto figureY = tickTop + 2.0f;
+    auto lastFigureX = -100.0f;
+    for (const auto mark : { 0.0f, 3.0f, 6.0f, 12.0f, 18.0f, 24.0f })
+    {
+        if (mark > meterRangeDb)
+            continue;
+        const auto tickX = inner.getX() + mark / meterRangeDb * inner.getWidth();
+        g.setColour (textColour.withAlpha (mark <= 0.0f ? 0.7f : 0.35f));
+        g.fillRect (tickX - 0.5f, tickTop, 1.0f, 2.0f);
+        if (tickX - lastFigureX >= 14.0f) {
+            g.drawText (juce::String (static_cast<int> (mark)),
+                        juce::Rectangle<float> (tickX - 8.0f, figureY, 16.0f, 9.0f),
+                        juce::Justification::centredTop, false);
+            lastFigureX = tickX;
+        }
+    }
 }

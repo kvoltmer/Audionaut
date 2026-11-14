@@ -20,6 +20,7 @@
 #include "Engine/Analysis/AnalysisWorker.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Effects/AuxBusContainer.h"
+#include "Engine/Effects/BuiltIn/CompressorEffect.h"
 #include "Engine/Effects/BuiltIn/DelayEffect.h"
 #include "Engine/Effects/BuiltIn/TrimEffect.h"
 #include "Engine/Effects/EffectSlot.h"
@@ -32,6 +33,7 @@
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
+#include "Engine/Undo/UndoableEffectParameterAction.h"
 
 using namespace audium;
 using namespace audium::test;
@@ -606,6 +608,123 @@ SCENARIO ("a rebuild while playing carries the delay lines over", "[engine][effe
             {
                 requireShifted (live, referenceLive, 0, 480);
                 requireShifted (live, referenceLive, 3, 480);
+            }
+        }
+    }
+}
+
+SCENARIO ("a parameter that moves an insert's latency has the plan rebuilt around it", "[engine][effects][latency]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("two tracks, rendered plain for reference, and a compressor at ratio 1 on track 0 - a pure pass, prepared without look-ahead")
+    {
+        Session plain;
+        const auto referenceLive = renderLive (*plain.engine);
+        const auto referenceBounce = bounce (*plain.engine);
+
+        Session session;
+        auto& chain = session.track (0)->getTrackInserts();
+        auto slot = chain.add (CompressorEffect::typeInfo().id);
+        REQUIRE (slot != nullptr);
+        slot->getEffect().setParameter (CompressorEffect::ratio, 1.0f);
+        REQUIRE (session.preparedPlan().latency.preFader == 0);
+        const auto lookahead = 441;   // 10 ms at 44.1 kHz
+
+        WHEN ("the look-ahead is set to 10 ms through the chain, nothing playing")
+        {
+            const auto rebuilds = session.planner().getNumRebuilds();
+            REQUIRE (chain.setParameter (0, CompressorEffect::lookaheadMs, 10.0f));
+
+            THEN ("the slot is prepared again for the new latency and is back in a plan that compensates for it")
+            {
+                REQUIRE (session.planner().getNumRebuilds() > rebuilds);
+                REQUIRE (slot->getLatencySamples() == lookahead);
+                REQUIRE (! slot->hasStaleLatency());
+                const auto& plan = session.preparedPlan();
+                REQUIRE (plan.latency.preFader == lookahead);
+                REQUIRE (plan.tracks[0].inserts.size() == 1);
+                REQUIRE (plan.tracks[1].preFaderDelay->getDelaySamples() == lookahead);
+                requireShifted (renderLive (*session.engine), referenceLive, 0, lookahead);
+                requireShifted (renderLive (*session.engine), referenceLive, 3, lookahead);
+                requireIdentical (bounce (*session.engine), referenceBounce);
+            }
+
+            THEN ("a value that leaves the latency alone builds no plan")
+            {
+                const auto before = session.planner().getNumRebuilds();
+                REQUIRE (chain.setParameter (0, CompressorEffect::thresholdDb, -30.0f));
+                REQUIRE (session.planner().getNumRebuilds() == before);
+            }
+
+            THEN ("the undo step takes it back the same way")
+            {
+                auto undoManager = session.tracks().getUndoManager();
+                undoManager->beginNewTransaction();
+                REQUIRE (undoManager->perform (new UndoableEffectParameterAction (session.tracks(), InsertChainAddress::ofTrack (session.track (0)->getId()),
+                                                                                  0, CompressorEffect::lookaheadMs, 10.0f, 0.0f)));
+                REQUIRE (slot->getLatencySamples() == 0);
+                REQUIRE (session.preparedPlan().latency.preFader == 0);
+                REQUIRE (undoManager->undo());
+                REQUIRE (slot->getLatencySamples() == lookahead);
+                REQUIRE (session.preparedPlan().latency.preFader == lookahead);
+            }
+        }
+
+        WHEN ("the look-ahead changes while playing")
+        {
+            FakeAudioIODevice device (kSampleRate, kBlockSize, 2, kNumOutputs);
+            LiveBlockDriver driver (*session.engine, device);
+            driver.play (0.0);
+            juce::AudioBuffer<float> live (kNumOutputs, static_cast<int> (kRenderSeconds * kSampleRate));
+            auto write = 0;
+            const auto append = [&] (const juce::AudioBuffer<float>& part)
+            {
+                const auto count = std::min (part.getNumSamples(), live.getNumSamples() - write);
+                for (auto c = 0; c < kNumOutputs; ++c)
+                    live.copyFrom (c, write, part, c, 0, count);
+                write += count;
+            };
+            const auto half = 21 * kBlockSize;   // whole blocks: the driver trims a render to the seconds asked for
+            append (driver.render (half / kSampleRate));
+
+            REQUIRE (chain.setParameter (0, CompressorEffect::lookaheadMs, 10.0f));
+
+            // the render thread may be inside the slot, so it sat the first new plan out; that plan is
+            // adopted at the top of the next block, the container's timer frees the previous one, and
+            // the planner prepares the slot and builds once more
+            append (driver.render (kBlockSize / kSampleRate));
+            for (auto tries = 0; tries < 50 && slot->hasStaleLatency(); ++tries)
+            {
+                juce::Thread::sleep (20);
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (1);
+            }
+            REQUIRE (! slot->hasStaleLatency());
+            REQUIRE (slot->getLatencySamples() == lookahead);
+            REQUIRE (session.planner().getPlans().getCurrent()->latency.preFader == lookahead);
+            REQUIRE (session.planner().getPlans().getCurrent()->tracks[0].inserts.size() == 1);
+            const auto resumed = write;
+            append (driver.render ((live.getNumSamples() - write) / kSampleRate));
+            driver.stop();
+
+            THEN ("once the new plan runs and its lines are full, every output is the plain one the look-ahead later")
+            {
+                for (const auto channel : { 0, 3 })
+                {
+                    auto maxDiff = 0.0f;
+                    auto at = -1;
+                    for (auto i = resumed + kBlockSize + lookahead; i < live.getNumSamples(); ++i)
+                    {
+                        const auto diff = std::abs (live.getSample (channel, i) - referenceLive.getSample (channel, i - lookahead));
+                        if (diff > maxDiff)
+                        {
+                            maxDiff = diff;
+                            at = i;
+                        }
+                    }
+                    CAPTURE (channel, maxDiff, at);
+                    REQUIRE (maxDiff == 0.0f);
+                }
             }
         }
     }

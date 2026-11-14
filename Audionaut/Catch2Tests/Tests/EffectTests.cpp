@@ -403,5 +403,85 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             run (compressor, quiet);
             REQUIRE (juce::Decibels::gainToDecibels (settledPeak (quiet)) == Approx (-24.0f).margin (0.2f));
         }
+
+        THEN ("it reports the gain reduction for a meter: the peak since the last reading, which clears it")
+        {
+            REQUIRE (compressor.hasGainReductionMeter());
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+
+            auto loud = makeSine (1, 32, 1000.0, 1.0f);
+            run (compressor, loud);
+            // 20 dB over the threshold at 4:1 is 15 dB of reduction once the envelope has settled
+            REQUIRE (compressor.takeGainReductionDb() == Approx (15.0f).margin (1.5f));
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+
+            // make-up gain is not part of the reading
+            compressor.setParameter (CompressorEffect::makeupDb, 12.0f);
+            run (compressor, loud);
+            REQUIRE (compressor.takeGainReductionDb() == Approx (15.0f).margin (1.5f));
+
+            compressor.reset();
+            auto quiet = makeSine (1, 8, 1000.0, juce::Decibels::decibelsToGain (-30.0f));
+            run (compressor, quiet);
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+        }
+    }
+
+    GIVEN ("a compressor at -20 dB threshold, ratio 4, a 5 ms attack and 10 ms of look-ahead")
+    {
+        CompressorEffect compressor;
+        compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+        compressor.setParameter (CompressorEffect::ratio, 4.0f);
+        compressor.setParameter (CompressorEffect::attackMs, 5.0f);
+        compressor.setParameter (CompressorEffect::releaseMs, 50.0f);
+        compressor.setParameter (CompressorEffect::lookaheadMs, 10.0f);
+        REQUIRE (compressor.getLatencySamples() == 0);   // no rate yet
+        compressor.prepare (kSampleRate, kBlockSize, 1);
+        const auto lookahead = 480;   // 10 ms at 48 kHz
+
+        THEN ("the look-ahead is its latency, in samples at the prepared rate, and follows the parameter")
+        {
+            REQUIRE (compressor.getLatencySamples() == lookahead);
+            compressor.setParameter (CompressorEffect::lookaheadMs, 2.5f);
+            REQUIRE (compressor.getLatencySamples() == 120);
+            compressor.setParameter (CompressorEffect::lookaheadMs, 0.0f);
+            REQUIRE (compressor.getLatencySamples() == 0);
+        }
+
+        THEN ("a tone under the threshold comes out as it went in, the look-ahead later")
+        {
+            auto quiet = makeSine (1, 8, 1000.0, juce::Decibels::decibelsToGain (-30.0f));
+            const auto reference = quiet;
+            run (compressor, quiet);
+            REQUIRE (quiet.getMagnitude (0, 0, lookahead) == 0.0f);
+            auto maxDiff = 0.0f;
+            for (auto i = lookahead; i < quiet.getNumSamples(); ++i)
+                maxDiff = std::max (maxDiff, std::abs (quiet.getSample (0, i) - reference.getSample (0, i - lookahead)));
+            REQUIRE (maxDiff == 0.0f);
+        }
+
+        THEN ("a burst arrives already turned down, where without look-ahead its first millisecond got through")
+        {
+            // silence, then a 0 dBFS tone from block 4 on
+            const auto onset = 4 * kBlockSize;
+            const auto burstOf = [] (int numBlocks)
+            {
+                auto buffer = makeSine (1, numBlocks, 1000.0, 1.0f);
+                buffer.clear (0, 0, onset);
+                return buffer;
+            };
+            const auto firstMillisecond = static_cast<int> (kSampleRate / 1000.0);
+
+            auto ahead = burstOf (8);
+            run (compressor, ahead);
+            // the gain has had the look-ahead - twice the attack - to come down before the burst shows up
+            REQUIRE (juce::Decibels::gainToDecibels (ahead.getMagnitude (0, onset + lookahead, firstMillisecond)) < -10.0f);
+
+            compressor.setParameter (CompressorEffect::lookaheadMs, 0.0f);
+            compressor.reset();
+            auto prompt = burstOf (8);
+            run (compressor, prompt);
+            REQUIRE (juce::Decibels::gainToDecibels (prompt.getMagnitude (0, onset, firstMillisecond)) > -3.0f);
+        }
     }
 }

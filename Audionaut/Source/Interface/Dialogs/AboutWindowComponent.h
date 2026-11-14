@@ -64,8 +64,6 @@ public:
         addCredit ("Rubber Band Library (Particular Programs, GPL)", "https://breakfastquay.com/rubberband/");
         addCredit ("LAME " + String (get_lame_version()) + " MP3 encoder (The LAME Project, LGPL)",
                    "https://lame.sourceforge.io");
-        addCredit ("Airwindows effects (Chris Johnson, MIT)", "https://www.airwindows.com");
-        addCredit ("Airwindows Consolidated (Paul Walker and contributors, MIT)", "https://github.com/baconpaul/airwin2rack");
 
         // Copyright
         addAndMakeVisible (copyrightLabel);

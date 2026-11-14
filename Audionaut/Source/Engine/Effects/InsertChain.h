@@ -20,7 +20,10 @@ class MixerPlanner;
  * The ordered inserts of one track, aux bus or the master: a
  * list of effect slots the mix plan is built from. Every change of the
  * structure (add, remove, move) asks the planner for a new plan; enabling
- * and parameter changes are atomics the running plan picks up.
+ * and parameter changes are atomics the running plan picks up. The one
+ * exception is a parameter that moves the effect's latency (the
+ * compressor's look-ahead): setParameter() sees the slot gone stale and
+ * asks for a plan, which prepares the slot again around the new figure.
  *
  * The JSON form is an array of {"type", "enabled", "state"} under the key
  * "inserts", written only when there is something in it, so a project
@@ -55,6 +58,9 @@ public:
     bool move (int from, int to);
     bool setEnabled (int index, bool enabled);
     void clear();
+
+    /// Stores the value into the slot's effect; where that changed the effect's latency, a plan is requested. False out of range.
+    bool setParameter (int index, int parameter, float value);
 
     /// Writes the chain under `key` when it has slots or unresolved elements; a project without effects serializes as before.
     void writeToJson (json& output, const char* key = "inserts") const;

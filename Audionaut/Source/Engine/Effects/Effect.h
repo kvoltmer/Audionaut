@@ -32,6 +32,7 @@ struct EffectParameterInfo
     bool boolean = false;   ///< 0 or 1, shown as a toggle
     const char* group = nullptr;   ///< the section an editor shows it in ("Mid"); consecutive parameters share one
     const char* label = nullptr;   ///< its name within that section ("Freq"); the name when unset
+    bool movesLatency = false;     ///< a change moves getLatencySamples(), which rebuilds the plan: an editor writes it at a drag's end only
 };
 
 /// What an effect type is called: the id is what projects store ("builtin:eq3"), the name what menus show,
@@ -95,6 +96,14 @@ public:
 
     virtual int getLatencySamples() const noexcept { return 0; }
     virtual double getTailSeconds() const noexcept { return 0.0; }
+
+    /// The effect turns the level down and can say by how much: an editor shows a gain reduction meter beside the dials.
+    virtual bool hasGainReductionMeter() const noexcept { return false; }
+
+    /// Message thread: the most gain reduction, in dB as a positive figure, any sample saw since the last call. The
+    /// call clears it, so a meter polling this shows the peak of each interval and falls to zero while nothing renders
+    /// the effect.
+    virtual float takeGainReductionDb() noexcept { return 0.0f; }
 
     std::span<const EffectParameterInfo> getParameters() const noexcept { return parameters; }
     int getNumParameters() const noexcept { return static_cast<int> (parameters.size()); }

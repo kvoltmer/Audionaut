@@ -895,11 +895,10 @@ server.registerTool(
   {
     title: "List effect types",
     description:
-      "The effect types add_insert can create, each with its category (Dynamics, Clipping, Delay, Reverb, " +
-      "Saturation, EQ, Utility), a one-line description and its parameters: id, name, unit, range, default and " +
+      "The effect types add_insert can create, each with its category (Utility, EQ, Dynamics, " +
+      "Delay), a one-line description and its parameters: id, name, unit, range, default and " +
       "default_text. Built-ins (builtin:trim, builtin:eq3, builtin:compressor, builtin:delay) take values in their " +
-      "units; the curated Airwindows effects (airwindows:buttercomp2, airwindows:kplated, airwindows:totape6, ...) take " +
-      "Airwindows' own 0..1 values, and default_text shows what a value reads as (e.g. dB). Needs no project.",
+      "units. Needs no project.",
     inputSchema: {},
   },
   async () => runCli(["list-effects"])
@@ -917,7 +916,7 @@ server.registerTool(
     inputSchema: {
       project: projectParam,
       ...chainParams,
-      type: z.string().describe("Effect type id from list_effects, e.g. builtin:eq3, builtin:compressor, airwindows:kplated, airwindows:buttercomp2"),
+      type: z.string().describe("Effect type id from list_effects, e.g. builtin:eq3, builtin:compressor"),
       at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
       task: taskParam,
     },

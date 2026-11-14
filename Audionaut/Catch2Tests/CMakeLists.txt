@@ -101,23 +101,6 @@ else()
     endif()
 endif()
 
-# Airwindows (MIT), the curated effects behind the "airwindows:" insert
-# types, vendored from airwin2rack (see ThirdParty/airwindows/PROVENANCE.md).
-# Optimised and quiet like the other DSP libraries: the code is Airwindows'
-# own and stays as it is upstream.
-set(AIRWINDOWS_PATH "${CMAKE_CURRENT_LIST_DIR}/../../ThirdParty/airwindows/src")
-file(GLOB AIRWINDOWS_SOURCES ${AIRWINDOWS_PATH}/*.cpp ${AIRWINDOWS_PATH}/autogen_airwin/*.cpp)
-add_library(audionaut_airwindows STATIC ${AIRWINDOWS_SOURCES})
-set_property(TARGET audionaut_airwindows PROPERTY CXX_STANDARD 20)
-set_property(TARGET audionaut_airwindows PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(audionaut_airwindows PUBLIC ${AIRWINDOWS_PATH})
-if(MSVC)
-    target_compile_definitions(audionaut_airwindows PRIVATE _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES)
-    target_compile_options(audionaut_airwindows PRIVATE /w /MP)
-else()
-    target_compile_options(audionaut_airwindows PRIVATE -O3 -w)
-endif()
-
 # Code coverage. Off by default; the instrumentation is attached to the
 # AudionautTests target only (see below), so JUCE, Catch2 and the other
 # submodules are never instrumented and never appear in the report.
@@ -229,6 +212,7 @@ function(audionaut_configure_common target)
             AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
             JUCE_WEB_BROWSER=0  # removing either needs NEEDS_WEB_BROWSER / NEEDS_CURL on juce_add_console_app
             JUCE_USE_CURL=0
+            AUDIONAUT_BUILT_IN_EFFECTS=1 # the development effects, in Release too (a release app has none)
             DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
 
     target_link_libraries(${target}
@@ -249,7 +233,6 @@ function(audionaut_configure_common target)
     endif()
     target_link_libraries(${target} PRIVATE audionaut_rubberband)
     target_link_libraries(${target} PRIVATE audionaut_lame)
-    target_link_libraries(${target} PRIVATE audionaut_airwindows)
 
     set_target_properties(${target}
                           PROPERTIES

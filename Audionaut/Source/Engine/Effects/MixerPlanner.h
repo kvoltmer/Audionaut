@@ -42,7 +42,9 @@ class InsertChain;
  * stopped or bypassed, so there it is done in place; a chain whose channel
  * count changes while the device runs leaves its slots out of the plan
  * until the plans that ran them are freed, then prepares them and builds
- * once more.
+ * once more. A slot whose effect moved its latency (a look-ahead turned)
+ * goes the same way: out of one plan, prepared for the new figure, back
+ * in the next.
  *
  * Every plan also gets its latency compensation (MixPlan::Latency): the
  * slots' latencies summed along each path, the waits at the three summing

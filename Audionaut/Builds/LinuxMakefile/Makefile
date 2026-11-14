@@ -39,7 +39,7 @@ ifeq ($(CONFIG),Debug)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x90002" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\"1.0.0\"" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DDEMUCS_ENABLED=1" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.7.0" "-DJUCE_APP_VERSION_HEX=0x10700" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/include -I../../../Submodules/farbot/include/ -I../../../Submodules/rubberband/ -I../../../ThirdParty/lame/include -I../../../ThirdParty/airwindows/src $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DDEBUG=1" "-D_DEBUG=1" "-DJUCE_PROJUCER_VERSION=0x90002" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\"1.0.0\"" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DDEMUCS_ENABLED=1" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.7.0" "-DJUCE_APP_VERSION_HEX=0x10700" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/include -I../../../Submodules/farbot/include/ -I../../../Submodules/rubberband/ -I../../../ThirdParty/lame/include $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
@@ -60,7 +60,7 @@ ifeq ($(CONFIG),Release)
     TARGET_ARCH := 
   endif
 
-  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x90002" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\"1.0.0\"" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DDEMUCS_ENABLED=1" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.7.0" "-DJUCE_APP_VERSION_HEX=0x10700" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/include -I../../../Submodules/farbot/include/ -I../../../Submodules/rubberband/ -I../../../ThirdParty/lame/include -I../../../ThirdParty/airwindows/src $(CPPFLAGS)
+  JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1" "-DNDEBUG=1" "-DJUCE_PROJUCER_VERSION=0x90002" "-DJUCE_MODULE_AVAILABLE_juce_analytics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_devices=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_formats=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_processors_headless=1" "-DJUCE_MODULE_AVAILABLE_juce_audio_utils=1" "-DJUCE_MODULE_AVAILABLE_juce_core=1" "-DJUCE_MODULE_AVAILABLE_juce_cryptography=1" "-DJUCE_MODULE_AVAILABLE_juce_data_structures=1" "-DJUCE_MODULE_AVAILABLE_juce_dsp=1" "-DJUCE_MODULE_AVAILABLE_juce_events=1" "-DJUCE_MODULE_AVAILABLE_juce_graphics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_basics=1" "-DJUCE_MODULE_AVAILABLE_juce_gui_extra=1" "-DJUCE_WEBVIEW_INTEROP_LIBRARY_VERSION=\"1.0.0\"" "-DJUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1" "-DJUCE_STRICT_REFCOUNTEDPOINTER=1" "-DJUCE_STANDALONE_APPLICATION=1" "-DJUCE_MODAL_LOOPS_PERMITTED=1" "-DDEMUCS_ENABLED=1" "-DGA4_MEASUREMENT_ID=\"G-Q6904SZWWY\"" "-DLINK_PLATFORM_LINUX=1" "-DJUCER_LINUX_MAKE_6D53C8B4=1" "-DJUCE_APP_VERSION=1.7.0" "-DJUCE_APP_VERSION_HEX=0x10700" $(shell $(PKG_CONFIG) --cflags $(shell ($(PKG_CONFIG) --exists webkit2gtk-4.1 && echo webkit2gtk-4.1) || echo webkit2gtk-4.0) alsa freetype2 fontconfig libcurl gtk+-x11-3.0) -pthread -I../../JuceLibraryCode -I../../../Submodules/JUCE/modules -I../../Source -I../../../Submodules/json/include/ -I../../../Submodules/link/include/ -I../../../Submodules/link/modules/asio-standalone/include -I../../../Submodules/farbot/include/ -I../../../Submodules/rubberband/ -I../../../ThirdParty/lame/include $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=0" "-DJucePlugin_Build_Unity=0" "-DJucePlugin_Build_LV2=0"
   JUCE_TARGET_APP := audionaut
 
@@ -71,7 +71,6 @@ ifeq ($(CONFIG),Release)
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(JUCE_OBJDIR)
 endif
 
-JUCE_COMPILERFLAGSCHEME_airwindows := -O3 -w
 JUCE_COMPILERFLAGSCHEME_demucs := -O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src
 JUCE_COMPILERFLAGSCHEME_lame := -O3 -w -include ../../../ThirdParty/lame/audionaut/lame_config.h -I../../../ThirdParty/lame/libmp3lame
 JUCE_COMPILERFLAGSCHEME_rubberband := -O3 -w
@@ -86,53 +85,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/model_inference_923f7f85.o \
   $(JUCE_OBJDIR)/model_load_2d69c904.o \
   $(JUCE_OBJDIR)/RubberBandSingle_666e5df8.o \
-  $(JUCE_OBJDIR)/airwin_consolidated_base_74ba759d.o \
-  $(JUCE_OBJDIR)/ADClip8_b1ddf73b.o \
-  $(JUCE_OBJDIR)/ADClip8Proc_fa59b0b1.o \
-  $(JUCE_OBJDIR)/Air3_68354f9d.o \
-  $(JUCE_OBJDIR)/Air3Proc_8aaa0813.o \
-  $(JUCE_OBJDIR)/Baxandall2_fef08803.o \
-  $(JUCE_OBJDIR)/Baxandall2Proc_66a69d79.o \
-  $(JUCE_OBJDIR)/BlockParty_ffdc128d.o \
-  $(JUCE_OBJDIR)/BlockPartyProc_9a55d303.o \
-  $(JUCE_OBJDIR)/ButterComp2_f30297f9.o \
-  $(JUCE_OBJDIR)/ButterComp2Proc_e2a3c26f.o \
-  $(JUCE_OBJDIR)/Chamber2_45972c8.o \
-  $(JUCE_OBJDIR)/Chamber2Proc_64629dbe.o \
-  $(JUCE_OBJDIR)/ClipOnly2_b56826c.o \
-  $(JUCE_OBJDIR)/ClipOnly2Proc_81473b62.o \
-  $(JUCE_OBJDIR)/Density2_2b49f7be.o \
-  $(JUCE_OBJDIR)/Density2Proc_e4fbb7b4.o \
-  $(JUCE_OBJDIR)/Doublelay_af6cdf89.o \
-  $(JUCE_OBJDIR)/DoublelayProc_4a7fc1ff.o \
-  $(JUCE_OBJDIR)/Galactic3_1f917a2f.o \
-  $(JUCE_OBJDIR)/Galactic3Proc_8bea99a5.o \
-  $(JUCE_OBJDIR)/Logical4_4ea76c3f.o \
-  $(JUCE_OBJDIR)/Logical4Proc_7b9903b5.o \
-  $(JUCE_OBJDIR)/Mackity_83fc3648.o \
-  $(JUCE_OBJDIR)/MackityProc_5f7a13e.o \
-  $(JUCE_OBJDIR)/Pear2_9749e762.o \
-  $(JUCE_OBJDIR)/Pear2Proc_6a733558.o \
-  $(JUCE_OBJDIR)/Pressure4_ab99bbe5.o \
-  $(JUCE_OBJDIR)/Pressure4Proc_71ef105b.o \
-  $(JUCE_OBJDIR)/PurestDrive_9f031dc7.o \
-  $(JUCE_OBJDIR)/PurestDriveProc_ec30b13d.o \
-  $(JUCE_OBJDIR)/PurestEcho_ee3c5ad2.o \
-  $(JUCE_OBJDIR)/PurestEchoProc_531e70c8.o \
-  $(JUCE_OBJDIR)/PurestSquish_4743c8f4.o \
-  $(JUCE_OBJDIR)/PurestSquishProc_e09dfdea.o \
-  $(JUCE_OBJDIR)/Pyewacket_893051b3.o \
-  $(JUCE_OBJDIR)/PyewacketProc_d38a0f29.o \
-  $(JUCE_OBJDIR)/TapeDelay2_bdbd9705.o \
-  $(JUCE_OBJDIR)/TapeDelay2Proc_ca705b7b.o \
-  $(JUCE_OBJDIR)/ToTape6_8875ce2f.o \
-  $(JUCE_OBJDIR)/ToTape6Proc_8284eda5.o \
-  $(JUCE_OBJDIR)/Verbity2_ae61fdd7.o \
-  $(JUCE_OBJDIR)/Verbity2Proc_7201094d.o \
-  $(JUCE_OBJDIR)/kCathedral3_aff4dd28.o \
-  $(JUCE_OBJDIR)/kCathedral3Proc_a581d81e.o \
-  $(JUCE_OBJDIR)/kPlateD_ee5c8ef.o \
-  $(JUCE_OBJDIR)/kPlateDProc_6f98865.o \
   $(JUCE_OBJDIR)/VbrTag_456b90df.o \
   $(JUCE_OBJDIR)/bitstream_e8fb0c6c.o \
   $(JUCE_OBJDIR)/encoder_b56dd7b.o \
@@ -210,8 +162,6 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/Mp3AudioFormat_a0828914.o \
   $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o \
   $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o \
-  $(JUCE_OBJDIR)/AirwindowsCatalog_1180d365.o \
-  $(JUCE_OBJDIR)/AirwindowsEffect_dc51b7cf.o \
   $(JUCE_OBJDIR)/AuxBus_58602d7.o \
   $(JUCE_OBJDIR)/AuxBusContainer_59272cb4.o \
   $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o \
@@ -398,241 +348,6 @@ $(JUCE_OBJDIR)/RubberBandSingle_666e5df8.o: ../../../Submodules/rubberband/singl
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling RubberBandSingle.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_rubberband) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/airwin_consolidated_base_74ba759d.o: ../../../ThirdParty/airwindows/src/airwin_consolidated_base.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling airwin_consolidated_base.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ADClip8_b1ddf73b.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ADClip8.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ADClip8.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ADClip8Proc_fa59b0b1.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ADClip8Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ADClip8Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Air3_68354f9d.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Air3.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Air3.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Air3Proc_8aaa0813.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Air3Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Air3Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Baxandall2_fef08803.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Baxandall2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Baxandall2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Baxandall2Proc_66a69d79.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Baxandall2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Baxandall2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/BlockParty_ffdc128d.o: ../../../ThirdParty/airwindows/src/autogen_airwin/BlockParty.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling BlockParty.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/BlockPartyProc_9a55d303.o: ../../../ThirdParty/airwindows/src/autogen_airwin/BlockPartyProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling BlockPartyProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ButterComp2_f30297f9.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ButterComp2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ButterComp2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ButterComp2Proc_e2a3c26f.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ButterComp2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ButterComp2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Chamber2_45972c8.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Chamber2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Chamber2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Chamber2Proc_64629dbe.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Chamber2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Chamber2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ClipOnly2_b56826c.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ClipOnly2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ClipOnly2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ClipOnly2Proc_81473b62.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ClipOnly2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ClipOnly2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Density2_2b49f7be.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Density2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Density2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Density2Proc_e4fbb7b4.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Density2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Density2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Doublelay_af6cdf89.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Doublelay.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Doublelay.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/DoublelayProc_4a7fc1ff.o: ../../../ThirdParty/airwindows/src/autogen_airwin/DoublelayProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling DoublelayProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Galactic3_1f917a2f.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Galactic3.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Galactic3.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Galactic3Proc_8bea99a5.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Galactic3Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Galactic3Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Logical4_4ea76c3f.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Logical4.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Logical4.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Logical4Proc_7b9903b5.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Logical4Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Logical4Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Mackity_83fc3648.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Mackity.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Mackity.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/MackityProc_5f7a13e.o: ../../../ThirdParty/airwindows/src/autogen_airwin/MackityProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling MackityProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Pear2_9749e762.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Pear2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Pear2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Pear2Proc_6a733558.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Pear2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Pear2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Pressure4_ab99bbe5.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Pressure4.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Pressure4.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Pressure4Proc_71ef105b.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Pressure4Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Pressure4Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestDrive_9f031dc7.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestDrive.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestDrive.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestDriveProc_ec30b13d.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestDriveProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestDriveProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestEcho_ee3c5ad2.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestEcho.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestEcho.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestEchoProc_531e70c8.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestEchoProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestEchoProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestSquish_4743c8f4.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestSquish.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestSquish.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PurestSquishProc_e09dfdea.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PurestSquishProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PurestSquishProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Pyewacket_893051b3.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Pyewacket.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Pyewacket.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/PyewacketProc_d38a0f29.o: ../../../ThirdParty/airwindows/src/autogen_airwin/PyewacketProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling PyewacketProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/TapeDelay2_bdbd9705.o: ../../../ThirdParty/airwindows/src/autogen_airwin/TapeDelay2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling TapeDelay2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/TapeDelay2Proc_ca705b7b.o: ../../../ThirdParty/airwindows/src/autogen_airwin/TapeDelay2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling TapeDelay2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ToTape6_8875ce2f.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ToTape6.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ToTape6.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/ToTape6Proc_8284eda5.o: ../../../ThirdParty/airwindows/src/autogen_airwin/ToTape6Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling ToTape6Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Verbity2_ae61fdd7.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Verbity2.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Verbity2.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/Verbity2Proc_7201094d.o: ../../../ThirdParty/airwindows/src/autogen_airwin/Verbity2Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling Verbity2Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/kCathedral3_aff4dd28.o: ../../../ThirdParty/airwindows/src/autogen_airwin/kCathedral3.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling kCathedral3.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/kCathedral3Proc_a581d81e.o: ../../../ThirdParty/airwindows/src/autogen_airwin/kCathedral3Proc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling kCathedral3Proc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/kPlateD_ee5c8ef.o: ../../../ThirdParty/airwindows/src/autogen_airwin/kPlateD.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling kPlateD.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/kPlateDProc_6f98865.o: ../../../ThirdParty/airwindows/src/autogen_airwin/kPlateDProc.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling kPlateDProc.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) $(JUCE_COMPILERFLAGSCHEME_airwindows) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/VbrTag_456b90df.o: ../../../ThirdParty/lame/libmp3lame/VbrTag.c
 	-$(V_AT)mkdir -p $(@D)
@@ -1017,16 +732,6 @@ $(JUCE_OBJDIR)/AudioExportThread_db1a0cc7.o: ../../Source/Engine/Export/AudioExp
 $(JUCE_OBJDIR)/SelectionManager_445cdbb2.o: ../../Source/Engine/Selection/SelectionManager.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling SelectionManager.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/AirwindowsCatalog_1180d365.o: ../../Source/Engine/Effects/Airwindows/AirwindowsCatalog.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AirwindowsCatalog.cpp"
-	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
-
-$(JUCE_OBJDIR)/AirwindowsEffect_dc51b7cf.o: ../../Source/Engine/Effects/Airwindows/AirwindowsEffect.cpp
-	-$(V_AT)mkdir -p $(@D)
-	@echo "Compiling AirwindowsEffect.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/AuxBus_58602d7.o: ../../Source/Engine/Effects/AuxBus.cpp

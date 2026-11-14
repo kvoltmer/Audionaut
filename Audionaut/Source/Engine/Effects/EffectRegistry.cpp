@@ -9,7 +9,6 @@
 #include "BuiltIn/DelayEffect.h"
 #include "BuiltIn/Eq3Effect.h"
 #include "BuiltIn/TrimEffect.h"
-#include "Airwindows/AirwindowsEffect.h"
 
 namespace audium
 {
@@ -36,11 +35,6 @@ void EffectRegistry::addBuiltInEffects()
     add (Eq3Effect::typeInfo(), [] { return std::make_unique<Eq3Effect>(); });
     add (CompressorEffect::typeInfo(), [] { return std::make_unique<CompressorEffect>(); });
     add (DelayEffect::typeInfo(), [] { return std::make_unique<DelayEffect>(); });
-}
-
-void EffectRegistry::addAirwindowsEffects()
-{
-    airwindows::addEffects (*this);
 }
 
 std::unique_ptr<Effect> EffectRegistry::create (const std::string& typeId) const

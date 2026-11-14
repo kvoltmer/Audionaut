@@ -23,10 +23,18 @@
  * frequency dial turns on a logarithmic taper. While the slot is
  * bypassed the dials are dimmed, still live.
  *
+ * An effect that reports its gain reduction (the compressor) gets a meter
+ * in the band beside the bypass key: a bar growing from the left on a
+ * linear dB scale, holding the peak of each timer interval and falling at
+ * a steady rate between readings.
+ *
  * A dial drag writes the live value into the effect and records one undo
  * step from the value before the drag to the value after; a typed or
- * double-clicked value is one step by itself. The dials follow the effect
- * on a timer, so a change from elsewhere (an agent, undo) shows up.
+ * double-clicked value is one step by itself. A parameter that moves the
+ * effect's latency (the compressor's look-ahead) is written at the drag's
+ * end only, as every value would rebuild the plan around the slot. The
+ * dials follow the effect on a timer, so a change from elsewhere (an
+ * agent, undo) shows up.
  *
  * The slot is held weakly: once it left its chain or the project, the
  * editor asks its owner to close the window.
@@ -45,6 +53,9 @@ public:
     static constexpr int margin = 10;
     static constexpr int minimumWidth = 200;
     static constexpr int maximumColumns = 6;   ///< more parameters than that go on two rows
+    static constexpr int minimumWidthWithMeter = 340;   ///< room in the band for the key, the meter's name and a readable scale
+    static constexpr float meterRangeDb = 24.0f;   ///< the scale's full extent
+    static constexpr float meterFallDbPerTick = 1.0f;   ///< the bar's fall between readings, 25 ticks a second
 
     EffectEditorComponent (MixerContext context, audium::InsertChainAddress address, std::shared_ptr<audium::EffectSlot> slot);
     ~EffectEditorComponent() override;
@@ -73,11 +84,14 @@ private:
         std::unique_ptr<juce::Label> value;
         std::unique_ptr<juce::TextButton> key;
         bool dragging = false;
+        bool heldWhileDragging = false;   ///< written at the drag's end only: the value moves the latency
         float valueAtDragStart = 0.0f;
     };
 
     void timerCallback() override;
     void refresh();
+    void refreshMeter();
+    void paintMeter (juce::Graphics& g) const;
     int slotIndex() const;
     void commit (int parameter, float oldValue, float newValue);
     void showValue (Cell& cell);
@@ -93,6 +107,10 @@ private:
     std::vector<std::unique_ptr<Cell>> cells;
     std::vector<juce::String> groups;   ///< each column's heading, empty when the effect has no groups
     int columns = 1, rows = 1;
+
+    bool meterShown = false;
+    float meterDb = 0.0f;   ///< the bar's current height, after hold and fall
+    juce::Rectangle<int> meterArea;   ///< the band right of the bypass key; empty without a meter
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EffectEditorComponent)
 };

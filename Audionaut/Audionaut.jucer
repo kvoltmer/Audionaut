@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/&#10;../../../ThirdParty/lame/include&#10;../../../ThirdParty/airwindows/src"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/&#10;../../../ThirdParty/lame/include"
               bundleIdentifier="com.voltmer-systems.audionaut" version="1.7.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
-              cppLanguageStandard="20" compilerFlagSchemes="demucs,rubberband,lame,airwindows" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;DEMUCS_ENABLED=1&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
+              cppLanguageStandard="20" compilerFlagSchemes="demucs,rubberband,lame" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;DEMUCS_ENABLED=1&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
     <GROUP id="{D3A1C5E7-2B4F-4A6C-9E1D-5F7B9C0A2E4D}" name="Submodules">
       <GROUP id="{E4B2D6F8-3C5A-4B7D-8F2E-6A8C0D1B3F5E}" name="demucs.cpp">
@@ -30,81 +30,6 @@
       </GROUP>
     </GROUP>
     <GROUP id="{C7A4E2B9-5D31-4F68-A0B2-3E9D71C6F4A8}" name="ThirdParty">
-      <GROUP id="{A1B2C3D4-A001-4E5F-8A9B-0C1D2E3F4A5B}" name="airwindows">
-        <FILE id="AwV001" name="airwin_consolidated_base.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/airwin_consolidated_base.cpp" compilerFlagScheme="airwindows"/>
-        <FILE id="AwV002" name="airwin_consolidated_base.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/airwin_consolidated_base.h"/>
-        <GROUP id="{A1B2C3D4-A002-4E5F-8A9B-0C1D2E3F4A5B}" name="autogen_airwin">
-          <FILE id="AwV003" name="ADClip8.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ADClip8.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV004" name="ADClip8.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ADClip8.h"/>
-          <FILE id="AwV005" name="ADClip8Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ADClip8Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV006" name="Air3.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Air3.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV007" name="Air3.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Air3.h"/>
-          <FILE id="AwV008" name="Air3Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Air3Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV009" name="Baxandall2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Baxandall2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV010" name="Baxandall2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Baxandall2.h"/>
-          <FILE id="AwV011" name="Baxandall2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Baxandall2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV012" name="BlockParty.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/BlockParty.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV013" name="BlockParty.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/BlockParty.h"/>
-          <FILE id="AwV014" name="BlockPartyProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/BlockPartyProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV015" name="ButterComp2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ButterComp2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV016" name="ButterComp2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ButterComp2.h"/>
-          <FILE id="AwV017" name="ButterComp2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ButterComp2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV018" name="Chamber2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Chamber2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV019" name="Chamber2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Chamber2.h"/>
-          <FILE id="AwV020" name="Chamber2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Chamber2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV021" name="ClipOnly2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ClipOnly2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV022" name="ClipOnly2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ClipOnly2.h"/>
-          <FILE id="AwV023" name="ClipOnly2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ClipOnly2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV024" name="Density2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Density2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV025" name="Density2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Density2.h"/>
-          <FILE id="AwV026" name="Density2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Density2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV027" name="Doublelay.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Doublelay.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV028" name="Doublelay.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Doublelay.h"/>
-          <FILE id="AwV029" name="DoublelayProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/DoublelayProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV030" name="Galactic3.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Galactic3.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV031" name="Galactic3.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Galactic3.h"/>
-          <FILE id="AwV032" name="Galactic3Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Galactic3Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV033" name="Logical4.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Logical4.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV034" name="Logical4.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Logical4.h"/>
-          <FILE id="AwV035" name="Logical4Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Logical4Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV036" name="Mackity.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Mackity.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV037" name="Mackity.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Mackity.h"/>
-          <FILE id="AwV038" name="MackityProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/MackityProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV039" name="Pear2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pear2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV040" name="Pear2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pear2.h"/>
-          <FILE id="AwV041" name="Pear2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pear2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV042" name="Pressure4.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pressure4.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV043" name="Pressure4.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pressure4.h"/>
-          <FILE id="AwV044" name="Pressure4Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pressure4Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV045" name="PurestDrive.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestDrive.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV046" name="PurestDrive.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestDrive.h"/>
-          <FILE id="AwV047" name="PurestDriveProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestDriveProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV048" name="PurestEcho.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestEcho.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV049" name="PurestEcho.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestEcho.h"/>
-          <FILE id="AwV050" name="PurestEchoProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestEchoProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV051" name="PurestSquish.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestSquish.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV052" name="PurestSquish.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestSquish.h"/>
-          <FILE id="AwV053" name="PurestSquishProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PurestSquishProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV054" name="Pyewacket.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pyewacket.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV055" name="Pyewacket.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Pyewacket.h"/>
-          <FILE id="AwV056" name="PyewacketProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/PyewacketProc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV057" name="TapeDelay2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/TapeDelay2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV058" name="TapeDelay2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/TapeDelay2.h"/>
-          <FILE id="AwV059" name="TapeDelay2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/TapeDelay2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV060" name="ToTape6.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ToTape6.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV061" name="ToTape6.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ToTape6.h"/>
-          <FILE id="AwV062" name="ToTape6Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/ToTape6Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV063" name="Verbity2.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Verbity2.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV064" name="Verbity2.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Verbity2.h"/>
-          <FILE id="AwV065" name="Verbity2Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/Verbity2Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV066" name="kCathedral3.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kCathedral3.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV067" name="kCathedral3.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kCathedral3.h"/>
-          <FILE id="AwV068" name="kCathedral3Proc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kCathedral3Proc.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV069" name="kPlateD.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kPlateD.cpp" compilerFlagScheme="airwindows"/>
-          <FILE id="AwV070" name="kPlateD.h" compile="0" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kPlateD.h"/>
-          <FILE id="AwV071" name="kPlateDProc.cpp" compile="1" resource="0" file="../ThirdParty/airwindows/src/autogen_airwin/kPlateDProc.cpp" compilerFlagScheme="airwindows"/>
-        </GROUP>
-      </GROUP>
       <GROUP id="{C7A4E2B9-5D31-4F68-A0B2-3E9D71C6F4A9}" name="lame">
         <FILE id="Lam001" name="VbrTag.c" compile="1" resource="0" file="../ThirdParty/lame/libmp3lame/VbrTag.c"
               compilerFlagScheme="lame"/>
@@ -390,14 +315,6 @@
           <FILE id="ClOvTg1" name="ClipOverlayTarget.h" compile="0" resource="0" file="Source/Engine/Selection/ClipOverlayTarget.h"/>
         </GROUP>
         <GROUP id="{3E7F1A52-9C04-4B8D-A6E1-2F5D7C9B0E41}" name="Effects">
-          <GROUP id="{A1B2C3D4-A003-4E5F-8A9B-0C1D2E3F4A5B}" name="Airwindows">
-            <FILE id="AwSCat" name="AirwindowsCatalog.cpp" compile="1" resource="0"
-                  file="Source/Engine/Effects/Airwindows/AirwindowsCatalog.cpp"/>
-            <FILE id="AwSEfC" name="AirwindowsEffect.cpp" compile="1" resource="0"
-                  file="Source/Engine/Effects/Airwindows/AirwindowsEffect.cpp"/>
-            <FILE id="AwSEfH" name="AirwindowsEffect.h" compile="0" resource="0"
-                  file="Source/Engine/Effects/Airwindows/AirwindowsEffect.h"/>
-          </GROUP>
           <GROUP id="{5B9D2C73-1E86-4F0A-B7C2-8A3E6D1F4C92}" name="BuiltIn">
             <FILE id="EfBCmp" name="CompressorEffect.h" compile="0" resource="0"
                   file="Source/Engine/Effects/BuiltIn/CompressorEffect.h"/>
@@ -995,7 +912,7 @@
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" rubberband="-O3 -w" airwindows="-O3 -w" lame="-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
+    <XCODE_MAC targetFolder="Builds/MacOSX" rubberband="-O3 -w" lame="-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
                smallIcon="qhU3Rr" bigIcon="gdiYPG" appSandboxInheritance="1"
                appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
@@ -1029,7 +946,7 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" rubberband="-O3 -w" airwindows="-O3 -w" lame="-O3 -w -include ../../../ThirdParty/lame/audionaut/lame_config.h -I../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src" smallIcon="qhU3Rr" bigIcon="gdiYPG"
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" rubberband="-O3 -w" lame="-O3 -w -include ../../../ThirdParty/lame/audionaut/lame_config.h -I../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I../../../Submodules/demucs.cpp/vendor/eigen -I../../../Submodules/demucs.cpp/src" smallIcon="qhU3Rr" bigIcon="gdiYPG"
                 extraDefs="LINK_PLATFORM_LINUX=1">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source"
@@ -1055,7 +972,7 @@
         <MODULEPATH id="juce_audio_processors_headless" path="../Submodules/JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
-    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" airwindows="/w /D_USE_MATH_DEFINES /D_CRT_SECURE_NO_WARNINGS" lame="/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;_WIN32_WINNT=0x0A00&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN"
+    <VS2026 targetFolder="Builds/VisualStudio2026" rubberband="/w" lame="/w /D_CRT_SECURE_NO_WARNINGS /I..\..\..\ThirdParty\lame\audionaut /I..\..\..\ThirdParty\lame\libmp3lame /FIlame_config.h" demucs="/bigobj /w /I..\..\..\Submodules\demucs.cpp\vendor\eigen /I..\..\..\Submodules\demucs.cpp\src" extraDefs="LINK_PLATFORM_WINDOWS=1&#10;_WIN32_WINNT=0x0A00&#10;NOMINMAX&#10;WIN32_LEAN_AND_MEAN"
             smallIcon="qhU3Rr" bigIcon="gdiYPG" externalLibraries="ws2_32.lib">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="../../Source"/>
