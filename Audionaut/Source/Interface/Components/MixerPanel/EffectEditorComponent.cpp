@@ -74,6 +74,8 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         dial->setRotaryParameters (AudiumLookAndFeel::dialStartAngle, AudiumLookAndFeel::dialEndAngle, true);
         dial->setMouseDragSensitivity (160);
         dial->setDoubleClickReturnValue (true, info.def);
+        // the wheel moves a dial in a burst of one-step drags: each a plan rebuild where the parameter moves the latency
+        dial->setScrollWheelEnabled (! info.movesLatency);
         dial->setNumDecimalPlacesToDisplay (unit == "Hz" ? 0 : unit == "dB" ? 1 : 2);
         if (unit.isNotEmpty())
             dial->setTextValueSuffix (" " + unit);

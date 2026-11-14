@@ -28,8 +28,10 @@ namespace audium
  * earlier, so the attack is under way when a transient arrives. The delay
  * is the effect's latency, reported for compensation; a change of the
  * look-ahead changes it, and the slot is prepared again for the new figure
- * (see EffectSlot). The line is sized for the longest look-ahead at
- * prepare(), so a change allocates nothing.
+ * (see EffectSlot). Until then the delay stays at the prepared figure, the
+ * one the running plan compensates: a new look-ahead is heard only from the
+ * prepare() that comes with a plan built for it. The line is sized for the
+ * longest look-ahead at prepare().
  */
 class CompressorEffect final : public Effect
 {
@@ -67,6 +69,7 @@ public:
         lines.assign (static_cast<size_t> (numChannels), std::vector<float> (static_cast<size_t> (size), 0.0f));
 
         applyParameters();
+        lookaheadSamples = std::min (lookaheadSamplesFor (getParameter (lookaheadMs)), maxLookaheadSamples);
         reset();
     }
 
@@ -152,14 +155,13 @@ private:
         ratioInverse = 1.0f / getParameter (ratio);
         envelope.setAttackTime (getParameter (attackMs));
         envelope.setReleaseTime (getParameter (releaseMs));
-        lookaheadSamples = std::min (lookaheadSamplesFor (getParameter (lookaheadMs)), maxLookaheadSamples);
         makeup.setGainDecibels (getParameter (makeupDb));
     }
 
     double sampleRate = 0.0;
     juce::dsp::BallisticsFilter<float> envelope;
     float threshold = 1.0f, thresholdInverse = 1.0f, ratioInverse = 1.0f;   // render thread, from applyParameters()
-    int lookaheadSamples = 0;                                               // render thread, from applyParameters()
+    int lookaheadSamples = 0;                                               // from prepare(): the latency the plan compensates
     int maxLookaheadSamples = 0;
     int mask = 0;
     std::vector<std::vector<float>> lines;   ///< the signal waiting for its gain, one line per channel

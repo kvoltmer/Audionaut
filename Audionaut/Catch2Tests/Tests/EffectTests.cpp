@@ -460,6 +460,28 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             REQUIRE (maxDiff == 0.0f);
         }
 
+        THEN ("a new look-ahead is heard only once the effect is prepared again, the delay staying where the plan compensates it")
+        {
+            compressor.setParameter (CompressorEffect::lookaheadMs, 0.0f);
+            REQUIRE (compressor.getLatencySamples() == 0);   // reported at once, so the slot goes stale
+
+            const auto quietTone = [] { return makeSine (1, 8, 1000.0, juce::Decibels::decibelsToGain (-30.0f)); };
+            const auto reference = quietTone();
+
+            auto before = quietTone();
+            run (compressor, before);
+            REQUIRE (before.getMagnitude (0, 0, lookahead) == 0.0f);   // still the prepared 10 ms
+            REQUIRE (std::abs (before.getSample (0, lookahead + 10) - reference.getSample (0, 10)) == 0.0f);
+
+            compressor.prepare (kSampleRate, kBlockSize, 1);
+            auto after = quietTone();
+            run (compressor, after);
+            auto maxDiff = 0.0f;
+            for (auto i = 0; i < after.getNumSamples(); ++i)
+                maxDiff = std::max (maxDiff, std::abs (after.getSample (0, i) - reference.getSample (0, i)));
+            REQUIRE (maxDiff == 0.0f);
+        }
+
         THEN ("a burst arrives already turned down, where without look-ahead its first millisecond got through")
         {
             // silence, then a 0 dBFS tone from block 4 on
@@ -478,7 +500,7 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             REQUIRE (juce::Decibels::gainToDecibels (ahead.getMagnitude (0, onset + lookahead, firstMillisecond)) < -10.0f);
 
             compressor.setParameter (CompressorEffect::lookaheadMs, 0.0f);
-            compressor.reset();
+            compressor.prepare (kSampleRate, kBlockSize, 1);
             auto prompt = burstOf (8);
             run (compressor, prompt);
             REQUIRE (juce::Decibels::gainToDecibels (prompt.getMagnitude (0, onset, firstMillisecond)) > -3.0f);
