@@ -101,6 +101,10 @@ public:
     virtual int getLatencySamples() const noexcept { return 0; }
     virtual double getTailSeconds() const noexcept { return 0.0; }
 
+    /// Message thread: the effect changed in a way prepare() has to see again (a plugin that arrived after its
+    /// placeholder stood in a prepared slot): the slot prepares it anew before the next plan runs it.
+    virtual bool needsPrepare() const noexcept { return false; }
+
     /// The effect turns the level down and can say by how much: an editor shows a gain reduction meter beside the dials.
     virtual bool hasGainReductionMeter() const noexcept { return false; }
 
@@ -188,7 +192,8 @@ public:
     virtual json getPluginInfo() const { return nullptr; }
 
     /// Message thread: the effect's latency moved of its own accord (a plugin's report), not through a
-    /// parameter this engine set. The chain holding the slot sets it to ask for a plan; a bare effect has none.
+    /// parameter this engine set - or it needs preparing again (needsPrepare). The chain holding the slot
+    /// sets it to ask for a plan; a bare effect has none.
     std::function<void()> onLatencyChanged;
 
 protected:

@@ -142,6 +142,7 @@ private:
     std::unique_ptr<AboutSplashScreen> splashScreen;
     std::unique_ptr<juce::Component> fileBrowserView;
     std::unique_ptr<juce::Component> processingLoadView;   // the Processing Load tool window, while open
+    std::unique_ptr<juce::Component> pluginManagerView;    // the Manage Plugins tool window, while open
    #if JUCE_DEBUG
     std::unique_ptr<juce::Component> loadSimulatorView;    // debug builds: the Load Simulator tool window, while open
    #endif
@@ -184,6 +185,7 @@ private:
     void showAboutWindow();
     void showFileBrowserWindow();
     void showProcessingLoadWindow();
+    void showPluginManagerWindow();
    #if JUCE_DEBUG
     void showLoadSimulatorWindow();
    #endif

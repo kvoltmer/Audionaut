@@ -12,6 +12,7 @@
 {
 @public
     std::function<void()> onClose;
+    std::function<void()> onResize;
 }
 @end
 
@@ -23,6 +24,13 @@
         onClose();
     return NO;
 }
+
+- (void) windowDidResize: (NSNotification*) notification
+{
+    juce::ignoreUnused (notification);
+    if (onResize != nullptr)
+        onResize();
+}
 @end
 
 //==============================================================================
@@ -33,10 +41,11 @@ struct FloatingPanel::Native
 };
 
 FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* content_, std::unique_ptr<juce::Component>& ownerPointer,
-                              juce::KeyListener* shortcuts) :
+                              juce::KeyListener* shortcuts, bool userResizable_) :
     owner (ownerPointer),
     content (content_),
-    native (std::make_unique<Native>())
+    native (std::make_unique<Native>()),
+    userResizable (userResizable_)
 {
     addAndMakeVisible (content.get());
     const auto width = content->getWidth();
@@ -46,8 +55,11 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
 
     JUCE_AUTORELEASEPOOL
     {
+        NSWindowStyleMask style = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskUtilityWindow;
+        if (userResizable)
+            style |= NSWindowStyleMaskResizable;
         native->panel = [[NSPanel alloc] initWithContentRect: NSMakeRect (0, 0, width, height)
-                                                   styleMask: NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskUtilityWindow
+                                                   styleMask: style
                                                      backing: NSBackingStoreBuffered
                                                        defer: NO];
         [native->panel setFloatingPanel: YES];       // above the app's windows
@@ -58,6 +70,13 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
 
         native->delegate = [[AudionautFloatingPanelDelegate alloc] init];
         native->delegate->onClose = [this] { requestClose(); };
+        native->delegate->onResize = [this]
+        {
+            // the user drags the panel's edge: the panel, and with it the content, takes the new size
+            const auto size = [[native->panel contentView] frame].size;
+            juce::ScopedValueSetter<bool> guard (nativeResizing, true);
+            setSize (static_cast<int> (size.width), static_cast<int> (size.height));
+        };
         [native->panel setDelegate: native->delegate];
 
         addToDesktop (0, [native->panel contentView]);
@@ -97,4 +116,27 @@ void FloatingPanel::bringToFront()
 {
     [native->panel makeKeyAndOrderFront: nil];
     grabKeyboardFocus();
+}
+
+void FloatingPanel::setResizeLimits (int minimumWidth, int minimumHeight, int maximumWidth, int maximumHeight)
+{
+    if (native->panel == nil)
+        return;
+    [native->panel setContentMinSize: NSMakeSize (minimumWidth, minimumHeight)];
+    [native->panel setContentMaxSize: NSMakeSize (maximumWidth, maximumHeight)];
+}
+
+void FloatingPanel::applySizeToNative()
+{
+    // the content grew or shrank (a plugin resized its editor): the panel's window takes the size, its top left staying put
+    if (native == nullptr || native->panel == nil || nativeResizing)
+        return;
+
+    const auto frame = [native->panel frame];
+    const auto current = [native->panel contentRectForFrameRect: frame].size;
+    if (static_cast<int> (current.width) == getWidth() && static_cast<int> (current.height) == getHeight())
+        return;
+
+    [native->panel setContentSize: NSMakeSize (getWidth(), getHeight())];
+    [native->panel setFrameTopLeftPoint: NSMakePoint (frame.origin.x, NSMaxY (frame))];
 }

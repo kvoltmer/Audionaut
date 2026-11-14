@@ -363,6 +363,7 @@
     <ClCompile Include="..\..\Source\Interface\Handlers\SnapToGridHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Handlers\ZoomHandler.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.cpp"/>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\HostedEffectEditorComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.cpp"/>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.cpp"/>
@@ -3654,6 +3655,7 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\LoadSimulatorComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingLoadComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\PluginManagerComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>
@@ -3675,6 +3677,8 @@
     <ClInclude Include="..\..\Source\Interface\Handlers\SnapToGridHandler.h"/>
     <ClInclude Include="..\..\Source\Interface\Handlers\ZoomHandler.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\HostedEffectEditorComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\SlotEditor.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusGroupComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\MixerBusStripComponent.h"/>

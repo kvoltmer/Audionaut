@@ -1474,6 +1474,9 @@
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\HostedEffectEditorComponent.cpp">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.cpp">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClCompile>
@@ -5391,6 +5394,9 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingLoadComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\PluginManagerComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
@@ -5452,6 +5458,12 @@
       <Filter>Audionaut\Source\Interface\Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\EffectEditorComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\HostedEffectEditorComponent.h">
+      <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\SlotEditor.h">
       <Filter>Audionaut\Source\Interface\Components\MixerPanel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Components\MixerPanel\InsertSlotListComponent.h">

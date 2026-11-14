@@ -88,7 +88,7 @@ public:
     bool isPreparedFor (double sampleRate_, int maxBlockSize_, int numChannels_) const noexcept
     {
         return prepared && sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_ && numChannels == numChannels_
-            && ! hasStaleLatency();
+            && ! hasStaleLatency() && ! effect->needsPrepare();
     }
 
     bool isPrepared() const noexcept { return prepared; }

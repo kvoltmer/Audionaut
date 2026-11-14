@@ -40,7 +40,11 @@ juce::File PluginHost::defaultDataDirectory()
 void PluginHost::addPlatformFormats (juce::AudioPluginFormatManager& manager)
 {
    #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    manager.addFormat (std::make_unique<juce::AudioUnitPluginFormat>());   // the sandbox's one format
+    auto audioUnits = std::make_unique<juce::AudioUnitPluginFormat>();   // the sandbox's one format
+    // inside the sandbox the OS refuses to open an AUv2 without the sandbox-safe flag in-process (-3000):
+    // those run in the system's hosting service, as they do in Logic
+    audioUnits->setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
+    manager.addFormat (std::move (audioUnits));
    #endif
    #if (JUCE_WINDOWS || JUCE_LINUX || JUCE_BSD) && JUCE_PLUGINHOST_VST3
     manager.addFormat (std::make_unique<juce::VST3PluginFormat>());
@@ -94,12 +98,38 @@ void PluginHost::attach (std::shared_ptr<EffectRegistry> registry, Mode mode)
     attached.push_back ({ registry, mode });
 }
 
+PluginHost::Availability PluginHost::availabilityOf (const juce::PluginDescription& description) const
+{
+    return formatOf (description) != nullptr ? Availability::available : Availability::formatMissing;
+}
+
+juce::String PluginHost::describe (Availability availability)
+{
+    switch (availability)
+    {
+        case Availability::available:      return {};
+        case Availability::formatMissing:  return TRANS ("its format is not hosted on this platform");
+    }
+    return {};
+}
+
 bool PluginHost::canCreate (const juce::PluginDescription& description) const
+{
+    return availabilityOf (description) == Availability::available;
+}
+
+juce::AudioPluginFormat* PluginHost::formatOf (const juce::PluginDescription& description) const
 {
     for (auto* format : formats.getFormats())
         if (format->getName() == description.pluginFormatName)
-            return ! format->requiresUnblockedMessageThreadDuringCreation (description);   // AUv3 waits for asynchronous loading
-    return false;
+            return format;
+    return nullptr;
+}
+
+bool PluginHost::loadsOutOfProcess (const juce::PluginDescription& description) const
+{
+    auto* format = formatOf (description);
+    return format != nullptr && format->requiresUnblockedMessageThreadDuringCreation (description);
 }
 
 bool PluginHost::isPluginTypeId (const std::string& typeId) const
@@ -208,11 +238,45 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
         return std::make_unique<HostedEffect> (type, description, nullptr, "not loaded in this session");
 
     // the format the planner prepares with comes later; the plugin is told the real one in prepare()
+    if (loadsOutOfProcess (description))
+    {
+        // the plugin comes through the message queue: a placeholder stands in until then
+        auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
+        ++*pendingLoads;
+        formatOf (description)->createPluginInstanceAsync (description, 44100.0, 512,
+                                           [alive = effect->getAliveToken(), waiting = effect.get(), pending = pendingLoads]
+                                           (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
+                                           {
+                                               // message thread; the effect may be gone by now (an undo, a closed
+                                               // project): the plugin goes away with the callback then
+                                               if (alive.lock() != nullptr)
+                                                   waiting->adopt (std::move (instance), message);
+                                               --*pending;
+                                           });
+        return effect;
+    }
+
     juce::String error;
     auto instance = createInstance (description, 44100.0, 512, error);
     if (instance == nullptr && error.isEmpty())
         error = "the plugin could not be loaded";
     return std::make_unique<HostedEffect> (type, description, std::move (instance), error);
+}
+
+bool PluginHost::waitForPendingLoads (int timeoutMs) const
+{
+    const auto deadline = juce::Time::getMillisecondCounter() + static_cast<juce::uint32> (timeoutMs);
+    auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
+    while (pendingLoads->load() > 0)
+    {
+        if (juce::Time::getMillisecondCounter() >= deadline)
+            return false;
+        if (messageManager != nullptr && messageManager->isThisTheMessageThread())
+            messageManager->runDispatchLoopUntil (20);
+        else
+            juce::Thread::sleep (20);
+    }
+    return true;
 }
 
 //==============================================================================

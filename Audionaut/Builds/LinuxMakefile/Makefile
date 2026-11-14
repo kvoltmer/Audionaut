@@ -220,6 +220,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/SnapToGridHandler_51ca2978.o \
   $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o \
   $(JUCE_OBJDIR)/EffectEditorComponent_b0bbd8ef.o \
+  $(JUCE_OBJDIR)/HostedEffectEditorComponent_b31fc628.o \
   $(JUCE_OBJDIR)/InsertSlotListComponent_35ec7058.o \
   $(JUCE_OBJDIR)/MixerBusGroupComponent_457128ef.o \
   $(JUCE_OBJDIR)/MixerBusStripComponent_8c081cf6.o \
@@ -1026,6 +1027,11 @@ $(JUCE_OBJDIR)/ZoomHandler_aafc8870.o: ../../Source/Interface/Handlers/ZoomHandl
 $(JUCE_OBJDIR)/EffectEditorComponent_b0bbd8ef.o: ../../Source/Interface/Components/MixerPanel/EffectEditorComponent.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling EffectEditorComponent.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/HostedEffectEditorComponent_b31fc628.o: ../../Source/Interface/Components/MixerPanel/HostedEffectEditorComponent.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling HostedEffectEditorComponent.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/InsertSlotListComponent_35ec7058.o: ../../Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp

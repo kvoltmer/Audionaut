@@ -31,6 +31,7 @@
 #include "Interface/Dialogs/FloatingToolWindow.h"
 #include "Interface/Dialogs/FileBrowserView.h"
 #include "Interface/Dialogs/ProcessingLoadComponent.h"
+#include "Interface/Dialogs/PluginManagerComponent.h"
 #if JUCE_DEBUG
  #include "Interface/Dialogs/LoadSimulatorComponent.h"
 #endif
@@ -865,6 +866,8 @@ PopupMenu AudiumApplication::createOptionsMenu()
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::followTransport);
     menu.addCommandItem (commandManager.get(), CommandIDs::enableSnapToGrid);
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::showPluginManager);
     return menu;
 }
 
@@ -932,6 +935,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::clearRecentFiles,
                                 CommandIDs::showFileBrowser,
                                 CommandIDs::showProcessingLoad,
+                                CommandIDs::showPluginManager,
                                #if JUCE_DEBUG
                                 CommandIDs::showLoadSimulator,
                                #endif
@@ -1007,6 +1011,9 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
     case CommandIDs::showProcessingLoad:
         result.setInfo ("Processing Load", "Show the load of every render thread.", CommandCategories::view, 0);
         break;
+    case CommandIDs::showPluginManager:
+        result.setInfo ("Manage Plugins...", "List and scan the plugins the inserts can use.", CommandCategories::general, 0);
+        break;
    #if JUCE_DEBUG
     case CommandIDs::showLoadSimulator:
         result.setInfo ("Load Simulator (debug)", "Burn extra render time per track to try overload scenarios.", CommandCategories::view, 0);
@@ -1079,6 +1086,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::showProcessingLoad:
             showProcessingLoadWindow();
+            break;
+        case CommandIDs::showPluginManager:
+            showPluginManagerWindow();
             break;
        #if JUCE_DEBUG
         case CommandIDs::showLoadSimulator:
@@ -1508,6 +1518,17 @@ void AudiumApplication::showProcessingLoadWindow()
                                 new ProcessingLoadComponent (audiumEngine),
                                 processingLoadView, true,
                                 ProcessingLoadComponent::minimumWidth, 280, ProcessingLoadComponent::minimumWidth, 200, 1600, 1000);
+}
+
+void AudiumApplication::showPluginManagerWindow()
+{
+    if (pluginManagerView != nullptr)
+        pluginManagerView->toFront (true);
+    else if (pluginHost != nullptr)
+        new FloatingToolWindow ("Manage Plugins", audium::PreferenceKeys::pluginManagerWindowState,
+                                new PluginManagerComponent (pluginHost),
+                                pluginManagerView, true,
+                                760, 480, 480, 320, 2400, 1600);
 }
 
 #if JUCE_DEBUG

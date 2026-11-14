@@ -206,19 +206,56 @@ SCENARIO ("the plugin host registers its plugins as effect types", "[engine][eff
             }
         }
 
-        WHEN ("a listed plugin's format cannot create it synchronously")
+        WHEN ("a listed plugin's format creates it asynchronously only (a plugin in a process of its own)")
         {
             auto asyncFormat = std::make_unique<TestPluginFormat> ("TestC", std::vector { gainIn ("TestC", 0x3333) });
             asyncFormat->asyncOnly = true;
             host.getFormats().addFormat (std::move (asyncFormat));
-            host.getList().addType (TestPluginInstance::describe (gainIn ("TestC", 0x3333)));
+            const auto description = TestPluginInstance::describe (gainIn ("TestC", 0x3333));
+            host.getList().addType (description);
             host.registerInto (*registry, PluginHost::Mode::full);
 
-            THEN ("it stays in the list but is not a type yet")
+            THEN ("it is a type like any other, marked as running out of process")
             {
                 REQUIRE (host.getList().getNumTypes() == 3);
-                REQUIRE_FALSE (registry->hasType ("testc:00003333"));
-                REQUIRE_FALSE (host.canCreate (TestPluginInstance::describe (gainIn ("TestC", 0x3333))));
+                REQUIRE (registry->hasType ("testc:00003333"));
+                REQUIRE (host.canCreate (description));
+                REQUIRE (host.loadsOutOfProcess (description));
+                REQUIRE_FALSE (host.loadsOutOfProcess (TestPluginInstance::describe (gainIn ("TestA", 0x1111))));
+            }
+
+            THEN ("creating it gives a loading placeholder that adopts the plugin from the message queue")
+            {
+                auto effect = registry->create ("testc:00003333");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+                REQUIRE (hosted->getNumParameters() == 0);
+                REQUIRE (host.getNumPendingLoads() == 1);
+
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (hosted->getNumParameters() == 2);
+            }
+
+            THEN ("a placeholder destroyed before the plugin arrives leaves nothing behind")
+            {
+                auto effect = registry->create ("testc:00003333");
+                REQUIRE (host.getNumPendingLoads() == 1);
+                effect.reset();
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+            }
+
+            THEN ("a catalogue-only engine gets a plain placeholder, nothing pending")
+            {
+                auto effect = host.createEffect (description, PluginHost::Mode::catalogueOnly);
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (host.getNumPendingLoads() == 0);
             }
         }
     }

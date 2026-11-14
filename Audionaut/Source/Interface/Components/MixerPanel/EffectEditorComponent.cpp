@@ -21,20 +21,6 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
     effectName = effect.getType().name;
     meterShown = effect.hasGainReductionMeter();
 
-    bypassKey.setButtonText (TRANS ("Bypass"));
-    bypassKey.getProperties().set (AudiumLookAndFeel::consoleButtonProperty, true);
-    bypassKey.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
-    bypassKey.setColour (juce::TextButton::buttonOnColourId, juce::Colour (audium::toggledOnColour));
-    bypassKey.setClickingTogglesState (true);
-    bypassKey.onStateChange = [this] { repaint(); };   // the key's shadow is painted here
-    bypassKey.onClick = [this]
-    {
-        const auto index = slotIndex();
-        if (index >= 0)
-            InsertChainActions::setEnabled (context, address, index, ! bypassKey.getToggleState());
-    };
-    addAndMakeVisible (bypassKey);
-
     const auto parameters = effect.getParameters();
     for (int i = 0; i < static_cast<int> (parameters.size()); ++i)
     {
@@ -199,8 +185,8 @@ void EffectEditorComponent::arrange()
 
 juce::Rectangle<int> EffectEditorComponent::gridArea() const
 {
-    // the grid, centred in the room under the band and the group headings
-    auto bounds = getLocalBounds().withTrimmedTop (headerHeight + (groups.empty() ? 0 : groupHeight)).reduced (margin);
+    // the grid, centred in the room under the group headings and above the meter
+    auto bounds = getLocalBounds().withTrimmedTop (groups.empty() ? 0 : groupHeight).withTrimmedBottom (meterShown ? meterHeight : 0).reduced (margin);
     return bounds.withSizeKeepingCentre (columns * cellWidth, rows * cellHeight);
 }
 
@@ -211,7 +197,7 @@ int EffectEditorComponent::getPreferredWidth() const
 
 int EffectEditorComponent::getPreferredHeight() const
 {
-    return headerHeight + (groups.empty() ? 0 : groupHeight) + rows * cellHeight + 2 * margin;
+    return (groups.empty() ? 0 : groupHeight) + rows * cellHeight + 2 * margin + (meterShown ? meterHeight : 0);
 }
 
 bool EffectEditorComponent::isStillValid() const
@@ -271,7 +257,6 @@ void EffectEditorComponent::refresh()
 
     auto& effect = slot->getEffect();
     const auto bypassed = ! slot->isEnabled();
-    bypassKey.setToggleState (bypassed, juce::dontSendNotification);
 
     for (auto& cell : cells)
     {
@@ -320,10 +305,7 @@ void EffectEditorComponent::timerCallback()
 
 void EffectEditorComponent::resized()
 {
-    auto bounds = getLocalBounds();
-    auto header = bounds.removeFromTop (headerHeight).reduced (margin, 0);
-    bypassKey.setBounds (header.removeFromLeft (56).withSizeKeepingCentre (56, 18));
-    meterArea = meterShown ? header.withTrimmedLeft (margin) : juce::Rectangle<int>();
+    meterArea = meterShown ? getLocalBounds().removeFromBottom (meterHeight).reduced (margin, 0) : juce::Rectangle<int>();
 
     const auto grid = gridArea();
     for (auto& cellPtr : cells)
@@ -345,12 +327,6 @@ void EffectEditorComponent::resized()
 void EffectEditorComponent::paint (juce::Graphics& g)
 {
     g.fillAll (findColour (audium::secondaryBackgroundColourId));
-
-    auto band = getLocalBounds().removeFromTop (headerHeight);
-    g.setColour (findColour (audium::dividerColourId));
-    g.fillRect (band);
-    g.setColour (juce::Colours::black.withAlpha (0.4f));
-    g.fillRect (band.removeFromBottom (1));
 
     // the group headings over their columns, a faint rule between neighbouring groups
     const auto grid = gridArea();
@@ -375,7 +351,6 @@ void EffectEditorComponent::paint (juce::Graphics& g)
     if (meterShown)
         paintMeter (g);
 
-    AudiumLookAndFeel::drawConsoleButtonShadows (g, { &bypassKey });
     for (const auto& cell : cells)
         if (cell->key != nullptr)
             AudiumLookAndFeel::drawConsoleButtonShadows (g, { cell->key.get() });

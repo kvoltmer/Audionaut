@@ -25,11 +25,46 @@ HostedEffect::HostedEffect (EffectTypeInfo type, juce::PluginDescription descrip
     status (instance != nullptr ? Status::loaded : Status::notLoaded),
     error (std::move (error_))
 {
-    if (instance == nullptr)
-        return;
+    if (instance != nullptr)
+        takeInstance (std::move (instance));
+}
 
+HostedEffect::HostedEffect (EffectTypeInfo type, juce::PluginDescription description_, Loading) :
+    Effect (std::move (type), noParameters),
+    description (std::move (description_)),
+    status (Status::loading)
+{
+}
+
+void HostedEffect::takeInstance (std::unique_ptr<juce::AudioPluginInstance> created)
+{
+    instance = std::move (created);
     buildParameterTable();
     instance->addListener (this);
+}
+
+void HostedEffect::adopt (std::unique_ptr<juce::AudioPluginInstance> created, juce::String error_)
+{
+    jassert (getStatus() == Status::loading && instance == nullptr);
+
+    if (created == nullptr)
+    {
+        error = error_.isNotEmpty() ? std::move (error_) : juce::String ("the plugin could not be loaded");
+        status.store (Status::notLoaded, std::memory_order_release);
+        return;
+    }
+
+    takeInstance (std::move (created));
+    error.clear();
+    if (! keptBlob.empty())
+        setState (json { { "blob", std::exchange (keptBlob, {}) } });   // what the project saved, into the plugin
+
+    // the slot that holds this is prepared without a plugin: it prepares again before the next plan;
+    // a render thread that sees the new status meanwhile finds nothing prepared and passes through
+    prepareNeeded = true;
+    status.store (Status::loaded, std::memory_order_release);
+    if (onLatencyChanged)
+        onLatencyChanged();
 }
 
 HostedEffect::~HostedEffect()
@@ -168,11 +203,13 @@ void HostedEffect::prepare (double sampleRate, int maxBlockSize, int numChannels
     if (preparedChannels > 0)
         instance->releaseResources();   // a second prepare: the plugin lets go of the old format first
 
-    status = negotiateLayout (numChannels) ? Status::loaded : Status::incompatibleLayout;
-    if (status == Status::incompatibleLayout)
+    const auto negotiated = negotiateLayout (numChannels);
+    if (! negotiated)
         error = juce::String (numChannels) + (numChannels == 1 ? " channel" : " channels") + " not supported";
     else
         error.clear();
+    status.store (negotiated ? Status::loaded : Status::incompatibleLayout, std::memory_order_release);
+    prepareNeeded = false;
 
     const auto pluginChannels = foldMono ? 2 : numChannels;
     scratch.setSize (pluginChannels, maxBlockSize);
@@ -203,8 +240,8 @@ void HostedEffect::reset() noexcept
 
 void HostedEffect::process (juce::dsp::AudioBlock<float>& block) noexcept
 {
-    if (instance == nullptr || status != Status::loaded || preparedChannels == 0)
-        return;   // passes through: a placeholder, or a layout the plugin refused
+    if (status.load (std::memory_order_acquire) != Status::loaded || preparedChannels == 0 || instance == nullptr)
+        return;   // passes through: a placeholder (loading or not), or a layout the plugin refused
 
     const auto numChannels = static_cast<int> (block.getNumChannels());
     const auto numSamples = static_cast<int> (block.getNumSamples());
@@ -235,12 +272,12 @@ void HostedEffect::process (juce::dsp::AudioBlock<float>& block) noexcept
 
 int HostedEffect::getLatencySamples() const noexcept
 {
-    return instance != nullptr && status == Status::loaded ? instance->getLatencySamples() : 0;
+    return instance != nullptr && getStatus() == Status::loaded ? instance->getLatencySamples() : 0;
 }
 
 double HostedEffect::getTailSeconds() const noexcept
 {
-    if (instance == nullptr || status != Status::loaded)
+    if (instance == nullptr || getStatus() != Status::loaded)
         return 0.0;
     const auto tail = instance->getTailLengthSeconds();
     return std::isfinite (tail) && tail > 0.0 ? tail : 0.0;   // an endless tail is no figure to extend an export by
@@ -315,7 +352,7 @@ void HostedEffect::audioProcessorChanged (juce::AudioProcessor*, const ChangeDet
     if (details.latencyChanged)
     {
         // any thread: on the message thread, if the effect still lives, the chain hears of it
-        juce::MessageManager::callAsync ([weak = std::weak_ptr<int> (aliveToken), this]
+        juce::MessageManager::callAsync ([weak = std::weak_ptr<const int> (aliveToken), this]
         {
             if (weak.lock() != nullptr && onLatencyChanged)
                 onLatencyChanged();

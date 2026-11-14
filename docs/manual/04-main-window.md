@@ -4,8 +4,9 @@
 
 The window has three areas: the **header bar** across the top, the **middle
 area** with channel strips and the arrangement timeline, and the **right
-panel** with regions and playlists. A separate floating **File Browser**
-window is available from the *View* menu.
+panel** with regions and playlists. The **mixer** opens along the bottom of
+the middle area ([The mixer, effects and plugins](14-mixer-and-effects.md)).
+A separate floating **File Browser** window is available from the *View* menu.
 
 ## Header bar
 
