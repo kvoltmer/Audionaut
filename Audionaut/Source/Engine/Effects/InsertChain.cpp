@@ -12,6 +12,12 @@
 namespace audium
 {
 
+InsertChain::~InsertChain()
+{
+    for (const auto& slot : slots)
+        release (*slot);
+}
+
 std::shared_ptr<EffectSlot> InsertChain::getSlot (int index) const noexcept
 {
     return index >= 0 && index < size() ? slots[static_cast<size_t> (index)] : nullptr;
@@ -28,6 +34,7 @@ std::shared_ptr<EffectSlot> InsertChain::add (const std::string& typeId, int at)
 
     const auto index = at < 0 || at > size() ? size() : at;
     slots.insert (slots.begin() + index, slot);
+    adopt (*slot);
     changed();
     return slot;
 }
@@ -38,6 +45,7 @@ bool InsertChain::remove (int index)
         return false;
 
     // the slot lives on in the plans that reference it until they retire
+    release (*slots[static_cast<size_t> (index)]);
     slots.erase (slots.begin() + index);
     changed();
     return true;
@@ -72,8 +80,18 @@ void InsertChain::clear()
     unresolved.clear();
     if (slots.empty())
         return;
+    for (const auto& slot : slots)
+        release (*slot);
     slots.clear();
     changed();
+}
+
+bool InsertChain::removeUnresolved (int position)
+{
+    if (position < 0 || position >= getNumUnresolved())
+        return false;
+    unresolved.erase (unresolved.begin() + position);
+    return true;
 }
 
 void InsertChain::writeToJson (json& output, const char* key) const
@@ -84,9 +102,12 @@ void InsertChain::writeToJson (json& output, const char* key) const
     auto inserts = json::array();
     for (const auto& slot : slots)
     {
-        inserts.push_back ({ { "type", slot->getEffect().getType().id },
-                             { "enabled", slot->isEnabled() },
-                             { "state", slot->getEffect().getState() } });
+        json element = { { "type", slot->getEffect().getType().id },
+                         { "enabled", slot->isEnabled() },
+                         { "state", slot->getEffect().getState() } };
+        if (auto plugin = slot->getEffect().getPluginInfo(); ! plugin.is_null())
+            element["plugin"] = std::move (plugin);   // how another machine finds the plugin
+        inserts.push_back (std::move (element));
     }
 
     // what could not be read goes back where it was, as it was (the list
@@ -138,13 +159,14 @@ void InsertChain::readFromJson (const json& input, const char* key)
         if (slot == nullptr)
         {
             if (planner != nullptr)
-                slot = planner->createSlot (typeId);
+                slot = planner->createSlot (typeId, &element);   // or the same plugin in another format
             if (slot == nullptr)
             {
                 // a type this engine cannot create: kept for the file, not run
                 unresolved.push_back ({ index, element });
                 continue;
             }
+            adopt (*slot);
         }
 
         if (element.contains ("enabled") && element["enabled"].is_boolean())
@@ -155,6 +177,10 @@ void InsertChain::readFromJson (const json& input, const char* key)
 
         slots.push_back (std::move (slot));
     }
+
+    for (size_t i = 0; i < previous.size(); ++i)
+        if (! used[i])
+            release (*previous[i]);   // leaves with the old plan
 
     if (slots != previous || latencyMoved)
         changed();
@@ -176,6 +202,16 @@ void InsertChain::changed()
 {
     if (planner != nullptr)
         planner->requestRebuild();
+}
+
+void InsertChain::adopt (EffectSlot& slot)
+{
+    slot.getEffect().onLatencyChanged = [this] { changed(); };
+}
+
+void InsertChain::release (EffectSlot& slot)
+{
+    slot.getEffect().onLatencyChanged = nullptr;
 }
 
 } // namespace audium

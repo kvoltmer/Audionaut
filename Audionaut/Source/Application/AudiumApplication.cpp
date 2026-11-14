@@ -122,6 +122,14 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // window dependency (mirrors Projucer's settings-before-CLI ordering).
     initPreferences();
 
+    // The plugins this machine has, from the list the last scan left: the
+    // engine registers them as effect types, so a project's plugin inserts
+    // resolve when it opens. A scan runs this binary as its worker, one
+    // process per plugin file.
+    pluginHost = std::make_shared<audium::PluginHost> (audium::PluginHost::defaultDataDirectory());
+    pluginHost->loadList();
+    pluginHost->useChildProcessScanner (File::getSpecialLocation (File::currentExecutableFile));
+
     // Projucer-style in-app CLI: a recognised verb runs headlessly and the
     // process quits with its exit code; anything else (a project file, no
     // arguments) falls through to normal GUI startup.
@@ -140,6 +148,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         context.quiet = args.removeOptionIfFound ("--quiet");
         context.progressJson = args.removeOptionIfFound ("--progress-json");
         context.preferences = &getPreferences(); // consent-gated CLI analytics
+        context.pluginHost = pluginHost;
 
         const auto exitCode = cli::performCliCommand (args, context);
         // --json is only ever passed by a CLI caller expecting one envelope
@@ -186,7 +195,7 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
     // create audium engine; its questions and messages go through the
     // native dialogs
-    audiumEngine = audium::AudiumFactory::createAudiumEngine(std::make_shared<audium::GuiUserPrompter>());
+    audiumEngine = audium::AudiumFactory::createAudiumEngine(std::make_shared<audium::GuiUserPrompter>(), pluginHost);
     fileStore = audiumEngine->getProjectFileStore();
     serializer = audiumEngine->getProjectSerializer();
 
@@ -579,6 +588,12 @@ void AudiumApplication::shutdown()
 
         audiumEngine->uninitialise();
         audiumEngine.reset();
+    }
+
+    if (pluginHost != nullptr)
+    {
+        pluginHost->saveList();   // what a scan found, and what the blacklist holds
+        pluginHost.reset();
     }
 
     // flushes or saves the queued events; must go while the preferences live

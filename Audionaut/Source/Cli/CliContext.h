@@ -8,6 +8,7 @@
 #include <functional>
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <JuceHeader.h>
 #include <nlohmann/json.hpp>
@@ -15,6 +16,7 @@
 namespace audium {
 
 class Preferences;
+class PluginHost;
 
 namespace cli {
 
@@ -41,6 +43,10 @@ public:
     /** The GUI app's live preferences in in-app CLI mode; null in the
         standalone binary, which opens its own instance when it needs one. */
     Preferences* preferences = nullptr;
+
+    /** The process's plugins, for the engines the verbs open; null (no
+        plugin types) in tests and wherever no list was loaded. */
+    std::shared_ptr<PluginHost> pluginHost;
 
     /**
      * Set by a host running a verb on someone else's behalf: the envelope and

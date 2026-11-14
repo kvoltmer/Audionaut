@@ -59,7 +59,7 @@ int runAnalyze (const juce::ArgumentList& args, CliContext& context)
     int openFailure = exitFailure;
     auto session = projectFile != juce::File()
                        ? openProjectSession (projectFile, CommandAccess::readOnly, context, openFailure)
-                       : openEngineSession();
+                       : openEngineSession (context);
     if (! session)
         return openFailure;
 

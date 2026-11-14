@@ -11,6 +11,7 @@
 
 #include "Engine/AudiumEngine.h"
 #include "Engine/Analysis/AnalysisWorker.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
@@ -45,15 +46,24 @@ class HeadlessEngineSession {
 public:
     /** GUI app only: make sessions borrow the app's MessageManager. */
     static void setUseExternalMessageManager (bool external) { externalFlag().store (external); }
+    static bool usesExternalMessageManager() { return externalFlag().load(); }
 
-    HeadlessEngineSession() :
+    /**
+     * @param pluginHost The process's plugins, registered in the engine;
+     *        nullptr for an engine without any.
+     * @param mode How the engine gets them: running, or as placeholders that
+     *        carry a project's plugin state without loading the plugins
+     *        (the scratch engine of a hosted edit).
+     */
+    explicit HeadlessEngineSession (std::shared_ptr<PluginHost> pluginHost = nullptr,
+                                    PluginHost::Mode mode = PluginHost::Mode::full) :
         ownsMessageManager (! externalFlag().load())
     {
         if (ownsMessageManager) {
             juce::MessageManager::getInstance();
             messageManagerLock = std::make_unique<juce::MessageManagerLock> (juce::Thread::getCurrentThread());
         }
-        engine = AudiumFactory::createAudiumEngine();
+        engine = AudiumFactory::createAudiumEngine (nullptr, std::move (pluginHost), mode);
 
         // Opening a project queues background analysis for every file the
         // cache lacks. This engine lives for one verb, so that only made it
