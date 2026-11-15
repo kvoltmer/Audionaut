@@ -378,6 +378,13 @@ void AgentHost::setProject (const juce::File& newProjectFile)
 
 AgentHost::Refusal AgentHost::refusalFor (const juce::String& verb) const
 {
+    // A verb that waits for a plugin keeps the message thread serving while it
+    // waits, and the next client's command could arrive through it: one verb
+    // at a time has the document.
+    if (isHostedExecution())
+        return { "busy",
+                 "Audionaut is still working on another command; run this one again in a moment" };
+
     if (engine->getAudioBusInterface()->anyChannelRecording())
         return { "recording_in_progress",
                  "Audionaut is recording; applying a change would stop the take" };

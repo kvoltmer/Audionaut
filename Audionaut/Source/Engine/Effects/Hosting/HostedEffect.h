@@ -45,10 +45,19 @@ namespace audium
  * Threads: as Effect says - prepare, release and the state on the message
  * thread, process on a render thread, one at a time. The plugin's own
  * reports (AudioProcessorListener) can come from any thread: they set
- * flags, and a latency change posts onLatencyChanged to the message thread.
+ * flags and counters, and a latency change reaches onLatencyChanged on the
+ * message thread without allocating where it was reported.
+ *
+ * What the user does in the plugin's own window is the plugin's to report:
+ * getPluginChangeCount() moves with every such report, isGestureOpen() says
+ * a control is held, and getHostEditCount() moves when the host itself put
+ * a value or a state into the plugin - whose echo the plugin may report
+ * like a change of its own. The editor window turns the former into undo
+ * steps and tells the two apart by these.
  */
 class HostedEffect final : public Effect,
-                           private juce::AudioProcessorListener
+                           private juce::AudioProcessorListener,
+                           private juce::AsyncUpdater
 {
 public:
     enum class Status
@@ -74,6 +83,8 @@ public:
      * (needsPrepare), and the chain hears of it through onLatencyChanged.
      */
     void adopt (std::unique_ptr<juce::AudioPluginInstance> instance, juce::String error);
+    /// Message thread: a placeholder without a plugin starts waiting for one; adopt() brings it (or the reason).
+    void expectPlugin();
     /// Expires with the effect: a posted callback checks it before touching the effect.
     std::weak_ptr<const int> getAliveToken() const noexcept { return aliveToken; }
 
@@ -84,6 +95,13 @@ public:
     Status getStatus() const noexcept { return status.load (std::memory_order_relaxed); }
     const juce::String& getError() const noexcept { return error; }
     bool needsPrepare() const noexcept override { return prepareNeeded; }
+
+    /// Moves whenever the plugin reports a change of a parameter or of its state (any thread).
+    juce::uint32 getPluginChangeCount() const noexcept { return pluginChanges.load (std::memory_order_relaxed); }
+    /// Whether the plugin reports a control as held (between a gesture's begin and end).
+    bool isGestureOpen() const noexcept { return openGestures.load (std::memory_order_relaxed) > 0; }
+    /// Message thread: moves whenever the host put a parameter value or a state into the plugin.
+    juce::uint32 getHostEditCount() const noexcept { return hostEdits; }
 
     void prepare (double sampleRate, int maxBlockSize, int numChannels) override;
     void release() override;
@@ -114,7 +132,10 @@ private:
     void takeInstance (std::unique_ptr<juce::AudioPluginInstance> created);
 
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override;
+    void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override;
+    void audioProcessorParameterChangeGestureEnd (juce::AudioProcessor*, int) override;
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details) override;
+    void handleAsyncUpdate() override;   // message thread: a latency change the plugin reported
 
     juce::PluginDescription description;
     std::unique_ptr<juce::AudioPluginInstance> instance;
@@ -132,6 +153,11 @@ private:
     mutable std::atomic<bool> stateDirty { true };
     std::string keptBlob;   // a placeholder keeps what it was given
 
+    // who changed the plugin: itself (its window, its own reports) or the host
+    std::atomic<juce::uint32> pluginChanges { 0 };
+    std::atomic<int> openGestures { 0 };
+    juce::uint32 hostEdits = 0;
+
     // the render path: the chain's block wrapped for processBlock, no allocation
     juce::AudioBuffer<float> wrapper;
     juce::AudioBuffer<float> scratch;   // the stereo pair of a folded mono chain
@@ -141,7 +167,7 @@ private:
     int preparedBlockSize = 0;
     bool foldMono = false;   // a mono chain run through a stereo-only plugin
 
-    std::shared_ptr<const int> aliveToken = std::make_shared<const int> (0);   // a posted callback checks the effect still lives
+    std::shared_ptr<const int> aliveToken = std::make_shared<const int> (0);   // a creation callback in flight checks the effect still lives
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostedEffect)
 };

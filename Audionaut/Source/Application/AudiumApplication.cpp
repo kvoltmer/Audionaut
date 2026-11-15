@@ -593,7 +593,9 @@ void AudiumApplication::shutdown()
 
     if (pluginHost != nullptr)
     {
-        pluginHost->saveList();   // what a scan found, and what the blacklist holds
+        // what a scan found and what the blacklist holds, if a change is still unwritten; a list this
+        // process did not change is left alone (a scan-plugins run beside the app may have written a newer one)
+        pluginHost->saveListIfChanged();
         pluginHost.reset();
     }
 

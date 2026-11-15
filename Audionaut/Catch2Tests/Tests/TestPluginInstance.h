@@ -16,6 +16,7 @@ struct TestPluginOptions
     int uid = 0x1234;
     bool stereoOnly = false;   ///< refuses every layout but stereo
     int maxChannels = 8;       ///< refuses more channels than this
+    bool fixedSidechain = false;   ///< a second stereo input bus the plugin will not switch off
     double tail = 0.0;
 };
 
@@ -62,8 +63,7 @@ public:
     using Options = TestPluginOptions;
 
     explicit TestPluginInstance (Options options_ = {}) :
-        AudioPluginInstance (BusesProperties().withInput ("Input", juce::AudioChannelSet::stereo())
-                                              .withOutput ("Output", juce::AudioChannelSet::stereo())),
+        AudioPluginInstance (busesFor (options_)),
         options (std::move (options_))
     {
         auto gainParameter = std::make_unique<TestParameter> ("gain", "Gain", 0.0f, 2.0f, 1.0f);
@@ -76,6 +76,13 @@ public:
     }
 
     ~TestPluginInstance() override { --instances(); }
+
+    static BusesProperties busesFor (const Options& options)
+    {
+        auto buses = BusesProperties().withInput ("Input", juce::AudioChannelSet::stereo())
+                                      .withOutput ("Output", juce::AudioChannelSet::stereo());
+        return options.fixedSidechain ? buses.withInput ("Sidechain", juce::AudioChannelSet::stereo()) : buses;
+    }
 
     /// How many are alive: a test that must not load a plugin checks this stays put.
     static int& instances() { static int count = 0; return count; }
@@ -118,6 +125,8 @@ public:
         const auto in = layouts.getMainInputChannelSet();
         const auto out = layouts.getMainOutputChannelSet();
         if (in != out || in.isDisabled())
+            return false;
+        if (options.fixedSidechain && layouts.getChannelSet (true, 1) != juce::AudioChannelSet::stereo())
             return false;
         if (options.stereoOnly)
             return in == juce::AudioChannelSet::stereo();

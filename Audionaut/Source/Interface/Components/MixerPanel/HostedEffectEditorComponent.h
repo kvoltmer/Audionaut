@@ -22,6 +22,14 @@
  * the editor changes it (the window follows the component); a plugin whose
  * editor lets the user resize it hands the window's room on to it.
  *
+ * What the user does in the plugin's window becomes an undo step, as a
+ * dial of a built-in's editor does: the plugin reports its changes, and
+ * once a move is over (the control released, no report for a moment) the
+ * state before and after go to the undo manager - so the project knows it
+ * changed and asks to be saved. A state the host itself put into the plugin
+ * (an undo, an agent's edit) is not a move of the user's: the reports that
+ * follow it are let pass, and the state they leave is the next start.
+ *
  * The slot is held strongly: the plugin instance outlives its editor, which
  * the destructor takes down first. Whether the slot is still in the project
  * is polled on a timer; once it is not, the owner is asked to close the
@@ -58,7 +66,13 @@ private:
     void refresh();
     int slotIndex() const;
     void createEditor();
+    void deleteEditor();
     void followEditorSize();
+    void startTrackingEdits();
+    void trackEdits();
+    void commitEdit();
+
+    static constexpr juce::uint32 quietMilliseconds = 500;   ///< no report for this long ends a move
 
     MixerContext context;
     audium::InsertChainAddress address;
@@ -67,6 +81,16 @@ private:
 
     std::unique_ptr<juce::AudioProcessorEditor> editor;
     bool following = false;   ///< sizing this to the editor right now: its bounds are not to be written back
+    audium::HostedEffect::Status shownStatus = audium::HostedEffect::Status::loaded;   ///< what the placeholder's text was painted for
+
+    // the user's moves in the plugin's window, as undo steps
+    nlohmann::json baseline;                ///< the state the next step starts from
+    juce::uint32 seenPluginChanges = 0;
+    juce::uint32 seenHostEdits = 0;
+    juce::uint32 lastChange = 0;           ///< when the plugin last reported one, or the host last edited
+    bool tracking = false;                 ///< the plugin is there
+    bool editPending = false;              ///< the plugin reported changes that are not a step yet
+    bool settling = false;                 ///< the reports are the echo of a host edit
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostedEffectEditorComponent)
 };

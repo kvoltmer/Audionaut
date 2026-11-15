@@ -38,18 +38,36 @@ namespace
 //==============================================================================
 /// One slot: the effect's name, click = editor, right-click = menu, drag = reorder.
 class InsertSlotListComponent::SlotRow : public juce::Component,
-                                         public juce::SettableTooltipClient
+                                         public juce::SettableTooltipClient,
+                                         private juce::Timer
 {
 public:
     SlotRow (InsertSlotListComponent& owner_, int index_, std::shared_ptr<EffectSlot> slot_) :
         owner (owner_),
         index (index_),
-        slot (std::move (slot_)),
-        problem (hostedProblem (slot->getEffect()))
+        slot (std::move (slot_))
     {
         setRepaintsOnMouseActivity (true);
+        showProblem (hostedProblem (slot->getEffect()));
+
+        // a plugin on its way arrives, or fails to, without a change of the chain: the row looks for itself
+        if (isLoading())
+            startTimerHz (4);
+    }
+
+    /// The marker and the tooltip follow the effect: a plugin that arrives later may fail to load, or refuse the layout.
+    void refreshProblem()
+    {
+        if (auto current = hostedProblem (slot->getEffect()); current != problem)
+            showProblem (std::move (current));
+    }
+
+    void showProblem (juce::String current)
+    {
+        problem = std::move (current);
         setTooltip (problem.isNotEmpty() ? juce::String (slot->getEffect().getType().name) + ": " + problem
                                          : juce::String (slot->getEffect().getType().name));
+        repaint();
     }
 
     void paint (juce::Graphics& g) override
@@ -94,10 +112,25 @@ public:
             owner.context.openEditor (owner.address, slot, owner.editorTitle (index));
     }
 
+private:
+    bool isLoading() const
+    {
+        auto* hosted = dynamic_cast<const HostedEffect*> (&slot->getEffect());
+        return hosted != nullptr && hosted->getStatus() == HostedEffect::Status::loading;
+    }
+
+    void timerCallback() override
+    {
+        if (isLoading())
+            return;
+        stopTimer();
+        refreshProblem();
+    }
+
     InsertSlotListComponent& owner;
     const int index;
     const std::shared_ptr<EffectSlot> slot;
-    const juce::String problem;
+    juce::String problem;
     bool dragged = false;
 };
 
@@ -263,6 +296,12 @@ void InsertSlotListComponent::refresh()
             addAndMakeVisible (rows.back().get());
         }
         layoutRows();
+    }
+    else
+    {
+        for (auto& row : rows)
+            if (auto* slotRow = dynamic_cast<SlotRow*> (row.get()))
+                slotRow->refreshProblem();
     }
 
     repaint();   // a bypass flips the dimming

@@ -9,6 +9,7 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/InsertChain.h"
@@ -145,7 +146,9 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context)
                                                   "Add Insert", false);
         if (! applied)
             return context.fail (exitFailure, "add_failed", "could not add the insert");
-        session.settlePlugins();   // a plugin that loads asynchronously is reported loaded, with its parameters
+        // a plugin that loads asynchronously is reported loaded, with its parameters
+        if (! session.settlePlugins())
+            return context.fail (exitFailure, "plugin_timeout", "the plugin did not finish loading; nothing was added");
 
         const auto index = at < 0 || at > target.chain->size() - 1 ? target.chain->size() - 1 : at;
         outcome.log = "added " + typeValue + " at " + juce::String (index);
@@ -242,6 +245,21 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
 
         if (paramValue.isNotEmpty())
         {
+            // The parameters are the plugin's. An edit of the document open in the app works on
+            // placeholders (the types, without a second instance of every plugin): the one whose
+            // parameter is set gets its plugin, with the state the project holds for it.
+            if (auto* hosted = dynamic_cast<HostedEffect*> (&effect); hosted != nullptr && ! hosted->isLoaded())
+            {
+                if (auto pluginHost = session->getPluginHost())
+                    pluginHost->load (*hosted);
+                if (! session.settlePlugins())
+                    return context.fail (exitFailure, "plugin_timeout", "the plugin did not finish loading; nothing was changed");
+                if (! hosted->isLoaded())
+                    return context.fail (exitFailure, "plugin_not_loaded",
+                                         effect.getType().name + " is not loaded"
+                                             + (hosted->getError().isNotEmpty() ? ": " + hosted->getError().toStdString() : std::string()));
+            }
+
             const auto parameter = effect.getParameterIndex (paramValue.toStdString());
             if (parameter < 0)
                 return context.fail (exitFailure, "unknown_parameter",
@@ -346,7 +364,9 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
         if (! plugin.has_value() || ! typeFilter.empty())
         {
             auto effect = registry.create (type.id);
-            session.settlePlugins();   // the parameters are the plugin's, which may still be on its way
+            // the parameters are the plugin's, which may still be on its way
+            if (! session.settlePlugins())
+                return context.fail (exitFailure, "plugin_timeout", "the plugin did not finish loading");
             if (effect != nullptr)
                 entry["parameters"] = describeParameters (*effect);
         }

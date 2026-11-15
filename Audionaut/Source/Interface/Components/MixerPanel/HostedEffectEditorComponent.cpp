@@ -27,7 +27,23 @@ HostedEffectEditorComponent::HostedEffectEditorComponent (MixerContext context_,
 HostedEffectEditorComponent::~HostedEffectEditorComponent()
 {
     stopTimer();
-    editor.reset();   // before the slot, and with it the plugin the editor belongs to
+
+    // what the user did just before closing the window is an undo step too
+    if (tracking && ! settling && (editPending || hosted.getPluginChangeCount() != seenPluginChanges))
+        commitEdit();
+
+    deleteEditor();   // before the slot, and with it the plugin the editor belongs to
+}
+
+void HostedEffectEditorComponent::deleteEditor()
+{
+    if (editor == nullptr)
+        return;
+
+    // the plugin made this its active editor: it hears that the editor goes before it does
+    if (auto* instance = hosted.getInstance(); instance != nullptr && instance->getActiveEditor() == editor.get())
+        instance->editorBeingDeleted (editor.get());
+    editor.reset();
 }
 
 void HostedEffectEditorComponent::createEditor()
@@ -42,6 +58,76 @@ void HostedEffectEditorComponent::createEditor()
         editor = std::make_unique<juce::GenericAudioProcessorEditor> (*instance);
 
     addAndMakeVisible (editor.get());
+    startTrackingEdits();
+}
+
+//==============================================================================
+void HostedEffectEditorComponent::startTrackingEdits()
+{
+    baseline = hosted.getState();
+    seenPluginChanges = hosted.getPluginChangeCount();
+    seenHostEdits = hosted.getHostEditCount();
+    editPending = false;
+    settling = false;
+    tracking = true;
+}
+
+void HostedEffectEditorComponent::trackEdits()
+{
+    if (! tracking)
+        return;
+
+    const auto now = juce::Time::getMillisecondCounter();
+
+    // the host put a value or a state into the plugin (an undo, an agent's edit): what the plugin
+    // reports next is the echo of that, not the user - once it is quiet, that state is the new start
+    if (const auto hostEdits = hosted.getHostEditCount(); hostEdits != seenHostEdits) {
+        seenHostEdits = hostEdits;
+        settling = true;
+        editPending = false;
+        lastChange = now;
+    }
+
+    if (const auto changes = hosted.getPluginChangeCount(); changes != seenPluginChanges) {
+        seenPluginChanges = changes;
+        lastChange = now;
+        editPending = ! settling;
+    }
+
+    // one step per move: a held control and a run of changes end first
+    if (now - lastChange < quietMilliseconds || hosted.isGestureOpen())
+        return;
+
+    if (settling) {
+        settling = false;
+        baseline = hosted.getState();
+    }
+    else if (editPending) {
+        commitEdit();
+    }
+}
+
+void HostedEffectEditorComponent::commitEdit()
+{
+    editPending = false;
+    seenPluginChanges = hosted.getPluginChangeCount();
+
+    const auto index = slotIndex();
+    if (index < 0)
+        return;
+
+    auto current = hosted.getState();
+    if (current == baseline)
+        return;   // reported, but the state is what it was
+
+    // The plugin holds the new state already: the step records it (performing it is a no-op) so that the
+    // project knows it changed - it asks to be saved - and the move can be undone.
+    auto& undoManager = context.undoManager();
+    undoManager.beginNewTransaction();
+    undoManager.perform (new UndoableEffectStateAction (context.container(), address, index, baseline, current),
+                         "Change " + hosted.getDescription().name);
+    baseline = std::move (current);
+    seenHostEdits = hosted.getHostEditCount();
 }
 
 bool HostedEffectEditorComponent::isUserResizable() const
@@ -89,9 +175,10 @@ void HostedEffectEditorComponent::resized()
         editor->setTopLeftPosition ((bounds.getWidth() - editor->getWidth()) / 2, 0);
         return;
     }
-    // the window was resized: its room is the editor's
+    // the window was resized: its room is the editor's, within what the editor's own rules allow
+    // (a fixed aspect ratio, say - the window's limits are only its smallest and largest size)
     juce::ScopedValueSetter<bool> guard (following, true);
-    editor->setBounds (bounds);
+    editor->setBoundsConstrained (bounds);
 }
 
 bool HostedEffectEditorComponent::isStillValid() const
@@ -132,6 +219,11 @@ void HostedEffectEditorComponent::timerCallback()
         followEditorSize();
         repaint();
     }
+    if (const auto status = hosted.getStatus(); status != shownStatus) {
+        shownStatus = status;
+        repaint();   // a placeholder's text follows: loading, then the plugin - or why it did not come
+    }
+    trackEdits();
     refresh();
 }
 

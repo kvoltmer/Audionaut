@@ -70,9 +70,11 @@ public:
      */
     bool commit (std::string& error);
 
-    /** File mode: waits for the plugins that load asynchronously (a verb that reports or saves them calls it);
-        nothing to wait for in a hosted session. */
-    void settlePlugins() const;
+    /** Waits for the plugins that load asynchronously (a verb that reports, renders or saves them calls
+        it); the live engine of a hosted read is not waited for.
+        @return False when a plugin is still on its way after the wait: the verb fails rather than report,
+                render or save the project without it. */
+    bool settlePlugins() const;
 
     /** @brief Whether the work is being applied to a project someone else owns. */
     bool isHosted() const noexcept;

@@ -76,6 +76,7 @@ bool PluginHost::loadList()
         return false;
 
     list.recreateFromXml (*xml);
+    persisted = listAsText();   // before the pedal's verdicts: those are news the file does not have
     // a scan this process did not survive: the file it was on goes on the blacklist
     juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, getDeadMansPedalFile());
     return true;
@@ -88,7 +89,22 @@ bool PluginHost::saveList() const
         return false;
 
     auto xml = list.createXml();
-    return xml != nullptr && xml->writeTo (file);
+    if (xml == nullptr || ! xml->writeTo (file))
+        return false;
+
+    persisted = xml->toString();
+    return true;
+}
+
+bool PluginHost::saveListIfChanged() const
+{
+    return listAsText() == persisted || saveList();
+}
+
+juce::String PluginHost::listAsText() const
+{
+    auto xml = list.createXml();
+    return xml != nullptr ? xml->toString() : juce::String();
 }
 
 //==============================================================================
@@ -242,17 +258,7 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
     {
         // the plugin comes through the message queue: a placeholder stands in until then
         auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
-        ++*pendingLoads;
-        formatOf (description)->createPluginInstanceAsync (description, 44100.0, 512,
-                                           [alive = effect->getAliveToken(), waiting = effect.get(), pending = pendingLoads]
-                                           (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
-                                           {
-                                               // message thread; the effect may be gone by now (an undo, a closed
-                                               // project): the plugin goes away with the callback then
-                                               if (alive.lock() != nullptr)
-                                                   waiting->adopt (std::move (instance), message);
-                                               --*pending;
-                                           });
+        requestInstance (*effect);
         return effect;
     }
 
@@ -261,6 +267,42 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
     if (instance == nullptr && error.isEmpty())
         error = "the plugin could not be loaded";
     return std::make_unique<HostedEffect> (type, description, std::move (instance), error);
+}
+
+void PluginHost::requestInstance (HostedEffect& effect) const
+{
+    ++*pendingLoads;
+    formatOf (effect.getDescription())->createPluginInstanceAsync (effect.getDescription(), 44100.0, 512,
+                                       [alive = effect.getAliveToken(), waiting = &effect, pending = pendingLoads]
+                                       (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
+                                       {
+                                           // message thread; the effect may be gone by now (an undo, a closed
+                                           // project): the plugin goes away with the callback then
+                                           if (alive.lock() != nullptr)
+                                               waiting->adopt (std::move (instance), message);
+                                           --*pending;
+                                       });
+}
+
+bool PluginHost::load (HostedEffect& effect) const
+{
+    if (effect.isLoaded() || effect.getStatus() == HostedEffect::Status::loading)
+        return true;
+
+    if (! canCreate (effect.getDescription()))
+        return false;
+
+    effect.expectPlugin();
+    if (loadsOutOfProcess (effect.getDescription()))
+    {
+        requestInstance (effect);
+        return true;
+    }
+
+    juce::String error;
+    auto instance = createInstance (effect.getDescription(), 44100.0, 512, error);
+    effect.adopt (std::move (instance), error);
+    return effect.isLoaded();
 }
 
 bool PluginHost::waitForPendingLoads (int timeoutMs) const

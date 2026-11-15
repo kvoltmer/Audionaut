@@ -19,6 +19,8 @@
 namespace audium
 {
 
+class HostedEffect;
+
 /**
  * The plugins this machine has, and how an engine gets them as effects.
  *
@@ -75,6 +77,10 @@ public:
     bool loadList();
     /// Writes the list file; false when the folder cannot be written.
     bool saveList() const;
+    /// Writes the list file if the list differs from what was last read or written here. A process that
+    /// changed nothing leaves the file alone, so it does not undo what another process (a scan run
+    /// beside the app) wrote meanwhile.
+    bool saveListIfChanged() const;
 
     /// Registers the plugins in the registry now and after every change of the list, while the registry lives.
     void attach (std::shared_ptr<EffectRegistry> registry, Mode mode);
@@ -110,6 +116,11 @@ public:
     /// Message thread: the plugin as an effect; a placeholder when it fails to load or in catalogue-only mode,
     /// a loading placeholder for a plugin that comes asynchronously.
     std::unique_ptr<Effect> createEffect (const juce::PluginDescription& description, Mode mode) const;
+
+    /// Message thread: gives a placeholder that has no plugin (a catalogue-only one, or one whose plugin
+    /// failed to load) its plugin, with the state it kept. A plugin that loadsOutOfProcess() arrives later
+    /// (waitForPendingLoads). False when the plugin cannot be created here or failed to load.
+    bool load (HostedEffect& effect) const;
 
     /// Effects created here whose plugin has not arrived yet.
     int getNumPendingLoads() const noexcept { return pendingLoads->load(); }
@@ -147,6 +158,8 @@ public:
 private:
     std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode) const;
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
+    void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
+    juce::String listAsText() const;
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
 
     struct Attached
@@ -160,6 +173,7 @@ private:
     juce::File dataDirectory;
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
+    mutable juce::String persisted;   // the list as last read from or written to the file
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

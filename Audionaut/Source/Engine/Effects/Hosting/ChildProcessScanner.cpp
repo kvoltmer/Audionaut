@@ -83,22 +83,20 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
 
 bool ChildProcessScanner::parseScanEnvelope (const juce::String& output, juce::OwnedArray<juce::PluginDescription>& result)
 {
-    // the envelope is the last thing on stdout; a plugin may have printed before it
-    const auto start = output.indexOfChar ('{');
-    if (start < 0)
-        return false;
-
+    // the envelope is the last thing on stdout and runs to its end; a plugin may have printed before
+    // it, braces included (the worker keeps its own output off stdout, not a plugin's printf): the
+    // envelope starts at the first brace from which the rest reads as one
+    const auto text = output.toStdString();
     nlohmann::json envelope;
-    try
+    auto found = false;
+    for (auto start = text.find ('{'); start != std::string::npos && ! found; start = text.find ('{', start + 1))
     {
-        envelope = nlohmann::json::parse (output.substring (start).toStdString());
-    }
-    catch (const nlohmann::json::exception&)
-    {
-        return false;
+        envelope = nlohmann::json::parse (text.begin() + static_cast<std::string::difference_type> (start), text.end(),
+                                          nullptr, false);
+        found = envelope.is_object() && envelope.contains ("ok");
     }
 
-    if (! envelope.is_object() || ! envelope.contains ("ok"))
+    if (! found)
         return false;
     if (! envelope["ok"].is_boolean() || ! envelope["ok"].get<bool>())
         return true;   // the worker ran and declined cleanly (no such format here): nothing in the file, no crash

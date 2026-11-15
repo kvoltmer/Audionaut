@@ -110,6 +110,59 @@ SCENARIO ("the plugin host keeps its list between runs", "[engine][effects][host
             }
         }
 
+        WHEN ("a second host loads the list, and the first then finds and saves another plugin")
+        {
+            TestHost second (temp.folder, false);
+            REQUIRE (second.host.loadList());
+
+            first.host.getList().addType (TestPluginInstance::describe (gainIn ("TestA", 0x3333)));
+            REQUIRE (first.host.saveList());
+
+            THEN ("the second, which changed nothing, leaves the newer file alone when asked to save what changed")
+            {
+                REQUIRE (second.host.saveListIfChanged());
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getNumTypes() == 3);
+            }
+
+            AND_WHEN ("the second changes its own list")
+            {
+                second.host.getList().addToBlacklist ("/test/also-crashes.testa");
+
+                THEN ("that is written")
+                {
+                    REQUIRE (second.host.saveListIfChanged());
+                    TestHost third (temp.folder, false);
+                    REQUIRE (third.host.loadList());
+                    REQUIRE (third.host.getList().getBlacklistedFiles().contains ("/test/also-crashes.testa"));
+                }
+            }
+        }
+
+        WHEN ("a placeholder made without loading the plugin is given its plugin after all")
+        {
+            const auto description = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+            const auto instancesBefore = TestPluginInstance::instances();
+            auto effect = first.host.createEffect (description, PluginHost::Mode::catalogueOnly);
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+            REQUIRE_FALSE (hosted->isLoaded());
+            REQUIRE (hosted->getNumParameters() == 0);
+            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+            hosted->setState (json { { "blob", juce::MemoryBlock ("1.500000|0|0", 12).toBase64Encoding().toStdString() } });
+
+            THEN ("the plugin is there, with its parameters and the state the placeholder kept")
+            {
+                REQUIRE (first.host.load (*hosted));
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (TestPluginInstance::instances() == instancesBefore + 1);
+                REQUIRE (hosted->getParameterIndex ("gain") == 0);
+                REQUIRE (hosted->getParameter (0) == Catch::Approx (0.75f));   // gain 1.5 of 0..2
+            }
+        }
+
         WHEN ("a host starts in an empty folder")
         {
             TempFolder other;
@@ -338,6 +391,34 @@ SCENARIO ("a project's plugin insert opens with the same plugin in another forma
             }
         }
 
+        WHEN ("a chain saved with two missing plugins in front of one that is here is read")
+        {
+            const auto missing = [] (const char* type, const char* blob)
+            {
+                return json { { "type", type }, { "enabled", true }, { "state", { { "blob", blob } } } };
+            };
+            json input;
+            input["inserts"] = json::array ({ missing ("testa:0000aaaa", "QQ=="), missing ("testa:0000bbbb", "Qg=="),
+                                              { { "type", "testb:00002222" }, { "enabled", true }, { "state", { { "blob", "" } } } } });
+            chain.readFromJson (input);
+            REQUIRE (chain.size() == 1);
+            REQUIRE (chain.getNumUnresolved() == 2);
+
+            AND_WHEN ("the first missing one is removed")
+            {
+                REQUIRE (chain.removeUnresolved (0));
+
+                THEN ("the other missing one still stands in front of the plugin when the chain is written")
+                {
+                    json output;
+                    chain.writeToJson (output);
+                    REQUIRE (output["inserts"].size() == 2);
+                    REQUIRE (output["inserts"][0]["type"] == "testa:0000bbbb");
+                    REQUIRE (output["inserts"][1]["type"] == "testb:00002222");
+                }
+            }
+        }
+
         WHEN ("an element without a plugin block names an unknown type")
         {
             json input;
@@ -417,6 +498,14 @@ SCENARIO ("the child-process scanner reads the worker's envelope", "[engine][eff
             juce::OwnedArray<juce::PluginDescription> found;
             REQUIRE (ChildProcessScanner::parseScanEnvelope ("loading...\nlicence ok\n" + juce::String (envelope.dump()), found));
             REQUIRE (found.size() == 1);
+        }
+
+        THEN ("chatter with braces of its own does not hide the envelope")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (ChildProcessScanner::parseScanEnvelope ("init {mode: fast}\n{\"licence\": \"ok\"}\n" + juce::String (envelope.dump (2)), found));
+            REQUIRE (found.size() == 1);
+            REQUIRE (found[0]->uniqueId == 0x5555);
         }
 
         THEN ("a worker that declined cleanly is no crash, but has nothing")

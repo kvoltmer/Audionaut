@@ -39,25 +39,30 @@ HostedContext& hostedContext()
     return context;
 }
 
+constexpr auto pluginTimeoutMessage = "a plugin of the project did not finish loading; nothing was done - run the command again";
+
 } // namespace
 
 struct ProjectSession::Impl
 {
     /** File mode: owns an engine of its own and opens the project into it. */
-    Impl (juce::File projectFile_, CommandAccess access_, std::shared_ptr<PluginHost> pluginHost_) :
-        pluginHost (std::move (pluginHost_)),
+    Impl (juce::File projectFile_, CommandAccess access_, std::shared_ptr<PluginHost> pluginHost) :
         projectFile (std::move (projectFile_)),
         access (access_)
     {
-        engineSession.emplace (pluginHost);
+        engineSession.emplace (std::move (pluginHost));
         configureRendering (*engineSession->get(), access);
     }
 
-    /** File mode: the plugins that load asynchronously have arrived before the verb reads or writes the project. */
-    void settlePlugins() const
+    /** An engine of our own: the plugins that load asynchronously have arrived before the verb reads,
+        renders or writes the project. False when one is still on its way after the wait. The live
+        engine of a hosted read is the app's: its plugins are not waited for. */
+    bool settlePlugins() const
     {
-        if (pluginHost != nullptr && ! hosted)
-            pluginHost->waitForPendingLoads();
+        if (borrowedEngine != nullptr)
+            return true;
+        auto pluginHost = engineSession->get()->getPluginHost();
+        return pluginHost == nullptr || pluginHost->waitForPendingLoads();
     }
 
     /** Only an isolated verb (export) renders; every other session edits or
@@ -87,11 +92,15 @@ struct ProjectSession::Impl
     {
         // The scratch engine lives inside a process that already runs a
         // MessageManager - it must borrow it rather than create and then
-        // destroy it. It gets the live engine's plugins as types only: the
-        // project's plugin inserts resolve and keep their state, without a
-        // second instance of every plugin for the length of one edit.
+        // destroy it. For an edit it gets the live engine's plugins as types
+        // only: the project's plugin inserts resolve and keep their state,
+        // without a second instance of every plugin for the length of one
+        // edit (a verb that needs one plugin's parameters loads that one). A
+        // render needs the plugins themselves, or the export would be the
+        // project without them.
         HeadlessEngineSession::setUseExternalMessageManager (true);
-        engineSession.emplace (hostedContext().engine->getPluginHost(), PluginHost::Mode::catalogueOnly);
+        engineSession.emplace (hostedContext().engine->getPluginHost(),
+                               access == CommandAccess::isolated ? PluginHost::Mode::full : PluginHost::Mode::catalogueOnly);
         HeadlessEngineSession::setUseExternalMessageManager (false);
 
         auto engineRef = engineSession->get();
@@ -131,7 +140,6 @@ struct ProjectSession::Impl
         return borrowedEngine != nullptr ? borrowedEngine : engineSession->get();
     }
 
-    std::shared_ptr<PluginHost> pluginHost;   // file mode: the process's plugins, for settlePlugins()
     std::optional<HeadlessEngineSession> engineSession;
     std::shared_ptr<AudiumEngine> borrowedEngine;
     juce::File projectFile;
@@ -202,6 +210,12 @@ bool ProjectSession::commit (std::string& error)
 {
     jassert (impl != nullptr);
 
+    // a plugin the verb added or loaded writes its own state, not its placeholder's
+    if (impl->access == CommandAccess::mutating && ! impl->settlePlugins()) {
+        error = pluginTimeoutMessage;
+        return false;
+    }
+
     if (impl->scratch && impl->access == CommandAccess::mutating) {
         // Hand the result to the host, which applies it to the live document
         // as one undoable step. Nothing of ours reaches the project file - the
@@ -227,15 +241,13 @@ bool ProjectSession::commit (std::string& error)
         return false;
     }
 
-    impl->settlePlugins();   // a plugin added by the verb writes its own state, not the placeholder's
     return (*impl->engineSession)->getProjectFileStore()
                ->save (impl->projectFile, [&error] (std::string message) { error = message; });
 }
 
-void ProjectSession::settlePlugins() const
+bool ProjectSession::settlePlugins() const
 {
-    if (impl != nullptr)
-        impl->settlePlugins();
+    return impl == nullptr || impl->settlePlugins();
 }
 
 bool ProjectSession::isHosted() const noexcept
@@ -278,6 +290,12 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         if (configure)
             configure (*scratchImpl->engine());
 
+        // a render's plugins are there before it starts
+        if (access == CommandAccess::isolated && ! scratchImpl->settlePlugins()) {
+            failureExitCode = context.fail (exitFailure, "plugin_timeout", pluginTimeoutMessage);
+            return {};
+        }
+
         return ProjectSession (std::move (scratchImpl));
     }
 
@@ -294,7 +312,11 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         return {};
     }
 
-    impl->settlePlugins();   // the project's plugins are there when the verb looks at them
+    // the project's plugins are there when the verb looks at them
+    if (! impl->settlePlugins()) {
+        failureExitCode = context.fail (exitFailure, "plugin_timeout", pluginTimeoutMessage);
+        return {};
+    }
     return ProjectSession (std::move (impl));
 }
 
