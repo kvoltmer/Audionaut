@@ -33,6 +33,9 @@ struct MixerContext
     /// Opens, or raises, the editor window of a slot; the title says where the slot sits ("Track 2 / ch 1 / EQ3").
     std::function<void (const audium::InsertChainAddress&, std::shared_ptr<audium::EffectSlot>, const juce::String& title)> openEditor;
 
+    /// Opens the Manage Plugins window; unset where there is none (the headless builds).
+    std::function<void()> openPluginManager;
+
     audium::AudioTrackContainer& container() const { return *engine->getAudioTrackContainer(); }
     audium::MixerPlanner* planner() const { return container().getMixerPlanner(); }
     juce::UndoManager& undoManager() const { return *container().getUndoManager(); }
@@ -72,6 +75,21 @@ namespace InsertChainActions
         return edit (ctx, address, "Add Insert", [&] (InsertChain& chain) { return chain.add (typeId, at) != nullptr; });
     }
 
+    /// Adds at the end of the chain and opens the new slot's editor at once.
+    inline bool addAndEdit (const MixerContext& ctx, const InsertChainAddress& address, const std::string& typeId,
+                            const std::function<juce::String (int index)>& editorTitle)
+    {
+        if (! add (ctx, address, typeId))
+            return false;
+        auto* chain = ctx.chain (address);
+        if (chain == nullptr || chain->size() == 0)
+            return true;
+        const auto index = chain->size() - 1;
+        if (ctx.openEditor != nullptr)
+            ctx.openEditor (address, chain->getSlot (index), editorTitle (index));
+        return true;
+    }
+
     inline bool remove (const MixerContext& ctx, const InsertChainAddress& address, int index)
     {
         return edit (ctx, address, "Remove Insert", [&] (InsertChain& chain) { return chain.remove (index); });
@@ -80,6 +98,12 @@ namespace InsertChainActions
     inline bool move (const MixerContext& ctx, const InsertChainAddress& address, int from, int to)
     {
         return edit (ctx, address, "Move Insert", [&] (InsertChain& chain) { return chain.move (from, to); });
+    }
+
+    /// Drops an element the chain keeps for a plugin this machine lacks (position among the chain's unresolved elements).
+    inline bool removeUnresolved (const MixerContext& ctx, const InsertChainAddress& address, int position)
+    {
+        return edit (ctx, address, "Remove Missing Insert", [&] (InsertChain& chain) { return chain.removeUnresolved (position); });
     }
 
     inline bool setEnabled (const MixerContext& ctx, const InsertChainAddress& address, int index, bool enabled)
@@ -101,7 +125,8 @@ namespace InsertChainActions
     }
 
     /// The effect types by category, a submenu each, in the order the registry first lists one of the
-    /// category (the built-ins' categories first); a type without a category goes on the top level.
+    /// category (the built-ins' categories first, then the plugins by manufacturer); a type without a
+    /// category goes on the top level. Last, where the app has one, the Manage Plugins window.
     inline juce::PopupMenu typesMenu (const MixerContext& ctx, std::function<void (const std::string& typeId)> onPick)
     {
         juce::PopupMenu menu;
@@ -126,6 +151,11 @@ namespace InsertChainActions
         for (const auto& type : types)
             if (type.category.empty())
                 menu.addItem (type.name, [onPick, id = type.id] { onPick (id); });
+
+        if (ctx.openPluginManager != nullptr) {
+            menu.addSeparator();
+            menu.addItem (TRANS ("Manage Plugins..."), [open = ctx.openPluginManager] { open(); });
+        }
         return menu;
     }
 
@@ -169,7 +199,7 @@ namespace InsertChainActions
             if (index > 0)
                 menu.addSeparator();
         }
-        menu.addSubMenu (TRANS ("Add"), typesMenu (ctx, [ctx, address] (const std::string& id) { add (ctx, address, id); }));
+        menu.addSubMenu (TRANS ("Add"), typesMenu (ctx, [ctx, address, editorTitle] (const std::string& id) { addAndEdit (ctx, address, id, editorTitle); }));
         return menu;
     }
 }

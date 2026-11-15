@@ -110,6 +110,59 @@ SCENARIO ("the plugin host keeps its list between runs", "[engine][effects][host
             }
         }
 
+        WHEN ("a second host loads the list, and the first then finds and saves another plugin")
+        {
+            TestHost second (temp.folder, false);
+            REQUIRE (second.host.loadList());
+
+            first.host.getList().addType (TestPluginInstance::describe (gainIn ("TestA", 0x3333)));
+            REQUIRE (first.host.saveList());
+
+            THEN ("the second, which changed nothing, leaves the newer file alone when asked to save what changed")
+            {
+                REQUIRE (second.host.saveListIfChanged());
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getNumTypes() == 3);
+            }
+
+            AND_WHEN ("the second changes its own list")
+            {
+                second.host.getList().addToBlacklist ("/test/also-crashes.testa");
+
+                THEN ("that is written")
+                {
+                    REQUIRE (second.host.saveListIfChanged());
+                    TestHost third (temp.folder, false);
+                    REQUIRE (third.host.loadList());
+                    REQUIRE (third.host.getList().getBlacklistedFiles().contains ("/test/also-crashes.testa"));
+                }
+            }
+        }
+
+        WHEN ("a placeholder made without loading the plugin is given its plugin after all")
+        {
+            const auto description = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+            const auto instancesBefore = TestPluginInstance::instances();
+            auto effect = first.host.createEffect (description, PluginHost::Mode::catalogueOnly);
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+            REQUIRE_FALSE (hosted->isLoaded());
+            REQUIRE (hosted->getNumParameters() == 0);
+            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+            hosted->setState (json { { "blob", juce::MemoryBlock ("1.500000|0|0", 12).toBase64Encoding().toStdString() } });
+
+            THEN ("the plugin is there, with its parameters and the state the placeholder kept")
+            {
+                REQUIRE (first.host.load (*hosted));
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (TestPluginInstance::instances() == instancesBefore + 1);
+                REQUIRE (hosted->getParameterIndex ("gain") == 0);
+                REQUIRE (hosted->getParameter (0) == Catch::Approx (0.75f));   // gain 1.5 of 0..2
+            }
+        }
+
         WHEN ("a host starts in an empty folder")
         {
             TempFolder other;
@@ -206,19 +259,56 @@ SCENARIO ("the plugin host registers its plugins as effect types", "[engine][eff
             }
         }
 
-        WHEN ("a listed plugin's format cannot create it synchronously")
+        WHEN ("a listed plugin's format creates it asynchronously only (a plugin in a process of its own)")
         {
             auto asyncFormat = std::make_unique<TestPluginFormat> ("TestC", std::vector { gainIn ("TestC", 0x3333) });
             asyncFormat->asyncOnly = true;
             host.getFormats().addFormat (std::move (asyncFormat));
-            host.getList().addType (TestPluginInstance::describe (gainIn ("TestC", 0x3333)));
+            const auto description = TestPluginInstance::describe (gainIn ("TestC", 0x3333));
+            host.getList().addType (description);
             host.registerInto (*registry, PluginHost::Mode::full);
 
-            THEN ("it stays in the list but is not a type yet")
+            THEN ("it is a type like any other, marked as running out of process")
             {
                 REQUIRE (host.getList().getNumTypes() == 3);
-                REQUIRE_FALSE (registry->hasType ("testc:00003333"));
-                REQUIRE_FALSE (host.canCreate (TestPluginInstance::describe (gainIn ("TestC", 0x3333))));
+                REQUIRE (registry->hasType ("testc:00003333"));
+                REQUIRE (host.canCreate (description));
+                REQUIRE (host.loadsOutOfProcess (description));
+                REQUIRE_FALSE (host.loadsOutOfProcess (TestPluginInstance::describe (gainIn ("TestA", 0x1111))));
+            }
+
+            THEN ("creating it gives a loading placeholder that adopts the plugin from the message queue")
+            {
+                auto effect = registry->create ("testc:00003333");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+                REQUIRE (hosted->getNumParameters() == 0);
+                REQUIRE (host.getNumPendingLoads() == 1);
+
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (hosted->getNumParameters() == 2);
+            }
+
+            THEN ("a placeholder destroyed before the plugin arrives leaves nothing behind")
+            {
+                auto effect = registry->create ("testc:00003333");
+                REQUIRE (host.getNumPendingLoads() == 1);
+                effect.reset();
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+            }
+
+            THEN ("a catalogue-only engine gets a plain placeholder, nothing pending")
+            {
+                auto effect = host.createEffect (description, PluginHost::Mode::catalogueOnly);
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (host.getNumPendingLoads() == 0);
             }
         }
     }
@@ -298,6 +388,34 @@ SCENARIO ("a project's plugin insert opens with the same plugin in another forma
                 REQUIRE_FALSE (chain.removeUnresolved (1));
                 REQUIRE (chain.removeUnresolved (0));
                 REQUIRE (chain.getNumUnresolved() == 0);
+            }
+        }
+
+        WHEN ("a chain saved with two missing plugins in front of one that is here is read")
+        {
+            const auto missing = [] (const char* type, const char* blob)
+            {
+                return json { { "type", type }, { "enabled", true }, { "state", { { "blob", blob } } } };
+            };
+            json input;
+            input["inserts"] = json::array ({ missing ("testa:0000aaaa", "QQ=="), missing ("testa:0000bbbb", "Qg=="),
+                                              { { "type", "testb:00002222" }, { "enabled", true }, { "state", { { "blob", "" } } } } });
+            chain.readFromJson (input);
+            REQUIRE (chain.size() == 1);
+            REQUIRE (chain.getNumUnresolved() == 2);
+
+            AND_WHEN ("the first missing one is removed")
+            {
+                REQUIRE (chain.removeUnresolved (0));
+
+                THEN ("the other missing one still stands in front of the plugin when the chain is written")
+                {
+                    json output;
+                    chain.writeToJson (output);
+                    REQUIRE (output["inserts"].size() == 2);
+                    REQUIRE (output["inserts"][0]["type"] == "testa:0000bbbb");
+                    REQUIRE (output["inserts"][1]["type"] == "testb:00002222");
+                }
             }
         }
 
@@ -382,6 +500,14 @@ SCENARIO ("the child-process scanner reads the worker's envelope", "[engine][eff
             REQUIRE (found.size() == 1);
         }
 
+        THEN ("chatter with braces of its own does not hide the envelope")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (ChildProcessScanner::parseScanEnvelope ("init {mode: fast}\n{\"licence\": \"ok\"}\n" + juce::String (envelope.dump (2)), found));
+            REQUIRE (found.size() == 1);
+            REQUIRE (found[0]->uniqueId == 0x5555);
+        }
+
         THEN ("a worker that declined cleanly is no crash, but has nothing")
         {
             juce::OwnedArray<juce::PluginDescription> found;
@@ -396,6 +522,114 @@ SCENARIO ("the child-process scanner reads the worker's envelope", "[engine][eff
             REQUIRE_FALSE (ChildProcessScanner::parseScanEnvelope ("", found));
             REQUIRE_FALSE (ChildProcessScanner::parseScanEnvelope ("Segmentation fault", found));
             REQUIRE_FALSE (ChildProcessScanner::parseScanEnvelope ("{\"ok\": true, \"result\": {}", found));
+        }
+    }
+}
+
+SCENARIO ("a host that started without a list file leaves another process's list alone", "[engine][effects][hosting]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a host that found no list file, and a second one that scanned and saved meanwhile")
+    {
+        TestHost first (temp.folder, false);
+        REQUIRE_FALSE (first.host.loadList());
+
+        TestHost second (temp.folder);
+        REQUIRE (second.host.saveList());
+
+        WHEN ("the first, which changed nothing, saves what changed")
+        {
+            REQUIRE (first.host.saveListIfChanged());
+
+            THEN ("the second's list is still in the file")
+            {
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getNumTypes() == 2);
+            }
+        }
+
+        WHEN ("the first changes its own list")
+        {
+            first.host.getList().addToBlacklist ("/test/crashes.testa");
+
+            THEN ("that is written")
+            {
+                REQUIRE (first.host.saveListIfChanged());
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getBlacklistedFiles().contains ("/test/crashes.testa"));
+            }
+        }
+    }
+}
+
+SCENARIO ("an engine waits for its own plugins, not for another engine's", "[engine][effects][hosting]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("one host with a plugin that loads asynchronously, attached to two registries")
+    {
+        PluginHost host (temp.folder, false);
+        auto format = std::make_unique<TestPluginFormat> ("TestC", std::vector { gainIn ("TestC", 0x3333) });
+        format->asyncOnly = true;
+        auto* testFormat = format.get();
+        host.getFormats().addFormat (std::move (format));
+        host.getList().addType (TestPluginInstance::describe (gainIn ("TestC", 0x3333)));
+
+        auto app = std::make_shared<EffectRegistry>();
+        auto scratch = std::make_shared<EffectRegistry>();
+        host.attach (app, PluginHost::Mode::full);
+        host.attach (scratch, PluginHost::Mode::full);
+
+        WHEN ("the first registry's plugin never arrives")
+        {
+            testFormat->withhold = true;
+            auto stuck = app->create ("testc:00003333");
+            messageThread.pump();   // the creation was asked for, and is withheld
+            REQUIRE (host.getNumPendingLoads() == 1);
+
+            THEN ("the second registry has nothing to wait for")
+            {
+                REQUIRE (PluginHost::waitForPendingLoads (*scratch, 2000));
+                REQUIRE_FALSE (PluginHost::waitForPendingLoads (*app, 100));
+            }
+
+            AND_WHEN ("the second creates the plugin too, and that one arrives")
+            {
+                testFormat->withhold = false;
+                auto effect = scratch->create ("testc:00003333");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+
+                THEN ("the second's wait ends with its plugin, the first's goes on")
+                {
+                    REQUIRE (PluginHost::waitForPendingLoads (*scratch, 5000));
+                    REQUIRE (hosted->isLoaded());
+                    REQUIRE (host.getNumPendingLoads() == 1);
+                }
+            }
+        }
+
+        WHEN ("a placeholder of a catalogue-only registry is given its plugin later")
+        {
+            auto catalogue = std::make_shared<EffectRegistry>();
+            host.attach (catalogue, PluginHost::Mode::catalogueOnly);
+            auto effect = catalogue->create ("testc:00003333");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+            REQUIRE (host.load (*hosted));
+
+            THEN ("that load counts for its registry")
+            {
+                REQUIRE (catalogue->getPendingArrivals()->load() == 1);
+                REQUIRE (PluginHost::waitForPendingLoads (*catalogue, 5000));
+                REQUIRE (hosted->isLoaded());
+            }
         }
     }
 }

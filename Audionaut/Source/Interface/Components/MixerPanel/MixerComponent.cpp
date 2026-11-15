@@ -7,9 +7,11 @@
 
 #include "Interface/ColourIds.h"
 #include "Interface/Components/MixerPanel/EffectEditorComponent.h"
+#include "Interface/Components/MixerPanel/HostedEffectEditorComponent.h"
 #include "Interface/Dialogs/FloatingPanel.h"
 #ifndef AUDIONAUT_HEADLESS
  #include "Application/AudiumApplication.h"
+ #include "Application/AudiumCommandIDs.h"
  #include "Util/Preferences.h"
 #endif
 
@@ -84,6 +86,9 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
         if (safeThis != nullptr)
             safeThis->openEditor (address, slot, title);
     };
+   #ifndef AUDIONAUT_HEADLESS
+    context.openPluginManager = [] { AudiumApplication::getCommandManager().invokeDirectly (CommandIDs::showPluginManager, true); };
+   #endif
 
     content = std::make_unique<Content>();
     viewport.setViewedComponent (content.get(), false);
@@ -211,7 +216,7 @@ juce::String MixerComponent::structureSignature() const
     {
         for (const auto& slot : chain.getSlots())
             signature << juce::String::toHexString (reinterpret_cast<juce::pointer_sized_int> (slot.get())) << ",";
-        signature << ";";
+        signature << "u" << chain.getNumUnresolved() << ";";   // the missing plugins' rows
     };
 
     auto& container = context.container();
@@ -332,15 +337,30 @@ void MixerComponent::openEditor (const InsertChainAddress& address, std::shared_
         return;
     }
 
-    auto* editor = new EffectEditorComponent (context, address, slot);
-    editor->onSlotGone = [safeThis = juce::Component::SafePointer<MixerComponent> (this), key = slot.get()]
+    const auto onSlotGone = [safeThis = juce::Component::SafePointer<MixerComponent> (this), key = slot.get()]
     {
         if (safeThis != nullptr)
             safeThis->editorWindows.erase (key);
     };
+    auto* shortcuts = AudiumApplication::getCommandManager().getKeyMappings();   // undo and the other shortcuts work with the editor in front
 
-    new FloatingPanel (title, editor, holder,
-                       AudiumApplication::getCommandManager().getKeyMappings());   // undo and the other shortcuts work with the editor in front
+    if (dynamic_cast<HostedEffect*> (&slot->getEffect()) != nullptr)
+    {
+        // a plugin: its own editor under the band, in a panel the user may resize where the editor allows it
+        auto* editor = new HostedEffectEditorComponent (context, address, slot);
+        editor->onSlotGone = onSlotGone;
+        const auto resizable = editor->isUserResizable();
+        auto* panel = new FloatingPanel (title, editor, holder, shortcuts, resizable);
+        if (resizable) {
+            const auto limits = editor->getSizeLimits();
+            panel->setResizeLimits (limits.minimumWidth, limits.minimumHeight, limits.maximumWidth, limits.maximumHeight);
+        }
+        return;
+    }
+
+    auto* editor = new EffectEditorComponent (context, address, slot);
+    editor->onSlotGone = onSlotGone;
+    new FloatingPanel (title, editor, holder, shortcuts);
    #endif
 }
 
@@ -349,7 +369,7 @@ void MixerComponent::closeEditorsWhoseSlotIsGone()
     for (auto it = editorWindows.begin(); it != editorWindows.end();)
     {
         auto* window = dynamic_cast<FloatingPanel*> (it->second.get());
-        auto* editor = window != nullptr ? dynamic_cast<EffectEditorComponent*> (window->getContentComponent()) : nullptr;
+        auto* editor = window != nullptr ? dynamic_cast<SlotEditor*> (window->getContentComponent()) : nullptr;
         if (it->second == nullptr || editor == nullptr || ! editor->isStillValid())
             it = editorWindows.erase (it);
         else

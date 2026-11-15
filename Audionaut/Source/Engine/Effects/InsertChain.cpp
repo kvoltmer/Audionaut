@@ -91,6 +91,11 @@ bool InsertChain::removeUnresolved (int position)
     if (position < 0 || position >= getNumUnresolved())
         return false;
     unresolved.erase (unresolved.begin() + position);
+
+    // the saved array is one shorter from here on: what came behind the element moves up with it,
+    // or the next save would put a later element behind a slot it stood in front of
+    for (auto later = unresolved.begin() + position; later != unresolved.end(); ++later)
+        --later->index;
     return true;
 }
 
@@ -195,6 +200,18 @@ bool InsertChain::setParameter (int index, int parameter, float value)
     slot->getEffect().setParameter (parameter, value);
     if (slot->hasStaleLatency())
         changed();   // the plan around the slot is built for its old latency
+    return true;
+}
+
+bool InsertChain::setState (int index, const json& state)
+{
+    auto slot = getSlot (index);
+    if (slot == nullptr)
+        return false;
+
+    slot->getEffect().setState (state);
+    if (slot->hasStaleLatency())
+        changed();
     return true;
 }
 

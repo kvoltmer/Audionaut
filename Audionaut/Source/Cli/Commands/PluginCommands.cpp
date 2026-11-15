@@ -51,29 +51,42 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "scan-plugin requires the plugin file or identifier");
     const auto fileOrIdentifier = working[1].text;
 
-    juce::AudioPluginFormatManager formats;
-    PluginHost::addPlatformFormats (formats);
-    juce::AudioPluginFormat* format = nullptr;
-    for (auto* candidate : formats.getFormats())
+    // The scan's work is shared with its thread, not lent: a plugin that is still loading when the
+    // time is up goes on using the formats and the result after this function has returned.
+    struct Scan
+    {
+        juce::AudioPluginFormatManager formats;
+        juce::AudioPluginFormat* format = nullptr;
+        juce::String fileOrIdentifier;
+        juce::OwnedArray<juce::PluginDescription> found;
+    };
+    auto scan = std::make_shared<Scan>();
+    scan->fileOrIdentifier = fileOrIdentifier;
+    PluginHost::addPlatformFormats (scan->formats);
+    for (auto* candidate : scan->formats.getFormats())
         if (candidate->getName() == formatName)
-            format = candidate;
-    if (format == nullptr)
+            scan->format = candidate;
+    if (scan->format == nullptr)
         return context.fail (exitUnavailable, "unknown_format", "this build hosts no " + formatName.toStdString() + " plugins");
 
     // the plugin is loaded to read its description: on a thread of its own,
     // the message thread pumping, since some formats refuse to load on it
-    ScopedMessageLoop messageLoop;
-    juce::OwnedArray<juce::PluginDescription> found;
-    const auto finished = PluginHost::runWhilePumping ([&] { format->findAllTypesForFile (found, fileOrIdentifier); }, 50000);
+    auto messageLoop = std::make_unique<ScopedMessageLoop>();
+    const auto finished = PluginHost::runWhilePumping ([scan] { scan->format->findAllTypesForFile (scan->found, scan->fileOrIdentifier); }, 50000);
     if (! finished)
+    {
+        // the thread is inside the plugin and wants the message loop: that stays too. This process is a
+        // scan worker and ends with the verb; whoever started it takes the failure as the verdict.
+        juce::ignoreUnused (messageLoop.release());
         return context.fail (exitFailure, "timeout", "the plugin did not finish loading");
+    }
 
     auto plugins = nlohmann::json::array();
-    for (const auto* description : found)
+    for (const auto* description : scan->found)
         if (auto xml = description->createXml())
             plugins.push_back (xml->toString().toStdString());
 
-    context.log (juce::String (found.size()) + " plugin(s) in " + fileOrIdentifier);
+    context.log (juce::String (scan->found.size()) + " plugin(s) in " + fileOrIdentifier);
     return context.ok ({ { "plugins", plugins } });
 }
 

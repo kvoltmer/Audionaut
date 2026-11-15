@@ -100,6 +100,16 @@ private:
      */
     Refusal refusalFor (const juce::String& verb) const;
 
+    /**
+     * @brief The part of refusalFor() that is about the document and the
+     *        transport, without the one-verb-at-a-time check.
+     *
+     * Message thread. Asked again by the verb that is running: it may have
+     * waited for a plugin with the message thread serving, and the user may
+     * have started a take, an export or the transport in that time.
+     */
+    Refusal documentRefusalFor (const juce::String& verb) const;
+
     std::atomic<bool> busy { false };
 
     std::shared_ptr<AudiumEngine> engine;

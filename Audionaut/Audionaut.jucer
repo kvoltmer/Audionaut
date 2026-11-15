@@ -621,6 +621,8 @@
                 file="Source/Interface/Dialogs/LoadSimulatorComponent.h"/>
           <FILE id="DlgPLd" name="ProcessingLoadComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ProcessingLoadComponent.h"/>
+          <FILE id="DlgPMg" name="PluginManagerComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/PluginManagerComponent.h"/>
           <FILE id="DlgSsc" name="SeparationSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SeparationSettingsComponent.h"/>
           <FILE id="DlgSsd" name="StemSeparationDialog.h" compile="0" resource="0"
@@ -679,6 +681,12 @@
                   file="Source/Interface/Components/MixerPanel/EffectEditorComponent.h"/>
             <FILE id="EfEdtC" name="EffectEditorComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/MixerPanel/EffectEditorComponent.cpp"/>
+            <FILE id="HsEdtH" name="HostedEffectEditorComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/HostedEffectEditorComponent.h"/>
+            <FILE id="HsEdtC" name="HostedEffectEditorComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/HostedEffectEditorComponent.cpp"/>
+            <FILE id="SltEdH" name="SlotEditor.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/SlotEditor.h"/>
             <FILE id="InSLsH" name="InsertSlotListComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.h"/>
             <FILE id="InSLsC" name="InsertSlotListComponent.cpp" compile="1" resource="0"

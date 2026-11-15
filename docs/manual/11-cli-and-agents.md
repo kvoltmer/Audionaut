@@ -108,6 +108,8 @@ goes on. `list-effects` then names the plugins by type id (`au:…`, `vst3:…`,
 lists its parameters, normalised 0 to 1. A project saved with a plugin in one
 format opens with the same plugin in another installed format when the name and
 manufacturer match; a plugin nobody has stays in the file as a missing insert.
+The mixer side of all this is in
+[The mixer, effects and plugins](14-mixer-and-effects.md).
 
 Run `audionaut-cli --help` for each verb's options. Positions and durations
 are musical by default — `--unit bars|beats|seconds|clocks`, bars and beats

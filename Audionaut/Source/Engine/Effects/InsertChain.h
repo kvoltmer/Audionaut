@@ -80,6 +80,10 @@ public:
     /// Stores the value into the slot's effect; where that changed the effect's latency, a plan is requested. False out of range.
     bool setParameter (int index, int parameter, float value);
 
+    /// Hands the state to the slot's effect (an undo step of what the user did in a plugin's own window);
+    /// a plan is requested where that changed the effect's latency. False out of range.
+    bool setState (int index, const json& state);
+
     /// Writes the chain under `key` when it has slots or unresolved elements; a project without effects serializes as before.
     void writeToJson (json& output, const char* key = "inserts") const;
     /// Reads the chain under `key` (an absent key empties it), keeping instances where the types line up.

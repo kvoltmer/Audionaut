@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
@@ -59,10 +60,17 @@ public:
     /// Every registered type, in registration order.
     const std::vector<EffectTypeInfo>& getTypes() const noexcept { return types; }
 
+    /// How many effects created from this registry are still on their way: a plugin that loads
+    /// asynchronously is created as a placeholder and arrives later. Counted by whoever registers such
+    /// types (the PluginHost), per registry - so per engine - since several engines share one host and
+    /// none of them should wait for another's plugins.
+    const std::shared_ptr<std::atomic<int>>& getPendingArrivals() const noexcept { return pendingArrivals; }
+
 private:
     std::vector<EffectTypeInfo> types;
     std::vector<Factory> factories;
     SubstituteResolver substituteResolver;
+    std::shared_ptr<std::atomic<int>> pendingArrivals = std::make_shared<std::atomic<int>> (0);   // shared with the creations in flight
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EffectRegistry)
 };

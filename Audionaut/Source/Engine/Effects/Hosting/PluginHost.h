@@ -19,6 +19,8 @@
 namespace audium
 {
 
+class HostedEffect;
+
 /**
  * The plugins this machine has, and how an engine gets them as effects.
  *
@@ -38,8 +40,15 @@ namespace audium
  * loading the plugin: the scratch engine of a hosted edit needs the types
  * to resolve, not a second instance of every plugin in the project.
  *
- * Plugins that cannot be created synchronously (AUv3) are listed but not
- * registered yet; they wait for asynchronous loading.
+ * A plugin that runs in a process of its own (AUv3; on macOS, inside the
+ * sandbox, an AUv2 without the sandbox-safe flag, which the OS refuses to
+ * open in-process - these go to the system's hosting service, as in Logic)
+ * is created asynchronously: its effect starts as a loading placeholder
+ * that passes the signal through and adopts the plugin when it arrives.
+ * waitForPendingLoads() is for a process that wants them before it goes on
+ * (the CLI, before it reports or saves): with a registry it waits for that
+ * engine's plugins only - a verb on a scratch engine shares the host with
+ * the app and is not kept by a plugin the app's own project is loading.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -70,6 +79,10 @@ public:
     bool loadList();
     /// Writes the list file; false when the folder cannot be written.
     bool saveList() const;
+    /// Writes the list file if the list differs from what was last read or written here. A process that
+    /// changed nothing leaves the file alone, so it does not undo what another process (a scan run
+    /// beside the app) wrote meanwhile.
+    bool saveListIfChanged() const;
 
     /// Registers the plugins in the registry now and after every change of the list, while the registry lives.
     void attach (std::shared_ptr<EffectRegistry> registry, Mode mode);
@@ -80,16 +93,44 @@ public:
     std::optional<juce::PluginDescription> findByTypeId (const std::string& typeId) const;
     /// A listed plugin of that name and manufacturer this host can create, any format.
     std::optional<juce::PluginDescription> findSubstitute (const juce::String& name, const juce::String& manufacturer) const;
-    /// Whether this host creates the plugin (its format is here, and it loads synchronously).
+    /// Why a listed plugin is not offered as an insert, if it is not.
+    enum class Availability
+    {
+        available,
+        formatMissing     ///< a format this process does not host
+    };
+    Availability availabilityOf (const juce::PluginDescription& description) const;
+    /// The reason in words, "" for an available plugin.
+    static juce::String describe (Availability availability);
+
+    /// Whether this host creates the plugin (its format is here).
     bool canCreate (const juce::PluginDescription& description) const;
+    /// Whether the plugin runs in a process of its own (an AUv3; inside the sandbox an AUv2 without the sandbox-safe
+    /// flag): its effect is created asynchronously and starts as a loading placeholder.
+    bool loadsOutOfProcess (const juce::PluginDescription& description) const;
     /// Whether a type id names a plugin of one of this host's formats (PluginTypeId::make of one).
     bool isPluginTypeId (const std::string& typeId) const;
 
-    /// Message thread: an instance, or nullptr with the reason in `error`.
+    /// Message thread: an instance, or nullptr with the reason in `error`. Synchronous: not for a plugin that
+    /// loadsOutOfProcess() - createEffect() handles those.
     std::unique_ptr<juce::AudioPluginInstance> createInstance (const juce::PluginDescription& description,
                                                                double sampleRate, int blockSize, juce::String& error) const;
-    /// Message thread: the plugin as an effect; a placeholder when it fails to load or in catalogue-only mode.
+    /// Message thread: the plugin as an effect; a placeholder when it fails to load or in catalogue-only mode,
+    /// a loading placeholder for a plugin that comes asynchronously.
     std::unique_ptr<Effect> createEffect (const juce::PluginDescription& description, Mode mode) const;
+
+    /// Message thread: gives a placeholder that has no plugin (a catalogue-only one, or one whose plugin
+    /// failed to load) its plugin, with the state it kept. A plugin that loadsOutOfProcess() arrives later
+    /// (waitForPendingLoads). False when the plugin cannot be created here or failed to load.
+    bool load (HostedEffect& effect) const;
+
+    /// Effects created here whose plugin has not arrived yet, whatever engine they belong to.
+    int getNumPendingLoads() const noexcept { return pendingLoads->load(); }
+    /// Message thread: pumps messages until every pending plugin arrived; false when the timeout passed
+    /// first, or when the message loop was told to stop (nothing arrives any more then).
+    bool waitForPendingLoads (int timeoutMs = 30000) const;
+    /// The same for the plugins of one registry's effects (one engine's).
+    static bool waitForPendingLoads (const EffectRegistry& registry, int timeoutMs = 30000);
 
     /// Scans with a child process per file: this executable run as the scan-plugin worker.
     void useChildProcessScanner (juce::File executable, int timeoutMs = 60000);
@@ -120,7 +161,12 @@ public:
     static bool runWhilePumping (std::function<void()> fn, int timeoutMs);
 
 private:
-    std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode) const;
+    std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode,
+                                          std::shared_ptr<std::atomic<int>> arrivalCount = nullptr) const;
+    static bool waitUntilNone (const std::atomic<int>& pending, int timeoutMs);
+    juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
+    void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
+    juce::String listAsText() const;
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
 
     struct Attached
@@ -129,9 +175,12 @@ private:
         Mode mode;
     };
 
+    std::shared_ptr<std::atomic<int>> pendingLoads = std::make_shared<std::atomic<int>> (0);   // shared with the callbacks in flight
+
     juce::File dataDirectory;
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
+    mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

@@ -89,4 +89,41 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableEffectParameterAction)
 };
 
+/**
+ * Undo step for what the user did in a hosted plugin's own window: the
+ * effect's state before and after, handed to the effect through the chain.
+ * The plugin holds the new state already when the step is recorded, so
+ * performing it changes nothing; undo and redo put the states back.
+ */
+struct UndoableEffectStateAction final : public juce::UndoableAction
+{
+    UndoableEffectStateAction (AudioTrackContainer& container_, InsertChainAddress address_, int slotIndex_, json oldState_, json newState_) :
+        container (container_),
+        address (address_),
+        slotIndex (slotIndex_),
+        oldState (std::move (oldState_)),
+        newState (std::move (newState_))
+    {
+    }
+
+    bool perform() override { return apply (newState); }
+    bool undo() override { return apply (oldState); }
+    int getSizeInUnits() override { return 1 + static_cast<int> ((oldState.dump().size() + newState.dump().size()) / 4096); }
+
+private:
+    bool apply (const json& state)
+    {
+        auto* chain = address.resolve (container);
+        return chain != nullptr && chain->setState (slotIndex, state);
+    }
+
+    AudioTrackContainer& container;
+    const InsertChainAddress address;
+    const int slotIndex;
+    const json oldState;
+    const json newState;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (UndoableEffectStateAction)
+};
+
 } // namespace audium

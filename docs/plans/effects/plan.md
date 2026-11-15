@@ -799,8 +799,8 @@ next to the right-panel button toggle it.
 ### Phase 7: Plugin hosting (AU on macOS; VST3 on Windows; VST3 and LV2 on Linux)
 
 Decided with Klaus 2026-11-14: **macOS stays sandboxed on both channels** (App Store and DMG
-share one container), so the Mac hosts Audio Units only - sandbox-safe AUv2 now, AUv3 (which
-JUCE creates asynchronously only) as a follow-up; Windows hosts VST3, Linux VST3 and LV2. The
+share one container), so the Mac hosts Audio Units only - AUv2 in-process when sandbox-safe,
+otherwise (and every AUv3) out of process, see 7c; Windows hosts VST3, Linux VST3 and LV2. The
 three `JUCE_PLUGINHOST_*` flags are set globally (jucer `JUCEOPTIONS`, test CMake), the formats a
 process hosts are chosen at runtime (`PluginHost::addPlatformFormats`). Cross-format recall:
 the slot JSON carries a `"plugin"` block (name, manufacturer, format, file, version) beside the
@@ -830,12 +830,59 @@ their plugin block and missing elements with `"missing": true`. MCP: `list_effec
 `AudioPluginInstance` with hosted parameters), `HostedEffectTests`, `PluginHostTests`, and on
 macOS Apple's AUDelay through the real format (`AudioUnitHostingTests`, ctest `CliScanAU`).
 
-Open after 7a: 7b (plugin editors in the floating panel, the Manage Plugins window, missing
-rows in the mixer, the manual chapter); AUv3 asynchronous loading (TODO.md).
+Built in 7b (`feature/plugin-hosting-ui`, 2026-11-14): `SlotEditor`, the interface the mixer
+asks an editor window's content through (`isStillValid`, `onSlotGone`), implemented by the
+built-in `EffectEditorComponent` and the new `HostedEffectEditorComponent` (the plugin's own
+editor from `createEditorAndMakeActive` and nothing around it, JUCE's generic parameter list for
+a plugin without one, name and reason as text for a placeholder; the slot held strongly so the
+instance outlives its editor; sized to the editor and following it). Klaus's call: the editor
+windows carry no band of their own - the built-in editor lost its bypass key too (bypass is the
+slot's menu; a bypassed slot's editor is dimmed) and the compressor's gain-reduction meter moved
+to a strip under the dials - and an insert added from the mixer opens its editor at once
+(`InsertChainActions::addAndEdit`). `FloatingPanel` follows its content's size (a plugin that resizes its editor resizes the
+window) and, for an editor the plugin lets the user resize, is resizable itself within the
+editor's limits (macOS: `NSWindowStyleMaskResizable`, `windowDidResize:`, content min/max size;
+elsewhere `DocumentWindow::setResizable`). The Manage Plugins window (`PluginManagerComponent`:
+`juce::PluginListComponent` over the host's format manager, list and dead man's pedal, one
+scanning thread so the worker processes run one at a time, a status line counting effects,
+instruments and skipped files) opens from *Options › Manage Plugins…*
+(`CommandIDs::showPluginManager`) and from the end of every insert type menu
+(`MixerContext::openPluginManager`). `InsertSlotListComponent` shows a chain's unresolved
+elements as dimmed rows with a marker at their saved places (tooltip "<name> by <manufacturer>
+(<format>) is not installed", right-click Remove → `InsertChainActions::removeUnresolved`, one
+undo step), and marks a hosted slot that is not running (not loaded, incompatible layout) the
+same way with the reason as tooltip; a drop among the rows maps back to slot indices. Manual
+chapter 14 (mixer, inserts, sends, solo groups, plugins, Manage Plugins, missing plugins, the
+CLI side), `features.md` moved hosting out of *Not yet*.
+
+**Built in 7c (out-of-process Audio Units).** 112dB's Mikron Delay would not load in the app: inside
+the sandbox the OS refuses `AudioComponentInstanceNew` with -3000 for any AUv2 without
+`kAudioComponentFlag_SandboxSafe` (its `resourceUsage` wants `files.all.read-write`, which no App
+Store entitlement grants; 17 of the Audio Units on Klaus's Mac are like that). What works, verified
+with a sandboxed test tool, is what Logic does: `AudioComponentInstantiate` with
+`kAudioComponentInstantiation_LoadOutOfProcess` puts the plugin into Apple's `AUHostingServiceXPC`,
+and `requestViewController` delivers its editor as a remote view. JUCE took that path for AUv3 only,
+so the JUCE submodule now points at Klaus's fork (`kvoltmer/JUCE`, branch
+`audionaut/au-out-of-process`, to be offered upstream): `AudioUnitPluginFormat::setProcessIsolation`
+(`inProcess` | `whenSandboxRequires` | `outOfProcess`) decides per component, such plugins report
+`requiresUnblockedMessageThreadDuringCreation`, and the editor window skips the in-process Cocoa view
+for them. `PluginHost::addPlatformFormats` sets `whenSandboxRequires`. Creation is asynchronous:
+`PluginHost::createEffect` hands out a `HostedEffect` in status `loading` (passes through, keeps the
+blob), `createPluginInstanceAsync` delivers the plugin on the message thread, `adopt()` takes it,
+applies the kept state and sets `needsPrepare()` (new on `Effect`, part of `EffectSlot::isPreparedFor`)
+so the planner prepares the slot before the next plan runs it; `onLatencyChanged` asks for that plan.
+`PluginHost::waitForPendingLoads` pumps until the plugins arrived - the CLI calls it after opening a
+project, after `add-insert`, in `list-effects --type` and before a save (`ProjectSession::settlePlugins`).
+`Availability` is down to `available`/`formatMissing`; `loadsOutOfProcess` tells the Manage Plugins
+status line how many run in a process of their own; the editor window of a loading slot shows
+"Loading the plugin..." and takes the editor when it comes. AUv3 came along for free.
+
+Open after 7c: the editor windows saved with the project (TODO.md, mixer follow-ups); measuring the
+cross-process render cost; a window opened on a loading placeholder stays non-resizable until reopened.
 
 - Jucer: `JUCE_PLUGINHOST_VST3=1`, `JUCE_PLUGINHOST_AU=1` (macOS, `AudioUnit` framework),
-  `JUCE_PLUGINHOST_LV2=1` (Linux). Sandbox allows AU only (sandbox-safe AUs) - on both macOS
-  channels, see above.
+  `JUCE_PLUGINHOST_LV2=1` (Linux). Sandbox allows AU only (in-process when sandbox-safe, out
+  of process otherwise, see 7c) - on both macOS channels, see above.
 - `PluginRegistry` service (per process, injected, not static): `juce::AudioPluginFormatManager`
   + `KnownPluginList` persisted as XML in `Preferences::applicationDataDirectory()`; scanning in
   a child process (JUCE `ChildProcessCoordinator`, dead-man list so a crashing plugin is skipped

@@ -2,7 +2,9 @@
 #include <catch2/catch_approx.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
+#include <thread>
 
 #include "Cli/AgentClient.h"
 #include "Cli/AgentHost.h"
@@ -10,6 +12,9 @@
 #include "Cli/CommandSession.h"
 #include "Cli/Commands/Commands.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Effects/Hosting/HostedEffect.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/InsertChain.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
@@ -17,6 +22,7 @@
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "TestPluginInstance.h"
 
 using namespace audium;
 using namespace audium::cli;
@@ -410,6 +416,124 @@ SCENARIO("the hosted verbs of one agent task become one undo step",
     MessageManager::deleteInstance();
 }
 
+// A hosted edit works on a copy of the document that lists the plugins without
+// loading them. Two verbs need the plugins themselves: one that sets a plugin's
+// parameter (the parameters are the plugin's), and an export (without them the
+// file would be the project minus its plugins).
+SCENARIO("a hosted verb reaches the plugins of the open document",
+         "[cli][agent][routing][hosting]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    auto workDir = makeRoutingWorkDirectory();
+    auto package = workDir.getChildFile ("plugins.audium");
+    auto projectJson = package.getChildFile (ProjectFileStore::projectFileName);
+
+    CliContext setup;
+    setup.quiet = true;
+    REQUIRE (runCreate (argsFor ("create " + package.getFullPathName()), setup) == exitOk);
+    const auto sourceAudio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/120-funk-1-sec.wav";
+    REQUIRE (runImport (argsFor ("import " + package.getFullPathName() + " " + sourceAudio), setup) == exitOk);
+
+    // the machine's plugins: one test format with one gain plugin
+    TestPluginInstance::Options plugin;
+    plugin.format = "TestA";
+    plugin.uid = 0x1111;
+    auto pluginHost = std::make_shared<PluginHost> (workDir.getChildFile ("data"), false);
+    pluginHost->getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { plugin }));
+    pluginHost->getList().addType (TestPluginInstance::describe (plugin));
+
+    auto engine = AudiumFactory::createAudiumEngine (nullptr, pluginHost);
+    REQUIRE (engine->getProjectFileStore()->open (projectJson, nullptr));
+
+    // the plugin on the track that holds the clip
+    std::shared_ptr<AudioTrack> track;
+    for (auto& candidate : engine->getAudioTrackContainer()->getAudioTracks())
+        if (candidate->getPlayListContainer()->getNumItems() > 0)
+            track = candidate;
+    REQUIRE (track != nullptr);
+    auto slot = track->getTrackInserts().add ("testa:00001111");
+    REQUIRE (slot != nullptr);
+    auto* live = dynamic_cast<HostedEffect*> (&slot->getEffect());
+    REQUIRE (live != nullptr);
+    REQUIRE (live->isLoaded());
+    const auto trackOption = "--track " + juce::String (track->getId());
+    const auto instancesWhileOpen = TestPluginInstance::instances();
+
+    CliContext context;
+    context.quiet = true;
+    context.json = true;
+    json envelope;
+    context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
+
+    // As in the app: the host runs the verb on the message thread - where a plugin is created - while
+    // the client waits on a thread of its own, so this thread serves the message loop meanwhile.
+    auto runHosted = [&] (const juce::String& verb, const juce::String& options) {
+        std::atomic<bool> done { false };
+        auto ok = false;
+        std::thread client ([&] {
+            auto outcome = agent::routeCommand (argsFor (verb + " " + package.getFullPathName() + " " + options),
+                                                verb, agent::isHostableVerb (verb), context);
+            ok = outcome.handled && outcome.exitCode == exitOk && envelope.value ("ok", false);
+            done = true;
+        });
+        while (! done)
+            MessageManager::getInstance()->runDispatchLoopUntil (10);
+        client.join();
+        return ok;
+    };
+
+    GIVEN("the app hosting the document") {
+        agent::AgentHost host (engine);   // the app's own executor: onto the message thread
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        WHEN("an agent sets a parameter of the plugin") {
+            const auto set = runHosted ("set-insert", trackOption + " --index 0 --param gain --value 0.25");
+
+            THEN("the plugin of the open document has the value, and the copy's plugin is gone again") {
+                INFO (envelope.dump());
+                REQUIRE (set);
+                REQUIRE (live->getParameter (live->getParameterIndex ("gain")) == Catch::Approx (0.25f));
+                REQUIRE (engine->getUndoManager()->canUndo());
+                REQUIRE (TestPluginInstance::instances() == instancesWhileOpen);
+            }
+        }
+
+        WHEN("the plugin mutes the track and an agent exports the project") {
+            live->setParameter (live->getParameterIndex ("mute"), 1.0f);
+            const auto output = workDir.getChildFile ("muted.wav");
+            const auto exported = runHosted ("export", "-o " + output.getFullPathName());
+
+            THEN("the file is what the document sounds like: the plugin ran") {
+                INFO (envelope.dump());
+                REQUIRE (exported);
+
+                juce::AudioFormatManager formatManager;
+                formatManager.registerBasicFormats();
+                std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (output));
+                REQUIRE (reader != nullptr);
+                juce::AudioBuffer<float> buffer (static_cast<int> (reader->numChannels), static_cast<int> (reader->lengthInSamples));
+                reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, true);
+                REQUIRE (buffer.getNumSamples() > 0);
+                REQUIRE (buffer.getMagnitude (0, buffer.getNumSamples()) == Catch::Approx (0.0).margin (1.0e-4));
+                REQUIRE (TestPluginInstance::instances() == instancesWhileOpen);
+            }
+        }
+
+        host.setProject (juce::File());
+    }
+
+    slot = nullptr;
+    track = nullptr;
+    engine = nullptr;
+    pluginHost = nullptr;
+    workDir.deleteRecursively();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
 // The app's export and stem separation render on a worker thread behind a
 // modal progress window whose loop still serves agents. A verb applied then
 // would rebuild the graph the render is walking, so it waits its turn.
@@ -631,6 +755,139 @@ SCENARIO("a hosted verb streams its progress to the client",
 
     host.setProject (juce::File());
     engine = nullptr;
+    workDir.deleteRecursively();
+    DeletedAtShutdown::deleteAll();
+    MessageManager::deleteInstance();
+}
+
+SCENARIO("a hosted verb that waits for a plugin does not run over what the user started meanwhile",
+         "[cli][agent][routing][hosting]")
+{
+    MessageManager::getInstance();
+    MessageManagerLock mmLock (Thread::getCurrentThread());
+
+    auto workDir = makeRoutingWorkDirectory();
+    auto package = workDir.getChildFile ("plugins.audium");
+    auto projectJson = package.getChildFile (ProjectFileStore::projectFileName);
+
+    CliContext setup;
+    setup.quiet = true;
+    REQUIRE (runCreate (argsFor ("create " + package.getFullPathName()), setup) == exitOk);
+    const auto sourceAudio = juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/120-funk-1-sec.wav";
+    REQUIRE (runImport (argsFor ("import " + package.getFullPathName() + " " + sourceAudio), setup) == exitOk);
+
+    // the setup verbs took their message loop with them: the plugin arrives through one
+    MessageManager::getInstance();
+
+    // the machine's plugins: one test format with one gain plugin
+    TestPluginInstance::Options plugin;
+    plugin.format = "TestA";
+    plugin.uid = 0x1111;
+    auto pluginHost = std::make_shared<PluginHost> (workDir.getChildFile ("data"), false);
+    auto owned = std::make_unique<TestPluginFormat> ("TestA", std::vector { plugin });
+    owned->asyncOnly = true;   // as a plugin that runs in a process of its own: it arrives through the message queue
+    auto* format = owned.get();
+    pluginHost->getFormats().addFormat (std::move (owned));
+    pluginHost->getList().addType (TestPluginInstance::describe (plugin));
+
+    auto engine = AudiumFactory::createAudiumEngine (nullptr, pluginHost);
+    REQUIRE (engine->getProjectFileStore()->open (projectJson, nullptr));
+
+    // the plugin on the track that holds the clip
+    std::shared_ptr<AudioTrack> track;
+    for (auto& candidate : engine->getAudioTrackContainer()->getAudioTracks())
+        if (candidate->getPlayListContainer()->getNumItems() > 0)
+            track = candidate;
+    REQUIRE (track != nullptr);
+    auto slot = track->getTrackInserts().add ("testa:00001111");
+    REQUIRE (slot != nullptr);
+    auto* live = dynamic_cast<HostedEffect*> (&slot->getEffect());
+    REQUIRE (live != nullptr);
+    REQUIRE (pluginHost->waitForPendingLoads (5000));
+    REQUIRE (live->isLoaded());
+    const auto trackOption = "--track " + juce::String (track->getId());
+    const auto instancesWhileOpen = TestPluginInstance::instances();
+
+    CliContext context;
+    context.quiet = true;
+    context.json = true;
+    json envelope;
+    context.envelopeSink = [&envelope] (const json& produced) { envelope = produced; };
+
+    // As in the app: the host runs the verb on the message thread - where a plugin is created - while
+    // the client waits on a thread of its own, so this thread serves the message loop meanwhile.
+    auto runHosted = [&] (const juce::String& verb, const juce::String& options) {
+        std::atomic<bool> done { false };
+        auto ok = false;
+        std::thread client ([&] {
+            auto outcome = agent::routeCommand (argsFor (verb + " " + package.getFullPathName() + " " + options),
+                                                verb, agent::isHostableVerb (verb), context);
+            ok = outcome.handled && outcome.exitCode == exitOk && envelope.value ("ok", false);
+            done = true;
+        });
+        while (! done)
+            MessageManager::getInstance()->runDispatchLoopUntil (10);
+        client.join();
+        return ok;
+    };
+
+    GIVEN("the app hosting the document") {
+        agent::AgentHost host (engine);   // the app's own executor: onto the message thread
+        host.setProject (projectJson);
+        REQUIRE (host.isHosting());
+
+        WHEN("an export starts in the app while a set-insert waits for its plugin") {
+            // the verb's copy of the document gets the plugin when its parameter is set, and the
+            // message thread serves while it is on its way: that is when the user starts the export
+            std::unique_ptr<PlayListScheduler::ScopedOfflineRender> render;
+            format->onCreate = [&] { render = std::make_unique<PlayListScheduler::ScopedOfflineRender> (*engine->getPlayListScheduler()); };
+            const auto before = live->getParameter (live->getParameterIndex ("gain"));
+            const auto set = runHosted ("set-insert", trackOption + " --index 0 --param gain --value 0.25");
+            format->onCreate = nullptr;
+
+            THEN("the verb is refused when it comes to apply, and the document is as it was") {
+                INFO (envelope.dump());
+                REQUIRE (render != nullptr);
+                REQUIRE_FALSE (set);
+                REQUIRE (envelope["error"]["code"] == "render_in_progress");
+                REQUIRE (live->getParameter (live->getParameterIndex ("gain")) == Catch::Approx (before));
+                REQUIRE_FALSE (engine->getUndoManager()->canUndo());
+
+                AND_THEN("it goes through once the export is over") {
+                    render.reset();
+                    REQUIRE (runHosted ("set-insert", trackOption + " --index 0 --param gain --value 0.25"));
+                    REQUIRE (live->getParameter (live->getParameterIndex ("gain")) == Catch::Approx (0.25f));
+                }
+            }
+            render.reset();
+        }
+
+        WHEN("a plugin of the open document is still on its way and an agent edits something else") {
+            format->withhold = true;
+            auto second = track->getTrackInserts().add ("testa:00001111");
+            REQUIRE (second != nullptr);
+            REQUIRE (pluginHost->getNumPendingLoads() == 1);
+
+            const auto started = juce::Time::getMillisecondCounter();
+            const auto edited = runHosted ("clip-gain", "--at 1 --gain 0.5");
+            const auto took = juce::Time::getMillisecondCounter() - started;
+
+            THEN("the verb does not wait for the app's plugin") {
+                INFO (envelope.dump());
+                REQUIRE (edited);
+                REQUIRE (took < 10000);
+                REQUIRE (pluginHost->getNumPendingLoads() == 1);
+            }
+            second = nullptr;
+        }
+
+        host.setProject (juce::File());
+    }
+
+    slot = nullptr;
+    track = nullptr;
+    engine = nullptr;
+    pluginHost = nullptr;
     workDir.deleteRecursively();
     DeletedAtShutdown::deleteAll();
     MessageManager::deleteInstance();

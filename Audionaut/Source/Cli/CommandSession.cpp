@@ -9,6 +9,7 @@
 #include "Cli/HeadlessEngineSession.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -31,6 +32,7 @@ struct HostedContext
     json liveState;
     json stagedState;
     bool staged = false;
+    HostedSessionScope::Refusal refusal;
 };
 
 HostedContext& hostedContext()
@@ -38,6 +40,8 @@ HostedContext& hostedContext()
     static HostedContext context;
     return context;
 }
+
+constexpr auto pluginTimeoutMessage = "a plugin of the project did not finish loading; nothing was done - run the command again";
 
 } // namespace
 
@@ -50,6 +54,19 @@ struct ProjectSession::Impl
     {
         engineSession.emplace (std::move (pluginHost));
         configureRendering (*engineSession->get(), access);
+    }
+
+    /** An engine of our own: the plugins that load asynchronously have arrived before the verb reads,
+        renders or writes the project. False when one is still on its way after the wait. The live
+        engine of a hosted read is the app's: its plugins are not waited for. */
+    bool settlePlugins() const
+    {
+        if (borrowedEngine != nullptr)
+            return true;
+        // this engine's plugins only: the engine of a hosted verb shares the app's plugin host, and what
+        // the app's own document is loading is not this verb's to wait for
+        auto* planner = engineSession->get()->getAudioTrackContainer()->getMixerPlanner();
+        return planner == nullptr || PluginHost::waitForPendingLoads (planner->getRegistry());
     }
 
     /** Only an isolated verb (export) renders; every other session edits or
@@ -79,11 +96,15 @@ struct ProjectSession::Impl
     {
         // The scratch engine lives inside a process that already runs a
         // MessageManager - it must borrow it rather than create and then
-        // destroy it. It gets the live engine's plugins as types only: the
-        // project's plugin inserts resolve and keep their state, without a
-        // second instance of every plugin for the length of one edit.
+        // destroy it. For an edit it gets the live engine's plugins as types
+        // only: the project's plugin inserts resolve and keep their state,
+        // without a second instance of every plugin for the length of one
+        // edit (a verb that needs one plugin's parameters loads that one). A
+        // render needs the plugins themselves, or the export would be the
+        // project without them.
         HeadlessEngineSession::setUseExternalMessageManager (true);
-        engineSession.emplace (hostedContext().engine->getPluginHost(), PluginHost::Mode::catalogueOnly);
+        engineSession.emplace (hostedContext().engine->getPluginHost(),
+                               access == CommandAccess::isolated ? PluginHost::Mode::full : PluginHost::Mode::catalogueOnly);
         HeadlessEngineSession::setUseExternalMessageManager (false);
 
         auto engineRef = engineSession->get();
@@ -133,9 +154,10 @@ struct ProjectSession::Impl
 
 HostedSessionScope::HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine,
                                         juce::File projectFile,
-                                        json liveState)
+                                        json liveState,
+                                        Refusal refusal)
 {
-    hostedContext() = { std::move (liveEngine), std::move (projectFile), std::move (liveState), {}, false };
+    hostedContext() = { std::move (liveEngine), std::move (projectFile), std::move (liveState), {}, false, std::move (refusal) };
 }
 
 bool HostedSessionScope::hasStagedState()
@@ -193,6 +215,12 @@ bool ProjectSession::commit (std::string& error)
 {
     jassert (impl != nullptr);
 
+    // a plugin the verb added or loaded writes its own state, not its placeholder's
+    if (impl->access == CommandAccess::mutating && ! impl->settlePlugins()) {
+        error = pluginTimeoutMessage;
+        return false;
+    }
+
     if (impl->scratch && impl->access == CommandAccess::mutating) {
         // Hand the result to the host, which applies it to the live document
         // as one undoable step. Nothing of ours reaches the project file - the
@@ -220,6 +248,11 @@ bool ProjectSession::commit (std::string& error)
 
     return (*impl->engineSession)->getProjectFileStore()
                ->save (impl->projectFile, [&error] (std::string message) { error = message; });
+}
+
+bool ProjectSession::settlePlugins() const
+{
+    return impl == nullptr || impl->settlePlugins();
 }
 
 bool ProjectSession::isHosted() const noexcept
@@ -262,6 +295,21 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         if (configure)
             configure (*scratchImpl->engine());
 
+        // a render's plugins are there before it starts
+        if (access == CommandAccess::isolated && ! scratchImpl->settlePlugins()) {
+            failureExitCode = context.fail (exitFailure, "plugin_timeout", pluginTimeoutMessage);
+            return {};
+        }
+
+        // The wait kept the message thread serving: the user may have started the transport or a take
+        // since the host looked, and the render would run beside it.
+        if (access == CommandAccess::isolated && hostedContext().refusal) {
+            if (const auto [code, message] = hostedContext().refusal(); ! message.empty()) {
+                failureExitCode = context.fail (exitFailure, code, message);
+                return {};
+            }
+        }
+
         return ProjectSession (std::move (scratchImpl));
     }
 
@@ -278,6 +326,11 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         return {};
     }
 
+    // the project's plugins are there when the verb looks at them
+    if (! impl->settlePlugins()) {
+        failureExitCode = context.fail (exitFailure, "plugin_timeout", pluginTimeoutMessage);
+        return {};
+    }
     return ProjectSession (std::move (impl));
 }
 

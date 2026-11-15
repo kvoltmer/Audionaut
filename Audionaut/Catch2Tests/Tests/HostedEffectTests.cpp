@@ -302,6 +302,94 @@ SCENARIO ("a hosted effect runs the plugin on the chain's channels", "[engine][e
     }
 }
 
+SCENARIO ("a plugin with a bus it will not switch off is not run on the main bus alone", "[engine][effects][hosting]")
+{
+    GIVEN ("a plugin that insists on its stereo sidechain input")
+    {
+        TestPluginInstance::Options options;
+        options.fixedSidechain = true;
+        Hosted hosted (options);
+        auto& effect = *hosted.effect;
+
+        WHEN ("prepared for a stereo chain")
+        {
+            effect.prepare (kSampleRate, kBlockSize, 2);
+            auto buffer = makeDc (2, 0.8f);
+            effect.setParameter (0, 0.25f);
+            run (effect, buffer);
+
+            THEN ("the layout is refused and the signal passes: the plugin would expect four channels in the block")
+            {
+                REQUIRE (effect.getStatus() == HostedEffect::Status::incompatibleLayout);
+                REQUIRE (effect.getError().isNotEmpty());
+                REQUIRE (hosted.plugin->processCount == 0);
+                REQUIRE (buffer.getSample (0, 10) == Approx (0.8f));
+            }
+        }
+    }
+}
+
+SCENARIO ("a hosted effect tells the plugin's own changes from the host's", "[engine][effects][hosting]")
+{
+    GIVEN ("a hosted test plugin")
+    {
+        Hosted hosted;
+        auto& effect = *hosted.effect;
+        const auto pluginChanges = effect.getPluginChangeCount();
+        const auto hostEdits = effect.getHostEditCount();
+
+        WHEN ("the host sets a parameter and a state")
+        {
+            effect.setParameter (0, 0.75f);
+            const auto afterParameter = effect.getHostEditCount();
+            effect.setState (json { { "blob", juce::MemoryBlock ("0.500000|0|3", 12).toBase64Encoding().toStdString() } });
+
+            THEN ("each counts as a host edit")
+            {
+                REQUIRE (afterParameter != hostEdits);
+                REQUIRE (effect.getHostEditCount() != afterParameter);
+            }
+
+            AND_WHEN ("the same state is set again")
+            {
+                const auto before = effect.getHostEditCount();
+                effect.setState (effect.getState());
+
+                THEN ("nothing was put into the plugin, and nothing is counted")
+                {
+                    REQUIRE (effect.getHostEditCount() == before);
+                }
+            }
+        }
+
+        WHEN ("the plugin moves a control of its own, as its window does")
+        {
+            hosted.plugin->gain->beginChangeGesture();
+            hosted.plugin->gain->setValueNotifyingHost (0.1f);
+
+            THEN ("the change is counted as the plugin's, with the control held")
+            {
+                REQUIRE (effect.getPluginChangeCount() != pluginChanges);
+                REQUIRE (effect.getHostEditCount() == hostEdits);
+                REQUIRE (effect.isGestureOpen());
+
+                hosted.plugin->gain->endChangeGesture();
+                REQUIRE_FALSE (effect.isGestureOpen());
+            }
+        }
+
+        WHEN ("the plugin reports a state change that is no parameter")
+        {
+            hosted.plugin->bumpGeneration();
+
+            THEN ("that counts too")
+            {
+                REQUIRE (effect.getPluginChangeCount() != pluginChanges);
+            }
+        }
+    }
+}
+
 SCENARIO ("a hosted effect's state is the plugin's chunk, read when it changed", "[engine][effects][hosting]")
 {
     GIVEN ("a hosted test plugin")
@@ -382,6 +470,76 @@ SCENARIO ("a hosted effect's state is the plugin's chunk, read when it changed",
             placeholder.setState ({ { "blob", "QUJD" } });
             REQUIRE (placeholder.getState()["blob"] == "QUJD");
             REQUIRE (placeholder.getPluginInfo()["name"] == "Test Gain");
+        }
+    }
+
+    GIVEN ("a placeholder waiting for its plugin, in a prepared slot")
+    {
+        MessageThread messageThread;
+        auto description = TestPluginInstance::describe ({});
+        auto loading = std::make_unique<HostedEffect> (PluginTypeId::typeInfo (description), description, HostedEffect::Loading {});
+        auto* effect = loading.get();
+        auto latencyReports = 0;
+        effect->onLatencyChanged = [&latencyReports] { ++latencyReports; };
+        EffectSlot slot (std::move (loading));
+        slot.prepare (kSampleRate, kBlockSize, 2);
+
+        THEN ("it is loading, not loaded, and passes the signal through")
+        {
+            REQUIRE (effect->getStatus() == HostedEffect::Status::loading);
+            REQUIRE_FALSE (effect->isLoaded());
+            REQUIRE (effect->getNumParameters() == 0);
+            REQUIRE_FALSE (effect->needsPrepare());
+            REQUIRE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+            auto buffer = makeDc (2, 0.5f);
+            run (*effect, buffer);
+            REQUIRE (buffer.getSample (1, 5) == Approx (0.5f));
+        }
+
+        WHEN ("the plugin arrives, with a state the placeholder kept")
+        {
+            effect->setState ({ { "blob", juce::MemoryBlock ("1.500000|0|0", 12).toBase64Encoding().toStdString() } });
+            auto instance = std::make_unique<TestPluginInstance> (TestPluginInstance::Options {});
+            auto* plugin = instance.get();
+            effect->adopt (std::move (instance), {});
+
+            THEN ("it is loaded with the kept state, and the slot has to prepare it before it runs")
+            {
+                REQUIRE (effect->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (effect->isLoaded());
+                REQUIRE (effect->getNumParameters() == 2);
+                REQUIRE (plugin->setStateCount == 1);
+                REQUIRE (plugin->gain->get() == Approx (1.5f));
+                REQUIRE (latencyReports == 1);
+
+                REQUIRE (effect->needsPrepare());
+                REQUIRE_FALSE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+                auto buffer = makeDc (2, 0.5f);
+                run (*effect, buffer);
+                REQUIRE (buffer.getSample (1, 5) == Approx (0.5f));   // unprepared: still passing through
+                REQUIRE (plugin->processCount == 0);
+
+                slot.prepare (kSampleRate, kBlockSize, 2);
+                REQUIRE_FALSE (effect->needsPrepare());
+                REQUIRE (slot.isPreparedFor (kSampleRate, kBlockSize, 2));
+                REQUIRE (plugin->prepareCount == 1);
+                run (*effect, buffer);
+                REQUIRE (plugin->processCount == 1);
+                REQUIRE (buffer.getSample (1, 5) == Approx (0.75f));   // gain 1.5
+            }
+        }
+
+        WHEN ("the plugin does not come")
+        {
+            effect->adopt (nullptr, "the hosting service refused it");
+
+            THEN ("it is a plain placeholder with the reason")
+            {
+                REQUIRE (effect->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE_FALSE (effect->isLoaded());
+                REQUIRE (effect->getError() == "the hosting service refused it");
+                REQUIRE (latencyReports == 0);
+            }
         }
     }
 }

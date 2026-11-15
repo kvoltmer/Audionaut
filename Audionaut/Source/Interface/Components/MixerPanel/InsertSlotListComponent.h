@@ -16,6 +16,12 @@
  * slot's editor or, on an empty slot, the list of effect types; right-click
  * a slot's menu; a drag within the list reorders. A chain longer than the
  * rows scrolls with the mouse wheel.
+ *
+ * An element the chain keeps for a plugin this machine lacks shows as a
+ * dimmed row with a marker at the place it was saved in, named after the
+ * plugin; its menu removes it. A hosted plugin that is not running (failed
+ * to load, refuses the chain's channel count) carries the marker too, the
+ * reason as its tooltip.
  */
 class InsertSlotListComponent : public juce::Component,
                                 public juce::DragAndDropTarget
@@ -49,9 +55,21 @@ public:
 
 private:
     class SlotRow;
+    class MissingRow;
     class EmptyRow;
 
-    int dropIndexFor (int y) const;
+    /// One row of the column: a slot, or an unresolved element at its saved place.
+    struct Entry
+    {
+        std::shared_ptr<audium::EffectSlot> slot;   // null for a missing plugin's element
+        int slotIndex = -1;                           // in the chain, for a slot
+        int unresolvedPosition = -1;                  // among the chain's unresolved elements, for a missing one
+        bool operator== (const Entry& other) const { return slot == other.slot && unresolvedPosition == other.unresolvedPosition; }
+    };
+    std::vector<Entry> readEntries() const;
+
+    int dropRowFor (int y) const;
+    int slotIndexAtRow (int row) const;
     void layoutRows();
 
     MixerContext context;
@@ -59,12 +77,12 @@ private:
     std::function<juce::String (int index)> editorTitle;
     juce::String chainKey;
 
-    std::vector<std::unique_ptr<SlotRow>> slotRows;
-    std::vector<std::unique_ptr<EmptyRow>> emptyRows;   // fill the column below the used slots
-    std::vector<audium::EffectSlot*> shownSlots;   // what the rows were built from
+    std::vector<std::unique_ptr<juce::Component>> rows;   // the used slots and the missing elements, in the chain's order
+    std::vector<std::unique_ptr<EmptyRow>> emptyRows;      // fill the column below them
+    std::vector<Entry> shown;   // what the rows were built from
 
     int firstVisibleRow = 0;
-    int dropIndex = -1;   // where a dragged slot would land, -1 for no drag over the list
+    int dropRow = -1;   // the row a dragged slot would land before, -1 for no drag over the list
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (InsertSlotListComponent)
 };

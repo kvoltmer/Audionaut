@@ -62,14 +62,22 @@ monitoring. Each take becomes a region and a single undo step.
   ([Audio routing](manual/04-main-window.md#audio-routing))
 - Mute, solo, gain, pan and level meters per channel, plus master volume and
   meter.
-- **Insert effects** on every channel strip, on a whole track (all its
-  channels at once), on the aux buses and on the master: Trim, a three-band
-  EQ with high-pass, a compressor and a feedback delay, with click-free
-  bypass. Latency is compensated at every summing point, so a latent effect
-  never shifts its channel against the others, exports stay on the grid,
-  Link peers stay in time and recorded takes land where they were played.
-  Playback and export run them alike; agents add and set them through the
-  MCP tools.
+- **A mixer** along the bottom of the window: a strip per channel grouped
+  by track, with input and output, inserts, sends, pan, the record, monitor,
+  solo and mute keys, fader and meter, each section shown or hidden as you
+  like; the aux buses and the main bus as return strips at the right.
+  ([The mixer, effects and plugins](manual/14-mixer-and-effects.md))
+- **Insert effects** on every track (all its channels at once), on the aux
+  buses and on the main bus: the built-in Trim, three-band EQ with high-pass,
+  compressor and feedback delay, and your **plugins** - Audio Units on
+  macOS, VST3 on Windows, VST3 and LV2 on Linux - each in its own editor
+  window, with click-free bypass. Latency is compensated at every summing
+  point, so a latent effect never shifts its channel against the others,
+  exports stay on the grid, Link peers stay in time and recorded takes land
+  where they were played. Playback and export run them alike; agents add
+  and set them through the MCP tools. A project saved with a plugin in one
+  format opens with the same plugin in another; a plugin you lack stays in
+  the project until you have it.
 - **Aux buses and sends**: every project has two stereo aux buses (more can
   be added), each with its own insert chain and a return into the main mix
   with gain, pan, mute and solo. Every channel strip can send into each
@@ -127,8 +135,7 @@ Privacy: anonymous usage statistics are opt-in only
 
 Planned or under consideration, not available today:
 
-- Plugin hosting (VST3 / AU / LV2), send effects and automation envelopes
-- MIDI
+- Automation envelopes, instrument plugins and MIDI
 - Timeline markers and labels, import and export of label or region lists,
   and OSC cues
 - Automatic crossfades when clips are dragged over each other

@@ -481,17 +481,21 @@ the one-gesture crossfade UX on top:
 
 ## Plugin hosting — follow-ups (found 2026-11-14 in phase 7a)
 
-- [ ] **Load AUv3 plugins asynchronously.** JUCE refuses to create an AUv3
-  on the message thread synchronously (`requiresUnblockedMessageThreadDuringCreation`),
-  so `PluginHost::registerInto` lists them but does not register them as
-  effect types yet; the sandboxed app sees sandbox-safe AUv2s only. Plan:
-  `createSlot` hands out a `HostedEffect` placeholder at once (status
-  `loading`), the host calls `createPluginInstanceAsync`, and on completion
-  the effect adopts the instance and marks its slot stale (the same path a
-  latency change takes: `isPreparedFor` says no, the planner re-prepares the
-  slot once the plan that ran it has retired). The headless CLI waits for the
-  callback (`runWhilePumping`). Until then the placeholder passes the signal
-  through and keeps the blob, so a project with an AUv3 loses nothing.
+- [ ] **Offer the JUCE out-of-process patch upstream.** The JUCE submodule
+  points at `kvoltmer/JUCE`, branch `audionaut/au-out-of-process`:
+  `AudioUnitPluginFormat::setProcessIsolation` loads AUv2 plugins without the
+  sandbox-safe flag into Apple's hosting service when the host is sandboxed
+  (what Logic does; the OS refuses them in-process with -3000). A pull request
+  to juce-framework/JUCE lets the submodule return to upstream once merged.
+- [ ] **Measure the out-of-process render cost.** Every block of a plugin in
+  the hosting service is a cross-process call; small buffers with many such
+  plugins may cost noticeably more than in-process hosting. Bench a chain of
+  Mikron Delays at 64 and 512 samples against AUDelay in-process before any
+  tuning (a larger block for those slots, say).
+- [ ] **Editor window of a loading slot.** A window opened while the plugin
+  is still on its way shows "Loading the plugin..." and takes the editor when
+  it comes, but stays non-resizable (the panel's flag is set at creation):
+  let `FloatingPanel` switch resizability on, or reopen the window on arrival.
 - [ ] **Scan cost: one process per plugin file.** The child-process scanner
   launches this binary once per file (0.2–0.5 s each); a machine with a few
   hundred plugins scans for minutes. Batch many identifiers per child until
