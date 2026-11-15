@@ -86,24 +86,37 @@ void HostedEffectEditorComponent::trackEdits()
         settling = true;
         editPending = false;
         lastChange = now;
+        waitingSince = now;
     }
 
     if (const auto changes = hosted.getPluginChangeCount(); changes != seenPluginChanges) {
         seenPluginChanges = changes;
         lastChange = now;
-        editPending = ! settling;
+        if (! settling && ! editPending) {
+            editPending = true;
+            waitingSince = now;
+        }
     }
 
-    // one step per move: a held control and a run of changes end first
-    if (now - lastChange < quietMilliseconds || hosted.isGestureOpen())
+    if (! settling && ! editPending)
+        return;
+
+    // One step per move: a held control and a run of changes end first. Neither wait is open-ended,
+    // though - a plugin may report without pause (a meter it publishes as a parameter, a modulation of
+    // its own) or never close a gesture it opened, and the user's moves would wait for ever: no undo
+    // step, and a project that does not know it changed.
+    const auto quietFor = now - lastChange;
+    const auto moveIsOver = hosted.isGestureOpen() ? quietFor >= staleGestureMilliseconds   // held, but nothing moves: taken as let go
+                                                   : quietFor >= quietMilliseconds || now - waitingSince >= longestRunMilliseconds;
+    if (! moveIsOver)
         return;
 
     if (settling) {
         settling = false;
         baseline = hosted.getState();
     }
-    else if (editPending) {
-        commitEdit();
+    else {
+        commitEdit();   // no step when the state is what it was: reports alone change nothing
     }
 }
 

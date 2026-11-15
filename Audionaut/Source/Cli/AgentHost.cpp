@@ -217,13 +217,17 @@ private:
             }
 
             const ScopedWorkingDirectory workingDirectoryScope (workingDirectory);
-            const HostedSessionScope hostedScope (host.engine, host.projectFile, liveState);
+            const HostedSessionScope hostedScope (host.engine, host.projectFile, liveState,
+                                                  [this, verb = argv[0]] {
+                                                      const auto standing = host.documentRefusalFor (verb);
+                                                      return std::pair { standing.code, standing.message };
+                                                  });
 
             juce::ArgumentList arguments ("audionaut", argv);
             exitCode = performCliCommand (arguments, context);
 
             if (exitCode == exitOk && HostedSessionScope::hasStagedState())
-                applyStaged (liveState, HostedSessionScope::takeStagedState(), group,
+                applyStaged (argv[0], liveState, HostedSessionScope::takeStagedState(), group,
                              exitCode, envelope);
         });
 
@@ -241,10 +245,19 @@ private:
     /** Message thread. Puts the verb's result on the live document, in the
         undo step of the task it belongs to - unless the user changed the
         document while we worked. */
-    void applyStaged (const json& liveStateAtStart, json staged,
+    void applyStaged (const juce::String& verb, const json& liveStateAtStart, json staged,
                       const ProjectFileStore::AgentEditGroup& group,
                       int& exitCode, json& envelope)
     {
+        // A verb that waited for a plugin kept the message thread serving, so the user may have started
+        // a take or an export since we looked - neither shows in the document compared below, and
+        // applying a state would stop the take or rebuild the graph the export is walking.
+        if (const auto standing = host.documentRefusalFor (verb); ! standing.message.empty()) {
+            exitCode = exitFailure;
+            envelope = errorEnvelope (standing.code, standing.message + "; nothing was applied - run the command again");
+            return;
+        }
+
         json liveStateNow;
         host.engine->getProjectSerializer()->writeToJson (liveStateNow);
 
@@ -385,6 +398,11 @@ AgentHost::Refusal AgentHost::refusalFor (const juce::String& verb) const
         return { "busy",
                  "Audionaut is still working on another command; run this one again in a moment" };
 
+    return documentRefusalFor (verb);
+}
+
+AgentHost::Refusal AgentHost::documentRefusalFor (const juce::String& verb) const
+{
     if (engine->getAudioBusInterface()->anyChannelRecording())
         return { "recording_in_progress",
                  "Audionaut is recording; applying a change would stop the take" };

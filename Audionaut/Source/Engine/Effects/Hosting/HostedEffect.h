@@ -88,6 +88,11 @@ public:
     /// Expires with the effect: a posted callback checks it before touching the effect.
     std::weak_ptr<const int> getAliveToken() const noexcept { return aliveToken; }
 
+    /// The count of its registry's effects that are still arriving (EffectRegistry::getPendingArrivals):
+    /// a plugin requested for this effect, now or later, is counted there. None for an effect made outside a registry.
+    void setArrivalCount (std::shared_ptr<std::atomic<int>> count) { arrivalCount = std::move (count); }
+    const std::shared_ptr<std::atomic<int>>& getArrivalCount() const noexcept { return arrivalCount; }
+
     const juce::PluginDescription& getDescription() const noexcept { return description; }
     juce::AudioPluginInstance* getInstance() const noexcept { return instance.get(); }
     /// Whether the plugin is there (running or refusing the layout); false for a placeholder of either kind.
@@ -167,6 +172,7 @@ private:
     int preparedBlockSize = 0;
     bool foldMono = false;   // a mono chain run through a stereo-only plugin
 
+    std::shared_ptr<std::atomic<int>> arrivalCount;
     std::shared_ptr<const int> aliveToken = std::make_shared<const int> (0);   // a creation callback in flight checks the effect still lives
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HostedEffect)

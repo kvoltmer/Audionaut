@@ -525,3 +525,111 @@ SCENARIO ("the child-process scanner reads the worker's envelope", "[engine][eff
         }
     }
 }
+
+SCENARIO ("a host that started without a list file leaves another process's list alone", "[engine][effects][hosting]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a host that found no list file, and a second one that scanned and saved meanwhile")
+    {
+        TestHost first (temp.folder, false);
+        REQUIRE_FALSE (first.host.loadList());
+
+        TestHost second (temp.folder);
+        REQUIRE (second.host.saveList());
+
+        WHEN ("the first, which changed nothing, saves what changed")
+        {
+            REQUIRE (first.host.saveListIfChanged());
+
+            THEN ("the second's list is still in the file")
+            {
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getNumTypes() == 2);
+            }
+        }
+
+        WHEN ("the first changes its own list")
+        {
+            first.host.getList().addToBlacklist ("/test/crashes.testa");
+
+            THEN ("that is written")
+            {
+                REQUIRE (first.host.saveListIfChanged());
+                TestHost third (temp.folder, false);
+                REQUIRE (third.host.loadList());
+                REQUIRE (third.host.getList().getBlacklistedFiles().contains ("/test/crashes.testa"));
+            }
+        }
+    }
+}
+
+SCENARIO ("an engine waits for its own plugins, not for another engine's", "[engine][effects][hosting]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("one host with a plugin that loads asynchronously, attached to two registries")
+    {
+        PluginHost host (temp.folder, false);
+        auto format = std::make_unique<TestPluginFormat> ("TestC", std::vector { gainIn ("TestC", 0x3333) });
+        format->asyncOnly = true;
+        auto* testFormat = format.get();
+        host.getFormats().addFormat (std::move (format));
+        host.getList().addType (TestPluginInstance::describe (gainIn ("TestC", 0x3333)));
+
+        auto app = std::make_shared<EffectRegistry>();
+        auto scratch = std::make_shared<EffectRegistry>();
+        host.attach (app, PluginHost::Mode::full);
+        host.attach (scratch, PluginHost::Mode::full);
+
+        WHEN ("the first registry's plugin never arrives")
+        {
+            testFormat->withhold = true;
+            auto stuck = app->create ("testc:00003333");
+            messageThread.pump();   // the creation was asked for, and is withheld
+            REQUIRE (host.getNumPendingLoads() == 1);
+
+            THEN ("the second registry has nothing to wait for")
+            {
+                REQUIRE (PluginHost::waitForPendingLoads (*scratch, 2000));
+                REQUIRE_FALSE (PluginHost::waitForPendingLoads (*app, 100));
+            }
+
+            AND_WHEN ("the second creates the plugin too, and that one arrives")
+            {
+                testFormat->withhold = false;
+                auto effect = scratch->create ("testc:00003333");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+
+                THEN ("the second's wait ends with its plugin, the first's goes on")
+                {
+                    REQUIRE (PluginHost::waitForPendingLoads (*scratch, 5000));
+                    REQUIRE (hosted->isLoaded());
+                    REQUIRE (host.getNumPendingLoads() == 1);
+                }
+            }
+        }
+
+        WHEN ("a placeholder of a catalogue-only registry is given its plugin later")
+        {
+            auto catalogue = std::make_shared<EffectRegistry>();
+            host.attach (catalogue, PluginHost::Mode::catalogueOnly);
+            auto effect = catalogue->create ("testc:00003333");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+            REQUIRE (host.load (*hosted));
+
+            THEN ("that load counts for its registry")
+            {
+                REQUIRE (catalogue->getPendingArrivals()->load() == 1);
+                REQUIRE (PluginHost::waitForPendingLoads (*catalogue, 5000));
+                REQUIRE (hosted->isLoaded());
+            }
+        }
+    }
+}

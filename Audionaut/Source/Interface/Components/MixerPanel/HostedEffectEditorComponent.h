@@ -29,6 +29,8 @@
  * changed and asks to be saved. A state the host itself put into the plugin
  * (an undo, an agent's edit) is not a move of the user's: the reports that
  * follow it are let pass, and the state they leave is the next start.
+ * Neither wait is open-ended: a plugin that reports without pause, or that
+ * leaves a gesture open, gets its step after a few seconds all the same.
  *
  * The slot is held strongly: the plugin instance outlives its editor, which
  * the destructor takes down first. Whether the slot is still in the project
@@ -73,6 +75,8 @@ private:
     void commitEdit();
 
     static constexpr juce::uint32 quietMilliseconds = 500;   ///< no report for this long ends a move
+    static constexpr juce::uint32 longestRunMilliseconds = 3000;    ///< reports without pause, no control held: a step is taken after this long anyway
+    static constexpr juce::uint32 staleGestureMilliseconds = 2000;  ///< a control reported as held, with no report for this long, counts as released
 
     MixerContext context;
     audium::InsertChainAddress address;
@@ -87,6 +91,7 @@ private:
     nlohmann::json baseline;                ///< the state the next step starts from
     juce::uint32 seenPluginChanges = 0;
     juce::uint32 seenHostEdits = 0;
+    juce::uint32 waitingSince = 0;         ///< when the pending move, or the settling, began
     juce::uint32 lastChange = 0;           ///< when the plugin last reported one, or the host last edited
     bool tracking = false;                 ///< the plugin is there
     bool editPending = false;              ///< the plugin reported changes that are not a step yet

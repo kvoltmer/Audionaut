@@ -46,7 +46,9 @@ class HostedEffect;
  * is created asynchronously: its effect starts as a loading placeholder
  * that passes the signal through and adopts the plugin when it arrives.
  * waitForPendingLoads() is for a process that wants them before it goes on
- * (the CLI, before it reports or saves).
+ * (the CLI, before it reports or saves): with a registry it waits for that
+ * engine's plugins only - a verb on a scratch engine shares the host with
+ * the app and is not kept by a plugin the app's own project is loading.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -122,10 +124,13 @@ public:
     /// (waitForPendingLoads). False when the plugin cannot be created here or failed to load.
     bool load (HostedEffect& effect) const;
 
-    /// Effects created here whose plugin has not arrived yet.
+    /// Effects created here whose plugin has not arrived yet, whatever engine they belong to.
     int getNumPendingLoads() const noexcept { return pendingLoads->load(); }
-    /// Message thread: pumps messages until every pending plugin arrived; false when the timeout passed first.
+    /// Message thread: pumps messages until every pending plugin arrived; false when the timeout passed
+    /// first, or when the message loop was told to stop (nothing arrives any more then).
     bool waitForPendingLoads (int timeoutMs = 30000) const;
+    /// The same for the plugins of one registry's effects (one engine's).
+    static bool waitForPendingLoads (const EffectRegistry& registry, int timeoutMs = 30000);
 
     /// Scans with a child process per file: this executable run as the scan-plugin worker.
     void useChildProcessScanner (juce::File executable, int timeoutMs = 60000);
@@ -156,7 +161,9 @@ public:
     static bool runWhilePumping (std::function<void()> fn, int timeoutMs);
 
 private:
-    std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode) const;
+    std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode,
+                                          std::shared_ptr<std::atomic<int>> arrivalCount = nullptr) const;
+    static bool waitUntilNone (const std::atomic<int>& pending, int timeoutMs);
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
     juce::String listAsText() const;
@@ -173,7 +180,7 @@ private:
     juce::File dataDirectory;
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
-    mutable juce::String persisted;   // the list as last read from or written to the file
+    mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

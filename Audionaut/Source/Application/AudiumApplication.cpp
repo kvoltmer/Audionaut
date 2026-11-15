@@ -568,6 +568,7 @@ void AudiumApplication::shutdown()
     agentHost.reset();      // withdraw the marker and stop serving
     projectMonitor.reset(); // stop polling before the engine goes away
     processingLoadView.reset(); // its timer reads the engine; stores its position while preferences live
+    pluginManagerView.reset();  // ends a scan that still runs: the list is saved below, after its last word
    #if JUCE_DEBUG
     loadSimulatorView.reset();  // resets the simulated loads it set
    #endif

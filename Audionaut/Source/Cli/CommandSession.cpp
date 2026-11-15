@@ -9,6 +9,7 @@
 #include "Cli/HeadlessEngineSession.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -31,6 +32,7 @@ struct HostedContext
     json liveState;
     json stagedState;
     bool staged = false;
+    HostedSessionScope::Refusal refusal;
 };
 
 HostedContext& hostedContext()
@@ -61,8 +63,10 @@ struct ProjectSession::Impl
     {
         if (borrowedEngine != nullptr)
             return true;
-        auto pluginHost = engineSession->get()->getPluginHost();
-        return pluginHost == nullptr || pluginHost->waitForPendingLoads();
+        // this engine's plugins only: the engine of a hosted verb shares the app's plugin host, and what
+        // the app's own document is loading is not this verb's to wait for
+        auto* planner = engineSession->get()->getAudioTrackContainer()->getMixerPlanner();
+        return planner == nullptr || PluginHost::waitForPendingLoads (planner->getRegistry());
     }
 
     /** Only an isolated verb (export) renders; every other session edits or
@@ -150,9 +154,10 @@ struct ProjectSession::Impl
 
 HostedSessionScope::HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine,
                                         juce::File projectFile,
-                                        json liveState)
+                                        json liveState,
+                                        Refusal refusal)
 {
-    hostedContext() = { std::move (liveEngine), std::move (projectFile), std::move (liveState), {}, false };
+    hostedContext() = { std::move (liveEngine), std::move (projectFile), std::move (liveState), {}, false, std::move (refusal) };
 }
 
 bool HostedSessionScope::hasStagedState()
@@ -294,6 +299,15 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         if (access == CommandAccess::isolated && ! scratchImpl->settlePlugins()) {
             failureExitCode = context.fail (exitFailure, "plugin_timeout", pluginTimeoutMessage);
             return {};
+        }
+
+        // The wait kept the message thread serving: the user may have started the transport or a take
+        // since the host looked, and the render would run beside it.
+        if (access == CommandAccess::isolated && hostedContext().refusal) {
+            if (const auto [code, message] = hostedContext().refusal(); ! message.empty()) {
+                failureExitCode = context.fail (exitFailure, code, message);
+                return {};
+            }
         }
 
         return ProjectSession (std::move (scratchImpl));

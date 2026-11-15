@@ -215,10 +215,17 @@ public:
     bool requiresUnblockedMessageThreadDuringCreation (const juce::PluginDescription&) const override { return asyncOnly; }
 
     bool asyncOnly = false;   ///< behaves like AUv3: refuses synchronous creation
+    bool withhold = false;    ///< a creation asked for never answers: the plugin stays on its way
+    std::function<void()> onCreate;   ///< called when a plugin is about to be created (message thread for an asynchronous one)
 
 private:
     void createPluginInstance (const juce::PluginDescription& description, double, int, PluginCreationCallback callback) override
     {
+        if (withhold)
+            return;
+        if (onCreate)
+            onCreate();
+
         for (const auto& plugin : plugins)
         {
             if (TestPluginInstance::describe (plugin).uniqueId == description.uniqueId)
