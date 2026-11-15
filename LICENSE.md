@@ -8,4 +8,6 @@ If you want to use Audionaut in a closed-source project, you need to purchase a 
 
 Pitch-preserving time-stretch (the Stretch clip mode) is built on the [Rubber Band Library](https://breakfastquay.com/rubberband/) R3 engine (GPL-2.0 or later; a commercial licence is available from the authors and would be required for a closed-source build).
 
+Plugin hosting uses the plugin SDKs that ship with JUCE: on Windows and Linux the [VST 3 SDK](https://github.com/steinbergmedia/vst3sdk) (MIT; VST is a trademark of Steinberg Media Technologies GmbH), on Linux also [LV2](https://lv2plug.in) with lilv, serd, sord and sratom (ISC). On macOS the application hosts Audio Units through Apple's system frameworks.
+
 Stem separation is built on [demucs.cpp](https://github.com/sevagh/demucs.cpp) (MIT). The Demucs *htdemucs* model weights it runs are not part of this source distribution or the installers; the application downloads them separately on first use. Note that Meta has stated the pretrained weights are not covered by the MIT licence and are provided for scientific purposes only ([facebookresearch/demucs#327](https://github.com/facebookresearch/demucs/issues/327)).

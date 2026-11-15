@@ -895,13 +895,18 @@ server.registerTool(
   {
     title: "List effect types",
     description:
-      "The effect types add_insert can create, each with its category (Utility, EQ, Dynamics, " +
-      "Delay), a one-line description and its parameters: id, name, unit, range, default and " +
-      "default_text. Built-ins (builtin:trim, builtin:eq3, builtin:compressor, builtin:delay) take values in their " +
-      "units. Needs no project.",
-    inputSchema: {},
+      "The effect types add_insert can create: the built-ins (builtin:trim, builtin:eq3, " +
+      "builtin:compressor, builtin:delay; category Utility, EQ, Dynamics, Delay) with their parameters " +
+      "(id, name, unit, range, default, default_text, values in their units), and the plugins installed " +
+      "on this machine (type ids au:, vst3:, lv2:; category = manufacturer) with format, manufacturer " +
+      "and file but no parameters, since listing them would load every plugin. Pass type to get one " +
+      "type with its parameters; a plugin's are normalised 0 to 1 and come with the plugin's own " +
+      "default_text. Needs no project.",
+    inputSchema: {
+      type: z.string().optional().describe("One type id to list with its parameters (loads a plugin)"),
+    },
   },
-  async () => runCli(["list-effects"])
+  async ({ type }) => runCli(["list-effects", ...(type !== undefined ? ["--type", type] : [])])
 );
 
 server.registerTool(
@@ -909,14 +914,15 @@ server.registerTool(
   {
     title: "Add an insert effect",
     description:
-      "Inserts an effect (a type id from list_effects, e.g. builtin:eq3) into a chain: a track's (track; it " +
-      "processes all the track's channels together), an aux bus's (aux) or the master's (master). Appends by " +
-      "default, or at position at. Parameters start at their defaults: " +
-      "set them with set_insert. Playback and export_audio both run the inserts; get_project_info lists them.",
+      "Inserts an effect (a type id from list_effects: a built-in like builtin:eq3, or a plugin like " +
+      "au:1a2b3c4d) into a chain: a track's (track; it processes all the track's channels together), an aux " +
+      "bus's (aux) or the master's (master). Appends by default, or at position at. Parameters start at " +
+      "their defaults: set them with set_insert. Playback and export_audio both run the inserts; " +
+      "get_project_info lists them (a plugin with its plugin block and loaded state, no parameter values).",
     inputSchema: {
       project: projectParam,
       ...chainParams,
-      type: z.string().describe("Effect type id from list_effects, e.g. builtin:eq3, builtin:compressor"),
+      type: z.string().describe("Effect type id from list_effects, e.g. builtin:eq3 or a plugin's au:/vst3:/lv2: id"),
       at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
       task: taskParam,
     },
@@ -955,9 +961,10 @@ server.registerTool(
   {
     title: "Set an insert's parameter or enabled state",
     description:
-      "Sets parameter param (an id from list_effects, e.g. gain_db) of the insert at index to value, clamped " +
-      "to the parameter's range, and/or enables or disables the insert. A disabled insert passes the " +
-      "signal through unchanged.",
+      "Sets parameter param (an id from list_effects, e.g. gain_db; for a plugin the ids list_effects " +
+      "gives with type, values normalised 0 to 1) of the insert at index to value, clamped to the " +
+      "parameter's range, and/or enables or disables the insert. A disabled insert passes the signal " +
+      "through unchanged.",
     inputSchema: {
       project: projectParam,
       ...chainParams,

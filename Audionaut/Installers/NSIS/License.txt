@@ -20,6 +20,7 @@ Audionaut includes or links the following components, each under its own license
 - Eigen (https://eigen.tuxfamily.org) - MPL 2.0
 - JSON for Modern C++ by Niels Lohmann (https://github.com/nlohmann/json) - MIT
 - farbot by Fabian Renn (https://github.com/hogliux/farbot) - MIT
+- VST 3 SDK (https://github.com/steinbergmedia/vst3sdk) - MIT. VST is a trademark of Steinberg Media Technologies GmbH.
 
 The Demucs htdemucs model weights used for stem separation are not part of this installer; Audionaut downloads them separately on first use. Meta has stated that the pretrained weights are not covered by the MIT license and are provided for scientific purposes only (https://github.com/facebookresearch/demucs/issues/327).
 

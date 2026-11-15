@@ -313,11 +313,32 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runSetInsert },
 
         { "list-effects",
-          "list-effects [--json]",
-          "Lists the effect types and their parameters.",
-          "The effect types add-insert can create, each with its parameters: id, name, unit, "
-          "range and default. Needs no project.",
+          "list-effects [--type ID] [--json]",
+          "Lists the effect types: the built-ins and the plugins this machine has.",
+          "The effect types add-insert can create. A built-in comes with its parameters (id, name, "
+          "unit, range, default); a plugin (type ids au:, vst3:, lv2:) comes with its format, "
+          "manufacturer and file, and is not loaded. --type ID lists one type with its parameters, "
+          "loading a plugin to read them: a plugin's parameters are normalised, 0 to 1. Needs no project.",
           runListEffects },
+
+        { "scan-plugins",
+          "scan-plugins [--format F] [--json]",
+          "Scans this machine's plugins into the list the app and the verbs use.",
+          "Looks through the platform's plugin folders (Audio Units on macOS, VST3 on Windows, VST3 and "
+          "LV2 on Linux; one format with --format) and writes what it finds to the plugin list in the "
+          "app's data folder, from where list-effects and add-insert take the types. Every file is "
+          "loaded in a process of its own, so a plugin that crashes is blacklisted and the scan goes on; "
+          "a plugin that refuses to load here (on macOS one that is not sandbox-safe) counts as a file "
+          "without a plugin. Needs no project.",
+          runScanPlugins },
+
+        { "scan-plugin",
+          "scan-plugin --format F <file or identifier> [--json]",
+          "The scan worker: describes the plugins in one file (internal).",
+          "Loads one plugin file in this process and prints its descriptions; scan-plugins and the app "
+          "run this verb in a child process per file so a crash takes only the worker down. Not meant "
+          "for the command line.",
+          runScanPlugin },
 
         { "add-aux",
           "add-aux <project.audium> [--name N] [--json]",

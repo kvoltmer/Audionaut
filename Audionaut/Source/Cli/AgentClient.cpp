@@ -103,11 +103,11 @@ int refuse (CliContext& context, const std::string& message)
 
 bool isHostableVerb (const juce::String& verb)
 {
-    // `create` has no project to hold, `list-effects` takes none, and
-    // `analyze` may be given a bare audio file rather than a project at all;
-    // everything else that addresses a project can run against the open
-    // document.
-    return verb != "create" && verb != "list-effects";
+    // `create` has no project to hold, `list-effects` and the plugin scans
+    // take none, and `analyze` may be given a bare audio file rather than a
+    // project at all; everything else that addresses a project can run
+    // against the open document.
+    return verb != "create" && verb != "list-effects" && verb != "scan-plugins" && verb != "scan-plugin";
 }
 
 RouteOutcome routeCommand (const juce::ArgumentList& args,

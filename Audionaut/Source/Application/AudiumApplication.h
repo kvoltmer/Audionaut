@@ -12,6 +12,7 @@
 #include "Application/AudiumCommandIDs.h"
 #include "Interface/Dialogs/ImportOptionsComponent.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Util/Preferences.h"
 
 class SettingsDialog;
@@ -123,6 +124,7 @@ private:
     bool isRunningCommandLine = false;
 
     std::unique_ptr<AudiumMainWindow> mainWindow;
+    std::shared_ptr<audium::PluginHost> pluginHost;   // the machine's plugins, before the engine so a project's inserts resolve
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     std::shared_ptr<audium::ProjectFileStore> fileStore;
     std::shared_ptr<audium::ProjectSerializer> serializer;

@@ -8,6 +8,7 @@
 #include "Cli/CommandSession.h"
 #include "Cli/HeadlessEngineSession.h"
 #include "Engine/AudiumEngine.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Project/ProjectFileStore.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Group/AudioTrackContainer.h"
@@ -43,11 +44,11 @@ HostedContext& hostedContext()
 struct ProjectSession::Impl
 {
     /** File mode: owns an engine of its own and opens the project into it. */
-    Impl (juce::File projectFile_, CommandAccess access_) :
+    Impl (juce::File projectFile_, CommandAccess access_, std::shared_ptr<PluginHost> pluginHost) :
         projectFile (std::move (projectFile_)),
         access (access_)
     {
-        engineSession.emplace();
+        engineSession.emplace (std::move (pluginHost));
         configureRendering (*engineSession->get(), access);
     }
 
@@ -78,9 +79,11 @@ struct ProjectSession::Impl
     {
         // The scratch engine lives inside a process that already runs a
         // MessageManager - it must borrow it rather than create and then
-        // destroy it.
+        // destroy it. It gets the live engine's plugins as types only: the
+        // project's plugin inserts resolve and keep their state, without a
+        // second instance of every plugin for the length of one edit.
         HeadlessEngineSession::setUseExternalMessageManager (true);
-        engineSession.emplace();
+        engineSession.emplace (hostedContext().engine->getPluginHost(), PluginHost::Mode::catalogueOnly);
         HeadlessEngineSession::setUseExternalMessageManager (false);
 
         auto engineRef = engineSession->get();
@@ -262,7 +265,7 @@ ProjectSession openProjectSession (const juce::File& projectFile,
         return ProjectSession (std::move (scratchImpl));
     }
 
-    auto impl = std::make_unique<ProjectSession::Impl> (projectFile, access);
+    auto impl = std::make_unique<ProjectSession::Impl> (projectFile, access, context.pluginHost);
 
     if (configure)
         configure (*impl->engineSession->get());
@@ -278,9 +281,9 @@ ProjectSession openProjectSession (const juce::File& projectFile,
     return ProjectSession (std::move (impl));
 }
 
-ProjectSession openEngineSession()
+ProjectSession openEngineSession (CliContext& context)
 {
-    return ProjectSession (std::make_unique<ProjectSession::Impl> (juce::File(), CommandAccess::readOnly));
+    return ProjectSession (std::make_unique<ProjectSession::Impl> (juce::File(), CommandAccess::readOnly, context.pluginHost));
 }
 
 } // namespace cli

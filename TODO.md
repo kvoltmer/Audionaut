@@ -479,6 +479,29 @@ the one-gesture crossfade UX on top:
   and solo apply. Surfaces: the export dialog, CLI `export --tracks`, the
   MCP `export_audio` tool, the manual.
 
+## Plugin hosting — follow-ups (found 2026-11-14 in phase 7a)
+
+- [ ] **Load AUv3 plugins asynchronously.** JUCE refuses to create an AUv3
+  on the message thread synchronously (`requiresUnblockedMessageThreadDuringCreation`),
+  so `PluginHost::registerInto` lists them but does not register them as
+  effect types yet; the sandboxed app sees sandbox-safe AUv2s only. Plan:
+  `createSlot` hands out a `HostedEffect` placeholder at once (status
+  `loading`), the host calls `createPluginInstanceAsync`, and on completion
+  the effect adopts the instance and marks its slot stale (the same path a
+  latency change takes: `isPreparedFor` says no, the planner re-prepares the
+  slot once the plan that ran it has retired). The headless CLI waits for the
+  callback (`runWhilePumping`). Until then the placeholder passes the signal
+  through and keeps the blob, so a project with an AUv3 loses nothing.
+- [ ] **Scan cost: one process per plugin file.** The child-process scanner
+  launches this binary once per file (0.2–0.5 s each); a machine with a few
+  hundred plugins scans for minutes. Batch many identifiers per child until
+  one crashes (JUCE's superprocess pattern), restarting after the crash.
+- [ ] **Plugin state blobs in every undo snapshot.** A structural edit's
+  container snapshot carries every hosted insert's base64 state; effect
+  plugins are a few KB, samplers can be megabytes. Measure with a heavy
+  plugin; if it hurts, intern blobs by hash in a per-engine store and keep a
+  reference in the snapshots.
+
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
 - [ ] **Each undo step keeps two container snapshots.** An

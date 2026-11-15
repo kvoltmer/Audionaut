@@ -10,6 +10,7 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <functional>
 #include <span>
 #include <string>
 
@@ -47,8 +48,11 @@ struct EffectTypeInfo
 
 /**
  * One effect instance: the contract the insert chains, the renderer and the
- * surfaces (CLI, editors) program against, for built-ins and, later, hosted
- * plugins alike.
+ * surfaces (CLI, editors) program against, for built-ins and hosted plugins
+ * alike. The parameter table below is the built-ins': a fixed span of infos
+ * and an atomic per value. A hosted plugin has its parameters only once it
+ * is loaded, and more of them, so the parameter methods are virtual and a
+ * hosted effect answers them from its own table.
  *
  * Threads: prepare(), release() and the state round trip run on the message
  * thread while nothing renders the effect (the planner sees to that).
@@ -105,11 +109,11 @@ public:
     /// the effect.
     virtual float takeGainReductionDb() noexcept { return 0.0f; }
 
-    std::span<const EffectParameterInfo> getParameters() const noexcept { return parameters; }
-    int getNumParameters() const noexcept { return static_cast<int> (parameters.size()); }
+    virtual std::span<const EffectParameterInfo> getParameters() const noexcept { return parameters; }
+    virtual int getNumParameters() const noexcept { return static_cast<int> (parameters.size()); }
 
     /// The index of the parameter with this id, -1 if there is none.
-    int getParameterIndex (std::string_view id) const noexcept
+    virtual int getParameterIndex (std::string_view id) const noexcept
     {
         for (size_t i = 0; i < parameters.size(); ++i)
             if (id == parameters[i].id)
@@ -133,13 +137,13 @@ public:
         return false;
     }
 
-    float getParameter (int index) const noexcept
+    virtual float getParameter (int index) const noexcept
     {
         return isValidIndex (index) ? values[static_cast<size_t> (index)].load (std::memory_order_relaxed) : 0.0f;
     }
 
     /// The value as setParameter() would store it: within the parameter's range, a boolean at 0 or 1.
-    float clampParameter (int index, float value) const noexcept
+    virtual float clampParameter (int index, float value) const noexcept
     {
         if (! isValidIndex (index))
             return 0.0f;
@@ -150,7 +154,7 @@ public:
     }
 
     /// Clamps to the parameter's range (a boolean to 0 or 1) and stores; the next block picks it up.
-    void setParameter (int index, float value) noexcept
+    virtual void setParameter (int index, float value) noexcept
     {
         if (! isValidIndex (index))
             return;
@@ -178,6 +182,14 @@ public:
             if (auto it = state.find (parameters[i].id); it != state.end() && it->is_number())
                 setParameter (static_cast<int> (i), it->get<float>());
     }
+
+    /// A hosted plugin: what the project writes beside the type so another machine can find the plugin
+    /// ({"name", "manufacturer", "format", "file", "version"}); null for a built-in.
+    virtual json getPluginInfo() const { return nullptr; }
+
+    /// Message thread: the effect's latency moved of its own accord (a plugin's report), not through a
+    /// parameter this engine set. The chain holding the slot sets it to ask for a plan; a bare effect has none.
+    std::function<void()> onLatencyChanged;
 
 protected:
     /// Render thread: the version the last block saw against the current one, so an effect recomputes only on a change.

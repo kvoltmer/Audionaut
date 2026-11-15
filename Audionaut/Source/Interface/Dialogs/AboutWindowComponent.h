@@ -64,6 +64,13 @@ public:
         addCredit ("Rubber Band Library (Particular Programs, GPL)", "https://breakfastquay.com/rubberband/");
         addCredit ("LAME " + String (get_lame_version()) + " MP3 encoder (The LAME Project, LGPL)",
                    "https://lame.sourceforge.io");
+#if JUCE_PLUGINHOST_VST3 && ! JUCE_MAC
+        addCredit ("VST 3 SDK (Steinberg Media Technologies, MIT) - VST is a trademark of Steinberg Media Technologies GmbH",
+                   "https://github.com/steinbergmedia/vst3sdk");
+#endif
+#if JUCE_PLUGINHOST_LV2 && JUCE_LINUX
+        addCredit ("LV2, lilv, serd, sord and sratom (David Robillard, ISC)", "https://lv2plug.in");
+#endif
 
         // Copyright
         addAndMakeVisible (copyrightLabel);

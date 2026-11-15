@@ -84,7 +84,7 @@ private:
 
     friend ProjectSession openProjectSession (const juce::File&, CommandAccess, CliContext&, int&,
                                               const std::function<void (AudiumEngine&)>&);
-    friend ProjectSession openEngineSession();
+    friend ProjectSession openEngineSession (CliContext&);
 };
 
 /**
@@ -105,9 +105,10 @@ ProjectSession openProjectSession (const juce::File& projectFile,
 
 /**
  * @brief A session with an engine but no project, for a verb that can also
- *        work on a bare audio file (`analyze`). `commit()` is refused.
+ *        work on a bare audio file (`analyze`) or asks the engine itself
+ *        (`list-effects`). `commit()` is refused.
  */
-ProjectSession openEngineSession();
+ProjectSession openEngineSession (CliContext& context);
 
 /**
  * @class HostedSessionScope

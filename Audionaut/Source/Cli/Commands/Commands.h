@@ -98,8 +98,13 @@ int runAddInsert (const juce::ArgumentList& args, CliContext& context);
 int runRemoveInsert (const juce::ArgumentList& args, CliContext& context);
 /** `set-insert <project> (--track N [--channel C] | --master) --index I [--param ID --value V] [--enabled on|off]` */
 int runSetInsert (const juce::ArgumentList& args, CliContext& context);
-/** `list-effects` - the effect types with their parameters. */
+/** `list-effects [--type ID]` - the effect types; with --type one type's parameters. */
 int runListEffects (const juce::ArgumentList& args, CliContext& context);
+
+/** `scan-plugins [--format F]` - scan this machine's plugins into the list the app uses. */
+int runScanPlugins (const juce::ArgumentList& args, CliContext& context);
+/** `scan-plugin --format F <file or identifier>` - the scan worker: one file, in this process. */
+int runScanPlugin (const juce::ArgumentList& args, CliContext& context);
 
 /** `add-aux <project> [--name N]` - a new aux bus. */
 int runAddAux (const juce::ArgumentList& args, CliContext& context);

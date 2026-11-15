@@ -26,9 +26,9 @@ Decisions taken (2026-10-25):
 
 - Built-in effects first (juce_dsp, already a project module, no new dependencies). VST3/AU
   hosting implements the same interface in a later phase.
-- Revised 2026-11-13: the built-in effects (Trim, EQ, Compressor, Delay) are development tools
-  only, registered in debug builds and the CMake test/CLI targets (`AUDIONAUT_BUILT_IN_EFFECTS`);
-  a release app registers none. Effects for users come with plugin hosting (phase 7). Effects
+- Revised 2026-11-13, and again 2026-11-14 (PR #257 ships the built-ins in release builds after
+  all): the built-in effects (Trim, EQ, Compressor, Delay) stay, registered in every build, and
+  plugin hosting (phase 7) adds the plugins beside them. Phase 6 stays dropped: effects
   that sound good but not exceptional would hurt Audionaut more than missing ones: a set of 23
   vendored Airwindows effects was built and removed again (PR #257), and phase 6 is dropped.
 - Inserts per track, processing all bus channels of the track together (stereo effects on a stereo
@@ -796,11 +796,46 @@ next to the right-panel button toggle it.
 - Was: Limiter, Gate, Reverb, Delay, Chorus, Phaser. Dropped with the decision in section 1: the
   built-ins stay development tools, so phase 7 comes next.
 
-### Phase 7: Plugin hosting (VST3 / AU; LV2 on Linux), next
+### Phase 7: Plugin hosting (AU on macOS; VST3 on Windows; VST3 and LV2 on Linux)
+
+Decided with Klaus 2026-11-14: **macOS stays sandboxed on both channels** (App Store and DMG
+share one container), so the Mac hosts Audio Units only - sandbox-safe AUv2 now, AUv3 (which
+JUCE creates asynchronously only) as a follow-up; Windows hosts VST3, Linux VST3 and LV2. The
+three `JUCE_PLUGINHOST_*` flags are set globally (jucer `JUCEOPTIONS`, test CMake), the formats a
+process hosts are chosen at runtime (`PluginHost::addPlatformFormats`). Cross-format recall:
+the slot JSON carries a `"plugin"` block (name, manufacturer, format, file, version) beside the
+type id `au:`/`vst3:`/`lv2:` + eight hex digits of the plugin's unique id; a project saved with
+the plugin in one format opens with it in another installed format by name + manufacturer, the
+state blob handed over. Scanning runs this executable as a child process per plugin file
+(`scan-plugin` verb). Two PRs: 7a engine, 7b UI.
+
+Built in 7a (`feature/plugin-hosting`, 2026-11-14): `Engine/Effects/Hosting/` - `PluginHost`
+(one per process, injected into the factory: format manager, `KnownPluginList` as
+`<data>/Plugins/KnownPlugins.xml` with the blacklist and a dead man's pedal, `attach(registry,
+mode)` registering every listed plugin as an effect type by manufacturer and again on every list
+change, the substitute resolver, `scanAll`, `useChildProcessScanner`; `Mode::catalogueOnly`
+gives the scratch engine of a hosted edit placeholders that carry the state instead of a
+second instance of every plugin), `HostedEffect` (parameters normalised 0..1 under the plugin's
+ids, the plugin's text; state `{"blob": base64}` re-read only after the plugin reported a
+change, equal blobs skipped on set; layout negotiation with a mono-chain fold through
+stereo-only plugins, refused layouts pass dry as `incompatibleLayout`; a latency change the
+plugin reports posts `Effect::onLatencyChanged`, which the chain turns into a plan request),
+`ChildProcessScanner`, `PluginTypeId`. `Effect`'s parameter methods became virtual;
+`EffectRegistry` gained `remove` and the substitute resolver, `MixerPlanner::createSlot` the
+element it may substitute for, `InsertChain` the `"plugin"` block, the latency hook and
+`getUnresolved`/`removeUnresolved`. CLI: `list-effects` names plugins without loading them,
+`--type` loads one; `scan-plugins`, `scan-plugin` (worker); `info` lists hosted inserts with
+their plugin block and missing elements with `"missing": true`. MCP: `list_effects` takes
+`type`, texts updated, no new tool. Tests: `TestPluginInstance` (an in-process
+`AudioPluginInstance` with hosted parameters), `HostedEffectTests`, `PluginHostTests`, and on
+macOS Apple's AUDelay through the real format (`AudioUnitHostingTests`, ctest `CliScanAU`).
+
+Open after 7a: 7b (plugin editors in the floating panel, the Manage Plugins window, missing
+rows in the mixer, the manual chapter); AUv3 asynchronous loading (TODO.md).
 
 - Jucer: `JUCE_PLUGINHOST_VST3=1`, `JUCE_PLUGINHOST_AU=1` (macOS, `AudioUnit` framework),
-  `JUCE_PLUGINHOST_LV2=1` (Linux). MAS build: sandbox allows AU only (sandbox-safe AUs); VST3
-  hosting on the GitHub/DMG channel.
+  `JUCE_PLUGINHOST_LV2=1` (Linux). Sandbox allows AU only (sandbox-safe AUs) - on both macOS
+  channels, see above.
 - `PluginRegistry` service (per process, injected, not static): `juce::AudioPluginFormatManager`
   + `KnownPluginList` persisted as XML in `Preferences::applicationDataDirectory()`; scanning in
   a child process (JUCE `ChildProcessCoordinator`, dead-man list so a crashing plugin is skipped

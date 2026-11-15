@@ -212,6 +212,11 @@ function(audionaut_configure_common target)
             AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
             JUCE_WEB_BROWSER=0  # removing either needs NEEDS_WEB_BROWSER / NEEDS_CURL on juce_add_console_app
             JUCE_USE_CURL=0
+            # plugin hosting, the same three as the .jucer: the formats a process
+            # hosts are chosen at runtime (PluginHost::addPlatformFormats)
+            JUCE_PLUGINHOST_AU=1
+            JUCE_PLUGINHOST_VST3=1
+            JUCE_PLUGINHOST_LV2=1
             DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
 
     target_link_libraries(${target}
@@ -374,4 +379,12 @@ if(AUDIONAUT_BUILD_CLI)
     add_test(NAME CliSmoke
              COMMAND ${CLI_NAME} info ${CMAKE_CURRENT_SOURCE_DIR}/TestFiles/Sessions/simple-sine.audium --json)
     set_tests_properties(CliSmoke PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
+
+    # The plugin scan worker end to end on a real plugin: Apple's AUDelay,
+    # which every Mac has. This is the process the app spawns per plugin file.
+    if(APPLE)
+        add_test(NAME CliScanAU
+                 COMMAND ${CLI_NAME} scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")
+        set_tests_properties(CliScanAU PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
+    endif()
 endif()

@@ -9,6 +9,8 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/InsertChain.h"
 #include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Group/AudioTrack.h"
@@ -279,28 +281,15 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
     });
 }
 
-int runListEffects (const juce::ArgumentList& args, CliContext& context)
+namespace
 {
-    juce::ignoreUnused (args);
-    ScopedCoutToStderr guard (context.json);
-
-    // the types are the engine's, not a project's: a bare engine answers
-    auto session = openEngineSession();
-    auto* planner = session->getAudioTrackContainer()->getMixerPlanner();
-    if (planner == nullptr)
-        return context.fail (exitFailure, "no_effects", "this engine has no effect registry");
-
-    auto types = nlohmann::json::array();
-    for (const auto& type : planner->getRegistry().getTypes())
+    /// The parameters of one effect instance, as list-effects reports them.
+    nlohmann::json describeParameters (const Effect& effect)
     {
-        auto effect = planner->getRegistry().create (type.id);
-        if (effect == nullptr)
-            continue;   // registered but cannot be made: nothing add-insert could use
-
         auto parameters = nlohmann::json::array();
-        for (int index = 0; index < effect->getNumParameters(); ++index)
+        for (const auto& info : effect.getParameters())
         {
-            const auto& info = effect->getParameters()[static_cast<size_t> (index)];
+            const auto index = static_cast<int> (&info - effect.getParameters().data());
             parameters.push_back ({ { "id", info.id },
                                     { "name", info.name },
                                     { "unit", info.unit },
@@ -309,13 +298,57 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context)
                                     { "default", info.def },
                                     { "boolean", info.boolean },
                                     // the effect's own reading of the default, where it has one ("0.00 dB")
-                                    { "default_text", effect->getParameterText (index, info.def).toStdString() } });
+                                    { "default_text", effect.getParameterText (index, info.def).toStdString() } });
         }
-        types.push_back ({ { "type", type.id },
-                           { "name", type.name },
-                           { "category", type.category },
-                           { "description", type.description },
-                           { "parameters", parameters } });
+        return parameters;
+    }
+}
+
+int runListEffects (const juce::ArgumentList& args, CliContext& context)
+{
+    auto working = args;
+    const auto typeFilter = takeOptionValue (working, "--type").toStdString();
+    ScopedCoutToStderr guard (context.json);
+
+    // the types are the engine's, not a project's: a bare engine answers
+    auto session = openEngineSession (context);
+    auto* planner = session->getAudioTrackContainer()->getMixerPlanner();
+    if (planner == nullptr)
+        return context.fail (exitFailure, "no_effects", "this engine has no effect registry");
+
+    const auto& registry = planner->getRegistry();
+    if (! typeFilter.empty() && ! registry.hasType (typeFilter))
+        return context.fail (exitFailure, "unknown_effect", "no effect type " + typeFilter);
+
+    auto types = nlohmann::json::array();
+    for (const auto& type : registry.getTypes())
+    {
+        if (! typeFilter.empty() && type.id != typeFilter)
+            continue;
+
+        nlohmann::json entry = { { "type", type.id },
+                                 { "name", type.name },
+                                 { "category", type.category },
+                                 { "description", type.description } };
+
+        // a plugin is named without loading it - every plugin of the list
+        // would be instantiated otherwise; --type loads the one asked for
+        const auto plugin = context.pluginHost != nullptr ? context.pluginHost->findByTypeId (type.id) : std::nullopt;
+        if (plugin.has_value())
+        {
+            entry["format"] = plugin->pluginFormatName.toStdString();
+            entry["manufacturer"] = plugin->manufacturerName.toStdString();
+            entry["file"] = plugin->fileOrIdentifier.toStdString();
+            entry["version"] = plugin->version.toStdString();
+        }
+
+        if (! plugin.has_value() || ! typeFilter.empty())
+        {
+            auto effect = registry.create (type.id);
+            if (effect != nullptr)
+                entry["parameters"] = describeParameters (*effect);
+        }
+        types.push_back (std::move (entry));
     }
 
     context.log (juce::String (static_cast<int> (types.size())) + " effect types");

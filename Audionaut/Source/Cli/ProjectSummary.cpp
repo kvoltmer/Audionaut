@@ -6,6 +6,7 @@
 #include "Cli/ProjectSummary.h"
 
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/InsertChain.h"
 #include "Engine/Project/ProjectFileStore.h"
 
@@ -23,11 +24,29 @@ namespace cli {
 
 nlohmann::json describeInsert (const EffectSlot& slot, int index)
 {
-    return { { "index", index },
-             { "type", slot.getEffect().getType().id },
-             { "name", slot.getEffect().getType().name },
-             { "enabled", slot.isEnabled() },
-             { "state", slot.getEffect().getState() } };
+    const auto& effect = slot.getEffect();
+    nlohmann::json insert = { { "index", index },
+                              { "type", effect.getType().id },
+                              { "name", effect.getType().name },
+                              { "enabled", slot.isEnabled() } };
+
+    if (auto* hosted = dynamic_cast<const HostedEffect*> (&effect))
+    {
+        // a plugin: its state is an opaque chunk, its parameters are listed
+        // by list-effects --type; what identifies it goes out instead
+        insert["plugin"] = hosted->getPluginInfo();
+        insert["loaded"] = hosted->isLoaded();
+        insert["status"] = hosted->getStatus() == HostedEffect::Status::loaded ? "loaded"
+                         : hosted->getStatus() == HostedEffect::Status::incompatibleLayout ? "incompatible_layout"
+                                                                                           : "not_loaded";
+        if (hosted->getError().isNotEmpty())
+            insert["error"] = hosted->getError().toStdString();
+    }
+    else
+    {
+        insert["state"] = effect.getState();
+    }
+    return insert;
 }
 
 nlohmann::json describeInserts (const InsertChain& chain)
@@ -35,6 +54,20 @@ nlohmann::json describeInserts (const InsertChain& chain)
     auto inserts = nlohmann::json::array();
     for (auto i = 0; i < chain.size(); ++i)
         inserts.push_back (describeInsert (*chain.getSlot (i), i));
+
+    // elements the engine could make nothing of (a plugin this machine lacks):
+    // listed without an index, so the slot indices stay what set-insert takes
+    for (const auto& entry : chain.getUnresolved())
+    {
+        nlohmann::json missing = { { "missing", true }, { "position", entry.index } };
+        if (entry.element.is_object())
+        {
+            for (const auto* key : { "type", "plugin", "enabled" })
+                if (entry.element.contains (key))
+                    missing[key] = entry.element[key];
+        }
+        inserts.push_back (std::move (missing));
+    }
     return inserts;
 }
 

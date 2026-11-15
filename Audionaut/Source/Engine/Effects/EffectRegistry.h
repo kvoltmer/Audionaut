@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+
 #include "Effect.h"
 
 namespace audium
@@ -19,8 +21,12 @@ namespace audium
  * The effect types this engine can create, by type id. One per engine,
  * injected where effects are created (the insert chains through the mixer
  * planner, the CLI): no process-wide registry, several engines live in one
- * process. The factory registers the built-ins; the hosting phase adds a
- * second source for plugins.
+ * process. The factory registers the built-ins; a PluginHost registers the
+ * plugins it knows and the substitute resolver: a project element whose
+ * type id names a plugin this machine lacks may still name one it has in
+ * another format (the same plugin as an Audio Unit here, as a VST3 where the
+ * project was saved), and the resolver finds that id from the element's
+ * "plugin" block.
  */
 class EffectRegistry
 {
@@ -32,8 +38,18 @@ public:
     /// Registers a type; a second registration of the same id replaces the first.
     void add (EffectTypeInfo type, Factory factory);
 
+    /// Unregisters a type; false when there was none of that id.
+    bool remove (const std::string& typeId);
+
     /// Registers Trim, EQ, Compressor and Delay.
     void addBuiltInEffects();
+
+    /// A stand-in for an insert element whose type this registry lacks: the type id to create instead, "" for none.
+    using SubstituteResolver = std::function<std::string (const nlohmann::json& insertElement)>;
+    void setSubstituteResolver (SubstituteResolver resolver) { substituteResolver = std::move (resolver); }
+
+    /// The type id a substitute for the element is registered under, "" when there is no resolver or no match.
+    std::string resolveSubstitute (const nlohmann::json& insertElement) const;
 
     /// A new instance of the type, nullptr for an unknown id.
     std::unique_ptr<Effect> create (const std::string& typeId) const;
@@ -46,6 +62,7 @@ public:
 private:
     std::vector<EffectTypeInfo> types;
     std::vector<Factory> factories;
+    SubstituteResolver substituteResolver;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EffectRegistry)
 };

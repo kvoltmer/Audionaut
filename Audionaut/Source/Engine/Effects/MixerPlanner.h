@@ -66,7 +66,9 @@ public:
     MixPlanContainer& getPlans() noexcept { return *plans; }
 
     /// A slot with a new effect of the type, nullptr for an unknown id. Prepared when it enters a plan.
-    std::shared_ptr<EffectSlot> createSlot (const std::string& typeId) const;
+    /// With the insert element it was read from, an unknown id may still get a slot: the registry's
+    /// substitute for that element (the same plugin in another format), when it has one.
+    std::shared_ptr<EffectSlot> createSlot (const std::string& typeId, const json* insertElement = nullptr) const;
 
     /// Message thread: a new plan, built and published now - or when the enclosing batch closes.
     void requestRebuild();
