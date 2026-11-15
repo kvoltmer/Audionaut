@@ -496,10 +496,11 @@ the one-gesture crossfade UX on top:
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):
   let `FloatingPanel` switch resizability on, or reopen the window on arrival.
-- [ ] **Scan cost: one process per plugin file.** The child-process scanner
-  launches this binary once per file (0.2–0.5 s each); a machine with a few
-  hundred plugins scans for minutes. Batch many identifiers per child until
-  one crashes (JUCE's superprocess pattern), restarting after the crash.
+- [x] **Scan cost: one process per plugin file.** Done: one worker serves
+  file after file over a named pipe (`scan-plugin --serve`), one file on its
+  way at a time, so the worker that dies died of that file and the next file
+  gets a new worker; a process per file remains as the fallback where the
+  pipe does not work. 40 Audio Units: 6.7 s before, about 2 s after.
 - [ ] **Plugin state blobs in every undo snapshot.** A structural edit's
   container snapshot carries every hosted insert's base64 state; effect
   plugins are a few KB, samplers can be megabytes. Measure with a heavy

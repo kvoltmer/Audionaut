@@ -806,8 +806,9 @@ process hosts are chosen at runtime (`PluginHost::addPlatformFormats`). Cross-fo
 the slot JSON carries a `"plugin"` block (name, manufacturer, format, file, version) beside the
 type id `au:`/`vst3:`/`lv2:` + eight hex digits of the plugin's unique id; a project saved with
 the plugin in one format opens with it in another installed format by name + manufacturer, the
-state blob handed over. Scanning runs this executable as a child process per plugin file
-(`scan-plugin` verb). Two PRs: 7a engine, 7b UI.
+state blob handed over. Scanning runs this executable as a child process (`scan-plugin` verb): at first one per plugin
+file, since the scan-batching follow-up one worker that serves file after file over a named pipe
+(`scan-plugin --serve`) and is replaced when a plugin takes it down. Two PRs: 7a engine, 7b UI.
 
 Built in 7a (`feature/plugin-hosting`, 2026-11-14): `Engine/Effects/Hosting/` - `PluginHost`
 (one per process, injected into the factory: format manager, `KnownPluginList` as

@@ -125,8 +125,8 @@ void AudiumApplication::initialise (const juce::String& commandLine)
 
     // The plugins this machine has, from the list the last scan left: the
     // engine registers them as effect types, so a project's plugin inserts
-    // resolve when it opens. A scan runs this binary as its worker, one
-    // process per plugin file.
+    // resolve when it opens. A scan runs this binary as its worker, a
+    // process that loads the plugin files in the app's place.
     pluginHost = std::make_shared<audium::PluginHost> (audium::PluginHost::defaultDataDirectory());
     pluginHost->loadList();
     pluginHost->useChildProcessScanner (File::getSpecialLocation (File::currentExecutableFile));

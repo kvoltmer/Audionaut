@@ -633,3 +633,165 @@ SCENARIO ("an engine waits for its own plugins, not for another engine's", "[eng
         }
     }
 }
+
+namespace
+{
+    /// A scan worker on a thread of this process: the real loop at the other end of the pipe, with a
+    /// scan function of the test's. A scan that throws Dies ends the worker without an answer.
+    struct Dies {};
+
+    class ThreadWorker final : public ChildProcessScanner::Worker
+    {
+    public:
+        ThreadWorker (ChildProcessScanner::ScanFunction scan_, int idleMs_) : scan (std::move (scan_)), idleMs (idleMs_) {}
+        ~ThreadWorker() override
+        {
+            if (thread.joinable())
+                thread.join();
+        }
+
+        bool start (const juce::String& pipeName) override
+        {
+            running = true;
+            thread = std::thread ([this, pipeName]
+            {
+                try { ChildProcessScanner::serve (pipeName, scan, idleMs); }
+                catch (const Dies&) {}
+                running = false;
+            });
+            return true;
+        }
+
+        bool isRunning() override { return running; }
+        void kill() override {}   // a thread is not killed: its loop ends when nobody asks any more
+
+    private:
+        ChildProcessScanner::ScanFunction scan;
+        int idleMs;
+        std::atomic<bool> running { false };
+        std::thread thread;
+    };
+
+    /// Started, alive, and silent.
+    struct MuteWorker final : public ChildProcessScanner::Worker
+    {
+        bool start (const juce::String&) override { return true; }
+        bool isRunning() override { return true; }
+        void kill() override {}
+    };
+
+    json describedIn (const juce::String& format, const juce::String& file)
+    {
+        if (format != "TestA")
+            return { { "ok", false }, { "code", "unknown_format" } };
+        if (file == "dies")
+            throw Dies();
+        if (file == "slow")
+            juce::Thread::sleep (700);
+
+        const auto description = TestPluginInstance::describe (gainIn ("TestA", file.getIntValue()));
+        return { { "ok", true }, { "plugins", json::array ({ description.createXml()->toString().toStdString() }) } };
+    }
+}
+
+SCENARIO ("the child-process scanner asks one worker for many files", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+    TestPluginFormat other ("TestB", std::vector { gainIn ("TestB", 0x2222) });
+
+    GIVEN ("a scanner whose workers serve the pipe")
+    {
+        ChildProcessScanner scanner ([] { return std::make_unique<ThreadWorker> (describedIn, 300); }, 400);
+
+        WHEN ("three files are scanned in a row")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+
+            THEN ("one worker answered them all")
+            {
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
+                REQUIRE (found.size() == 3);
+                REQUIRE (found[0]->uniqueId == 11);
+                REQUIRE (found[2]->uniqueId == 33);
+            }
+        }
+
+        WHEN ("a file takes the worker down")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            const auto verdict = scanner.findPluginTypesFor (format, found, "dies");
+
+            THEN ("that file failed, and the next one gets a new worker")
+            {
+                REQUIRE_FALSE (verdict);
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (found.size() == 2);
+            }
+        }
+
+        WHEN ("a file keeps the worker longer than the scanner waits")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            const auto verdict = scanner.findPluginTypesFor (format, found, "slow");
+
+            THEN ("that file failed, and the next one is scanned")
+            {
+                REQUIRE_FALSE (verdict);
+                REQUIRE (found.isEmpty());
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+                REQUIRE (found.size() == 1);
+                REQUIRE (found[0]->uniqueId == 22);
+            }
+        }
+
+        WHEN ("the worker was left alone until it went")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            juce::Thread::sleep (700);
+
+            THEN ("the next file gets a new one, and its answer")
+            {
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (found.size() == 2);
+            }
+        }
+
+        WHEN ("the worker has no such format")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            const auto verdict = scanner.findPluginTypesFor (other, found, "11");
+
+            THEN ("the file has nothing, and is no crash")
+            {
+                REQUIRE (verdict);
+                REQUIRE (found.isEmpty());
+            }
+        }
+    }
+
+    GIVEN ("a scanner whose worker never says hello")
+    {
+        ChildProcessScanner scanner ([] { return std::make_unique<MuteWorker>(); }, 400, 200);
+
+        WHEN ("files are scanned")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            const auto first = scanner.findPluginTypesFor (format, found, "11");
+            const auto second = scanner.findPluginTypesFor (format, found, "22");
+
+            THEN ("the pipe is given up after the first, with nothing to fall back to here")
+            {
+                REQUIRE_FALSE (first);
+                REQUIRE_FALSE (second);
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
+            }
+        }
+    }
+}

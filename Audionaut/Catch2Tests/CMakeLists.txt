@@ -381,7 +381,8 @@ if(AUDIONAUT_BUILD_CLI)
     set_tests_properties(CliSmoke PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
 
     # The plugin scan worker end to end on a real plugin: Apple's AUDelay,
-    # which every Mac has. This is the process the app spawns per plugin file.
+    # which every Mac has. This is the worker's one-file form, the scanner's
+    # fallback where its pipe to a serving worker does not work.
     if(APPLE)
         add_test(NAME CliScanAU
                  COMMAND ${CLI_NAME} scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")

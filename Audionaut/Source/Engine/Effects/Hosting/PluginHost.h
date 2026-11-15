@@ -29,7 +29,7 @@ class HostedEffect;
  * app lives in its sandbox; VST3 on Windows; VST3 and LV2 on Linux - and the
  * list of known plugins, kept as XML in the app's data folder together with
  * the blacklist, so a launch has the plugins without a scan. A scan goes
- * through a child process per file (ChildProcessScanner) when the host is
+ * through a worker process (ChildProcessScanner) when the host is
  * given the executable; without one it scans in-process (tests).
  *
  * attach() registers every known plugin as an effect type in an engine's
@@ -132,7 +132,8 @@ public:
     /// The same for the plugins of one registry's effects (one engine's).
     static bool waitForPendingLoads (const EffectRegistry& registry, int timeoutMs = 30000);
 
-    /// Scans with a child process per file: this executable run as the scan-plugin worker.
+    /// Scans in a child process: this executable run as the scan-plugin worker, which serves file after file
+    /// until one takes it down (timeoutMs: how long one file may take).
     void useChildProcessScanner (juce::File executable, int timeoutMs = 60000);
 
     struct ScanResult

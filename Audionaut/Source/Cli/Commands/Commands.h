@@ -103,7 +103,8 @@ int runListEffects (const juce::ArgumentList& args, CliContext& context);
 
 /** `scan-plugins [--format F]` - scan this machine's plugins into the list the app uses. */
 int runScanPlugins (const juce::ArgumentList& args, CliContext& context);
-/** `scan-plugin --format F <file or identifier>` - the scan worker: one file, in this process. */
+/** `scan-plugin --format F <file or identifier>` | `scan-plugin --serve <pipe>` - the scan worker: one file, or
+    file after file for the scanner at the other end of the pipe, in this process. */
 int runScanPlugin (const juce::ArgumentList& args, CliContext& context);
 
 /** `add-aux <project> [--name N]` - a new aux bus. */
