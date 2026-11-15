@@ -23,11 +23,15 @@ namespace audium
  * hands it one file at a time over a named pipe and reads the answer from
  * it, so starting the binary is paid once and not per file. Only one file
  * is ever on its way, which keeps the verdict exact: the worker that dies
- * died of that file, and the next file gets a new worker. A worker nobody
- * asks for a while leaves by itself.
+ * died while that file was in it, and the next file gets a new worker. A
+ * file that failed in a worker which had loaded other plugins before is
+ * asked once more of a new worker, and only blacklisted when it fails there
+ * too: what an earlier plugin left behind is not held against it. A worker
+ * nobody asks for a while leaves by itself.
  *
- * Where the pipe does not work (the worker never says hello), the scanner
- * falls back to a process per file: `scan-plugin --json --format <name>
+ * Where the pipe does not work (the worker is there and never says hello,
+ * or does not start twice in a row), the scanner falls back to a process
+ * per file: `scan-plugin --json --format <name>
  * <file or identifier>`, which reports one JSON envelope on stdout and
  * exits.
  *
@@ -63,9 +67,15 @@ public:
     int getNumWorkersStarted() const noexcept { return workersStarted.load(); }
 
     //==============================================================================
-    /// The worker's side: what it found in one file of one format. `{"ok": true, "plugins": [xml, ...]}`,
-    /// or `{"ok": false, "code": ...}`; with `"last": true` the worker leaves after this answer.
-    using ScanFunction = std::function<nlohmann::json (const juce::String& formatName, const juce::String& fileOrIdentifier)>;
+    /// The worker's side: what it found in one file of one format, given so long for it.
+    /// `{"ok": true, "plugins": [xml, ...]}`, or `{"ok": false, "code": ...}`; with `"last": true` the
+    /// worker leaves after this answer.
+    using ScanFunction = std::function<nlohmann::json (const juce::String& formatName, const juce::String& fileOrIdentifier,
+                                                       int timeoutMs)>;
+
+    /// How long the worker gets for a file the scanner waits timeoutMs for: a little less, so that
+    /// its own answer about a stuck plugin still arrives.
+    static int workerTimeoutMs (int scannerTimeoutMs) noexcept;
 
     /// The worker's loop: opens the pipe, says hello, answers one request after the other and leaves
     /// when it is told to, when an answer was its last, or when nobody asked for idleMs. `pump` is
@@ -77,11 +87,12 @@ public:
     static bool parseScanEnvelope (const juce::String& output, juce::OwnedArray<juce::PluginDescription>& result);
 
 private:
-    enum class Asked { found, nothing, failed, abandoned, unavailable };
+    enum class Asked { found, nothing, failed, failedAfterOthers, abandoned, unavailable, unusable };
+    enum class Started { ready, silent, failed, abandoned };
 
     Asked askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
                      juce::OwnedArray<juce::PluginDescription>& result);
-    bool startWorker();
+    Started startWorker();
     void dropWorker (bool kill);
     bool scanInProcessOfItsOwn (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,
                                 const juce::String& fileOrIdentifier);
@@ -94,6 +105,8 @@ private:
     juce::CriticalSection workerLock;          // one file on its way at a time
     std::unique_ptr<juce::NamedPipe> pipe;
     std::unique_ptr<Worker> worker;
+    int answeredByWorker = 0;                  // files the current worker has loaded
+    int startFailures = 0;                     // workers in a row that did not get as far as hello
     bool pipeUnusable = false;                 // the fallback, for the rest of this scanner's life
     std::atomic<int> workersStarted { 0 };
 

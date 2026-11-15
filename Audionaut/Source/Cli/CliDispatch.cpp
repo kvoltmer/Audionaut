@@ -333,7 +333,7 @@ const std::vector<CliCommandSpec>& getCliCommands()
           runScanPlugins },
 
         { "scan-plugin",
-          "scan-plugin --format F <file or identifier> [--json] | scan-plugin --serve <pipe>",
+          "scan-plugin --format F [--timeout-ms N] <file or identifier> [--json] | scan-plugin --serve <pipe>",
           "The scan worker: describes the plugins in plugin files (internal).",
           "Loads plugin files in this process and reports their descriptions; scan-plugins and the app "
           "run this verb in a child process so a crash takes only the worker down. With --serve it "

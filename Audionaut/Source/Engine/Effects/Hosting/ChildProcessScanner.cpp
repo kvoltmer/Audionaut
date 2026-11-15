@@ -68,18 +68,45 @@ namespace
 
     enum class Read { frame, nothing, broken };
 
+    /// All of it, in however many pieces the pipe hands it over: a Windows pipe returns what is there,
+    /// which may be less than was asked for.
+    bool readAll (juce::NamedPipe& pipe, char* destination, int size, int withinMs)
+    {
+        const auto deadline = juce::Time::currentTimeMillis() + withinMs;
+        auto done = 0;
+        while (done < size)
+        {
+            const auto left = static_cast<int> (deadline - juce::Time::currentTimeMillis());
+            if (left <= 0)
+                return false;
+
+            const auto read = pipe.read (destination + done, size - done, left);
+            if (read < 0)
+                return false;
+            if (read == 0)
+                juce::Thread::sleep (1);
+            done += read;
+        }
+        return true;
+    }
+
     Read readFrame (juce::NamedPipe& pipe, nlohmann::json& message, int waitMs)
     {
+        // The wait is for one byte: a read that runs out of time gives up what it had taken, and one
+        // byte is there or it is not. The rest of a frame that began follows at once (it is written
+        // in one piece).
         char header[4];
-        if (pipe.read (header, 4, waitMs) != 4)
+        if (pipe.read (header, 1, waitMs) != 1)
             return Read::nothing;   // nothing yet (or a pipe that is gone: its owner sees that by other means)
+        if (! readAll (pipe, header + 1, 3, frameIoTimeoutMs))
+            return Read::broken;
 
         const auto size = juce::ByteOrder::littleEndianInt (header);
         if (size == 0 || size > largestFrame)
             return Read::broken;
 
         std::string text (size, '\0');
-        if (pipe.read (text.data(), static_cast<int> (size), frameIoTimeoutMs) != static_cast<int> (size))
+        if (! readAll (pipe, text.data(), static_cast<int> (size), frameIoTimeoutMs))
             return Read::broken;
 
         message = nlohmann::json::parse (text, nullptr, false);
@@ -112,6 +139,29 @@ namespace
         }
     }
 
+    /// The envelope a one-shot worker wrote: the last thing on stdout, running to its end. A plugin may
+    /// have printed before it, braces included (the worker keeps its own output off stdout, not a
+    /// plugin's printf): the envelope starts at the first brace from which the rest reads as one.
+    bool readEnvelope (const juce::String& output, nlohmann::json& envelope)
+    {
+        const auto text = output.toStdString();
+        for (auto start = text.find ('{'); start != std::string::npos; start = text.find ('{', start + 1))
+        {
+            envelope = nlohmann::json::parse (text.begin() + static_cast<std::string::difference_type> (start), text.end(),
+                                              nullptr, false);
+            if (envelope.is_object() && envelope.contains ("ok"))
+                return true;
+        }
+        return false;
+    }
+
+    /// The worker ran and has no such format: nothing in the file for it, and no crash.
+    bool declinedTheFormat (const nlohmann::json& envelope)
+    {
+        return envelope.contains ("error") && envelope["error"].is_object()
+            && envelope["error"].value ("code", std::string()) == "unknown_format";
+    }
+
     /// This executable as the serving worker.
     class ProcessWorker final : public ChildProcessScanner::Worker
     {
@@ -124,7 +174,12 @@ namespace
         }
 
         bool isRunning() override { return child.isRunning(); }
-        void kill() override { child.kill(); }
+
+        void kill() override
+        {
+            child.kill();
+            child.waitForProcessToFinish (500);   // collected, so that nothing of it stays behind
+        }
 
     private:
         juce::File executable;
@@ -172,13 +227,22 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
 
     if (! pipeUnusable)
     {
-        switch (askWorker (format.getName(), fileOrIdentifier, result))
+        auto asked = askWorker (format.getName(), fileOrIdentifier, result);
+
+        // A worker that had other plugins in it may have died of what they left behind, not of this
+        // file: the file gets a worker to itself before the failure is held against it.
+        if (asked == Asked::failedAfterOthers)
+            asked = askWorker (format.getName(), fileOrIdentifier, result);
+
+        switch (asked)
         {
             case Asked::found:
-            case Asked::nothing:     return true;
-            case Asked::failed:      return false;   // the plugin took the worker down, or kept it too long
-            case Asked::abandoned:   return true;    // by the user: no verdict on the file
-            case Asked::unavailable: pipeUnusable = true; break;
+            case Asked::nothing:           return true;
+            case Asked::failed:
+            case Asked::failedAfterOthers: return false;   // the plugin took the worker down, or kept it too long
+            case Asked::abandoned:         return true;    // by the user: no verdict on the file
+            case Asked::unavailable:       break;          // no worker this time: this file in a process of its own
+            case Asked::unusable:          pipeUnusable = true; break;
         }
     }
 
@@ -188,14 +252,33 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
 ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
                                                            juce::OwnedArray<juce::PluginDescription>& result)
 {
-    const nlohmann::json request { { "format", formatName.toStdString() }, { "file", fileOrIdentifier.toStdString() } };
+    // the worker gives up a little before the scanner does, so that its answer still gets here
+    const nlohmann::json request { { "format", formatName.toStdString() },
+                                   { "file", fileOrIdentifier.toStdString() },
+                                   { "timeoutMs", workerTimeoutMs (timeoutMs) } };
+
+    // the worker is not left to itself after a failure: a plugin may be stuck in it
+    const auto failed = [this]
+    {
+        const auto afterOthers = answeredByWorker > 0;
+        dropWorker (true);
+        return afterOthers ? Asked::failedAfterOthers : Asked::failed;
+    };
 
     // A worker that was idle may be on its way out just as the request goes to it: its goodbye comes
     // back in place of an answer, or the request cannot be written. The next worker gets the request.
     for (auto attempt = 0; attempt < 3; ++attempt)
     {
-        if ((worker == nullptr || ! worker->isRunning()) && ! startWorker())
-            return Asked::unavailable;
+        if (worker == nullptr || ! worker->isRunning())
+        {
+            switch (startWorker())
+            {
+                case Started::ready:     startFailures = 0; break;
+                case Started::abandoned: return Asked::abandoned;
+                case Started::silent:    return Asked::unusable;   // the pipe does not work here
+                case Started::failed:    return ++startFailures >= 2 ? Asked::unusable : Asked::unavailable;
+            }
+        }
 
         if (! writeFrame (*pipe, request))
         {
@@ -215,22 +298,17 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
                 if (answer.contains ("bye"))
                     break;   // it left without taking the request
 
-                if (answer.value ("last", false))
-                    dropWorker (false);   // it is leaving after this answer, by its own choice
-
                 if (! answer.value ("ok", false))
-                    return answer.value ("code", std::string()) == "unknown_format" ? Asked::nothing : Asked::failed;
+                    return answer.value ("code", std::string()) == "unknown_format" ? Asked::nothing : failed();
 
+                ++answeredByWorker;
                 if (answer.contains ("plugins") && answer["plugins"].is_array())
                     addDescriptions (answer["plugins"], result);
                 return Asked::found;
             }
 
             if (read == Read::broken || gone)
-            {
-                dropWorker (true);
-                return Asked::failed;
-            }
+                return failed();
 
             if (shouldExit())
             {
@@ -239,10 +317,7 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
             }
 
             if (juce::Time::getMillisecondCounter() >= deadline)
-            {
-                dropWorker (true);
-                return Asked::failed;
-            }
+                return failed();
 
             // a worker that died may have answered first: the pipe is looked at once more
             gone = ! worker->isRunning();
@@ -254,7 +329,12 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
     return Asked::unavailable;
 }
 
-bool ChildProcessScanner::startWorker()
+int ChildProcessScanner::workerTimeoutMs (int scannerTimeoutMs) noexcept
+{
+    return scannerTimeoutMs - scannerTimeoutMs / 6;
+}
+
+ChildProcessScanner::Started ChildProcessScanner::startWorker()
 {
     dropWorker (true);
 
@@ -263,14 +343,14 @@ bool ChildProcessScanner::startWorker()
     if (! pipe->createNewPipe (name, true))
     {
         pipe.reset();
-        return false;
+        return Started::failed;
     }
 
     worker = workerFactory();
     if (worker == nullptr || ! worker->start (name))
     {
         dropWorker (false);
-        return false;
+        return Started::failed;
     }
     ++workersStarted;
 
@@ -281,12 +361,17 @@ bool ChildProcessScanner::startWorker()
     {
         nlohmann::json hello;
         if (readFrame (*pipe, hello, pollMs) == Read::frame && hello.contains ("hello"))
-            return true;
+            return Started::ready;
 
-        if (gone || shouldExit() || juce::Time::getMillisecondCounter() >= deadline)
+        // only a worker that is there and stays silent says something about the pipe
+        const auto outcome = gone ? Started::failed
+                           : shouldExit() ? Started::abandoned
+                           : juce::Time::getMillisecondCounter() >= deadline ? Started::silent
+                           : Started::ready;
+        if (outcome != Started::ready)
         {
             dropWorker (true);
-            return false;
+            return outcome;
         }
         gone = ! worker->isRunning();
     }
@@ -298,6 +383,7 @@ void ChildProcessScanner::dropWorker (bool kill)
         worker->kill();
     worker.reset();
     pipe.reset();
+    answeredByWorker = 0;
 }
 
 bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format,
@@ -309,6 +395,7 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
 
     juce::ChildProcess child;
     const juce::StringArray arguments { executable.getFullPathName(), "scan-plugin", "--json",
+                                        "--timeout-ms", juce::String (workerTimeoutMs (timeoutMs)),
                                         "--format", format.getName(), fileOrIdentifier };
     if (! child.start (arguments, juce::ChildProcess::wantStdOut))
         return false;
@@ -325,7 +412,11 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
         return shouldExit();   // abandoned by the user: no verdict on the file; out of time: a crash as far as the list is concerned
 
     if (child.getExitCode() != 0)
-        return false;   // the plugin took the worker down
+    {
+        // the plugin took the worker down - unless the worker said that it has no such format
+        nlohmann::json envelope;
+        return readEnvelope (output, envelope) && declinedTheFormat (envelope);
+    }
 
     return parseScanEnvelope (output, result);
 }
@@ -366,7 +457,8 @@ int ChildProcessScanner::serve (const juce::String& pipeName, const ScanFunction
             return 0;
 
         const auto answer = scan (juce::String (request.value ("format", std::string())),
-                                  juce::String (request.value ("file", std::string())));
+                                  juce::String (request.value ("file", std::string())),
+                                  request.value ("timeoutMs", 50000));
         if (! writeFrame (pipe, answer))
             return 1;
         if (answer.value ("last", false))
@@ -378,23 +470,11 @@ int ChildProcessScanner::serve (const juce::String& pipeName, const ScanFunction
 
 bool ChildProcessScanner::parseScanEnvelope (const juce::String& output, juce::OwnedArray<juce::PluginDescription>& result)
 {
-    // the envelope is the last thing on stdout and runs to its end; a plugin may have printed before
-    // it, braces included (the worker keeps its own output off stdout, not a plugin's printf): the
-    // envelope starts at the first brace from which the rest reads as one
-    const auto text = output.toStdString();
     nlohmann::json envelope;
-    auto found = false;
-    for (auto start = text.find ('{'); start != std::string::npos && ! found; start = text.find ('{', start + 1))
-    {
-        envelope = nlohmann::json::parse (text.begin() + static_cast<std::string::difference_type> (start), text.end(),
-                                          nullptr, false);
-        found = envelope.is_object() && envelope.contains ("ok");
-    }
-
-    if (! found)
+    if (! readEnvelope (output, envelope))
         return false;
     if (! envelope["ok"].is_boolean() || ! envelope["ok"].get<bool>())
-        return true;   // the worker ran and declined cleanly (no such format here): nothing in the file, no crash
+        return declinedTheFormat (envelope);   // nothing in the file for a format the worker has not; any other failure counts as a crash
 
     if (! envelope.contains ("result") || ! envelope["result"].is_object()
         || ! envelope["result"].contains ("plugins") || ! envelope["result"]["plugins"].is_array())
