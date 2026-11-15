@@ -101,8 +101,8 @@ separate        split a clip into Drums/Bass/Other/Vocals tracks (Demucs)
 Effects come as the built-ins (`builtin:trim`, `builtin:eq3`, `builtin:compressor`,
 `builtin:delay`) and as plugins: Audio Units on macOS, VST3 on Windows, VST3 and
 LV2 on Linux. `scan-plugins` looks through the platform's plugin folders and
-writes what it finds to the list the app and the verbs share; each plugin is
-loaded in a process of its own, so one that crashes is blacklisted and the scan
+writes what it finds to the list the app and the verbs share; the plugins are
+loaded in a worker process, so one that crashes is blacklisted and the scan
 goes on. `list-effects` then names the plugins by type id (`au:…`, `vst3:…`,
 `lv2:…`) with format and manufacturer; `list-effects --type ID` loads one and
 lists its parameters, normalised 0 to 1. A project saved with a plugin in one
