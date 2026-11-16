@@ -136,17 +136,17 @@ and every AUv3, in a process of their own: macOS's own plugin hosting
 service, the same one Logic uses. Such a plugin works like any other, its
 window included. It takes a moment longer to appear after you add it (the
 slot passes the signal through until it is there), and a plugin that
-crashes takes down only that service, not Audionaut. The line under the
-Manage Plugins list says how many of your plugins run this way.
+crashes takes down only that service, not Audionaut.
 
 Plugins are off until you turn them on: tick **Plugins enabled** above the
-Manage Plugins list, then scan. With the box unticked Audionaut offers no
+Manage Plugins list, and Audionaut scans for them at once. With the box unticked Audionaut offers no
 plugin as an insert and loads none, the list cannot be scanned, and a
 project that uses a plugin keeps the slot and its settings as a marked row.
 The built-in effects are always there.
 
-On macOS, turning plugins on has one consequence worth knowing, and the
-window says so beside the box: before macOS runs an Audio Unit that is not
+On macOS, turning plugins on has one consequence worth knowing, and a
+message explains it when you tick the box (**Cancel** leaves plugins off):
+before macOS runs an Audio Unit that is not
 marked sandbox-safe for Audionaut, it asks you to lower the security
 settings for Audionaut. It asks when the first such plugin loads, which may
 be during the scan. If you decline, the plugin does not load; a slot that
@@ -162,16 +162,19 @@ project you have open go through the app, and use the plugins the app has.
 ### Manage Plugins
 
 *Options → Manage Plugins…* (also at the end of every insert menu) opens
-the list of plugins Audionaut knows. The list starts empty: choose the
-**Options** button and **Scan for new or updated … plug-ins** to look
-through the platform's plugin folders. Each plugin file is examined in a
+the list of plugins Audionaut knows. Turning plugins on scans the
+platform's plugin folders; later, after installing a plugin, click
+**Rescan** under the list to look through them again. While a scan runs, a progress bar under the list
+shows how far it is and which plugin is being examined, and **Cancel**
+stops it. When it is done, the line there says how many new plugins it found. Each plugin file is examined in a
 separate process, so a plugin that crashes while it is examined takes
 nothing down with it; it is skipped from then on, and the line under the
 list counts such files. Entries the inserts cannot use are greyed out: the
 skipped files, instruments, and plugins in a format Audionaut does not host
 here. Click an entry and the lines under the list say what it is and, for a
-greyed one, why it is not offered. The same menu removes entries you do not
-want to see and sorts the list. Scanning runs while you work; the plugins appear in
+greyed one, why it is not offered. **Remove**, which appears while entries are selected, takes them off the
+list (a skipped file is then tried again by the next scan), **Clear** empties
+the whole list, and a click on a column title sorts by it. Scanning runs while you work; the plugins appear in
 the insert menus as soon as the scan found them.
 
 The list is kept in Audionaut's data folder, not in the project, so it is

@@ -489,10 +489,10 @@ the one-gesture crossfade UX on top:
   to juce-framework/JUCE lets the submodule return to upstream once merged.
 - [ ] **Say how many Audio Units macOS will ask about before plugins are
   turned on.** "Plugins enabled" in Manage Plugins also allows the Audio
-  Units macOS wants lowered security settings for, and the window only says
-  that this may happen. The sandbox-safe flag and the component's name are
-  readable without loading (`AudioComponentGetDescription`), so the hint
-  beside the box could name the number, or say that there are none.
+  Units macOS wants lowered security settings for, and the message box only
+  says that this may happen. The sandbox-safe flag and the component's name
+  are readable without loading (`AudioComponentGetDescription`), so the
+  message could name the number, or be left out where there are none.
 - [ ] **A scan with the security prompt unanswered.** If macOS's question
   sits unanswered past the scan timeout, the file at hand is blacklisted.
   Check what the scan worker sees while the prompt is up, and do not
