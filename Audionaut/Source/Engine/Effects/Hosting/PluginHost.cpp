@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #include <thread>
+#include <utility>
 
 #include "ChildProcessScanner.h"
 #include "HostedEffect.h"
@@ -23,7 +24,25 @@ PluginHost::PluginHost (juce::File dataDirectory_, bool withPlatformFormats) :
     dataDirectory (std::move (dataDirectory_))
 {
     if (withPlatformFormats)
+    {
         addPlatformFormats (formats);
+
+       #if JUCE_MAC && JUCE_PLUGINHOST_AU
+        // The plugins the system asks about are those that only load out of process because this
+        // process is sandboxed: what a format that isolates them would load that way, less what
+        // runs out of process anyway (AUv3).
+        auto isolatingUnits = std::make_shared<juce::AudioUnitPluginFormat>();
+        isolatingUnits->setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
+        const std::shared_ptr<juce::AudioPluginFormat> isolating = isolatingUnits;
+        const std::shared_ptr<juce::AudioPluginFormat> plain = std::make_shared<juce::AudioUnitPluginFormat>();
+        asksForLoweredSecurity = [isolating, plain] (const juce::PluginDescription& description)
+        {
+            return description.pluginFormatName == plain->getName()
+                && isolating->requiresUnblockedMessageThreadDuringCreation (description)
+                && ! plain->requiresUnblockedMessageThreadDuringCreation (description);
+        };
+       #endif
+    }
     list.addChangeListener (this);
 
     // where there is no list file yet (or none that reads), the empty list is what this host started
@@ -44,11 +63,8 @@ juce::File PluginHost::defaultDataDirectory()
 void PluginHost::addPlatformFormats (juce::AudioPluginFormatManager& manager)
 {
    #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    auto audioUnits = std::make_unique<juce::AudioUnitPluginFormat>();   // the sandbox's one format
-    // inside the sandbox the OS refuses to open an AUv2 without the sandbox-safe flag in-process (-3000):
-    // those run in the system's hosting service, as they do in Logic
-    audioUnits->setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
-    manager.addFormat (std::move (audioUnits));
+    // the sandbox's one format; see applyLoweredSecurity() for the plugins the sandbox does not open in-process
+    manager.addFormat (std::make_unique<juce::AudioUnitPluginFormat>());
    #endif
    #if (JUCE_WINDOWS || JUCE_LINUX || JUCE_BSD) && JUCE_PLUGINHOST_VST3
     manager.addFormat (std::make_unique<juce::VST3PluginFormat>());
@@ -57,6 +73,47 @@ void PluginHost::addPlatformFormats (juce::AudioPluginFormatManager& manager)
     manager.addFormat (std::make_unique<juce::LV2PluginFormat>());
    #endif
     juce::ignoreUnused (manager);
+}
+
+void PluginHost::applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed)
+{
+   #if JUCE_MAC && JUCE_PLUGINHOST_AU
+    // Inside the sandbox the OS refuses to open an AUv2 without the sandbox-safe flag in-process
+    // (-3000). Allowed, those run in the system's hosting service, as they do in Logic - which the
+    // system grants once the user agreed to lower the app's security settings. Not allowed, they are
+    // asked for in-process and fail, and nobody is asked anything.
+    using Isolation = juce::AudioUnitPluginFormat::ProcessIsolation;
+    for (auto* format : manager.getFormats())
+        if (auto* audioUnits = dynamic_cast<juce::AudioUnitPluginFormat*> (format))
+            audioUnits->setProcessIsolation (allowed ? Isolation::whenSandboxRequires : Isolation::inProcess);
+   #endif
+    juce::ignoreUnused (manager, allowed);
+}
+
+bool PluginHost::isSandboxed()
+{
+   #if JUCE_MAC
+    return juce::SystemStats::getEnvironmentVariable ("APP_SANDBOX_CONTAINER_ID", {}).isNotEmpty();
+   #else
+    return false;
+   #endif
+}
+
+void PluginHost::setEnabled (bool enabled_)
+{
+    if (std::exchange (enabled, enabled_) == enabled_)
+        return;
+
+    registerIntoAttached();   // the plugins come, or go
+}
+
+void PluginHost::setLoweredSecurityAllowed (bool allowed)
+{
+    if (loweredSecurityAllowed->exchange (allowed) == allowed)
+        return;
+
+    applyLoweredSecurity (formats, allowed);
+    registerIntoAttached();   // the plugins in question come, or go
 }
 
 juce::File PluginHost::getListFile() const
@@ -120,7 +177,13 @@ void PluginHost::attach (std::shared_ptr<EffectRegistry> registry, Mode mode)
 
 PluginHost::Availability PluginHost::availabilityOf (const juce::PluginDescription& description) const
 {
-    return formatOf (description) != nullptr ? Availability::available : Availability::formatMissing;
+    if (formatOf (description) == nullptr)
+        return Availability::formatMissing;
+    if (! enabled)
+        return Availability::disabled;
+    if (! isLoweredSecurityAllowed() && asksForLoweredSecurity && asksForLoweredSecurity (description))
+        return Availability::needsLoweredSecurity;
+    return Availability::available;
 }
 
 juce::String PluginHost::describe (Availability availability)
@@ -129,8 +192,20 @@ juce::String PluginHost::describe (Availability availability)
     {
         case Availability::available:      return {};
         case Availability::formatMissing:  return TRANS ("its format is not hosted on this platform");
+        case Availability::disabled:       return TRANS ("plugins are turned off; Manage Plugins turns them on");
+        case Availability::needsLoweredSecurity:
+            return TRANS ("macOS only loads it with lowered security settings, which a command run without the app cannot ask for");
     }
     return {};
+}
+
+juce::String PluginHost::describeLoadError (const juce::String& message)
+{
+    // userCanceledErr: the user said no when the system asked to lower the security settings (or
+    // nobody was there to say yes)
+    if (message.contains ("(-128)"))
+        return TRANS ("macOS did not load the plugin: lowering the security settings for it was declined");
+    return message;
 }
 
 bool PluginHost::canCreate (const juce::PluginDescription& description) const
@@ -247,7 +322,9 @@ std::unique_ptr<juce::AudioPluginInstance> PluginHost::createInstance (const juc
         error = "plugin " + description.name + " (" + description.pluginFormatName + ") cannot be loaded here";
         return nullptr;
     }
-    return formats.createPluginInstance (description, sampleRate, blockSize, error);
+    auto instance = formats.createPluginInstance (description, sampleRate, blockSize, error);
+    error = describeLoadError (error);
+    return instance;
 }
 
 std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription& description, Mode mode) const
@@ -299,7 +376,7 @@ void PluginHost::requestInstance (HostedEffect& effect) const
                                            // message thread; the effect may be gone by now (an undo, a closed
                                            // project): the plugin goes away with the callback then
                                            if (alive.lock() != nullptr)
-                                               waiting->adopt (std::move (instance), message);
+                                               waiting->adopt (std::move (instance), describeLoadError (message));
                                            --*pending;
                                            if (arrivals != nullptr)
                                                --*arrivals;
@@ -363,7 +440,9 @@ bool PluginHost::waitUntilNone (const std::atomic<int>& pending, int timeoutMs)
 //==============================================================================
 void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
 {
-    list.setCustomScanner (std::make_unique<ChildProcessScanner> (std::move (executable), timeoutMs));
+    auto scanner = std::make_unique<ChildProcessScanner> (std::move (executable), timeoutMs);
+    scanner->setLoweredSecurityFlag (loweredSecurityAllowed);   // the worker loads what this host may load
+    list.setCustomScanner (std::move (scanner));
 }
 
 PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, const juce::String&)>& progress,
@@ -430,7 +509,11 @@ void PluginHost::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     // message thread: the list changed (a scan, a removal, the blacklist)
     saveList();
+    registerIntoAttached();
+}
 
+void PluginHost::registerIntoAttached()
+{
     attached.erase (std::remove_if (attached.begin(), attached.end(),
                                     [] (const Attached& entry) { return entry.registry.expired(); }),
                     attached.end());

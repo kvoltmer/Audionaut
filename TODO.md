@@ -487,6 +487,16 @@ the one-gesture crossfade UX on top:
   sandbox-safe flag into Apple's hosting service when the host is sandboxed
   (what Logic does; the OS refuses them in-process with -3000). A pull request
   to juce-framework/JUCE lets the submodule return to upstream once merged.
+- [ ] **Say how many Audio Units macOS will ask about before plugins are
+  turned on.** "Plugins enabled" in Manage Plugins also allows the Audio
+  Units macOS wants lowered security settings for, and the window only says
+  that this may happen. The sandbox-safe flag and the component's name are
+  readable without loading (`AudioComponentGetDescription`), so the hint
+  beside the box could name the number, or say that there are none.
+- [ ] **A scan with the security prompt unanswered.** If macOS's question
+  sits unanswered past the scan timeout, the file at hand is blacklisted.
+  Check what the scan worker sees while the prompt is up, and do not
+  blacklist for that.
 - [ ] **Measure the out-of-process render cost.** Every block of a plugin in
   the hosting service is a cross-process call; small buffers with many such
   plugins may cost noticeably more than in-process hosting. Bench a chain of

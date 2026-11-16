@@ -569,6 +569,145 @@ SCENARIO ("a host that started without a list file leaves another process's list
     }
 }
 
+SCENARIO ("a host that is turned off offers no plugins", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    TestHost test (temp.folder);
+    auto& host = test.host;
+    const auto plugin = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+
+    GIVEN ("a host with plugins, attached to a registry")
+    {
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("it is on, and the plugins are types of the registry")
+        {
+            REQUIRE (host.isEnabled());
+            REQUIRE (registry->hasType ("testa:00001111"));
+            REQUIRE (registry->hasType ("testb:00002222"));
+        }
+
+        WHEN ("it is turned off")
+        {
+            host.setEnabled (false);
+
+            THEN ("the types leave the registry, and the host says why")
+            {
+                REQUIRE_FALSE (registry->hasType ("testa:00001111"));
+                REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+                REQUIRE (host.availabilityOf (plugin) == PluginHost::Availability::disabled);
+                REQUIRE (PluginHost::describe (PluginHost::Availability::disabled).isNotEmpty());
+                REQUIRE_FALSE (host.canCreate (plugin));
+            }
+
+            THEN ("nothing is loaded, and the list keeps its plugins")
+            {
+                const auto instancesBefore = TestPluginInstance::instances();
+                juce::String error;
+                REQUIRE (host.createInstance (plugin, 44100.0, 512, error) == nullptr);
+                REQUIRE (error.isNotEmpty());
+                REQUIRE (TestPluginInstance::instances() == instancesBefore);
+                REQUIRE (host.getList().getNumTypes() > 0);
+                REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
+            }
+
+            AND_WHEN ("it is turned on again")
+            {
+                host.setEnabled (true);
+
+                THEN ("the plugins are back, and load")
+                {
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                    auto effect = registry->create ("testa:00001111");
+                    auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                    REQUIRE (hosted != nullptr);
+                    REQUIRE (hosted->isLoaded());
+                }
+            }
+        }
+    }
+}
+
+SCENARIO ("a plugin the system asks the user about is only there where that is allowed", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    TestHost test (temp.folder);
+    auto& host = test.host;
+    const auto plain = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+    const auto asking = TestPluginInstance::describe (gainIn ("TestB", 0x2222));
+
+    GIVEN ("a host one of whose plugins needs lowered security settings, attached to a registry")
+    {
+        host.setLoweredSecurityQuestion ([] (const juce::PluginDescription& description) { return description.pluginFormatName == "TestB"; });
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("it is not offered, and the host says why; the other plugin is")
+        {
+            REQUIRE_FALSE (host.isLoweredSecurityAllowed());
+            REQUIRE (host.availabilityOf (asking) == PluginHost::Availability::needsLoweredSecurity);
+            REQUIRE (PluginHost::describe (PluginHost::Availability::needsLoweredSecurity).isNotEmpty());
+            REQUIRE_FALSE (host.canCreate (asking));
+            REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+            REQUIRE (host.availabilityOf (plain) == PluginHost::Availability::available);
+            REQUIRE (registry->hasType ("testa:00001111"));
+        }
+
+        THEN ("it is not loaded, and not taken as another format's stand-in")
+        {
+            const auto instancesBefore = TestPluginInstance::instances();
+            juce::String error;
+            REQUIRE (host.createInstance (asking, 44100.0, 512, error) == nullptr);
+            REQUIRE (error.isNotEmpty());
+            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+
+            host.getList().removeType (plain);
+            REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
+        }
+
+        WHEN ("it is allowed")
+        {
+            host.setLoweredSecurityAllowed (true);
+
+            THEN ("the plugin is a type of the attached registry, and loads")
+            {
+                REQUIRE (host.availabilityOf (asking) == PluginHost::Availability::available);
+                REQUIRE (registry->hasType ("testb:00002222"));
+                auto effect = registry->create ("testb:00002222");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->isLoaded());
+            }
+
+            AND_WHEN ("it is taken back")
+            {
+                host.setLoweredSecurityAllowed (false);
+
+                THEN ("the type leaves the registry again")
+                {
+                    REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                }
+            }
+        }
+    }
+
+    GIVEN ("what a format says when the user declined")
+    {
+        THEN ("the host says it in plain words, and leaves other messages alone")
+        {
+            const auto declined = PluginHost::describeLoadError ("An OS error occurred during initialisation of the plug-in (-128)");
+            REQUIRE_FALSE (declined.contains ("-128"));
+            REQUIRE (declined.containsIgnoreCase ("security settings"));
+            REQUIRE (PluginHost::describeLoadError ("the file is damaged") == "the file is damaged");
+            REQUIRE (PluginHost::describeLoadError ({}).isEmpty());
+        }
+    }
+}
+
 SCENARIO ("an engine waits for its own plugins, not for another engine's", "[engine][effects][hosting]")
 {
     MessageThread messageThread;
@@ -685,8 +824,12 @@ namespace
         void kill() override {}
     };
 
-    json describedIn (const juce::String& format, const juce::String& file, int timeoutMs)
+    json describedIn (const ChildProcessScanner::Request& request)
     {
+        const auto& format = request.format;
+        const auto& file = request.file;
+        const auto timeoutMs = request.timeoutMs;
+
         if (format != "TestA")
             return { { "ok", false }, { "code", "unknown_format" } };
         if (file == "dies")
@@ -709,12 +852,12 @@ namespace
         return [idleMs]
         {
             auto loaded = std::make_shared<int> (0);
-            return std::make_unique<ThreadWorker> ([loaded] (const juce::String& format, const juce::String& file, int timeoutMs)
+            return std::make_unique<ThreadWorker> ([loaded] (const ChildProcessScanner::Request& request)
             {
-                if (file == "fragile" && *loaded > 0)
+                if (request.file == "fragile" && *loaded > 0)
                     throw Dies();
                 ++*loaded;
-                return describedIn (format, file, timeoutMs);
+                return describedIn (request);
             }, idleMs);
         };
     }
@@ -820,6 +963,35 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
                 REQUIRE (verdict);
                 REQUIRE (scanner.getNumWorkersStarted() == 2);
                 REQUIRE (found.size() == 2);
+            }
+        }
+    }
+
+    GIVEN ("a scanner that is told whether plugins may ask for lowered security settings")
+    {
+        auto heard = std::make_shared<std::vector<bool>>();
+        ChildProcessScanner scanner ([heard]
+        {
+            return std::make_unique<ThreadWorker> ([heard] (const ChildProcessScanner::Request& request)
+            {
+                heard->push_back (request.loweredSecurity);
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        auto allowed = std::make_shared<std::atomic<bool>> (false);
+
+        WHEN ("files are scanned before and after it is allowed")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));   // nothing said: no
+            scanner.setLoweredSecurityFlag (allowed);
+            REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+            allowed->store (true);
+            REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+
+            THEN ("the worker hears it with every file")
+            {
+                REQUIRE (*heard == std::vector<bool> { false, false, true });
             }
         }
     }

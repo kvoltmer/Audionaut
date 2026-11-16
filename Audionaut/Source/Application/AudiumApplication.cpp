@@ -131,6 +131,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     pluginHost->loadList();
     pluginHost->useChildProcessScanner (File::getSpecialLocation (File::currentExecutableFile));
 
+    // Plugins are off until the user turned them on in Manage Plugins, for the app and for the
+    // verbs this binary runs headlessly alike.
+    const auto pluginsEnabled = getPreferences().getValue (audium::PreferenceKeys::pluginsEnabled, "false") == "true";
+    pluginHost->setEnabled (pluginsEnabled);
+
     // Projucer-style in-app CLI: a recognised verb runs headlessly and the
     // process quits with its exit code; anything else (a project file, no
     // arguments) falls through to normal GUI startup.
@@ -169,6 +174,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         HeadlessMode::set (false);
         cli::HeadlessEngineSession::setUseExternalMessageManager (false);
     }
+
+    // Only now, as the app with its user in front of it: with plugins on, also those macOS asks
+    // about before it loads them (it wants the app's security settings lowered). A headless run
+    // above never gets here, and nothing is asked of a user who is not there.
+    pluginHost->setLoweredSecurityAllowed (pluginsEnabled);
 
     // Single-instance behavior, handled manually after the CLI block (see
     // moreThanOneInstanceAllowed): a second GUI launch forwards its command
@@ -1529,7 +1539,13 @@ void AudiumApplication::showPluginManagerWindow()
         pluginManagerView->toFront (true);
     else if (pluginHost != nullptr)
         new FloatingToolWindow ("Manage Plugins", audium::PreferenceKeys::pluginManagerWindowState,
-                                new PluginManagerComponent (pluginHost),
+                                new PluginManagerComponent (pluginHost, [this] (bool enabled)
+                                {
+                                    getPreferences().setValue (audium::PreferenceKeys::pluginsEnabled, enabled ? "true" : "false");
+                                    getPreferences().synchronize();
+                                    pluginHost->setEnabled (enabled);
+                                    pluginHost->setLoweredSecurityAllowed (enabled);
+                                }),
                                 pluginManagerView, true,
                                 760, 480, 480, 320, 2400, 1600);
 }

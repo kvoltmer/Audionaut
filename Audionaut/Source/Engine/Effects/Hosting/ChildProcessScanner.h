@@ -63,15 +63,27 @@ public:
                              juce::OwnedArray<juce::PluginDescription>& result,
                              const juce::String& fileOrIdentifier) override;
 
+    /// Whether the worker may load plugins that make the system ask the user to lower the app's security
+    /// settings (PluginHost::setLoweredSecurityAllowed); read for every file. Without a flag: no.
+    void setLoweredSecurityFlag (std::shared_ptr<const std::atomic<bool>> flag) { loweredSecurity = std::move (flag); }
+
     /// How many workers were started so far.
     int getNumWorkersStarted() const noexcept { return workersStarted.load(); }
 
     //==============================================================================
-    /// The worker's side: what it found in one file of one format, given so long for it.
-    /// `{"ok": true, "plugins": [xml, ...]}`, or `{"ok": false, "code": ...}`; with `"last": true` the
-    /// worker leaves after this answer.
-    using ScanFunction = std::function<nlohmann::json (const juce::String& formatName, const juce::String& fileOrIdentifier,
-                                                       int timeoutMs)>;
+    /// What the worker is asked: one file of one format, so long for it, and whether it may load a
+    /// plugin the system wants the user's consent for.
+    struct Request
+    {
+        juce::String format;
+        juce::String file;
+        int timeoutMs = 50000;
+        bool loweredSecurity = false;
+    };
+
+    /// The worker's side: what it found. `{"ok": true, "plugins": [xml, ...]}`, or
+    /// `{"ok": false, "code": ...}`; with `"last": true` the worker leaves after this answer.
+    using ScanFunction = std::function<nlohmann::json (const Request& request)>;
 
     /// How long the worker gets for a file the scanner waits timeoutMs for: a little less, so that
     /// its own answer about a stuck plugin still arrives.
@@ -101,6 +113,7 @@ private:
     WorkerFactory workerFactory;
     int timeoutMs;
     int helloTimeoutMs;
+    std::shared_ptr<const std::atomic<bool>> loweredSecurity;
 
     juce::CriticalSection workerLock;          // one file on its way at a time
     std::unique_ptr<juce::NamedPipe> pipe;

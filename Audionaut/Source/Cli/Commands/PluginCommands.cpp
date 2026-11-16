@@ -60,8 +60,15 @@ struct ScanWorker
 
     /// One file: `{"ok": true, "plugins": [xml, ...]}`, or `{"ok": false, "code", "message"}` - a
     /// timeout among them, which is this worker's last answer (`"last": true`).
-    nlohmann::json scan (const juce::String& formatName, const juce::String& fileOrIdentifier, int timeoutMs)
+    nlohmann::json scan (const ChildProcessScanner::Request& request)
     {
+        const auto& formatName = request.format;
+        const auto& fileOrIdentifier = request.file;
+
+        // only when the app that asked allows it: otherwise the system would ask this worker's
+        // (absent) user to lower the security settings, and such a plugin simply fails to load
+        PluginHost::applyLoweredSecurity (formats, request.loweredSecurity);
+
         auto* format = formatNamed (formatName);
         if (format == nullptr)
             return { { "ok", false }, { "code", "unknown_format" },
@@ -83,7 +90,7 @@ struct ScanWorker
         // the message thread pumping, since some formats refuse to load on it
         if (messageLoop == nullptr)
             messageLoop = std::make_unique<ScopedMessageLoop>();
-        if (! PluginHost::runWhilePumping ([work] { work->format->findAllTypesForFile (work->found, work->fileOrIdentifier); }, timeoutMs))
+        if (! PluginHost::runWhilePumping ([work] { work->format->findAllTypesForFile (work->found, work->fileOrIdentifier); }, request.timeoutMs))
         {
             stuck = true;
             return { { "ok", false }, { "code", "timeout" }, { "message", "the plugin did not finish loading" }, { "last", true } };
@@ -110,6 +117,7 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
     const auto pipeName = takeOptionValue (working, "--serve");
     const auto timeoutText = takeOptionValue (working, "--timeout-ms");
     const auto timeoutMs = timeoutText.getIntValue() > 0 ? timeoutText.getIntValue() : 50000;
+    const auto loweredSecurity = working.removeOptionIfFound ("--allow-lowered-security");
     ScopedCoutToStderr guard (context.json || pipeName.isNotEmpty());   // whatever a plugin prints while loading stays off the envelope
 
     // A thread still inside a plugin when the time was up goes on using the formats and wants the
@@ -126,7 +134,7 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
     // many files, one after the other, for a scanner at the other end of a pipe
     if (pipeName.isNotEmpty())
         return finish (ChildProcessScanner::serve (pipeName,
-                                                   [worker] (const juce::String& format, const juce::String& file, int withinMs) { return worker->scan (format, file, withinMs); },
+                                                   [worker] (const ChildProcessScanner::Request& request) { return worker->scan (request); },
                                                    5000,
                                                    [worker] { worker->pump(); }));
 
@@ -136,7 +144,7 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
         return finish (context.fail (exitUsage, "usage", "scan-plugin requires the plugin file or identifier"));
     const auto fileOrIdentifier = working[1].text;
 
-    const auto answer = worker->scan (formatName, fileOrIdentifier, timeoutMs);
+    const auto answer = worker->scan ({ formatName, fileOrIdentifier, timeoutMs, loweredSecurity });
     if (! answer.value ("ok", false))
     {
         const auto code = answer.value ("code", std::string ("failed"));
@@ -156,6 +164,8 @@ int runScanPlugins (const juce::ArgumentList& args, CliContext& context)
 
     if (context.pluginHost == nullptr)
         return context.fail (exitUnavailable, "feature_unavailable", "this process hosts no plugins");
+    if (! context.pluginHost->isEnabled())
+        return context.fail (exitUnavailable, "plugins_disabled", "plugins are turned off: turn them on in Audionaut's Manage Plugins window");
 
     auto& formats = context.pluginHost->getFormats();
     if (formatName.isNotEmpty())

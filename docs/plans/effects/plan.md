@@ -867,7 +867,16 @@ so the JUCE submodule now points at Klaus's fork (`kvoltmer/JUCE`, branch
 `audionaut/au-out-of-process`, to be offered upstream): `AudioUnitPluginFormat::setProcessIsolation`
 (`inProcess` | `whenSandboxRequires` | `outOfProcess`) decides per component, such plugins report
 `requiresUnblockedMessageThreadDuringCreation`, and the editor window skips the in-process Cocoa view
-for them. `PluginHost::addPlatformFormats` sets `whenSandboxRequires`. Creation is asynchronous:
+for them. macOS grants such a load only after the user agreed, in a system dialog, to lower the app's
+security settings (declined or unanswered: -128), so plugins as a whole are opt-in in the app: the
+"Plugins enabled" tick box above the Manage Plugins list (preference `PluginsEnabled`, off by
+default) drives `PluginHost::setEnabled` - off, every plugin is `Availability::disabled`, not
+registered, and the list component is disabled so nothing scans - and, in the GUI run only,
+`PluginHost::setLoweredSecurityAllowed`, which switches the format between `inProcess` (these
+plugins are `Availability::needsLoweredSecurity`, not registered, never asked for) and
+`whenSandboxRequires`. A CLI verb in the app binary follows `PluginsEnabled` but never allows
+lowered security; `audionaut-cli` has no such preference and hosts plugins. The scan worker is
+told per file what the app allows. Creation is asynchronous:
 `PluginHost::createEffect` hands out a `HostedEffect` in status `loading` (passes through, keeps the
 blob), `createPluginInstanceAsync` delivers the plugin on the message thread, `adopt()` takes it,
 applies the kept state and sets `needsPrepare()` (new on `Effect`, part of `EffectSlot::isPreparedFor`)
