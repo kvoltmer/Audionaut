@@ -26,7 +26,6 @@ SCENARIO("recording scenario", "[engine][clip][volume]")
     auto sr = 44100.0;
     // generate DC offset
     auto inputFile = generateDcOffsetAudioFile(2.0);
-    //auto inBuffer = audioFileToAudioBuffer(inputFile);
     
     auto bounceConfig = std::make_shared<audium::ExportAudioConfig>();
     bounceConfig->fileName = testOutputDirectory().getChildFile("rec-out.wav");

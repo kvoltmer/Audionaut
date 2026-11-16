@@ -44,30 +44,10 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     REQUIRE(zoomHandler->getZoomFactor() == ZoomHandler::defaultZoomFactor);
 
 
-    
-//    double secondsToXWithOffset (const double time) const;
-//    double xToSecondsWithOffset (const double x) const;
-//
-//    double barsToX (const double bars) const;
-//    double xToBars (const double x) const;
-//
-//    double clocksToX (const double clocks) const;
-//    double xToClocks (const double x) const;
-
-    
-    
     zoomHandler->setZoomFactor(1.0);
-//    auto scrollbar = std::make_unique<juce::ScrollBar>(false);
-    
     // 1 bar = 200 pixels
     // 1 second = 100 pixels (@120BPM)
-    
-    // Set the limit to 1000 pixels = 10 seconds @120BPM
-//    scrollbar->setRangeLimits(juce::Range<double>(0.0, 1000.0));
-    // Changes the position of the scrollbar's 'thumb'.
-//    scrollbar->setCurrentRange(juce::Range<double>(100.0, 200.0));
-    
-    
+
     auto visibleRange = zoomHandler->getVisibleRange();
     
     
@@ -81,25 +61,3 @@ TEST_CASE( "zoom handler", "[ZoomHandlerTests]" ) {
     playListScheduler = nullptr;
     zoomHandler = nullptr;
 }
-
-
-//auto visibleRange = zoomHandler->getVisibleRange();
-//
-//// adjust the drawing area
-////        thumbArea.setX(static_cast<int>(visibleRange.getStart()));
-////        thumbArea.setWidth(static_cast<int>(visibleRange.getLength()));
-////
-//auto rangeInSeconds = zoomHandler->getVisibleRangeInSeconds();
-////
-////        audioResource->getThumbnail().drawChannels (g, thumbArea,
-////                                                    rangeInSeconds.getStart(), rangeInSeconds.getEnd(), 1.0f);
-//
-//
-////const auto startSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position.getStart());
-////const auto endSecond = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioR egion->position.getEnd());
-//auto rangeSeconds = zoomHandler->getPlayListScheduler()->clocksToSeconds(audioRegion->position);
-//auto start = rangeSeconds.getStart();
-//auto end = rangeSeconds.getEnd();
-//thumb->drawChannels (g, thumbArea, start, end, 1.0f);
-//
-//std::cout << rangeInSeconds.getStart() << " " << rangeSeconds.getEnd() << " " << start << " " << end << std::endl;
