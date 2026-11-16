@@ -14,6 +14,7 @@
 
 #include "ChildProcessScanner.h"
 #include "HostedEffect.h"
+#include "PluginFormats.h"
 #include "PluginTypeId.h"
 #include "Util/Preferences.h"
 
@@ -62,32 +63,12 @@ juce::File PluginHost::defaultDataDirectory()
 
 void PluginHost::addPlatformFormats (juce::AudioPluginFormatManager& manager)
 {
-   #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    // the sandbox's one format; see applyLoweredSecurity() for the plugins the sandbox does not open in-process
-    manager.addFormat (std::make_unique<juce::AudioUnitPluginFormat>());
-   #endif
-   #if (JUCE_WINDOWS || JUCE_LINUX || JUCE_BSD) && JUCE_PLUGINHOST_VST3
-    manager.addFormat (std::make_unique<juce::VST3PluginFormat>());
-   #endif
-   #if (JUCE_LINUX || JUCE_BSD) && JUCE_PLUGINHOST_LV2
-    manager.addFormat (std::make_unique<juce::LV2PluginFormat>());
-   #endif
-    juce::ignoreUnused (manager);
+    PluginFormats::addPlatformFormats (manager);
 }
 
 void PluginHost::applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed)
 {
-   #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    // Inside the sandbox the OS refuses to open an AUv2 without the sandbox-safe flag in-process
-    // (-3000). Allowed, those run in the system's hosting service, as they do in Logic - which the
-    // system grants once the user agreed to lower the app's security settings. Not allowed, they are
-    // asked for in-process and fail, and nobody is asked anything.
-    using Isolation = juce::AudioUnitPluginFormat::ProcessIsolation;
-    for (auto* format : manager.getFormats())
-        if (auto* audioUnits = dynamic_cast<juce::AudioUnitPluginFormat*> (format))
-            audioUnits->setProcessIsolation (allowed ? Isolation::whenSandboxRequires : Isolation::inProcess);
-   #endif
-    juce::ignoreUnused (manager, allowed);
+    PluginFormats::applyLoweredSecurity (manager, allowed);
 }
 
 bool PluginHost::isSandboxed()
@@ -124,6 +105,11 @@ juce::File PluginHost::getListFile() const
 juce::File PluginHost::getDeadMansPedalFile() const
 {
     return dataDirectory.getChildFile ("Plugins").getChildFile ("ScanInProgress.txt");
+}
+
+juce::File PluginHost::getScanLogFile() const
+{
+    return dataDirectory.getChildFile ("Plugins").getChildFile ("ScanLog.txt");
 }
 
 bool PluginHost::loadList()
@@ -440,9 +426,62 @@ bool PluginHost::waitUntilNone (const std::atomic<int>& pending, int timeoutMs)
 //==============================================================================
 void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
 {
+    const auto workerPath = executable.getFullPathName();
     auto scanner = std::make_unique<ChildProcessScanner> (std::move (executable), timeoutMs);
     scanner->setLoweredSecurityFlag (loweredSecurityAllowed);   // the worker loads what this host may load
+
+    // The scan's log, for a user to send along when a scan goes wrong: a heading whenever the scanner
+    // takes up work again after a pause (a new scan), then its lines with the time of day.
+    struct Log
+    {
+        juce::File file;
+        juce::String worker;
+        std::shared_ptr<const std::atomic<bool>> loweredSecurity;
+        juce::Time last;
+    };
+    auto state = std::make_shared<Log> (Log { getScanLogFile(), workerPath, loweredSecurityAllowed, {} });
+    scanner->setLog ([state] (const juce::String& line)
+    {
+        const auto now = juce::Time::getCurrentTime();
+        juce::String text;
+
+        if ((now - state->last).inSeconds() > 20.0)
+        {
+            if (state->file.getSize() > 1024 * 1024)
+                state->file.deleteFile();   // the old scans go, this one is kept whole
+            state->file.getParentDirectory().createDirectory();
+
+            text << (state->file.existsAsFile() ? "\n" : "")
+                 << "=== Plugin scan, " << now.toString (true, true) << " ===\n"
+                 << "Audionaut " << ProjectInfo::versionString
+                #if JUCE_DEBUG
+                 << " (debug build)"
+                #endif
+                 << ", " << juce::SystemStats::getOperatingSystemName()
+                 << (juce::SystemStats::isOperatingSystem64Bit() ? ", 64 bit" : ", 32 bit")
+                 << ", " << juce::SystemStats::getCpuModel() << "\n"
+                 << "Sandboxed: " << (isSandboxed() ? "yes" : "no")
+                 << ", lowered security settings allowed: " << (state->loweredSecurity->load() ? "yes" : "no") << "\n"
+                 << "Worker: " << state->worker << "\n";
+        }
+        state->last = now;
+
+        text << now.formatted ("%H:%M:%S") << "  " << line << "\n";
+        state->file.appendText (text, false, false, "\n");
+    });
     list.setCustomScanner (std::move (scanner));
+}
+
+juce::File PluginHost::scanWorkerExecutable()
+{
+   #if JUCE_MAC
+    // Contents/Helpers, where the Xcode project's post-build step puts it (ScanHelper/embed-scan-helper.sh)
+    const auto helper = juce::File::getSpecialLocation (juce::File::currentApplicationFile)
+                            .getChildFile ("Contents/Helpers/audionaut-scan-helper");
+    if (helper.existsAsFile())
+        return helper;
+   #endif
+    return juce::File::getSpecialLocation (juce::File::currentExecutableFile);
 }
 
 PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, const juce::String&)>& progress,
@@ -487,21 +526,7 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
 
 bool PluginHost::runWhilePumping (std::function<void()> fn, int timeoutMs)
 {
-    auto done = std::make_shared<std::atomic<bool>> (false);
-    std::thread ([work = std::move (fn), done] { work(); done->store (true); }).detach();
-
-    const auto deadline = juce::Time::getMillisecondCounter() + static_cast<juce::uint32> (timeoutMs);
-    auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
-    while (! done->load())
-    {
-        if (juce::Time::getMillisecondCounter() >= deadline)
-            return false;
-        if (messageManager != nullptr && messageManager->isThisTheMessageThread())
-            messageManager->runDispatchLoopUntil (20);
-        else
-            juce::Thread::sleep (20);
-    }
-    return true;
+    return PluginFormats::runWhilePumping (std::move (fn), timeoutMs);
 }
 
 //==============================================================================

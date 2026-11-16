@@ -1315,6 +1315,12 @@
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginHost.cpp">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.cpp">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.cpp">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp">
       <Filter>Audionaut\Source\Engine\Effects</Filter>
     </ClCompile>
@@ -5115,7 +5121,13 @@
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\HostedEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.h">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginHost.h">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginTypeId.h">

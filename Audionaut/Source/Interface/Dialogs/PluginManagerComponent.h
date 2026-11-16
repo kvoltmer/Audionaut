@@ -49,6 +49,8 @@ public:
     {
         list.setNumberOfThreadsForScanning (1);   // one worker process at a time
         list.setTableModel (new Rows (*this));    // the list component owns it
+        list.getTableListBox().getHeader().setSortColumnId (Rows::manufacturerColumn, true);   // until a column is clicked
+        list.onScanFinished = [this] (const juce::StringArray& failed, const juce::StringArray& skipped) { scanFinished (failed, skipped); };
         addAndMakeVisible (list);
 
         details.setJustificationType (juce::Justification::topLeft);
@@ -86,6 +88,11 @@ public:
             addAndMakeVisible (hint);
         }
 
+        showLog.setButtonText (TRANS ("Show Scan Log"));
+        showLog.setTooltip (TRANS ("Shows the file that says what the last scans did with each plugin: the one to send along when a scan goes wrong."));
+        showLog.onClick = [this] { host->getScanLogFile().revealToUser(); };
+        addAndMakeVisible (showLog);
+
         host->getList().addChangeListener (this);
         pluginsSwitched();
     }
@@ -107,7 +114,10 @@ public:
         enablePlugins.setBounds (top.removeFromLeft (160));
         hint.setBounds (top);
         bounds.removeFromTop (4);
-        status.setBounds (bounds.removeFromBottom (22));
+        auto bottom = bounds.removeFromBottom (22);
+        showLog.setBounds (bottom.removeFromRight (110));
+        bottom.removeFromRight (8);
+        status.setBounds (bottom);
         details.setBounds (bounds.removeFromBottom (38));
         bounds.removeFromBottom (4);
         list.setBounds (bounds);
@@ -309,6 +319,50 @@ private:
         details.setText (text, juce::dontSendNotification);
     }
 
+    /// Up to `limit` of the files' names, one per line, the rest counted.
+    juce::String namesOf (const juce::StringArray& files, int limit = 8)
+    {
+        juce::StringArray names;
+        for (const auto& file : files)
+            names.addIfNotAlreadyThere (skippedEntry (file).name);
+        names.sortNatural();
+
+        const auto more = names.size() - limit;
+        if (more > 1)   // a last line "and 1 more" would as well be the name
+            names.removeRange (limit, more);
+
+        auto text = names.joinIntoString ("\n");
+        if (more > 1)
+            text << "\n" << TRANS ("and ") << more << TRANS (" more");
+        return text;
+    }
+
+    /// Says what a scan left out, where it left something out: the names only, the rest is in the list.
+    void scanFinished (const juce::StringArray& failed, const juce::StringArray& skipped)
+    {
+        juce::StringArray parts;
+        if (! skipped.isEmpty())
+            parts.add ((skipped.size() == 1 ? TRANS ("1 plugin crashed or took too long and is skipped:")
+                                            : juce::String (skipped.size()) + TRANS (" plugins crashed or took too long and are skipped:"))
+                       + "\n" + namesOf (skipped));
+        if (! failed.isEmpty())
+            parts.add ((failed.size() == 1 ? TRANS ("1 file could not be loaded as a plugin:")
+                                           : juce::String (failed.size()) + TRANS (" files could not be loaded as plugins:"))
+                       + "\n" + namesOf (failed));
+        if (parts.isEmpty())
+            return;
+
+        if (! skipped.isEmpty())
+            parts.add (TRANS ("Skipped plugins are greyed out in the list."));
+
+        scanResult = juce::NativeMessageBox::showScopedAsync (juce::MessageBoxOptions::makeOptionsOk (juce::MessageBoxIconType::InfoIcon,
+                                                                                                      TRANS ("Plugin scan complete"),
+                                                                                                      parts.joinIntoString ("\n\n"),
+                                                                                                      {},
+                                                                                                      this),
+                                                              nullptr);
+    }
+
     void changeListenerCallback (juce::ChangeBroadcaster*) override
     {
         updateStatus();
@@ -325,6 +379,8 @@ private:
 
     void updateStatus()
     {
+        showLog.setEnabled (host->getScanLogFile().existsAsFile());   // there once something was scanned
+
         if (! host->isEnabled())
         {
             const auto listed = host->getList().getNumTypes();
@@ -377,6 +433,8 @@ private:
     juce::Label status;
     juce::ToggleButton enablePlugins;
     juce::Label hint;
+    juce::ScopedMessageBox scanResult;
+    juce::TextButton showLog;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginManagerComponent)
 };

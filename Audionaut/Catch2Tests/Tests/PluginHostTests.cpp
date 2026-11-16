@@ -862,10 +862,113 @@ namespace
         };
     }
 
+    /// Workers that find nothing in a "late" file once they have loaded something else before it, and
+    /// nothing in "empty" ever.
+    ChildProcessScanner::WorkerFactory workersThatGoBlind (int idleMs)
+    {
+        return [idleMs]
+        {
+            auto loaded = std::make_shared<int> (0);
+            return std::make_unique<ThreadWorker> ([loaded] (const ChildProcessScanner::Request& request) -> json
+            {
+                const auto blind = request.file.startsWith ("late") && *loaded > 0;
+                ++*loaded;
+                if (blind || request.file == "empty")
+                    return { { "ok", true }, { "plugins", json::array() } };
+                return describedIn (request);
+            }, idleMs);
+        };
+    }
+
     // Generous, so that a busy machine does not decide a test: the scenarios that are about time
     // running out set their own.
     constexpr auto patientIdleMs = 20000;
     constexpr auto patientTimeoutMs = 20000;
+}
+
+SCENARIO ("the child-process scanner asks a new worker about a file the used one found nothing in", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers that find nothing in some files once they have loaded another")
+    {
+        ChildProcessScanner scanner (workersThatGoBlind (patientIdleMs), patientTimeoutMs);
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("the system may ask the user about plugins")
+        {
+            scanner.setLoweredSecurityFlag (std::make_shared<const std::atomic<bool>> (true));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
+
+            THEN ("a new worker found the plugin, and goes on with the next files")
+            {
+                REQUIRE (found.size() == 2);
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+            }
+
+            AND_WHEN ("files are empty in a new worker too")
+            {
+                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, "44"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                const auto started = scanner.getNumWorkersStarted();
+                REQUIRE (started == 4);
+
+                THEN ("after two of them no further worker is started for an empty file")
+                {
+                    REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
+                    REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                    REQUIRE (scanner.getNumWorkersStarted() == started);
+                    REQUIRE (found.size() == 4);
+                }
+            }
+        }
+
+        WHEN ("it may not")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
+
+            THEN ("the file counts as empty and the worker stays")
+            {
+                REQUIRE (found.size() == 1);
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner says what it did with each file", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner with a log")
+    {
+        ChildProcessScanner scanner ([] { return std::make_unique<ThreadWorker> (describedIn, patientIdleMs); }, patientTimeoutMs);
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+
+        WHEN ("a file is found and another takes its worker down")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE_FALSE (scanner.findPluginTypesFor (format, found, "dies"));
+
+            THEN ("the log has the workers, the plugin by name and the failure with its reason")
+            {
+                const auto log = lines.joinIntoString ("\n");
+                INFO (log);
+                REQUIRE (lines[0].startsWith ("worker 1 started"));
+                REQUIRE (lines[1].startsWith ("TestA  11  ->  1 found: " + found[0]->name));
+                REQUIRE (log.contains ("asked again of a new worker"));
+                REQUIRE (log.contains ("worker 2 started"));
+                REQUIRE (lines[lines.size() - 1].startsWith ("TestA  dies  ->  FAILED, file skipped: the worker process ended"));
+            }
+        }
+    }
 }
 
 SCENARIO ("the child-process scanner asks one worker for many files", "[engine][effects][hosting][scan]")

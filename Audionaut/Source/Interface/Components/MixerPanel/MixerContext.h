@@ -124,9 +124,10 @@ namespace InsertChainActions
         });
     }
 
-    /// The effect types by category, a submenu each, in the order the registry first lists one of the
-    /// category (the built-ins' categories first, then the plugins by manufacturer); a type without a
-    /// category goes on the top level. Last, where the app has one, the Manage Plugins window.
+    /// The effect types in two sections, the built-in effects and below them the plugins. The built-ins are
+    /// listed by name on the section's own level; the plugins get a submenu per manufacturer, one without a
+    /// manufacturer going below the submenus. Submenus and names are in alphabetical order. Last, where the
+    /// app has one, the Manage Plugins window.
     inline juce::PopupMenu typesMenu (const MixerContext& ctx, std::function<void (const std::string& typeId)> onPick)
     {
         juce::PopupMenu menu;
@@ -134,23 +135,46 @@ namespace InsertChainActions
         if (planner == nullptr)
             return menu;
 
-        const auto& types = planner->getRegistry().getTypes();
-        std::vector<std::string> categories;
-        for (const auto& type : types)
-            if (! type.category.empty() && std::find (categories.begin(), categories.end(), type.category) == categories.end())
-                categories.push_back (type.category);
-
-        for (const auto& category : categories)
+        const auto isBuiltIn = [] (const audium::EffectTypeInfo& type) { return type.id.rfind ("builtin:", 0) == 0; };
+        const auto before = [] (const std::string& a, const std::string& b)
         {
-            juce::PopupMenu submenu;
+            const auto order = juce::String::fromUTF8 (a.c_str()).compareNatural (juce::String::fromUTF8 (b.c_str()));
+            return order != 0 ? order < 0 : a < b;
+        };
+
+        auto types = planner->getRegistry().getTypes();
+        std::stable_sort (types.begin(), types.end(), [&] (const auto& a, const auto& b) { return before (a.name, b.name); });
+
+        const auto addSection = [&] (const juce::String& title, bool builtIn)
+        {
+            std::vector<std::string> categories;   // none for the built-ins, which are listed flat
+            bool any = false;
             for (const auto& type : types)
-                if (type.category == category)
-                    submenu.addItem (type.name, [onPick, id = type.id] { onPick (id); });
-            menu.addSubMenu (juce::String (category), submenu);
-        }
-        for (const auto& type : types)
-            if (type.category.empty())
-                menu.addItem (type.name, [onPick, id = type.id] { onPick (id); });
+                if (isBuiltIn (type) == builtIn) {
+                    any = true;
+                    if (! builtIn && ! type.category.empty() && std::find (categories.begin(), categories.end(), type.category) == categories.end())
+                        categories.push_back (type.category);
+                }
+            if (! any)
+                return;
+            std::sort (categories.begin(), categories.end(), before);
+
+            menu.addSectionHeader (title);
+            for (const auto& category : categories)
+            {
+                juce::PopupMenu submenu;
+                for (const auto& type : types)
+                    if (isBuiltIn (type) == builtIn && type.category == category)
+                        submenu.addItem (juce::String::fromUTF8 (type.name.c_str()), [onPick, id = type.id] { onPick (id); });
+                menu.addSubMenu (juce::String::fromUTF8 (category.c_str()), submenu);
+            }
+            for (const auto& type : types)
+                if (isBuiltIn (type) == builtIn && (builtIn || type.category.empty()))
+                    menu.addItem (juce::String::fromUTF8 (type.name.c_str()), [onPick, id = type.id] { onPick (id); });
+        };
+
+        addSection (TRANS ("Built-in"), true);
+        addSection (TRANS ("Plugins"), false);
 
         if (ctx.openPluginManager != nullptr) {
             menu.addSeparator();

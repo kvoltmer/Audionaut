@@ -59,6 +59,8 @@ Stem separation runs [demucs.cpp](https://github.com/sevagh/demucs.cpp), a C++ p
 Audionaut/Builds/MacOSX/Audionaut.xcodeproj
 ```
 
+The build needs [CMake](https://cmake.org) (`brew install cmake`): a post-build step compiles the plugin scan helper (`Audionaut/ScanHelper`) and puts it into the app bundle.
+
 **Visual Studio 2026** — open the Visual Studio solution located here:
 
 ```

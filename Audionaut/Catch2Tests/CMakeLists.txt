@@ -389,3 +389,17 @@ if(AUDIONAUT_BUILD_CLI)
         set_tests_properties(CliScanAU PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
     endif()
 endif()
+
+# ---------------------------------------------------------------------------
+# audionaut-scan-helper
+#
+# The scan worker the sandboxed macOS app starts in its own place
+# (../ScanHelper, built into the app bundle by the Xcode project's post-build
+# step). Built here too, so that CI compiles it, and run on Apple's AUDelay
+# the way the scanner's fallback runs it.
+# ---------------------------------------------------------------------------
+if(APPLE)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../ScanHelper scan-helper-bin)
+    add_test(NAME ScanHelperAU
+             COMMAND AudionautScanHelper scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")
+endif()

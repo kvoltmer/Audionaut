@@ -511,6 +511,9 @@ the one-gesture crossfade UX on top:
   way at a time, so the worker that dies died of that file and the next file
   gets a new worker; a process per file remains as the fallback where the
   pipe does not work. 40 Audio Units: 6.7 s before, about 2 s after.
+  On macOS the worker is `audionaut-scan-helper` in the bundle
+  (`Audionaut/ScanHelper`): the sandboxed app's own binary dies as its child
+  (`forbidden-sandbox-reinit`).
 - [ ] **Plugin state blobs in every undo snapshot.** A structural edit's
   container snapshot carries every hosted insert's base64 state; effect
   plugins are a few KB, samplers can be megabytes. Measure with a heavy

@@ -107,6 +107,9 @@ public:
     juce::KnownPluginList& getList() noexcept { return list; }
     juce::File getListFile() const;
     juce::File getDeadMansPedalFile() const;
+    /// What the child-process scanner did, file by file (useChildProcessScanner writes it); a text
+    /// file a user can send along. Kept over several scans until it grows past a megabyte.
+    juce::File getScanLogFile() const;
 
     /// Reads the list file (and what the dead man's pedal left behind); false when there is none yet.
     bool loadList();
@@ -170,9 +173,12 @@ public:
     /// The same for the plugins of one registry's effects (one engine's).
     static bool waitForPendingLoads (const EffectRegistry& registry, int timeoutMs = 30000);
 
-    /// Scans in a child process: this executable run as the scan-plugin worker, which serves file after file
+    /// Scans in a child process: the executable run as the scan-plugin worker, which serves file after file
     /// until one takes it down (timeoutMs: how long one file may take).
     void useChildProcessScanner (juce::File executable, int timeoutMs = 60000);
+    /// The executable an app scans with: the scan helper in its bundle on macOS (a sandboxed app
+    /// cannot run itself as a child process), the app itself everywhere else and where there is no helper.
+    static juce::File scanWorkerExecutable();
 
     struct ScanResult
     {

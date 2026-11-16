@@ -345,8 +345,16 @@
                   file="Source/Engine/Effects/Hosting/HostedEffect.h"/>
             <FILE id="EfHoPC" name="PluginHost.cpp" compile="1" resource="0"
                   file="Source/Engine/Effects/Hosting/PluginHost.cpp"/>
+            <FILE id="EfHoFC" name="PluginFormats.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginFormats.cpp"/>
+            <FILE id="EfHoFH" name="PluginFormats.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginFormats.h"/>
             <FILE id="EfHoPH" name="PluginHost.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/PluginHost.h"/>
+            <FILE id="EfHoWC" name="ScanWorker.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/ScanWorker.cpp"/>
+            <FILE id="EfHoWH" name="ScanWorker.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ScanWorker.h"/>
             <FILE id="EfHoTI" name="PluginTypeId.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/PluginTypeId.h"/>
           </GROUP>
@@ -946,7 +954,7 @@
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&#10;&#9;&lt;string&gt;13.0&lt;/string&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
                iosDevelopmentTeamID="Q89CZBX79G" buildNumber="30" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1">
+               localNetworkPermissionNeeded="1" postbuildCommand="&quot;$SRCROOT/../../ScanHelper/embed-scan-helper.sh&quot;">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications"

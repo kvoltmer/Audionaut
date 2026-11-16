@@ -26,7 +26,7 @@
 #                  Defaults to "-" (ad-hoc), which builds an image that runs
 #                  locally but that Gatekeeper rejects on other machines.
 #
-# Requires: Xcode command line tools.
+# Requires: Xcode command line tools, CMake (the build's scan helper step).
 
 set -eu
 
@@ -75,8 +75,22 @@ if [ ! -d "$APP" ]; then
     exit 1
 fi
 
-# The bundle has no nested code (JUCE, Rubber Band, LAME and demucs are all
-# linked statically), so signing the bundle itself is the whole job.
+# The bundle's one piece of nested code is the plugin scan helper, which the
+# Xcode build put there (ScanHelper/embed-scan-helper.sh). It is signed
+# first, with its own two entitlements - the app's would get it killed at
+# launch - and then the bundle around it. Everything else (JUCE, Rubber
+# Band, LAME, demucs) is linked statically.
+HELPER="$APP/Contents/Helpers/audionaut-scan-helper"
+if [ ! -f "$HELPER" ]; then
+    echo "package.sh: $HELPER does not exist" >&2
+    exit 1
+fi
+echo "Signing $HELPER"
+codesign --force --options runtime --timestamp \
+    --identifier com.voltmer-systems.audionaut.scan-helper \
+    --entitlements ../../ScanHelper/ScanHelper.entitlements \
+    --sign "$SIGN_IDENTITY" "$HELPER"
+
 echo "Signing $APP"
 codesign --force --options runtime --timestamp \
     --entitlements Audionaut.entitlements \
