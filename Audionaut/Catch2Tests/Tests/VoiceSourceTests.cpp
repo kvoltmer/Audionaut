@@ -36,7 +36,6 @@ SCENARIO("tranport source scenario", "[engine][dsp][transport]")
             
             bounceConfig->fileName = juce::File::createTempFile(".wav");
             bounceConfig->sampleRate = 44100.0;
-            //bounceConfig->positionSeconds = 1.5;
             bounceConfig->positionSeconds = 0.0;
             
             auto totalLength = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
