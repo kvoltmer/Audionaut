@@ -569,6 +569,145 @@ SCENARIO ("a host that started without a list file leaves another process's list
     }
 }
 
+SCENARIO ("a host that is turned off offers no plugins", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    TestHost test (temp.folder);
+    auto& host = test.host;
+    const auto plugin = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+
+    GIVEN ("a host with plugins, attached to a registry")
+    {
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("it is on, and the plugins are types of the registry")
+        {
+            REQUIRE (host.isEnabled());
+            REQUIRE (registry->hasType ("testa:00001111"));
+            REQUIRE (registry->hasType ("testb:00002222"));
+        }
+
+        WHEN ("it is turned off")
+        {
+            host.setEnabled (false);
+
+            THEN ("the types leave the registry, and the host says why")
+            {
+                REQUIRE_FALSE (registry->hasType ("testa:00001111"));
+                REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+                REQUIRE (host.availabilityOf (plugin) == PluginHost::Availability::disabled);
+                REQUIRE (PluginHost::describe (PluginHost::Availability::disabled).isNotEmpty());
+                REQUIRE_FALSE (host.canCreate (plugin));
+            }
+
+            THEN ("nothing is loaded, and the list keeps its plugins")
+            {
+                const auto instancesBefore = TestPluginInstance::instances();
+                juce::String error;
+                REQUIRE (host.createInstance (plugin, 44100.0, 512, error) == nullptr);
+                REQUIRE (error.isNotEmpty());
+                REQUIRE (TestPluginInstance::instances() == instancesBefore);
+                REQUIRE (host.getList().getNumTypes() > 0);
+                REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
+            }
+
+            AND_WHEN ("it is turned on again")
+            {
+                host.setEnabled (true);
+
+                THEN ("the plugins are back, and load")
+                {
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                    auto effect = registry->create ("testa:00001111");
+                    auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                    REQUIRE (hosted != nullptr);
+                    REQUIRE (hosted->isLoaded());
+                }
+            }
+        }
+    }
+}
+
+SCENARIO ("a plugin the system asks the user about is only there where that is allowed", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    TestHost test (temp.folder);
+    auto& host = test.host;
+    const auto plain = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+    const auto asking = TestPluginInstance::describe (gainIn ("TestB", 0x2222));
+
+    GIVEN ("a host one of whose plugins needs lowered security settings, attached to a registry")
+    {
+        host.setLoweredSecurityQuestion ([] (const juce::PluginDescription& description) { return description.pluginFormatName == "TestB"; });
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("it is not offered, and the host says why; the other plugin is")
+        {
+            REQUIRE_FALSE (host.isLoweredSecurityAllowed());
+            REQUIRE (host.availabilityOf (asking) == PluginHost::Availability::needsLoweredSecurity);
+            REQUIRE (PluginHost::describe (PluginHost::Availability::needsLoweredSecurity).isNotEmpty());
+            REQUIRE_FALSE (host.canCreate (asking));
+            REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+            REQUIRE (host.availabilityOf (plain) == PluginHost::Availability::available);
+            REQUIRE (registry->hasType ("testa:00001111"));
+        }
+
+        THEN ("it is not loaded, and not taken as another format's stand-in")
+        {
+            const auto instancesBefore = TestPluginInstance::instances();
+            juce::String error;
+            REQUIRE (host.createInstance (asking, 44100.0, 512, error) == nullptr);
+            REQUIRE (error.isNotEmpty());
+            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+
+            host.getList().removeType (plain);
+            REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
+        }
+
+        WHEN ("it is allowed")
+        {
+            host.setLoweredSecurityAllowed (true);
+
+            THEN ("the plugin is a type of the attached registry, and loads")
+            {
+                REQUIRE (host.availabilityOf (asking) == PluginHost::Availability::available);
+                REQUIRE (registry->hasType ("testb:00002222"));
+                auto effect = registry->create ("testb:00002222");
+                auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+                REQUIRE (hosted != nullptr);
+                REQUIRE (hosted->isLoaded());
+            }
+
+            AND_WHEN ("it is taken back")
+            {
+                host.setLoweredSecurityAllowed (false);
+
+                THEN ("the type leaves the registry again")
+                {
+                    REQUIRE_FALSE (registry->hasType ("testb:00002222"));
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                }
+            }
+        }
+    }
+
+    GIVEN ("what a format says when the user declined")
+    {
+        THEN ("the host says it in plain words, and leaves other messages alone")
+        {
+            const auto declined = PluginHost::describeLoadError ("An OS error occurred during initialisation of the plug-in (-128)");
+            REQUIRE_FALSE (declined.contains ("-128"));
+            REQUIRE (declined.containsIgnoreCase ("security settings"));
+            REQUIRE (PluginHost::describeLoadError ("the file is damaged") == "the file is damaged");
+            REQUIRE (PluginHost::describeLoadError ({}).isEmpty());
+        }
+    }
+}
+
 SCENARIO ("an engine waits for its own plugins, not for another engine's", "[engine][effects][hosting]")
 {
     MessageThread messageThread;
@@ -685,8 +824,12 @@ namespace
         void kill() override {}
     };
 
-    json describedIn (const juce::String& format, const juce::String& file, int timeoutMs)
+    json describedIn (const ChildProcessScanner::Request& request)
     {
+        const auto& format = request.format;
+        const auto& file = request.file;
+        const auto timeoutMs = request.timeoutMs;
+
         if (format != "TestA")
             return { { "ok", false }, { "code", "unknown_format" } };
         if (file == "dies")
@@ -709,12 +852,30 @@ namespace
         return [idleMs]
         {
             auto loaded = std::make_shared<int> (0);
-            return std::make_unique<ThreadWorker> ([loaded] (const juce::String& format, const juce::String& file, int timeoutMs)
+            return std::make_unique<ThreadWorker> ([loaded] (const ChildProcessScanner::Request& request)
             {
-                if (file == "fragile" && *loaded > 0)
+                if (request.file == "fragile" && *loaded > 0)
                     throw Dies();
                 ++*loaded;
-                return describedIn (format, file, timeoutMs);
+                return describedIn (request);
+            }, idleMs);
+        };
+    }
+
+    /// Workers that find nothing in a "late" file once they have loaded something else before it, and
+    /// nothing in "empty" ever.
+    ChildProcessScanner::WorkerFactory workersThatGoBlind (int idleMs)
+    {
+        return [idleMs]
+        {
+            auto loaded = std::make_shared<int> (0);
+            return std::make_unique<ThreadWorker> ([loaded] (const ChildProcessScanner::Request& request) -> json
+            {
+                const auto blind = request.file.startsWith ("late") && *loaded > 0;
+                ++*loaded;
+                if (blind || request.file == "empty")
+                    return { { "ok", true }, { "plugins", json::array() } };
+                return describedIn (request);
             }, idleMs);
         };
     }
@@ -723,6 +884,132 @@ namespace
     // running out set their own.
     constexpr auto patientIdleMs = 20000;
     constexpr auto patientTimeoutMs = 20000;
+}
+
+SCENARIO ("the child-process scanner asks a new worker about a file the used one found nothing in", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers that find nothing in some files once they have loaded another")
+    {
+        ChildProcessScanner scanner (workersThatGoBlind (patientIdleMs), patientTimeoutMs);
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("the system may ask the user about plugins")
+        {
+            scanner.setLoweredSecurityFlag (std::make_shared<const std::atomic<bool>> (true));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
+
+            THEN ("a new worker found the plugin, and goes on with the next files")
+            {
+                REQUIRE (found.size() == 2);
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+            }
+
+            AND_WHEN ("files are empty in a new worker too")
+            {
+                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                const auto started = scanner.getNumWorkersStarted();
+                REQUIRE (started == 4);
+
+                THEN ("after two of them in a row no further worker is started for an empty file")
+                {
+                    REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                    REQUIRE (scanner.getNumWorkersStarted() == started);
+                    REQUIRE (found.size() == 2);
+
+                    AND_THEN ("a file with a plugin in it does not start the count again, the next scan does")
+                    {
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                        REQUIRE (scanner.getNumWorkersStarted() == started);
+
+                        scanner.scanFinished();
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                        REQUIRE (scanner.getNumWorkersStarted() == started + 1);
+                        REQUIRE (found.size() == 3);
+                    }
+                }
+            }
+        }
+
+        WHEN ("it may not")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
+
+            THEN ("the file counts as empty and the worker stays")
+            {
+                REQUIRE (found.size() == 1);
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner holds a worker that does not run against no file", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner whose worker executable is not there")
+    {
+        ChildProcessScanner scanner (juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("audionaut-no-such-worker"), 5000);
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+
+        WHEN ("files are scanned")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            const auto first = scanner.findPluginTypesFor (format, found, "11");
+            const auto second = scanner.findPluginTypesFor (format, found, "22");
+            const auto third = scanner.findPluginTypesFor (format, found, "33");
+
+            THEN ("nothing is found, no file is to be skipped, and the log says why")
+            {
+                const auto log = lines.joinIntoString ("\n");
+                INFO (log);
+                REQUIRE (first);
+                REQUIRE (second);
+                REQUIRE (third);
+                REQUIRE (found.isEmpty());
+                REQUIRE (log.contains ("TestA  33  ->  NOT SCANNED"));
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner says what it did with each file", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner with a log")
+    {
+        ChildProcessScanner scanner ([] { return std::make_unique<ThreadWorker> (describedIn, patientIdleMs); }, patientTimeoutMs);
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+
+        WHEN ("a file is found and another takes its worker down")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE_FALSE (scanner.findPluginTypesFor (format, found, "dies"));
+
+            THEN ("the log has the workers, the plugin by name and the failure with its reason")
+            {
+                const auto log = lines.joinIntoString ("\n");
+                INFO (log);
+                REQUIRE (lines[0].startsWith ("worker 1 started"));
+                REQUIRE (lines[1].startsWith ("TestA  11  ->  1 found: " + found[0]->name));
+                REQUIRE (log.contains ("asked again of a new worker"));
+                REQUIRE (log.contains ("worker 2 started"));
+                REQUIRE (lines[lines.size() - 1].startsWith ("TestA  dies  ->  FAILED, file skipped: the worker process ended"));
+            }
+        }
+    }
 }
 
 SCENARIO ("the child-process scanner asks one worker for many files", "[engine][effects][hosting][scan]")
@@ -824,6 +1111,35 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
         }
     }
 
+    GIVEN ("a scanner that is told whether plugins may ask for lowered security settings")
+    {
+        auto heard = std::make_shared<std::vector<bool>>();
+        ChildProcessScanner scanner ([heard]
+        {
+            return std::make_unique<ThreadWorker> ([heard] (const ChildProcessScanner::Request& request)
+            {
+                heard->push_back (request.loweredSecurity);
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        auto allowed = std::make_shared<std::atomic<bool>> (false);
+
+        WHEN ("files are scanned before and after it is allowed")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));   // nothing said: no
+            scanner.setLoweredSecurityFlag (allowed);
+            REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+            allowed->store (true);
+            REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+
+            THEN ("the worker hears it with every file")
+            {
+                REQUIRE (*heard == std::vector<bool> { false, false, true });
+            }
+        }
+    }
+
     GIVEN ("a scanner that does not wait long")
     {
         ChildProcessScanner scanner ([] { return std::make_unique<ThreadWorker> (describedIn, patientIdleMs); }, 500);
@@ -872,12 +1188,128 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
             const auto first = scanner.findPluginTypesFor (format, found, "11");
             const auto second = scanner.findPluginTypesFor (format, found, "22");
 
-            THEN ("the pipe is given up after the first, with nothing to fall back to here")
+            THEN ("the pipe is given up after the first, with nothing to fall back to here - which is not held against the files")
             {
-                REQUIRE_FALSE (first);
-                REQUIRE_FALSE (second);
+                REQUIRE (first);
+                REQUIRE (second);
+                REQUIRE (found.isEmpty());
                 REQUIRE (scanner.getNumWorkersStarted() == 1);
             }
         }
     }
 }
+
+#if JUCE_MAC && defined (AUDIONAUT_TEST_SCAN_WORKER)
+// Real Audio Units in a real worker process: the two components of Catch2Tests/TestAudioUnits and
+// Apple's AUDelay, scanned by AudionautTestScanWorker - the scan helper's worker, which registers
+// the test components in its own process instead of having them installed on the machine.
+SCENARIO ("a scan gets past an Audio Unit that crashes and one with nothing in it", "[engine][effects][hosting][scan][audiounit]")
+{
+    MessageThread messageThread;
+
+    const juce::String crashes ("AudioUnit:Effects/aufx,Cras,Audn");
+    const juce::String empty ("AudioUnit:Effects/aufx,Empt,Audn");
+    const juce::String crashesInEditor ("AudioUnit:Effects/aufx,CrEd,Audn");
+    const juce::String delay ("AudioUnit:Effects/aufx,dely,appl");
+
+    GIVEN ("a plugin list that scans in the test worker")
+    {
+        const juce::File workerExecutable (AUDIONAUT_TEST_SCAN_WORKER);
+        REQUIRE (workerExecutable.existsAsFile());
+
+        juce::AudioUnitPluginFormat format;
+        juce::KnownPluginList list;
+        juce::StringArray log;
+
+        auto ownedScanner = std::make_unique<ChildProcessScanner> (workerExecutable, 30000);
+        auto* scanner = ownedScanner.get();
+        scanner->setLog ([&log] (const juce::String& line) { log.add (line); });
+        list.setCustomScanner (std::move (ownedScanner));
+
+        const auto scan = [&] (const juce::String& identifier)
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            list.scanAndAddFile (identifier, true, found, format);
+            return found.size();
+        };
+        const auto logged = [&] (const juce::String& identifier, const juce::String& outcome)
+        {
+            for (const auto& line : log)
+                if (line.contains (identifier + "  ->  ") && line.contains (outcome))
+                    return true;
+            return false;
+        };
+
+        WHEN ("the empty Audio Unit is scanned")
+        {
+            const auto found = scan (empty);
+
+            THEN ("no plugin is found, and nothing is held against the file")
+            {
+                REQUIRE (found == 0);
+                REQUIRE (list.getNumTypes() == 0);
+                REQUIRE (list.getBlacklistedFiles().isEmpty());
+                REQUIRE (logged (empty, "no plugin found"));
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+
+            THEN ("the same worker goes on to the next file")
+            {
+                REQUIRE (scan (delay) == 1);
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+        }
+
+        WHEN ("the Audio Unit that only crashes with its editor open is scanned")
+        {
+            const auto found = scan (crashesInEditor);
+
+            THEN ("it is listed like any effect: the scan opens no editor")
+            {
+                REQUIRE (found == 1);
+                REQUIRE (list.getBlacklistedFiles().isEmpty());
+                REQUIRE (list.getTypes()[0].name == "Crash On Editor");
+                REQUIRE (list.getTypes()[0].manufacturerName == "Audionaut Tests");
+                REQUIRE (list.getTypes()[0].numInputChannels == 2);
+                REQUIRE (list.getTypes()[0].numOutputChannels == 2);
+                REQUIRE_FALSE (list.getTypes()[0].isInstrument);
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+        }
+
+        WHEN ("the crashing Audio Unit is the first file of a scan")
+        {
+            const auto found = scan (crashes);
+
+            THEN ("it is skipped from now on, and the next file is scanned by a new worker")
+            {
+                REQUIRE (found == 0);
+                REQUIRE (list.getBlacklistedFiles() == juce::StringArray { crashes });
+                REQUIRE (logged (crashes, "FAILED, file skipped: the worker process ended while the plugin was loading"));
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+
+                REQUIRE (scan (delay) == 1);
+                REQUIRE (scanner->getNumWorkersStarted() == 2);
+                REQUIRE (list.getNumTypes() == 1);
+                REQUIRE (list.getTypes()[0].name == "AUDelay");
+            }
+        }
+
+        WHEN ("it comes after a file the worker had loaded, and the empty one after it")
+        {
+            REQUIRE (scan (delay) == 1);
+            const auto foundInCrashing = scan (crashes);
+            const auto foundInEmpty = scan (empty);
+
+            THEN ("it got a worker to itself before it was skipped, and only it is skipped")
+            {
+                REQUIRE (foundInCrashing == 0);
+                REQUIRE (foundInEmpty == 0);
+                REQUIRE (scanner->getNumWorkersStarted() == 3);   // the first, one for the crashing file alone, one for what follows
+                REQUIRE (list.getBlacklistedFiles() == juce::StringArray { crashes });
+                REQUIRE (list.getNumTypes() == 1);
+            }
+        }
+    }
+}
+#endif

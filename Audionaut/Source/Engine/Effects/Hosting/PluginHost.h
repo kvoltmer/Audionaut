@@ -49,6 +49,19 @@ class HostedEffect;
  * (the CLI, before it reports or saves): with a registry it waits for that
  * engine's plugins only - a verb on a scratch engine shares the host with
  * the app and is not kept by a plugin the app's own project is loading.
+ *
+ * The app hosts plugins only once its user turned them on (setEnabled;
+ * a host is on unless told otherwise). Off, no plugin is offered as an
+ * insert (Availability::disabled) and a project's slot with one stays an
+ * unresolved element with its state.
+ *
+ * Before macOS loads an AUv2 without the sandbox-safe flag for a sandboxed
+ * app, it asks the user to lower the app's security settings. That
+ * question is only raised where it was allowed (setLoweredSecurityAllowed):
+ * the app does so together with turning the plugins on, a headless run
+ * never does - it has nobody to answer. Not allowed, such a plugin is not
+ * offered either (Availability::needsLoweredSecurity), and a scan does
+ * not load it.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -67,13 +80,39 @@ public:
     /// The app's data folder, the default place for the list.
     static juce::File defaultDataDirectory();
 
-    /// The formats this platform hosts, added to the manager.
+    /// The formats this platform hosts, added to the manager. Plugins that need the user's consent to
+    /// lowered security settings are not loaded until applyLoweredSecurity() says so.
     static void addPlatformFormats (juce::AudioPluginFormatManager& manager);
+    /// Whether the manager's formats load the plugins the system asks the user about (an AUv2 without
+    /// the sandbox-safe flag, in a sandboxed process: out of process, after the user's consent).
+    static void applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed);
+    /// Whether this process is one in which that question comes up (a sandboxed app on macOS).
+    static bool isSandboxed();
+
+    /// Message thread. Whether this host offers and loads plugins at all (it does unless told otherwise;
+    /// the app turns it off until its user turned plugins on). Registers the attached registries' types
+    /// again when it changes. What an engine already has stays as it is: a plugin that runs keeps
+    /// running, a slot that was left unresolved stays so until its project is read again.
+    void setEnabled (bool enabled);
+    bool isEnabled() const noexcept { return enabled; }
+
+    /// Message thread. Whether plugins are loaded that make the system ask the user to lower the app's
+    /// security settings. Off (the default), they are not available here and the question is never
+    /// raised. Registers the attached registries' types again when it changes.
+    void setLoweredSecurityAllowed (bool allowed);
+    bool isLoweredSecurityAllowed() const noexcept { return loweredSecurityAllowed->load(); }
+    /// Both at once, as the app's switch sets them: the types are registered again once, not twice.
+    void setEnabled (bool enabled, bool loweredSecurityAllowed);
+    /// Which plugins those are; the platform's answer by default (tests bring their own).
+    void setLoweredSecurityQuestion (std::function<bool (const juce::PluginDescription&)> asksForIt) { asksForLoweredSecurity = std::move (asksForIt); }
 
     juce::AudioPluginFormatManager& getFormats() noexcept { return formats; }
     juce::KnownPluginList& getList() noexcept { return list; }
     juce::File getListFile() const;
     juce::File getDeadMansPedalFile() const;
+    /// What the child-process scanner did, file by file (useChildProcessScanner writes it); a text
+    /// file a user can send along. Kept over several scans until it grows past a megabyte.
+    juce::File getScanLogFile() const;
 
     /// Reads the list file (and what the dead man's pedal left behind); false when there is none yet.
     bool loadList();
@@ -97,13 +136,18 @@ public:
     enum class Availability
     {
         available,
-        formatMissing     ///< a format this process does not host
+        formatMissing,          ///< a format this process does not host
+        disabled,               ///< plugins are turned off here
+        needsLoweredSecurity    ///< the system would ask the user to lower the security settings, and that is not allowed here
     };
     Availability availabilityOf (const juce::PluginDescription& description) const;
     /// The reason in words, "" for an available plugin.
     static juce::String describe (Availability availability);
+    /// What a plugin's failure to load is called for the user: the format's message, or plainer words
+    /// where the system refused (the user declined to lower the security settings).
+    static juce::String describeLoadError (const juce::String& message);
 
-    /// Whether this host creates the plugin (its format is here).
+    /// Whether this host creates the plugin (its format is here, plugins are on, and nothing has to be allowed first).
     bool canCreate (const juce::PluginDescription& description) const;
     /// Whether the plugin runs in a process of its own (an AUv3; inside the sandbox an AUv2 without the sandbox-safe
     /// flag): its effect is created asynchronously and starts as a loading placeholder.
@@ -132,9 +176,12 @@ public:
     /// The same for the plugins of one registry's effects (one engine's).
     static bool waitForPendingLoads (const EffectRegistry& registry, int timeoutMs = 30000);
 
-    /// Scans in a child process: this executable run as the scan-plugin worker, which serves file after file
+    /// Scans in a child process: the executable run as the scan-plugin worker, which serves file after file
     /// until one takes it down (timeoutMs: how long one file may take).
     void useChildProcessScanner (juce::File executable, int timeoutMs = 60000);
+    /// The executable an app scans with: the scan helper in its bundle on macOS (a sandboxed app
+    /// cannot run itself as a child process), the app itself everywhere else and where there is no helper.
+    static juce::File scanWorkerExecutable();
 
     struct ScanResult
     {
@@ -168,6 +215,7 @@ private:
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
     juce::String listAsText() const;
+    void registerIntoAttached();
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
 
     struct Attached
@@ -182,6 +230,9 @@ private:
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
     mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
+    bool enabled = true;
+    std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner
+    std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

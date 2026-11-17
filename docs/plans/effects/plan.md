@@ -844,9 +844,11 @@ to a strip under the dials - and an insert added from the mixer opens its editor
 window) and, for an editor the plugin lets the user resize, is resizable itself within the
 editor's limits (macOS: `NSWindowStyleMaskResizable`, `windowDidResize:`, content min/max size;
 elsewhere `DocumentWindow::setResizable`). The Manage Plugins window (`PluginManagerComponent`:
-`juce::PluginListComponent` over the host's format manager, list and dead man's pedal, one
-scanning thread so the worker processes run one at a time, a status line counting effects,
-instruments and skipped files) opens from *Options › Manage Plugins…*
+its own table over the host's list, Rescan, Clear and Remove buttons, and its own `Scan` - a
+`juce::PluginDirectoryScanner` over one format's default folders on a one-thread pool, so the worker
+processes run one at a time, with a progress bar and Cancel in the window instead of a modal dialog -
+rather than `juce::PluginListComponent`, which would have needed changes in JUCE for that; a status
+line counting effects, instruments and skipped files) opens from *Options › Manage Plugins…*
 (`CommandIDs::showPluginManager`) and from the end of every insert type menu
 (`MixerContext::openPluginManager`). `InsertSlotListComponent` shows a chain's unresolved
 elements as dimmed rows with a marker at their saved places (tooltip "<name> by <manufacturer>
@@ -867,15 +869,24 @@ so the JUCE submodule now points at Klaus's fork (`kvoltmer/JUCE`, branch
 `audionaut/au-out-of-process`, to be offered upstream): `AudioUnitPluginFormat::setProcessIsolation`
 (`inProcess` | `whenSandboxRequires` | `outOfProcess`) decides per component, such plugins report
 `requiresUnblockedMessageThreadDuringCreation`, and the editor window skips the in-process Cocoa view
-for them. `PluginHost::addPlatformFormats` sets `whenSandboxRequires`. Creation is asynchronous:
+for them. macOS grants such a load only after the user agreed, in a system dialog, to lower the app's
+security settings (declined or unanswered: -128), so plugins as a whole are opt-in in the app: the
+"Plugins enabled" tick box above the Manage Plugins list (preference `PluginsEnabled`, off by
+default) drives `PluginHost::setEnabled` - off, every plugin is `Availability::disabled`, not
+registered, and the table and its buttons are disabled so nothing scans - and, in the GUI run only,
+`PluginHost::setLoweredSecurityAllowed`, which switches the format between `inProcess` (these
+plugins are `Availability::needsLoweredSecurity`, not registered, never asked for) and
+`whenSandboxRequires`. A CLI verb in the app binary follows `PluginsEnabled` but never allows
+lowered security; `audionaut-cli` has no such preference and hosts plugins. The scan worker is
+told per file what the app allows. Creation is asynchronous:
 `PluginHost::createEffect` hands out a `HostedEffect` in status `loading` (passes through, keeps the
 blob), `createPluginInstanceAsync` delivers the plugin on the message thread, `adopt()` takes it,
 applies the kept state and sets `needsPrepare()` (new on `Effect`, part of `EffectSlot::isPreparedFor`)
 so the planner prepares the slot before the next plan runs it; `onLatencyChanged` asks for that plan.
 `PluginHost::waitForPendingLoads` pumps until the plugins arrived - the CLI calls it after opening a
 project, after `add-insert`, in `list-effects --type` and before a save (`ProjectSession::settlePlugins`).
-`Availability` is down to `available`/`formatMissing`; `loadsOutOfProcess` tells the Manage Plugins
-status line how many run in a process of their own; the editor window of a loading slot shows
+`Availability` is down to `available`/`formatMissing`; `loadsOutOfProcess` says which plugins
+come asynchronously; the editor window of a loading slot shows
 "Loading the plugin..." and takes the editor when it comes. AUv3 came along for free.
 
 Open after 7c: the editor windows saved with the project (TODO.md, mixer follow-ups); measuring the

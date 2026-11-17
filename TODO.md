@@ -487,6 +487,16 @@ the one-gesture crossfade UX on top:
   sandbox-safe flag into Apple's hosting service when the host is sandboxed
   (what Logic does; the OS refuses them in-process with -3000). A pull request
   to juce-framework/JUCE lets the submodule return to upstream once merged.
+- [ ] **Say how many Audio Units macOS will ask about before plugins are
+  turned on.** "Plugins enabled" in Manage Plugins also allows the Audio
+  Units macOS wants lowered security settings for, and the message box only
+  says that this may happen. The sandbox-safe flag and the component's name
+  are readable without loading (`AudioComponentGetDescription`), so the
+  message could name the number, or be left out where there are none.
+- [ ] **A scan with the security prompt unanswered.** If macOS's question
+  sits unanswered past the scan timeout, the file at hand is blacklisted.
+  Check what the scan worker sees while the prompt is up, and do not
+  blacklist for that.
 - [ ] **Measure the out-of-process render cost.** Every block of a plugin in
   the hosting service is a cross-process call; small buffers with many such
   plugins may cost noticeably more than in-process hosting. Bench a chain of
@@ -501,6 +511,9 @@ the one-gesture crossfade UX on top:
   way at a time, so the worker that dies died of that file and the next file
   gets a new worker; a process per file remains as the fallback where the
   pipe does not work. 40 Audio Units: 6.7 s before, about 2 s after.
+  On macOS the worker is `audionaut-scan-helper` in the bundle
+  (`Audionaut/ScanHelper`): the sandboxed app's own binary dies as its child
+  (`forbidden-sandbox-reinit`).
 - [ ] **Plugin state blobs in every undo snapshot.** A structural edit's
   container snapshot carries every hosted insert's base64 state; effect
   plugins are a few KB, samplers can be megabytes. Measure with a heavy
