@@ -870,8 +870,12 @@ so the JUCE submodule now points at Klaus's fork (`kvoltmer/JUCE`, branch
 (`inProcess` | `whenSandboxRequires` | `outOfProcess`) decides per component, such plugins report
 `requiresUnblockedMessageThreadDuringCreation`, and the editor window skips the in-process Cocoa view
 for them. macOS grants such a load only after the user agreed, in a system dialog, to lower the app's
-security settings (declined or unanswered: -128), so plugins as a whole are opt-in in the app: the
-"Plugins enabled" tick box above the Manage Plugins list (preference `PluginsEnabled`, off by
+security settings (declined or unanswered: -128). It asks when such a plugin is loaded, not before:
+on macOS the list is filled from the system's component registry without loading anything
+(`AudioUnitRegistry`, `PluginHost::syncWithInstalled`; entries without a scan's time are "not
+scanned", offered all the same), nothing is scanned unless Scan is clicked, and the plugins macOS
+asks about load one at a time so that a declined question answers for those waiting behind it. The
+"Plugins enabled" tick box above the Manage Plugins list (preference `PluginsEnabled`, on by
 default) drives `PluginHost::setEnabled` - off, every plugin is `Availability::disabled`, not
 registered, and the table and its buttons are disabled so nothing scans - and, in the GUI run only,
 `PluginHost::setLoweredSecurityAllowed`, which switches the format between `inProcess` (these

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -61,7 +62,15 @@ class HostedEffect;
  * the app does so together with turning the plugins on, a headless run
  * never does - it has nobody to answer. Not allowed, such a plugin is not
  * offered either (Availability::needsLoweredSecurity), and a scan does
- * not load it.
+ * not load it. Such plugins are loaded one at a time: when the user
+ * declines the question, the plugins waiting behind that one are not
+ * loaded either, so a project with many of them asks once.
+ *
+ * Where the system knows its plugins without loading them (the Audio
+ * Units on macOS), the list has them without a scan: syncWithInstalled()
+ * adds what is installed as not scanned (isScanned). Such a plugin is
+ * offered like any other and first loaded when it is used; a scan
+ * replaces the entry with what the loaded plugin says.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -105,6 +114,21 @@ public:
     void setEnabled (bool enabled, bool loweredSecurityAllowed);
     /// Which plugins those are; the platform's answer by default (tests bring their own).
     void setLoweredSecurityQuestion (std::function<bool (const juce::PluginDescription&)> asksForIt) { asksForLoweredSecurity = std::move (asksForIt); }
+
+    /// What is installed, as far as the system tells without loading anything: the platform's answer
+    /// by default (the Audio Units on macOS, nothing elsewhere; tests bring their own).
+    void setInstalledSource (std::function<std::vector<juce::PluginDescription>()> source) { installedSource = std::move (source); }
+    /// Message thread. Brings the list in line with what is installed: adds the plugins that are
+    /// neither listed nor skipped as not scanned, and drops not-scanned entries that are gone.
+    /// True when the list changed.
+    bool syncWithInstalled();
+    /// Whether the entry comes from a scan (the loaded plugin's word) or only from the system's list.
+    static bool isScanned (const juce::PluginDescription& description) noexcept { return description.lastInfoUpdateTime != juce::Time(); }
+    /// Message thread, around a scan of the list's (a PluginDirectoryScanner leaves listed plugins
+    /// alone): before it the not-scanned entries leave the list, so that they are scanned; after it
+    /// those the scan did not get to are back as they were.
+    void prepareScan();
+    void finishScan();
 
     juce::AudioPluginFormatManager& getFormats() noexcept { return formats; }
     juce::KnownPluginList& getList() noexcept { return list; }
@@ -214,6 +238,22 @@ private:
     static bool waitUntilNone (const std::atomic<int>& pending, int timeoutMs);
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
+
+    /// The plugins the system asks the user about, waiting to be loaded one after the other.
+    struct Questions
+    {
+        struct Waiting
+        {
+            std::weak_ptr<const int> alive;   // the effect's
+            HostedEffect* effect = nullptr;
+            juce::AudioPluginFormat* format = nullptr;
+            std::shared_ptr<std::atomic<int>> arrivals;
+        };
+        std::deque<Waiting> waiting;
+        bool busy = false;     // one is loading
+        bool closed = false;   // the host is gone, and its formats with it
+    };
+    static void loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending);
     juce::String listAsText() const;
     void registerIntoAttached();
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
@@ -233,6 +273,8 @@ private:
     bool enabled = true;
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner
     std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
+    std::function<std::vector<juce::PluginDescription>()> installedSource;
+    std::shared_ptr<Questions> questions = std::make_shared<Questions>();   // shared with the callbacks in flight
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

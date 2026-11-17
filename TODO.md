@@ -493,10 +493,17 @@ the one-gesture crossfade UX on top:
   says that this may happen. The sandbox-safe flag and the component's name
   are readable without loading (`AudioComponentGetDescription`), so the
   message could name the number, or be left out where there are none.
-- [ ] **Remember a declined security prompt for the app's own loads.** The
-  scan raises macOS's question once per scan (a declined load fails with
-  `userCanceledErr`, -128, and the scanner leaves the other such plugins
-  out); a project's inserts still ask once per plugin.
+- [ ] **Try the Audio Unit listing without a scan with real plugins.** The
+  list comes from the system's registry (`AudioUnitRegistry`), not scanned
+  entries are offered as inserts and first loaded when used, and the
+  plugins macOS asks about load one at a time (a declined question answers
+  for those waiting). Not exercised by hand yet: the prompt on a first
+  insert, a project with several such inserts, a not-scanned plugin that
+  crashes on load in-process (it would take the app down - consider
+  loading not-scanned in-process Audio Units in the scan worker first).
+- [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
+  are on by default and no scan runs by itself; consider a hint in the
+  insert menu, or a first scan when the Manage Plugins window opens empty.
 - [ ] **Measure the out-of-process render cost.** Every block of a plugin in
   the hosting service is a cross-process call; small buffers with many such
   plugins may cost noticeably more than in-process hosting. Bench a chain of

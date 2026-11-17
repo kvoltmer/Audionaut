@@ -166,6 +166,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/AuxBus_58602d7.o \
   $(JUCE_OBJDIR)/AuxBusContainer_59272cb4.o \
   $(JUCE_OBJDIR)/ChildProcessScanner_b30316c5.o \
+  $(JUCE_OBJDIR)/AudioUnitRegistry_c4bb6211.o \
   $(JUCE_OBJDIR)/HostedEffect_9021fa48.o \
   $(JUCE_OBJDIR)/PluginHost_c863964b.o \
   $(JUCE_OBJDIR)/PluginFormats_8ec6ab63.o \
@@ -759,6 +760,11 @@ $(JUCE_OBJDIR)/AuxBusContainer_59272cb4.o: ../../Source/Engine/Effects/AuxBusCon
 $(JUCE_OBJDIR)/ChildProcessScanner_b30316c5.o: ../../Source/Engine/Effects/Hosting/ChildProcessScanner.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling ChildProcessScanner.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/AudioUnitRegistry_c4bb6211.o: ../../Source/Engine/Effects/Hosting/AudioUnitRegistry.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling AudioUnitRegistry.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/HostedEffect_9021fa48.o: ../../Source/Engine/Effects/Hosting/HostedEffect.cpp

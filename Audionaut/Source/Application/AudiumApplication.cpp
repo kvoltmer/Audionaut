@@ -132,9 +132,9 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     pluginHost->loadList();
     pluginHost->useChildProcessScanner (audium::PluginHost::scanWorkerExecutable());
 
-    // Plugins are off until the user turned them on in Manage Plugins, for the app and for the
+    // Plugins are on unless the user turned them off in Manage Plugins, for the app and for the
     // verbs this binary runs headlessly alike.
-    const auto pluginsEnabled = getPreferences().getValue (audium::PreferenceKeys::pluginsEnabled, "false") == "true";
+    const auto pluginsEnabled = getPreferences().getValue (audium::PreferenceKeys::pluginsEnabled, "true") == "true";
     pluginHost->setEnabled (pluginsEnabled);
 
     // Projucer-style in-app CLI: a recognised verb runs headlessly and the
@@ -189,6 +189,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         quit();
         return;
     }
+
+    // What the system knows to be installed is listed without a scan (the Audio Units on macOS):
+    // none is loaded before it is used.
+    if (pluginsEnabled)
+        pluginHost->syncWithInstalled();
 
     // GUI runs only: a CLI verb's crash surfaces to its caller instead
     CrashReporter::install();
@@ -1545,6 +1550,8 @@ void AudiumApplication::showPluginManagerWindow()
                                     getPreferences().setValue (audium::PreferenceKeys::pluginsEnabled, enabled ? "true" : "false");
                                     getPreferences().synchronize();
                                     pluginHost->setEnabled (enabled, enabled);   // and macOS may ask about plugins: somebody is here to answer
+                                    if (enabled)
+                                        pluginHost->syncWithInstalled();
                                 }),
                                 pluginManagerView, true,
                                 760, 480, 480, 320, 2400, 1600);

@@ -72,7 +72,7 @@ namespace PreferenceKeys
     static const char* const loadWindowState        = "LoadWindowState";
     static const char* const loadSimulatorWindowState = "LoadSimulatorWindowState";
     static const char* const pluginManagerWindowState = "PluginManagerWindowState";
-    static const char* const pluginsEnabled = "PluginsEnabled";   // "true": plugins are hosted (off until the user turns them on)
+    static const char* const pluginsEnabled = "PluginsEnabled";   // "false": no plugins are hosted (on unless the user turned them off)
     static const char* const autoEditWindowState    = "AutoEditWindowState";
     static const char* const browserWindowOpen      = "BrowserWindowOpen";
     static const char* const fileTreeState          = "FileTreeState";

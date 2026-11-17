@@ -193,7 +193,10 @@ public:
     {
         for (const auto& plugin : plugins)
             if (TestPluginInstance::describe (plugin).fileOrIdentifier == fileOrIdentifier)
-                results.add (new juce::PluginDescription (TestPluginInstance::describe (plugin)));
+            {
+                auto* scanned = results.add (new juce::PluginDescription (TestPluginInstance::describe (plugin)));
+                scanned->lastInfoUpdateTime = juce::Time::getCurrentTime();   // as every format's scan says
+            }
     }
 
     bool fileMightContainThisPluginType (const juce::String& fileOrIdentifier) override { return fileOrIdentifier.startsWith ("/test/"); }
@@ -217,6 +220,7 @@ public:
     bool asyncOnly = false;   ///< behaves like AUv3: refuses synchronous creation
     bool withhold = false;    ///< a creation asked for never answers: the plugin stays on its way
     std::function<void()> onCreate;   ///< called when a plugin is about to be created (message thread for an asynchronous one)
+    juce::String refuseWith;          ///< not empty: no plugin is created, this is the reason given
 
 private:
     void createPluginInstance (const juce::PluginDescription& description, double, int, PluginCreationCallback callback) override
@@ -225,6 +229,11 @@ private:
             return;
         if (onCreate)
             onCreate();
+        if (refuseWith.isNotEmpty())
+        {
+            callback (nullptr, refuseWith);
+            return;
+        }
 
         for (const auto& plugin : plugins)
         {
