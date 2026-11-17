@@ -59,6 +59,8 @@ PluginHost::~PluginHost()
 {
     list.removeChangeListener (this);
     questions->closed = true;   // a load still under way finds nothing more to start
+    checks->hostAlive.reset();
+    checks->pool.removeAllJobs (true, 60000);   // a check under way gives up its plugin
 }
 
 bool PluginHost::syncWithInstalled()
@@ -389,6 +391,15 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
         return effect;
     }
 
+    // a plugin nobody has loaded yet, which would run in here: the scan worker loads it first
+    if (needsCheckBeforeLoad (description))
+    {
+        auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
+        effect->setArrivalCount (std::move (arrivalCount));
+        requestChecked (*effect);
+        return effect;
+    }
+
     // the format the planner prepares with comes later; the plugin is told the real one in prepare()
     if (loadsOutOfProcess (description))
     {
@@ -489,6 +500,62 @@ void PluginHost::loadNextAsked (std::shared_ptr<Questions> questions, std::share
     questions->busy = false;
 }
 
+bool PluginHost::needsCheckBeforeLoad (const juce::PluginDescription& description) const
+{
+    // a plugin in a process of its own takes nothing down with it
+    if (! checksBeforeFirstLoad || loadsOutOfProcess (description))
+        return false;
+
+    const auto listed = list.getTypeForFile (description.fileOrIdentifier);   // as the list has it now
+    return listed != nullptr && ! isScanned (*listed);
+}
+
+void PluginHost::requestChecked (HostedEffect& effect) const
+{
+    const auto arrivals = effect.getArrivalCount();
+    ++*pendingLoads;
+    if (arrivals != nullptr)
+        ++*arrivals;
+
+    checks->pool.addJob ([this, &known = checks->list, format = formatOf (effect.getDescription()), description = effect.getDescription(),
+                          hostAlive = std::weak_ptr<int> (checks->hostAlive), alive = effect.getAliveToken(), waiting = &effect,
+                          pending = pendingLoads, arrivals]
+    {
+        // the list's scanner loads it (in the worker process), and the list has the scan's word after
+        juce::OwnedArray<juce::PluginDescription> found;
+        known.scanAndAddFile (description.fileOrIdentifier, false, found, *format);
+
+        juce::MessageManager::callAsync ([this, &known, description, hostAlive, alive, waiting, pending, arrivals, loads = ! found.isEmpty()]
+        {
+            std::unique_ptr<juce::AudioPluginInstance> instance;
+            juce::String error ("the plugin could not be loaded");
+
+            if (hostAlive.lock() != nullptr)   // else the list and the formats are gone
+            {
+                if (known.getBlacklistedFiles().contains (description.fileOrIdentifier))
+                {
+                    // it took the worker down, or too long: skipped from now on, not listed any more
+                    for (const auto& listed : known.getTypes())
+                        if (listed.fileOrIdentifier == description.fileOrIdentifier && ! isScanned (listed))
+                            known.removeType (listed);
+                    error = TRANS ("the plugin crashed or took too long when it was checked before its first load, and is skipped from now on");
+                }
+                else if (loads && alive.lock() != nullptr)
+                {
+                    instance = createInstance (description, 44100.0, 512, error);
+                }
+                known.sendChangeMessage();   // the entry is a scanned one now, or gone
+            }
+
+            if (alive.lock() != nullptr)
+                waiting->adopt (std::move (instance), error);
+            --*pending;
+            if (arrivals != nullptr)
+                --*arrivals;
+        });
+    });
+}
+
 bool PluginHost::load (HostedEffect& effect) const
 {
     if (effect.isLoaded() || effect.getStatus() == HostedEffect::Status::loading)
@@ -498,6 +565,11 @@ bool PluginHost::load (HostedEffect& effect) const
         return false;
 
     effect.expectPlugin();
+    if (needsCheckBeforeLoad (effect.getDescription()))
+    {
+        requestChecked (effect);
+        return true;
+    }
     if (loadsOutOfProcess (effect.getDescription()))
     {
         requestInstance (effect);
@@ -552,6 +624,7 @@ void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
     // else the flag changes nothing in the worker, and the scanner need not start new workers over it.
     if (isSandboxed())
         scanner->setLoweredSecurityFlag (loweredSecurityAllowed);
+    checksBeforeFirstLoad = true;   // a plugin that crashes does so in the worker
 
     // The scan's log, for a user to send along when a scan goes wrong: a heading whenever the scanner
     // takes up work again after a pause (a new scan), then its lines with the time of day.

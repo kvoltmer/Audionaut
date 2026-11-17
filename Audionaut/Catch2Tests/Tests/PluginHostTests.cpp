@@ -806,6 +806,106 @@ SCENARIO ("the plugin host lists what the system knows to be installed without a
     }
 }
 
+SCENARIO ("a not-scanned plugin that runs in the host's process is checked by the scanner before its first load", "[engine][effects][hosting][installed]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    /// Stands in for the worker process: counts what it is asked, and takes a plugin for one that crashes when told to.
+    struct CountingScanner final : public juce::KnownPluginList::CustomScanner
+    {
+        CountingScanner (std::shared_ptr<std::atomic<int>> asked_, std::shared_ptr<std::atomic<bool>> crashes_) :
+            asked (std::move (asked_)), crashes (std::move (crashes_)) {}
+
+        bool findPluginTypesFor (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,
+                                 const juce::String& fileOrIdentifier) override
+        {
+            ++*asked;
+            if (crashes->load())
+                return false;
+            format.findAllTypesForFile (result, fileOrIdentifier);
+            return true;
+        }
+
+        std::shared_ptr<std::atomic<int>> asked;
+        std::shared_ptr<std::atomic<bool>> crashes;
+    };
+
+    GIVEN ("a host that lists an installed plugin without a scan, and checks before a first load")
+    {
+        PluginHost host (temp.folder, false);
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { gainIn ("TestA", 0x1111) }));
+        const auto plugin = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+        host.setInstalledSource ([plugin] { return std::vector { plugin }; });
+        auto asked = std::make_shared<std::atomic<int>> (0);
+        auto crashes = std::make_shared<std::atomic<bool>> (false);
+        host.getList().setCustomScanner (std::make_unique<CountingScanner> (asked, crashes));
+        host.setChecksBeforeFirstLoad (true);
+        host.syncWithInstalled();
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        WHEN ("it is created as an effect")
+        {
+            auto effect = registry->create ("testa:00001111");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+
+            THEN ("it waits as a loading placeholder, is scanned once, and loads")
+            {
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+                REQUIRE (host.getNumPendingLoads() == 1);
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (asked->load() == 1);
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00001111")));
+            }
+
+            AND_WHEN ("it is created again")
+            {
+                REQUIRE (host.waitForPendingLoads (5000));
+                messageThread.pump();   // the registry hears of the scanned entry
+                auto again = registry->create ("testa:00001111");
+
+                THEN ("it loads at once, without another check")
+                {
+                    REQUIRE (dynamic_cast<HostedEffect*> (again.get())->isLoaded());
+                    REQUIRE (asked->load() == 1);
+                }
+            }
+        }
+
+        WHEN ("it takes the scanner's worker down")
+        {
+            crashes->store (true);
+            auto effect = registry->create ("testa:00001111");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("it is not loaded here, is skipped from now on and leaves the list")
+            {
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (hosted->getError().contains ("skipped"));
+                REQUIRE (host.getList().getBlacklistedFiles().contains (plugin.fileOrIdentifier));
+                REQUIRE (host.getList().getNumTypes() == 0);
+                REQUIRE_FALSE (host.syncWithInstalled());   // and does not come back as not scanned
+            }
+        }
+
+        WHEN ("the effect is gone before the check is done")
+        {
+            auto effect = registry->create ("testa:00001111");
+            effect.reset();
+
+            THEN ("nothing is left pending")
+            {
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+            }
+        }
+    }
+}
+
 SCENARIO ("plugins the system asks the user about are loaded one at a time, and a no answers for those waiting", "[engine][effects][hosting][security]")
 {
     MessageThread messageThread;

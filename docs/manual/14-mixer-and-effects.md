@@ -169,8 +169,12 @@ project you have open go through the app, and use the plugins the app has.
 the list of plugins Audionaut knows. On macOS it holds every installed
 Audio Unit from the start; the **Status** column says **Not scanned** for a
 plugin that is listed as the system reports it and has not been loaded to
-be checked. Such a plugin is offered as an insert like any other. On
-Windows and Linux the list is empty until you scan.
+be checked. Such a plugin is offered as an insert like any other. The
+first time you use one that runs inside Audionaut, it is checked in a
+separate process just before it loads: the slot passes the signal through
+for that moment, and a plugin that crashes there is marked **Skipped**
+instead of taking Audionaut down. On Windows and Linux the list is empty
+until you scan.
 
 Nothing is scanned unless you click **Scan** under the list. A scan looks
 through the platform's plugin folders and loads every plugin once; click it

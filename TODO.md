@@ -498,9 +498,10 @@ the one-gesture crossfade UX on top:
   entries are offered as inserts and first loaded when used, and the
   plugins macOS asks about load one at a time (a declined question answers
   for those waiting). Not exercised by hand yet: the prompt on a first
-  insert, a project with several such inserts, a not-scanned plugin that
-  crashes on load in-process (it would take the app down - consider
-  loading not-scanned in-process Audio Units in the scan worker first).
+  insert, a project with several such inserts, and the check of a
+  not-scanned plugin that runs inside the app in the scan worker before
+  its first load (the slot waits as "loading" meanwhile, no progress bar;
+  a plugin that crashes there is skipped).
 - [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
   are on by default and no scan runs by itself; consider a hint in the
   insert menu, or a first scan when the Manage Plugins window opens empty.

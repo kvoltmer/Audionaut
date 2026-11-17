@@ -70,7 +70,11 @@ class HostedEffect;
  * Units on macOS), the list has them without a scan: syncWithInstalled()
  * adds what is installed as not scanned (isScanned). Such a plugin is
  * offered like any other and first loaded when it is used; a scan
- * replaces the entry with what the loaded plugin says.
+ * replaces the entry with what the loaded plugin says. Where such a plugin
+ * would run inside this process, its first load is preceded by a check in
+ * the scan worker (setChecksBeforeFirstLoad): the effect waits as a
+ * loading placeholder meanwhile, and a plugin that takes the worker down
+ * is skipped instead of taking the app down.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -129,6 +133,10 @@ public:
     /// those the scan did not get to are back as they were.
     void prepareScan();
     void finishScan();
+    /// Whether a not-scanned plugin that runs inside this process is scanned (by the list's scanner,
+    /// off the message thread) before it is first loaded. Off by default; useChildProcessScanner
+    /// turns it on, since only a scanner in another process makes that a safeguard.
+    void setChecksBeforeFirstLoad (bool checks_) noexcept { checksBeforeFirstLoad = checks_; }
 
     juce::AudioPluginFormatManager& getFormats() noexcept { return formats; }
     juce::KnownPluginList& getList() noexcept { return list; }
@@ -254,6 +262,17 @@ private:
         bool closed = false;   // the host is gone, and its formats with it
     };
     static void loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending);
+
+    /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
+    struct Checks
+    {
+        explicit Checks (juce::KnownPluginList& list_) : list (list_) {}
+        juce::KnownPluginList& list;
+        std::shared_ptr<int> hostAlive = std::make_shared<int> (0);   // expires with the host
+        juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };
+    };
+    bool needsCheckBeforeLoad (const juce::PluginDescription& description) const;
+    void requestChecked (HostedEffect& effect) const;   // asynchronously: checked, then loaded, the effect adopts what comes
     juce::String listAsText() const;
     void registerIntoAttached();
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
@@ -275,6 +294,8 @@ private:
     std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
     std::function<std::vector<juce::PluginDescription>()> installedSource;
     std::shared_ptr<Questions> questions = std::make_shared<Questions>();   // shared with the callbacks in flight
+    std::unique_ptr<Checks> checks = std::make_unique<Checks> (list);
+    bool checksBeforeFirstLoad = false;
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)
