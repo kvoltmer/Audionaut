@@ -66,6 +66,8 @@ public:
     bool findPluginTypesFor (juce::AudioPluginFormat& format,
                              juce::OwnedArray<juce::PluginDescription>& result,
                              const juce::String& fileOrIdentifier) override;
+    /// The list's word that a scan is over: the next one asks new workers about empty files again.
+    void scanFinished() override;
 
     /// Whether the worker may load plugins that make the system ask the user to lower the app's security
     /// settings (PluginHost::setLoweredSecurityAllowed); read for every file. Without a flag: no.
@@ -129,7 +131,9 @@ private:
     std::unique_ptr<Worker> worker;
     int answeredByWorker = 0;                  // files the current worker has loaded
     int startFailures = 0;                     // workers in a row that did not get as far as hello
-    int emptyAgainInNewWorker = 0;             // files a new worker found as empty as the one before it, since the last file with a plugin
+    int emptyAgainInNewWorker = 0;             // files of this scan a new worker found as empty as the one before it, since one last helped
+    bool workerEverAnswered = false;           // a worker said hello, or a one-shot one wrote its envelope: workers do run here
+    bool noVerdict = false;                    // the file on its way was not scanned for want of a worker
     bool pipeUnusable = false;                 // the fallback, for the rest of this scanner's life
     std::atomic<int> workersStarted { 0 };
     std::function<void (const juce::String&)> log;

@@ -922,9 +922,13 @@ SCENARIO ("the child-process scanner asks a new worker about a file the used one
                     REQUIRE (scanner.getNumWorkersStarted() == started);
                     REQUIRE (found.size() == 2);
 
-                    AND_THEN ("a file with a plugin in it starts the count again")
+                    AND_THEN ("a file with a plugin in it does not start the count again, the next scan does")
                     {
                         REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                        REQUIRE (scanner.getNumWorkersStarted() == started);
+
+                        scanner.scanFinished();
                         REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
                         REQUIRE (scanner.getNumWorkersStarted() == started + 1);
                         REQUIRE (found.size() == 3);
@@ -942,6 +946,37 @@ SCENARIO ("the child-process scanner asks a new worker about a file the used one
             {
                 REQUIRE (found.size() == 1);
                 REQUIRE (scanner.getNumWorkersStarted() == 1);
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner holds a worker that does not run against no file", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner whose worker executable is not there")
+    {
+        ChildProcessScanner scanner (juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("audionaut-no-such-worker"), 5000);
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+
+        WHEN ("files are scanned")
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            const auto first = scanner.findPluginTypesFor (format, found, "11");
+            const auto second = scanner.findPluginTypesFor (format, found, "22");
+            const auto third = scanner.findPluginTypesFor (format, found, "33");
+
+            THEN ("nothing is found, no file is to be skipped, and the log says why")
+            {
+                const auto log = lines.joinIntoString ("\n");
+                INFO (log);
+                REQUIRE (first);
+                REQUIRE (second);
+                REQUIRE (third);
+                REQUIRE (found.isEmpty());
+                REQUIRE (log.contains ("TestA  33  ->  NOT SCANNED"));
             }
         }
     }
@@ -1153,10 +1188,11 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
             const auto first = scanner.findPluginTypesFor (format, found, "11");
             const auto second = scanner.findPluginTypesFor (format, found, "22");
 
-            THEN ("the pipe is given up after the first, with nothing to fall back to here")
+            THEN ("the pipe is given up after the first, with nothing to fall back to here - which is not held against the files")
             {
-                REQUIRE_FALSE (first);
-                REQUIRE_FALSE (second);
+                REQUIRE (first);
+                REQUIRE (second);
+                REQUIRE (found.isEmpty());
                 REQUIRE (scanner.getNumWorkersStarted() == 1);
             }
         }

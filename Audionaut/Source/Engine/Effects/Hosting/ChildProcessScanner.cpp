@@ -276,18 +276,17 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
         // The same for a worker that found nothing where the system may have asked the user about a
         // plugin: once macOS has the user's consent to lower the security settings, it loads no
         // further such plugin into the process that was asked, only into the next one. A new worker
-        // that finds nothing either says the file is empty; after two of those in a row none is
-        // started for this, until a file had a plugin in it again.
-        if (asked == Asked::found && result.size() > before)
-            emptyAgainInNewWorker = 0;
-
+        // that finds nothing either says the file is empty - or that the user declined, and then every
+        // such plugin would cost a worker and might bring the question up again: after two of those no
+        // worker is started for this any more in this scan, unless one of them did find the plugin.
         if (asked == Asked::found && result.size() == before && answeredByWorker > 1
             && loweredSecurity != nullptr && loweredSecurity->load() && emptyAgainInNewWorker < 2)
         {
             note ("  " + fileOrIdentifier + ": no plugin found; asked again of a new worker, the first had loaded other plugins");
             dropWorker (true);
             asked = askWorker (format.getName(), fileOrIdentifier, result);
-            emptyAgainInNewWorker = result.size() == before ? emptyAgainInNewWorker + 1 : 0;
+            if (asked == Asked::found)   // a worker that failed or was abandoned said nothing about the file
+                emptyAgainInNewWorker = result.size() == before ? emptyAgainInNewWorker + 1 : 0;
         }
 
         switch (asked)
@@ -306,8 +305,17 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
     }
 
     lastFailure.clear();
+    noVerdict = false;
     const auto verdict = scanInProcessOfItsOwn (format, result, fileOrIdentifier);
+    if (noVerdict)   // the worker is what failed, not the plugin: the file is not skipped from now on
+        return logged (true, "NOT SCANNED: " + lastFailure);
     return logged (verdict, (verdict ? found() : failure()) + ", in a worker process of its own");
+}
+
+void ChildProcessScanner::scanFinished()
+{
+    const juce::ScopedLock lock (workerLock);
+    emptyAgainInNewWorker = 0;
 }
 
 ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
@@ -430,6 +438,7 @@ ChildProcessScanner::Started ChildProcessScanner::startWorker()
         nlohmann::json hello;
         if (readFrame (*pipe, hello, pollMs) == Read::frame && hello.contains ("hello"))
         {
+            workerEverAnswered = true;
             note ("worker " + juce::String (workersStarted.load()) + " started (" + juce::String (juce::Time::getMillisecondCounter() - launched) + " ms)");
             return Started::ready;
         }
@@ -473,7 +482,8 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
     if (executable == juce::File())
     {
         lastFailure = "no worker available";
-        return false;
+        noVerdict = true;
+        return true;
     }
 
     juce::ChildProcess child;
@@ -485,7 +495,8 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
     if (! child.start (arguments, juce::ChildProcess::wantStdOut))
     {
         lastFailure = "the worker process could not be launched";
-        return false;
+        noVerdict = true;
+        return true;
     }
 
     Watchdog watchdog (child, *this, timeoutMs);
@@ -506,12 +517,22 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
     if (watchdog.timedOut())
         return shouldExit();   // abandoned by the user: no verdict on the file; out of time: a crash as far as the list is concerned
 
-    if (child.getExitCode() != 0)
+    nlohmann::json envelope;
+    const auto answered = readEnvelope (output, envelope);
+
+    // A worker that ends without a word, where none has ever got as far as an answer, is a worker that
+    // does not run here (missing, not signed as it must be, stopped by the system) - not a plugin that
+    // took it down. Held against the files, that would skip every plugin of the machine.
+    if (! answered && ! workerEverAnswered)
     {
-        // the plugin took the worker down - unless the worker said that it has no such format
-        nlohmann::json envelope;
-        return readEnvelope (output, envelope) && declinedTheFormat (envelope);
+        lastFailure << "; no worker has run here yet, so this is not held against the plugin";
+        noVerdict = true;
+        return true;
     }
+    workerEverAnswered = workerEverAnswered || answered;
+
+    if (child.getExitCode() != 0)
+        return answered && declinedTheFormat (envelope);   // the plugin took the worker down - unless the worker said that it has no such format
 
     return parseScanEnvelope (output, result);
 }

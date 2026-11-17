@@ -108,7 +108,7 @@ public:
             formatsToScan.clear();   // the formats still waiting, too
             scanCancelled = true;
             if (scan != nullptr)
-                scan->cancel();      // it ends after the file at hand, and says so as any scan does
+                scan->cancel();      // it gives up the file at hand, and says so as any scan does
         };
         addChildComponent (cancelScan);
 
@@ -318,7 +318,16 @@ private:
             pool.removeAllJobs (true, 60000);   // the list's scanner hears of it and gives up the file at hand
         }
 
-        void cancel()   { cancelled = true; }
+        /// Ends the scan now: the job is told to stop, which the list's scanner hears and gives up the
+        /// file at hand without a verdict on it - a plugin that hangs, or a question of macOS that
+        /// nobody answers, does not keep the window until the file's time is up.
+        void cancel()
+        {
+            cancelled = true;
+            pool.removeAllJobs (true, 0);
+            if (pool.getNumJobs() == 0)   // the job had not begun: nobody else says that it is over
+                done = true;
+        }
 
     private:
         /// A thread pool's job, which is what the list's scanner asks whether to go on.
@@ -328,17 +337,18 @@ private:
 
             JobStatus runJob() override
             {
-                juce::String name;
+                juce::String ignored;
                 while (! scan.cancelled && ! shouldExit())
                 {
-                    const auto next = scan.scanner.getNextPluginFileThatWillBeScanned();
-                    if (next.isEmpty())
-                        break;
                     {
-                        const juce::ScopedLock lock (scan.fileLock);
-                        scan.file = next;
+                        const juce::ScopedLock lock (scan.nameLock);
+                        scan.name = scan.scanner.getNextPluginFileThatWillBeScanned();   // the plugin's name, as its format knows it
                     }
-                    if (! scan.scanner.scanNextFile (true, name))
+                    scan.failedBeforeThisFile = scan.scanner.getFailedFiles().size();
+                    const auto more = scan.scanner.scanNextFile (true, ignored);   // false after the last file, and where there is none
+                    if (! shouldExit())
+                        scan.failedBeforeThisFile = scan.scanner.getFailedFiles().size();   // this one had its verdict
+                    if (! more)
                         break;
                 }
                 scan.done = true;
@@ -354,8 +364,8 @@ private:
             {
                 juce::String at;
                 {
-                    const juce::ScopedLock lock (fileLock);
-                    at = file;
+                    const juce::ScopedLock lock (nameLock);
+                    at = name;
                 }
                 owner.scanProgressed (scanner.getProgress(), at);
                 return;
@@ -366,15 +376,18 @@ private:
             for (const auto& skipped : owner.host->getList().getBlacklistedFiles())
                 if (! skippedBefore.contains (skipped))
                     skippedNow.add (skipped);
-            const auto failed = scanner.getFailedFiles();
+            auto failed = scanner.getFailedFiles();
+            if (cancelled)   // the file a cancelled scan gave up did not fail
+                failed.removeRange (failedBeforeThisFile, failed.size());
             owner.scanFinished (failed, skippedNow);   // deletes this scan: nothing of it is touched after
         }
 
         PluginManagerComponent& owner;
         const juce::StringArray skippedBefore;
         juce::PluginDirectoryScanner scanner;
-        juce::CriticalSection fileLock;
-        juce::String file;   // the one at hand, under the lock
+        juce::CriticalSection nameLock;
+        juce::String name;   // of the plugin at hand, under the lock
+        std::atomic<int> failedBeforeThisFile { 0 };
         std::atomic<bool> cancelled { false }, done { false };
         juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };   // one worker process at a time
     };
@@ -753,12 +766,11 @@ private:
     }
 
     /// The scan's word while it runs: how far it is and the plugin at hand.
-    void scanProgressed (double fraction, const juce::String& fileOrIdentifier)
+    void scanProgressed (double fraction, const juce::String& pluginName)
     {
         showScanProgress (true);
         scanFraction = juce::jlimit (0.0, 1.0, fraction);   // the bar reads it
-        scanFile.setText (fileOrIdentifier.isEmpty() ? TRANS ("Looking for plugins...")
-                                                     : TRANS ("Scanning ") + skippedEntry (fileOrIdentifier).name,
+        scanFile.setText (pluginName.isEmpty() ? TRANS ("Looking for plugins...") : TRANS ("Scanning ") + pluginName,
                           juce::dontSendNotification);
     }
 
