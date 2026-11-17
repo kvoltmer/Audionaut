@@ -129,7 +129,7 @@ private:
     std::unique_ptr<Worker> worker;
     int answeredByWorker = 0;                  // files the current worker has loaded
     int startFailures = 0;                     // workers in a row that did not get as far as hello
-    int emptyAgainInNewWorker = 0;             // files in a row a new worker found as empty as the one before it
+    int emptyAgainInNewWorker = 0;             // files a new worker found as empty as the one before it, since the last file with a plugin
     bool pipeUnusable = false;                 // the fallback, for the rest of this scanner's life
     std::atomic<int> workersStarted { 0 };
     std::function<void (const juce::String&)> log;

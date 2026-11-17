@@ -912,17 +912,23 @@ SCENARIO ("the child-process scanner asks a new worker about a file the used one
             AND_WHEN ("files are empty in a new worker too")
             {
                 REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                REQUIRE (scanner.findPluginTypesFor (format, found, "44"));
                 REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
                 const auto started = scanner.getNumWorkersStarted();
                 REQUIRE (started == 4);
 
-                THEN ("after two of them no further worker is started for an empty file")
+                THEN ("after two of them in a row no further worker is started for an empty file")
                 {
-                    REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
                     REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
                     REQUIRE (scanner.getNumWorkersStarted() == started);
-                    REQUIRE (found.size() == 4);
+                    REQUIRE (found.size() == 2);
+
+                    AND_THEN ("a file with a plugin in it starts the count again")
+                    {
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
+                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+                        REQUIRE (scanner.getNumWorkersStarted() == started + 1);
+                        REQUIRE (found.size() == 3);
+                    }
                 }
             }
         }

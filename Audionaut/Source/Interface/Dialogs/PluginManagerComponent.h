@@ -12,6 +12,11 @@
 #include <utility>
 #include <vector>
 
+#if defined (__APPLE__)
+ #include <pwd.h>
+ #include <unistd.h>
+#endif
+
 #include <JuceHeader.h>
 
 #include "Engine/Effects/Hosting/PluginHost.h"
@@ -91,10 +96,6 @@ public:
         remove.onClick = [this] { removeSelected(); };
         addChildComponent (remove);   // shown while something is selected
 
-        // what a scan that died with its process left behind: the file it was at is skipped from now on
-        juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (host->getList(), host->getDeadMansPedalFile());
-        host->getDeadMansPedalFile().deleteFile();
-
         // a scan's progress, in the place of the details while it runs
         scanBar.setPercentageDisplay (false);
         addChildComponent (scanBar);
@@ -122,7 +123,8 @@ public:
         addAndMakeVisible (status);
 
         enablePlugins.setButtonText (TRANS ("Plugins enabled"));
-        enablePlugins.setTooltip (TRANS ("Off, Audionaut offers and loads no plugins; a project that uses one keeps the slot and its settings."));
+        enablePlugins.setTooltip (TRANS ("Off, Audionaut offers no plugins and opens a project without them; a project that uses one keeps the slot and its settings. "
+                                         "A project that is open follows when it is opened again."));
         enablePlugins.setToggleState (host->isEnabled(), juce::dontSendNotification);
         enablePlugins.onClick = [this]
         {
@@ -198,7 +200,7 @@ private:
 
         int getNumRows() override
         {
-            return plugins().getNumTypes() + plugins().getBlacklistedFiles().size();
+            return static_cast<int> (owner.listed.size()) + owner.skippedFiles.size();
         }
 
         void paintRowBackground (juce::Graphics& g, int, int, int, bool rowIsSelected) override
@@ -224,7 +226,7 @@ private:
             }
             else if (const auto description = owner.pluginAt (row))
             {
-                usable = owner.isOffered (*description);
+                usable = owner.isOfferedAt (row);
                 switch (columnId)
                 {
                     case nameColumn:         text = description->name; break;
@@ -379,9 +381,15 @@ private:
 
     juce::PopupMenu rowMenu (int row)
     {
+        // the entry itself, not its row: the list may be sorted anew before the menu is answered
+        const auto* description = pluginAt (row);
+        const auto plugin = description != nullptr ? std::optional (*description) : std::nullopt;
+        const auto skipped = skippedFileAt (row);
+
         juce::PopupMenu menu;
         menu.addItem (juce::PopupMenu::Item (TRANS ("Remove plug-in from list"))
-                          .setAction ([this, row] { removeRow (row); }));
+                          .setEnabled (! isScanning())
+                          .setAction ([this, plugin, skipped] { removeEntry (plugin, skipped); }));
         if (const auto file = fileOfRow (row); file.exists())   // not for a plugin whose file is not known (the system's own Audio Units)
             menu.addItem (juce::PopupMenu::Item (TRANS ("Show folder containing plug-in"))
                               .setAction ([file] { file.revealToUser(); }));
@@ -401,14 +409,25 @@ private:
 
     /// The component bundle of an Audio Unit, which the list knows by its codes only
     /// ("AudioUnit:Effects/aufx,subt,manu"): the one in the plugin folders whose Info.plist names them.
-    static juce::File audioUnitComponent (const juce::String& identifier)
+    /// The folders are read once, when first asked, and again after the list changed.
+    juce::File audioUnitComponent (const juce::String& identifier) const
     {
-       #if JUCE_MAC
-        const auto codes = juce::StringArray::fromTokens (identifier.fromLastOccurrenceOf ("/", false, false), ",", {});
-        if (! identifier.startsWith ("AudioUnit:") || codes.size() != 3)
+        if (! identifier.startsWith ("AudioUnit:"))
             return {};
 
-        const std::function<bool (const juce::XmlElement&)> names = [&] (const juce::XmlElement& element)
+        if (! components)
+            components = readAudioUnitComponents();
+        const auto found = components->find (identifier.fromLastOccurrenceOf ("/", false, false));
+        return found != components->end() ? found->second : juce::File();
+    }
+
+    /// "type,subtype,manufacturer" to the bundle that declares it, for the components in the system's
+    /// and the user's plugin folder. A bundle whose Info.plist is not XML is not among them.
+    static std::map<juce::String, juce::File> readAudioUnitComponents()
+    {
+        std::map<juce::String, juce::File> result;
+       #if JUCE_MAC
+        const std::function<void (const juce::XmlElement&, const juce::File&)> collect = [&] (const juce::XmlElement& element, const juce::File& bundle)
         {
             if (element.hasTagName ("dict"))
             {
@@ -416,54 +435,83 @@ private:
                 for (auto* key = element.getChildByName ("key"); key != nullptr; key = key->getNextElementWithTagName ("key"))
                     if (auto* value = key->getNextElement(); value != nullptr && value->hasTagName ("string"))
                         entries.set (key->getAllSubText(), value->getAllSubText());
-                if (entries["type"] == codes[0] && entries["subtype"] == codes[1] && entries["manufacturer"] == codes[2])
-                    return true;
+                if (entries["type"].isNotEmpty() && entries["subtype"].isNotEmpty() && entries["manufacturer"].isNotEmpty())
+                    result.emplace (entries["type"] + "," + entries["subtype"] + "," + entries["manufacturer"], bundle);
             }
             for (auto* child : element.getChildIterator())
-                if (names (*child))
-                    return true;
-            return false;
+                collect (*child, bundle);
         };
 
-        for (const auto& folder : { juce::File ("/Library/Audio/Plug-Ins/Components"),
-                                    juce::File ("/Users/" + juce::SystemStats::getLogonName() + "/Library/Audio/Plug-Ins/Components") })
+        // the user's real home: inside the sandbox the home the app is told of is its container
+        juce::Array<juce::File> folders { juce::File ("/Library/Audio/Plug-Ins/Components") };
+        if (const auto* user = getpwuid (getuid()); user != nullptr && user->pw_dir != nullptr)
+            folders.add (juce::File (juce::String::fromUTF8 (user->pw_dir)).getChildFile ("Library/Audio/Plug-Ins/Components"));
+
+        for (const auto& folder : folders)
             for (const auto& bundle : folder.findChildFiles (juce::File::findFilesAndDirectories, false, "*.component"))
-                if (const auto plist = juce::parseXML (bundle.getChildFile ("Contents/Info.plist")); plist != nullptr && names (*plist))
-                    return bundle;
-       #else
-        juce::ignoreUnused (identifier);
+                if (const auto plist = juce::parseXML (bundle.getChildFile ("Contents/Info.plist")))
+                    collect (*plist, bundle);
        #endif
-        return {};
+        return result;
     }
 
-    void removeRow (int row)
+    bool isScanning() const   { return scanBar.isVisible(); }
+
+    /// Takes a plugin, or a skipped file, off the list; not while a scan fills it.
+    void removeEntry (const std::optional<juce::PluginDescription>& plugin, const juce::String& skipped)
     {
-        if (const auto description = pluginAt (row))
-            host->getList().removeType (*description);
-        else if (const auto skipped = skippedFileAt (row); skipped.isNotEmpty())
+        if (isScanning())
+            return;
+
+        if (plugin)
+            host->getList().removeType (*plugin);
+        else if (skipped.isNotEmpty())
             host->getList().removeFromBlacklist (skipped);   // the next scan tries it again
     }
 
     void removeSelected()
     {
+        if (isScanning())
+            return;
+
+        // by what the rows are now: the list tells of each removal later, all at once
         const auto selected = table.getSelectedRows();
         for (auto row = rows.getNumRows(); --row >= 0;)
-            if (selected.contains (row))
-                removeRow (row);
+        {
+            if (! selected.contains (row))
+                continue;
+            if (const auto* description = pluginAt (row))
+                host->getList().removeType (*description);
+            else if (const auto skipped = skippedFileAt (row); skipped.isNotEmpty())
+                host->getList().removeFromBlacklist (skipped);
+        }
     }
 
-    std::optional<juce::PluginDescription> pluginAt (int row) const
+    /// The rows as the table shows them: the host's list and what it skips, copied when either changed,
+    /// with whether the inserts have each plugin - painting a cell asks neither the list nor the system.
+    void refreshRows()
     {
-        const auto types = host->getList().getTypes();
-        if (row >= 0 && row < types.size())
-            return types[row];
-        return std::nullopt;
+        listed.clear();
+        for (const auto& description : host->getList().getTypes())
+            listed.push_back ({ description, isOffered (description) });
+        skippedFiles = host->getList().getBlacklistedFiles();
+        components.reset();   // a scan may have found what was installed meanwhile
+    }
+
+    const juce::PluginDescription* pluginAt (int row) const
+    {
+        return row >= 0 && row < static_cast<int> (listed.size()) ? &listed[static_cast<size_t> (row)].description : nullptr;
+    }
+
+    bool isOfferedAt (int row) const
+    {
+        return row >= 0 && row < static_cast<int> (listed.size()) && listed[static_cast<size_t> (row)].offered;
     }
 
     /// The skipped file a row stands for, "" where the row is a plugin (or none).
     juce::String skippedFileAt (int row) const
     {
-        return host->getList().getBlacklistedFiles()[row - host->getList().getNumTypes()];
+        return skippedFiles[row - static_cast<int> (listed.size())];
     }
 
     struct SkippedEntry
@@ -534,7 +582,7 @@ private:
                 what.removeEmptyStrings();
                 text << what.joinIntoString (", ") << "\n";
 
-                usable = isOffered (*description);
+                usable = isOfferedAt (row);
                 if (description->isInstrument)
                     text << TRANS ("An instrument: listed, but only effects are used as inserts.");
                 else if (! usable)
@@ -588,6 +636,7 @@ private:
                                     : added == 1 ? TRANS ("1 new plugin found.")
                                                  : juce::String (added) + TRANS (" new plugins found."));
         updateDetails();
+        updateStatus();   // the log is there now, whether or not the list changed
 
         const auto failed = std::exchange (failedSoFar, {});
         const auto skipped = std::exchange (skippedSoFar, {});
@@ -623,6 +672,7 @@ private:
     void listChanged()
     {
         table.getHeader().reSortTable();   // new entries take their place
+        refreshRows();
         table.updateContent();
         table.repaint();
         updateStatus();
@@ -735,7 +785,7 @@ private:
     /// No scan while plugins are off, and the list is left alone while a scan fills it.
     void updateButtons()
     {
-        const auto scanning = scanBar.isVisible();
+        const auto scanning = isScanning();
         rescan.setEnabled (host->isEnabled() && ! scanning);
         clear.setEnabled (host->isEnabled() && ! scanning);
         remove.setEnabled (host->isEnabled() && ! scanning);
@@ -743,9 +793,10 @@ private:
 
     void pluginsSwitched()
     {
+        refreshRows();   // what is offered changed
         table.setEnabled (host->isEnabled());
         updateButtons();
-        table.repaint();   // what is offered changed
+        table.repaint();
         updateStatus();
         updateDetails();
     }
@@ -757,7 +808,7 @@ private:
         if (! host->isEnabled())
         {
             const auto listed = host->getList().getNumTypes();
-            juce::String text (TRANS ("Plugins are off: none is offered as an insert or loaded"));
+            juce::String text (TRANS ("Plugins are off: none is offered as an insert, and a project opens without them"));
             if (listed > 0)
                 text << " (" << listed << TRANS (" in the list") << ")";
             status.setText (text, juce::dontSendNotification);
@@ -802,6 +853,14 @@ private:
     Rows rows { *this };
     juce::TableListBox table;
     juce::TextButton rescan, clear, remove;
+    struct Listed
+    {
+        juce::PluginDescription description;
+        bool offered;   // as an insert
+    };
+    std::vector<Listed> listed;       // the host's list as the rows show it (refreshRows)
+    juce::StringArray skippedFiles;   // and the files it skips, the rows after those
+    mutable std::optional<std::map<juce::String, juce::File>> components;   // Audio Unit codes to component bundles, read when first asked for
     std::map<juce::String, SkippedEntry> skippedEntries;
     juce::Label details;
     double scanFraction = 0.0;

@@ -142,6 +142,9 @@ Plugins are off until you turn them on: tick **Plugins enabled** above the
 Manage Plugins list, and Audionaut scans for them at once. With the box unticked Audionaut offers no
 plugin as an insert and loads none, the list cannot be scanned, and a
 project that uses a plugin keeps the slot and its settings as a marked row.
+The box takes effect for a project when it is opened: one that is open at
+the moment keeps the plugins it has loaded, or its marked rows, until you
+open it again.
 The built-in effects are always there.
 
 On macOS, turning plugins on has one consequence worth knowing, and a

@@ -162,6 +162,19 @@ namespace
             && envelope["error"].value ("code", std::string()) == "unknown_format";
     }
 
+    /// For the log, what a worker that ended with an error had to say about it: its own message where
+    /// it still wrote its envelope (a plugin it could not load, a format it has not), a crash where not.
+    juce::String whatTheWorkerSaid (const juce::String& output)
+    {
+        nlohmann::json envelope;
+        if (! readEnvelope (output, envelope))
+            return " and no answer (a crash)";
+        if (envelope.contains ("error") && envelope["error"].is_object())
+            if (const auto message = envelope["error"].value ("message", std::string()); ! message.empty())
+                return ": " + juce::String (message);
+        return {};
+    }
+
     /// This executable as the serving worker.
     class ProcessWorker final : public ChildProcessScanner::Worker
     {
@@ -264,7 +277,10 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
         // plugin: once macOS has the user's consent to lower the security settings, it loads no
         // further such plugin into the process that was asked, only into the next one. A new worker
         // that finds nothing either says the file is empty; after two of those in a row none is
-        // started for this any more.
+        // started for this, until a file had a plugin in it again.
+        if (asked == Asked::found && result.size() > before)
+            emptyAgainInNewWorker = 0;
+
         if (asked == Asked::found && result.size() == before && answeredByWorker > 1
             && loweredSecurity != nullptr && loweredSecurity->load() && emptyAgainInNewWorker < 2)
         {
@@ -483,7 +499,7 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
     if (watchdog.timedOut())
         lastFailure = "no answer within " + juce::String (timeoutMs / 1000) + " s";
     else if (child.getExitCode() != 0)
-        lastFailure = "the worker process ended with code " + juce::String (static_cast<int> (child.getExitCode())) + " (a crash)";
+        lastFailure = "the worker process ended with code " + juce::String (static_cast<int> (child.getExitCode())) + whatTheWorkerSaid (output);
     else
         lastFailure = "the worker's answer was unreadable";
 

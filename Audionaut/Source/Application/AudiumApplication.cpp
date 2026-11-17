@@ -1544,8 +1544,7 @@ void AudiumApplication::showPluginManagerWindow()
                                 {
                                     getPreferences().setValue (audium::PreferenceKeys::pluginsEnabled, enabled ? "true" : "false");
                                     getPreferences().synchronize();
-                                    pluginHost->setEnabled (enabled);
-                                    pluginHost->setLoweredSecurityAllowed (enabled);
+                                    pluginHost->setEnabled (enabled, enabled);   // and macOS may ask about plugins: somebody is here to answer
                                 }),
                                 pluginManagerView, true,
                                 760, 480, 480, 320, 2400, 1600);

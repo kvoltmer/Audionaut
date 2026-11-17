@@ -91,7 +91,8 @@ public:
 
     /// Message thread. Whether this host offers and loads plugins at all (it does unless told otherwise;
     /// the app turns it off until its user turned plugins on). Registers the attached registries' types
-    /// again when it changes.
+    /// again when it changes. What an engine already has stays as it is: a plugin that runs keeps
+    /// running, a slot that was left unresolved stays so until its project is read again.
     void setEnabled (bool enabled);
     bool isEnabled() const noexcept { return enabled; }
 
@@ -100,6 +101,8 @@ public:
     /// raised. Registers the attached registries' types again when it changes.
     void setLoweredSecurityAllowed (bool allowed);
     bool isLoweredSecurityAllowed() const noexcept { return loweredSecurityAllowed->load(); }
+    /// Both at once, as the app's switch sets them: the types are registered again once, not twice.
+    void setEnabled (bool enabled, bool loweredSecurityAllowed);
     /// Which plugins those are; the platform's answer by default (tests bring their own).
     void setLoweredSecurityQuestion (std::function<bool (const juce::PluginDescription&)> asksForIt) { asksForLoweredSecurity = std::move (asksForIt); }
 

@@ -97,6 +97,16 @@ void PluginHost::setLoweredSecurityAllowed (bool allowed)
     registerIntoAttached();   // the plugins in question come, or go
 }
 
+void PluginHost::setEnabled (bool enabled_, bool loweredSecurityAllowed_)
+{
+    const auto enabledChanged = std::exchange (enabled, enabled_) != enabled_;
+    const auto allowedChanged = loweredSecurityAllowed->exchange (loweredSecurityAllowed_) != loweredSecurityAllowed_;
+    if (allowedChanged)
+        applyLoweredSecurity (formats, loweredSecurityAllowed_);
+    if (enabledChanged || allowedChanged)
+        registerIntoAttached();
+}
+
 juce::File PluginHost::getListFile() const
 {
     return dataDirectory.getChildFile ("Plugins").getChildFile ("KnownPlugins.xml");
@@ -428,7 +438,10 @@ void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
 {
     const auto workerPath = executable.getFullPathName();
     auto scanner = std::make_unique<ChildProcessScanner> (std::move (executable), timeoutMs);
-    scanner->setLoweredSecurityFlag (loweredSecurityAllowed);   // the worker loads what this host may load
+    // The worker loads what this host may load. Only a sandboxed app is ever asked about a plugin; anywhere
+    // else the flag changes nothing in the worker, and the scanner need not start new workers over it.
+    if (isSandboxed())
+        scanner->setLoweredSecurityFlag (loweredSecurityAllowed);
 
     // The scan's log, for a user to send along when a scan goes wrong: a heading whenever the scanner
     // takes up work again after a pause (a new scan), then its lines with the time of day.
