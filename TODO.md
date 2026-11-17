@@ -493,10 +493,10 @@ the one-gesture crossfade UX on top:
   says that this may happen. The sandbox-safe flag and the component's name
   are readable without loading (`AudioComponentGetDescription`), so the
   message could name the number, or be left out where there are none.
-- [ ] **A scan with the security prompt unanswered.** If macOS's question
-  sits unanswered past the scan timeout, the file at hand is blacklisted.
-  Check what the scan worker sees while the prompt is up, and do not
-  blacklist for that.
+- [ ] **Remember a declined security prompt for the app's own loads.** The
+  scan raises macOS's question once per scan (a declined load fails with
+  `userCanceledErr`, -128, and the scanner leaves the other such plugins
+  out); a project's inserts still ask once per plugin.
 - [ ] **Measure the out-of-process render cost.** Every block of a plugin in
   the hosting service is a cross-process call; small buffers with many such
   plugins may cost noticeably more than in-process hosting. Bench a chain of

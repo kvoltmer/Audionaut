@@ -172,7 +172,11 @@ shows how far it is and which plugin is being examined, and **Cancel**
 stops it. When it is done, the line there says how many new plugins it found. Each plugin file is examined in a
 separate process, so a plugin that crashes while it is examined takes
 nothing down with it; it is skipped from then on, and the line under the
-list counts such files. Entries the inserts cannot use are greyed out: the
+list counts such files. A plugin that ran out of time while macOS may still
+have been waiting for your answer about the security settings is not
+skipped for that; the next scan tries it again. If you decline the question
+during a scan, that scan leaves out the other plugins that would raise it,
+and it is asked once more by the next scan. Entries the inserts cannot use are greyed out: the
 skipped files, instruments, and plugins in a format Audionaut does not host
 here. Click an entry and the lines under the list say what it is and, for a
 greyed one, why it is not offered. **Remove**, which appears while entries are selected, takes them off the

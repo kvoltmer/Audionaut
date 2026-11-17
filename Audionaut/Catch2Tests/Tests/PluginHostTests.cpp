@@ -982,6 +982,113 @@ SCENARIO ("the child-process scanner holds a worker that does not run against no
     }
 }
 
+SCENARIO ("the child-process scanner does not skip a plugin for the first wait for the user's answer", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers whose plugin runs out of time while the system may be asking the user")
+    {
+        ChildProcessScanner scanner ([]
+        {
+            return std::make_unique<ThreadWorker> ([] (const ChildProcessScanner::Request& request) -> json
+            {
+                if (request.file == "asks")
+                    return { { "ok", false }, { "code", "awaiting_consent" }, { "message", "waited for the answer" }, { "last", true } };
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("such a file is scanned")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            const auto first = scanner.findPluginTypesFor (format, found, "asks");
+
+            THEN ("it is not to be skipped, the log says why, and the next file gets a new worker")
+            {
+                INFO (lines.joinIntoString ("\n"));
+                REQUIRE (first);
+                REQUIRE (found.size() == 1);
+                REQUIRE (lines[lines.size() - 1].startsWith ("TestA  asks  ->  NOT SCANNED: waited for the answer"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+                REQUIRE (found.size() == 2);
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+            }
+
+            AND_WHEN ("it runs out of time again")
+            {
+                const auto second = scanner.findPluginTypesFor (format, found, "asks");
+
+                THEN ("it is skipped from now on")
+                {
+                    REQUIRE_FALSE (second);
+                    REQUIRE (lines[lines.size() - 1].startsWith ("TestA  asks  ->  FAILED, file skipped: waited for the answer"));
+                }
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner has the system's question raised once per scan when the user declines it", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers whose user declines the question, and a scanner that may raise it")
+    {
+        auto raised = std::make_shared<std::atomic<int>> (0);
+        ChildProcessScanner scanner ([raised]
+        {
+            return std::make_unique<ThreadWorker> ([raised] (const ChildProcessScanner::Request& request) -> json
+            {
+                if (! request.file.startsWith ("asks"))
+                    return describedIn (request);
+                if (! request.loweredSecurity)
+                    return { { "ok", true }, { "plugins", json::array() } };   // not loaded, nobody asked
+                ++*raised;
+                return { { "ok", false }, { "code", "consent_declined" }, { "message", "declined" } };
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        scanner.setLoweredSecurityFlag (std::make_shared<const std::atomic<bool>> (true));
+        juce::StringArray lines;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("several such files are scanned")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            const auto first = scanner.findPluginTypesFor (format, found, "asks 1");
+            const auto second = scanner.findPluginTypesFor (format, found, "asks 2");
+            const auto third = scanner.findPluginTypesFor (format, found, "asks 3");
+
+            THEN ("the question came up once, no file is to be skipped, and the worker stayed")
+            {
+                INFO (lines.joinIntoString ("\n"));
+                REQUIRE (raised->load() == 1);
+                REQUIRE (first);
+                REQUIRE (second);
+                REQUIRE (third);
+                REQUIRE (lines.joinIntoString ("\n").contains ("TestA  asks 1  ->  NOT SCANNED: declined"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+                REQUIRE (found.size() == 2);
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
+            }
+
+            AND_WHEN ("the next scan comes to such a file")
+            {
+                scanner.scanFinished();
+                REQUIRE (scanner.findPluginTypesFor (format, found, "asks 1"));
+
+                THEN ("the question is raised again")
+                {
+                    REQUIRE (raised->load() == 2);
+                }
+            }
+        }
+    }
+}
+
 SCENARIO ("the child-process scanner says what it did with each file", "[engine][effects][hosting][scan]")
 {
     TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });

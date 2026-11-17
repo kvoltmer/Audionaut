@@ -27,6 +27,11 @@ struct PluginFormats
     /// the sandbox-safe flag, in a sandboxed process: out of process, after the user's consent).
     static void applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed);
 
+    /// Whether the system asks the user before it loads this plugin here, once that is allowed: an
+    /// Audio Unit that only loads out of process because this process is sandboxed. Told from the
+    /// identifier, without loading anything.
+    static bool asksUserBeforeLoading (const juce::String& formatName, const juce::String& fileOrIdentifier);
+
     /**
      * Message thread: runs `fn` on a thread of its own while this thread
      * pumps messages, for the plugin calls that refuse to run on the message

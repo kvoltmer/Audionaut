@@ -62,6 +62,26 @@ void PluginFormats::applyLoweredSecurity (juce::AudioPluginFormatManager& manage
     juce::ignoreUnused (manager, allowed);
 }
 
+bool PluginFormats::asksUserBeforeLoading (const juce::String& formatName, const juce::String& fileOrIdentifier)
+{
+   #if JUCE_MAC && JUCE_PLUGINHOST_AU
+    // what a format that isolates such plugins would load out of process, less what runs there anyway (AUv3)
+    juce::AudioUnitPluginFormat isolating, plain;
+    isolating.setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
+    juce::PluginDescription description;
+    description.pluginFormatName = formatName;
+    description.fileOrIdentifier = fileOrIdentifier;
+    const juce::AudioPluginFormat& wouldIsolate = isolating;   // the question is the base class's to ask
+    const juce::AudioPluginFormat& asItIs = plain;
+    return formatName == plain.getName()
+        && wouldIsolate.requiresUnblockedMessageThreadDuringCreation (description)
+        && ! asItIs.requiresUnblockedMessageThreadDuringCreation (description);
+   #else
+    juce::ignoreUnused (formatName, fileOrIdentifier);
+    return false;
+   #endif
+}
+
 bool PluginFormats::runWhilePumping (std::function<void()> fn, int timeoutMs)
 {
     auto done = std::make_shared<std::atomic<bool>> (false);
