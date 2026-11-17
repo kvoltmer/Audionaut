@@ -403,3 +403,18 @@ if(APPLE)
     add_test(NAME ScanHelperAU
              COMMAND AudionautScanHelper scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")
 endif()
+
+# ---------------------------------------------------------------------------
+# Test Audio Units
+#
+# An Audio Unit that crashes when it is scanned and one with nothing in it,
+# with the worker process that scans them (TestAudioUnits/CMakeLists.txt).
+# PluginHostTests runs the scanner on that worker.
+# ---------------------------------------------------------------------------
+if(APPLE)
+    add_subdirectory(TestAudioUnits test-audio-units-bin)
+    add_dependencies(${APP_NAME} AudionautTestScanWorker)
+    target_compile_definitions(${APP_NAME}
+            PRIVATE
+            AUDIONAUT_TEST_SCAN_WORKER="$<TARGET_FILE:AudionautTestScanWorker>")
+endif()

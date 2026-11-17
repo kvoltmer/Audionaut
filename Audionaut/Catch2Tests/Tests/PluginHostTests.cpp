@@ -1198,3 +1198,118 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
         }
     }
 }
+
+#if JUCE_MAC && defined (AUDIONAUT_TEST_SCAN_WORKER)
+// Real Audio Units in a real worker process: the two components of Catch2Tests/TestAudioUnits and
+// Apple's AUDelay, scanned by AudionautTestScanWorker - the scan helper's worker, which registers
+// the test components in its own process instead of having them installed on the machine.
+SCENARIO ("a scan gets past an Audio Unit that crashes and one with nothing in it", "[engine][effects][hosting][scan][audiounit]")
+{
+    MessageThread messageThread;
+
+    const juce::String crashes ("AudioUnit:Effects/aufx,Cras,Audn");
+    const juce::String empty ("AudioUnit:Effects/aufx,Empt,Audn");
+    const juce::String crashesInEditor ("AudioUnit:Effects/aufx,CrEd,Audn");
+    const juce::String delay ("AudioUnit:Effects/aufx,dely,appl");
+
+    GIVEN ("a plugin list that scans in the test worker")
+    {
+        const juce::File workerExecutable (AUDIONAUT_TEST_SCAN_WORKER);
+        REQUIRE (workerExecutable.existsAsFile());
+
+        juce::AudioUnitPluginFormat format;
+        juce::KnownPluginList list;
+        juce::StringArray log;
+
+        auto ownedScanner = std::make_unique<ChildProcessScanner> (workerExecutable, 30000);
+        auto* scanner = ownedScanner.get();
+        scanner->setLog ([&log] (const juce::String& line) { log.add (line); });
+        list.setCustomScanner (std::move (ownedScanner));
+
+        const auto scan = [&] (const juce::String& identifier)
+        {
+            juce::OwnedArray<juce::PluginDescription> found;
+            list.scanAndAddFile (identifier, true, found, format);
+            return found.size();
+        };
+        const auto logged = [&] (const juce::String& identifier, const juce::String& outcome)
+        {
+            for (const auto& line : log)
+                if (line.contains (identifier + "  ->  ") && line.contains (outcome))
+                    return true;
+            return false;
+        };
+
+        WHEN ("the empty Audio Unit is scanned")
+        {
+            const auto found = scan (empty);
+
+            THEN ("no plugin is found, and nothing is held against the file")
+            {
+                REQUIRE (found == 0);
+                REQUIRE (list.getNumTypes() == 0);
+                REQUIRE (list.getBlacklistedFiles().isEmpty());
+                REQUIRE (logged (empty, "no plugin found"));
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+
+            THEN ("the same worker goes on to the next file")
+            {
+                REQUIRE (scan (delay) == 1);
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+        }
+
+        WHEN ("the Audio Unit that only crashes with its editor open is scanned")
+        {
+            const auto found = scan (crashesInEditor);
+
+            THEN ("it is listed like any effect: the scan opens no editor")
+            {
+                REQUIRE (found == 1);
+                REQUIRE (list.getBlacklistedFiles().isEmpty());
+                REQUIRE (list.getTypes()[0].name == "Crash On Editor");
+                REQUIRE (list.getTypes()[0].manufacturerName == "Audionaut Tests");
+                REQUIRE (list.getTypes()[0].numInputChannels == 2);
+                REQUIRE (list.getTypes()[0].numOutputChannels == 2);
+                REQUIRE_FALSE (list.getTypes()[0].isInstrument);
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+            }
+        }
+
+        WHEN ("the crashing Audio Unit is the first file of a scan")
+        {
+            const auto found = scan (crashes);
+
+            THEN ("it is skipped from now on, and the next file is scanned by a new worker")
+            {
+                REQUIRE (found == 0);
+                REQUIRE (list.getBlacklistedFiles() == juce::StringArray { crashes });
+                REQUIRE (logged (crashes, "FAILED, file skipped: the worker process ended while the plugin was loading"));
+                REQUIRE (scanner->getNumWorkersStarted() == 1);
+
+                REQUIRE (scan (delay) == 1);
+                REQUIRE (scanner->getNumWorkersStarted() == 2);
+                REQUIRE (list.getNumTypes() == 1);
+                REQUIRE (list.getTypes()[0].name == "AUDelay");
+            }
+        }
+
+        WHEN ("it comes after a file the worker had loaded, and the empty one after it")
+        {
+            REQUIRE (scan (delay) == 1);
+            const auto foundInCrashing = scan (crashes);
+            const auto foundInEmpty = scan (empty);
+
+            THEN ("it got a worker to itself before it was skipped, and only it is skipped")
+            {
+                REQUIRE (foundInCrashing == 0);
+                REQUIRE (foundInEmpty == 0);
+                REQUIRE (scanner->getNumWorkersStarted() == 3);   // the first, one for the crashing file alone, one for what follows
+                REQUIRE (list.getBlacklistedFiles() == juce::StringArray { crashes });
+                REQUIRE (list.getNumTypes() == 1);
+            }
+        }
+    }
+}
+#endif
