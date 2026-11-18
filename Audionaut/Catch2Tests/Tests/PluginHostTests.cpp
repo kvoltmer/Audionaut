@@ -435,6 +435,63 @@ SCENARIO ("a project's plugin insert opens with the same plugin in another forma
     }
 }
 
+SCENARIO ("the plugin host scans extra folders for the formats that look in folders", "[engine][effects][hosting]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a host whose formats look in no folders")
+    {
+        TestHost test (temp.folder, false);
+        auto& host = test.host;
+        auto* inFolders = dynamic_cast<TestPluginFormat*> (host.getFormats().getFormat (0));
+        auto* byIdentifier = host.getFormats().getFormat (1);
+        REQUIRE (inFolders != nullptr);
+        const auto standard = temp.folder.getChildFile ("standard");
+        const auto extra = temp.folder.getChildFile ("extra");
+
+        THEN ("extra folders mean nothing to it, and there are none")
+        {
+            REQUIRE_FALSE (host.scansFolders());
+            REQUIRE (host.getExtraScanFolders().getNumPaths() == 0);
+        }
+
+        WHEN ("one format has a standard folder and an extra one is set")
+        {
+            inFolders->defaultLocations.add (standard);
+            REQUIRE (host.setExtraScanFolders (juce::FileSearchPath (extra.getFullPathName())));
+
+            THEN ("that format's scan looks in both, the other format's in none")
+            {
+                REQUIRE (host.scansFolders());
+                const auto folders = host.getScanFolders (*inFolders);
+                REQUIRE (folders.getNumPaths() == 2);
+                REQUIRE (folders[0] == standard);
+                REQUIRE (folders[1] == extra);
+                REQUIRE (host.getScanFolders (*byIdentifier).getNumPaths() == 0);
+            }
+
+            THEN ("another process's host on the same data folder has the extra folder too")
+            {
+                PluginHost other (temp.folder, false);
+                REQUIRE (other.getExtraScanFolders().getNumPaths() == 1);
+                REQUIRE (other.getExtraScanFolders()[0] == extra);
+            }
+
+            AND_WHEN ("the extra folders are taken away again")
+            {
+                REQUIRE (host.setExtraScanFolders ({}));
+
+                THEN ("the scan looks in the standard folder only")
+                {
+                    REQUIRE (host.getExtraScanFolders().getNumPaths() == 0);
+                    REQUIRE (host.getScanFolders (*inFolders).getNumPaths() == 1);
+                }
+            }
+        }
+    }
+}
+
 SCENARIO ("the plugin host scans with its formats", "[engine][effects][hosting]")
 {
     MessageThread messageThread;
