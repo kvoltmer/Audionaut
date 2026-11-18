@@ -61,8 +61,8 @@ namespace audium
  * take the time it needs, choose a better and slower way to compute, and
  * need not drop work to keep up with a device. The plugin is told through
  * its format's own means - the non-realtime flag, and for an Audio Unit
- * the offline render property, which the flag alone does not reach - and
- * is prepared again, since a VST3 reads the mode when it is set up.
+ * the offline render property, which the flag alone does not reach. A
+ * VST3 is prepared again for it, since it reads the mode when it is set up.
  *
  * What the user does in the plugin's own window is the plugin's to report:
  * getPluginChangeCount() moves with every such report, isGestureOpen() says

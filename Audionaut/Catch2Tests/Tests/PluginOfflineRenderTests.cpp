@@ -18,9 +18,12 @@
 #include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/MixerPlanner.h"
+#include "Engine/Export/AudioExporter.h"
+#include "Engine/Export/ExportAudioConfig.h"
 #include "Engine/Factory/AudiumFactory.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
+#include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
@@ -58,12 +61,12 @@ private:
 /**
  * An engine with one track, a four second clip on it and a test plugin as
  * the track's insert: the plugin is created as the plugin host creates one,
- * with the render transport of the registry it is created from, and counts
- * the blocks it ran with the non-realtime flag set and without.
+ * described as a plugin of `format`, and counts the blocks it ran with the
+ * non-realtime flag set and without.
  */
 struct Session
 {
-    Session()
+    explicit Session (const juce::String& format = "TestA")
     {
         engine = AudiumFactory::createAudiumEngine();
         engine->getAudioResourceContainer()->getAnalysisWorker()->setAutoAnalysisEnabled (false);
@@ -76,13 +79,16 @@ struct Session
         REQUIRE (container->getNumItems() == 1);
 
         auto& registry = container->getMixerPlanner()->getRegistry();
-        registry.add ({ kTypeId, "Offline Test" }, [this, &registry]
+        registry.add ({ kTypeId, "Offline Test" }, [this, &registry, format]
         {
-            auto instance = std::make_unique<TestPluginInstance>();
+            TestPluginInstance::Options options;
+            options.format = format;
+            auto instance = std::make_unique<TestPluginInstance> (options);
             plugin = instance.get();
-            const auto description = TestPluginInstance::describe ({});
+            const auto description = TestPluginInstance::describe (options);
             auto effect = std::make_unique<HostedEffect> (PluginTypeId::typeInfo (description), description, std::move (instance));
             effect->setRenderTransport (registry.getRenderTransport());
+            hosted = effect.get();
             return effect;
         });
         REQUIRE (container->getAudioTrack (0)->getTrackInserts().add (kTypeId) != nullptr);
@@ -91,8 +97,59 @@ struct Session
         engine->getPlayListScheduler()->commitPlayListData();
     }
 
+    MixerPlanner& planner() { return *engine->getAudioTrackContainer()->getMixerPlanner(); }
+
     std::shared_ptr<AudiumEngine> engine;
     TestPluginInstance* plugin = nullptr;   // owned by the insert slot's effect
+    HostedEffect* hosted = nullptr;         // the effect itself, owned by the slot
+};
+
+/// A device type for the engine's device manager: one device, which never calls back.
+class FakeDeviceType final : public juce::AudioIODeviceType
+{
+public:
+    FakeDeviceType (double sampleRate_, int blockSize_) :
+        juce::AudioIODeviceType ("fake"), sampleRate (sampleRate_), blockSize (blockSize_) {}
+
+    void scanForDevices() override {}
+    juce::StringArray getDeviceNames (bool) const override { return { "fake" }; }
+    int getDefaultDeviceIndex (bool) const override { return 0; }
+    int getIndexOfDevice (juce::AudioIODevice* device, bool) const override { return device != nullptr ? 0 : -1; }
+    bool hasSeparateInputsAndOutputs() const override { return false; }
+    juce::AudioIODevice* createDevice (const juce::String&, const juce::String&) override
+    {
+        return new FakeAudioIODevice (sampleRate, blockSize, 2, 2);
+    }
+
+private:
+    const double sampleRate;
+    const int blockSize;
+};
+
+/// A fake device of that format as the engine's current device, with the engine's callback on it as
+/// the app puts it there (AudiumEngine::initialise): the callback hears of the device and prepares for it.
+struct OpenFakeDevice
+{
+    OpenFakeDevice (AudiumEngine& engine_, double sampleRate, int blockSize) : engine (engine_)
+    {
+        auto manager = engine.getAudioDeviceManager();
+        manager->addAudioDeviceType (std::make_unique<FakeDeviceType> (sampleRate, blockSize));
+        manager->setCurrentAudioDeviceType ("fake", true);
+        const auto error = manager->initialise (2, 2, nullptr, true);
+        CAPTURE (error.toStdString());
+        REQUIRE (manager->getCurrentAudioDevice() != nullptr);
+        REQUIRE (manager->getCurrentAudioDevice()->getCurrentBufferSizeSamples() == blockSize);
+        manager->addAudioCallback (engine.getLinkAudioDevice().get());
+    }
+
+    ~OpenFakeDevice()
+    {
+        auto manager = engine.getAudioDeviceManager();
+        manager->removeAudioCallback (engine.getLinkAudioDevice().get());
+        manager->closeAudioDevice();
+    }
+
+    AudiumEngine& engine;
 };
 
 } // namespace
@@ -105,7 +162,6 @@ SCENARIO ("a plugin is told when it runs in a bounce, and when in playback again
     {
         Session session;
         auto& plugin = *session.plugin;
-        auto& planner = *session.engine->getAudioTrackContainer()->getMixerPlanner();
         FakeAudioIODevice device (kSampleRate, kBlockSize, 2, 2);
         LiveBlockDriver driver (*session.engine, device);
 
@@ -130,34 +186,115 @@ SCENARIO ("a plugin is told when it runs in a bounce, and when in playback again
             const auto preparesBefore = plugin.prepareCount;
             bounceProject (*session.engine, 0.0, 0.25, kBlockSize, kSampleRate, 2);
 
-            THEN ("the plugin was prepared again, in offline mode, and ran the whole bounce that way")
+            THEN ("the plugin ran the whole bounce in offline mode")
             {
-                REQUIRE (plugin.prepareCount > preparesBefore);
                 REQUIRE (plugin.offlineBlocks >= 21);   // 11025 samples in blocks of 512
                 REQUIRE (plugin.liveBlocks == liveBefore);
             }
 
-            THEN ("the planner is back to live once the bounce is over")
+            THEN ("a plugin whose format has the mode at once was not prepared again for it")
             {
-                REQUIRE_FALSE (planner.isOfflineRendering());
+                REQUIRE (plugin.prepareCount == preparesBefore);
             }
 
-            AND_WHEN ("the device starts again and the transport plays")
+            THEN ("the plugin is back in live mode once the bounce is over, with no device to start for it")
             {
-                FakeAudioIODevice deviceAfter (kSampleRate, kBlockSize, 2, 2);
-                LiveBlockDriver driverAfter (*session.engine, deviceAfter);
-                const auto offlineAfterBounce = plugin.offlineBlocks;
-                driverAfter.play (0.0);
-                driverAfter.render (0.1);
-                driverAfter.stop();
+                REQUIRE_FALSE (session.planner().isOfflineRendering());
+                REQUIRE_FALSE (session.hosted->isOfflineRendering());
+                REQUIRE_FALSE (plugin.isNonRealtime());
+            }
 
-                THEN ("the plugin is prepared for live rendering and runs live")
+            AND_WHEN ("the transport plays again")
+            {
+                const auto offlineAfterBounce = plugin.offlineBlocks;
+                driver.play (0.0);
+                driver.render (0.1);
+                driver.stop();
+
+                THEN ("the plugin runs live")
                 {
-                    REQUIRE_FALSE (plugin.preparedOffline);
-                    REQUIRE_FALSE (plugin.isNonRealtime());
                     REQUIRE (plugin.liveBlocks > liveBefore);
                     REQUIRE (plugin.offlineBlocks == offlineAfterBounce);
                 }
+            }
+        }
+
+        WHEN ("one clip is bounced, which runs no insert")
+        {
+            driver.idle (2);
+            const auto preparesBefore = plugin.prepareCount;
+            const auto processedBefore = plugin.processCount;
+
+            auto config = std::make_shared<ExportAudioConfig>();
+            config->fileName = juce::File::createTempFile ("-offline-clip.wav");
+            config->sampleRate = kSampleRate;
+            config->blockSize = kBlockSize;
+            config->playListItem = session.engine->getAudioTrackContainer()->getAudioTrack (0)
+                                       ->getPlayListContainer()->getPlayListItems().front();
+            REQUIRE (AudioExporter (*session.engine, config).bounce());
+            config->fileName.deleteFile();
+
+            THEN ("the plugin is left alone: not told of a bounce, not prepared, not run")
+            {
+                REQUIRE_FALSE (plugin.isNonRealtime());
+                REQUIRE (plugin.offlineBlocks == 0);
+                REQUIRE (plugin.prepareCount == preparesBefore);
+                REQUIRE (plugin.processCount == processedBefore);
+            }
+        }
+    }
+
+    GIVEN ("a project with a plugin of a format that reads the mode when it is prepared")
+    {
+        Session session ("VST3");
+        auto& plugin = *session.plugin;
+        FakeAudioIODevice device (kSampleRate, kBlockSize, 2, 2);
+        LiveBlockDriver driver (*session.engine, device);
+        driver.idle (2);
+        REQUIRE_FALSE (plugin.preparedOffline);
+
+        WHEN ("the project is bounced with the device's block size and rate")
+        {
+            const auto preparesBefore = plugin.prepareCount;
+            bounceProject (*session.engine, 0.0, 0.25, kBlockSize, kSampleRate, 2);
+
+            THEN ("the plugin was prepared for the bounce in offline mode, and for live rendering after it")
+            {
+                REQUIRE (plugin.offlineBlocks >= 21);
+                REQUIRE (plugin.prepareCount == preparesBefore + 2);
+                REQUIRE_FALSE (plugin.preparedOffline);
+                REQUIRE_FALSE (plugin.isNonRealtime());
+            }
+        }
+    }
+}
+
+SCENARIO ("after a bounce the plugins are back in live mode at the device's format", "[engine][effects][hosting][offline]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("a project with a plugin on its track and a device open at 256 samples")
+    {
+        Session session ("VST3");
+        auto& plugin = *session.plugin;
+        constexpr int deviceBlockSize = 256;
+        OpenFakeDevice openDevice (*session.engine, kSampleRate, deviceBlockSize);
+        REQUIRE (session.planner().getMaxBlockSize() == deviceBlockSize);
+        REQUIRE_FALSE (plugin.preparedOffline);
+
+        WHEN ("the project is bounced in blocks of 512")
+        {
+            bounceProject (*session.engine, 0.0, 0.25, kBlockSize, kSampleRate, 2);
+
+            THEN ("the bounce ran offline, and the plugin is prepared for the device again, live")
+            {
+                REQUIRE (plugin.offlineBlocks >= 21);
+                REQUIRE (plugin.liveBlocks == 0);
+                REQUIRE (session.planner().getMaxBlockSize() == deviceBlockSize);
+                REQUIRE_FALSE (session.planner().isOfflineRendering());
+                REQUIRE_FALSE (session.hosted->isOfflineRendering());
+                REQUIRE_FALSE (plugin.isNonRealtime());
+                REQUIRE_FALSE (plugin.preparedOffline);
             }
         }
     }

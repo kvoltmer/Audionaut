@@ -107,7 +107,7 @@ public:
 
     /// Message thread, nothing rendering the effect: whether the renders to come are offline (a bounce, which
     /// takes as long as it takes) or live. Nothing to a built-in, which computes the same either way; a hosted
-    /// plugin is told, and asks to be prepared again (needsPrepare) where the plugin reads the mode only then.
+    /// plugin is told, and asks to be prepared again (needsPrepare) where its format reads the mode only then.
     virtual void setOfflineRendering (bool offline) { juce::ignoreUnused (offline); }
 
     /// The effect turns the level down and can say by how much: an editor shows a gain reduction meter beside the dials.

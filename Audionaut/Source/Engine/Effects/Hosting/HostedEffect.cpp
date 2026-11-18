@@ -64,8 +64,11 @@ void HostedEffect::setOfflineRendering (bool offline)
         return;   // a placeholder: the plugin is told when it comes
 
     tellPluginRenderMode();
-    if (preparedChannels > 0)
-        prepareNeeded = true;   // a VST3 takes the mode when it is set up: the slot prepares it again
+
+    // a VST3 takes the mode when it is set up: the slot prepares it again. The other formats have it
+    // by now, and a prepare would only cost them time, twice per bounce
+    if (preparedChannels > 0 && description.pluginFormatName == "VST3")
+        prepareNeeded = true;
 }
 
 void HostedEffect::tellPluginRenderMode()

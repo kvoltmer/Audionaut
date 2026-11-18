@@ -519,16 +519,17 @@ the one-gesture crossfade UX on top:
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):
   let `FloatingPanel` switch resizability on, or reopen the window on arrival.
-- [x] **Tell hosted plugins when a render is offline.** Done: the exporter
-  tells the mixer planner before it prepares for a bounce and again after
-  it (`MixerPlanner::setOfflineRendering`), the planner tells the effects
-  in that prepare and prepares the slots again, and a `HostedEffect` passes
-  it on as the plugin's non-realtime flag - plus, for an Audio Unit, the
+- [x] **Tell hosted plugins when a render is offline.** Done: for a project
+  bounce the exporter tells the mixer planner before it prepares for the
+  bounce and again after it (`MixerPlanner::setOfflineRendering`), the
+  planner tells the effects in that prepare, and a `HostedEffect` passes it
+  on as the plugin's non-realtime flag - plus, for an Audio Unit, the
   unit's offline render property, which JUCE's wrapper does not set (few
   units have it: of Apple's effects only AURoundTripAAC; the others refuse
-  it and render as ever). Stem separation renders through the same
-  exporter. Not tried by ear with a plugin that computes differently
-  offline.
+  it and render as ever). Only a VST3 is prepared again for it. A clip
+  bounce (one clip's export, a stem separation's render) runs no insert
+  and leaves the plugins alone. Not tried by ear with a plugin that
+  computes differently offline.
 - [x] **Give hosted plugins a playhead.** Done: the scheduler publishes
   where the transport is for each block (`RenderTransport`, one per engine:
   playing, position in samples, seconds and quarter notes, tempo, loop)

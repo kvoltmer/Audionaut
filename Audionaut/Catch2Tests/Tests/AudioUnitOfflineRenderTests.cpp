@@ -109,10 +109,10 @@ SCENARIO ("an Audio Unit itself hears of a bounce, and of its end", "[engine][ef
         {
             hosted->setOfflineRendering (true);
 
-            THEN ("the unit is set to render offline, and stays so through the prepare that follows")
+            THEN ("the unit is set to render offline at once, with no new prepare asked for, and stays so through one")
             {
                 REQUIRE (offlineRenderOf (*hosted) == 1);
-                REQUIRE (hosted->needsPrepare());
+                REQUIRE_FALSE (hosted->needsPrepare());
                 hosted->prepare (44100.0, 512, 2);
                 REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
                 REQUIRE (offlineRenderOf (*hosted) == 1);

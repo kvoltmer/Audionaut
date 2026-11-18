@@ -90,28 +90,28 @@ public:
             return true;
         };
 
-        // the inserts hear whether the render to come is this bounce or
-        // live again, in the prepare that follows: a plugin may compute
-        // differently offline, and is prepared again for the change
-        auto setInsertsOffline = [tracks = audiumEngine.getAudioTrackContainer()] (bool offline)
+        // The inserts hear that the renders to come are this bounce's, in the
+        // prepare that follows: a plugin may compute differently offline. A
+        // project bounce only - a clip's (an export of one clip, the render
+        // a stem separation starts from) plays the voices and runs no insert,
+        // so the plugins are left as they are.
+        const auto bounceRunsInserts = config->playListItem == nullptr;
+        auto mixerPlanner = [tracks = audiumEngine.getAudioTrackContainer()]
         {
-            if (auto* planner = tracks != nullptr ? tracks->getMixerPlanner() : nullptr)
-                planner->setOfflineRendering (offline);
-        };
-
-        auto prepareToPlay = [this, &onMessageThread, &setInsertsOffline] (int blockSize, double sampleRate, bool offline)
-        {
-            return onMessageThread ([&]
-            {
-                setInsertsOffline (offline);
-                audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
-            });
+            return tracks != nullptr ? tracks->getMixerPlanner() : nullptr;
         };
 
         auto linkAudioDevice = audiumEngine.getLinkAudioDevice();
         linkAudioDevice->setBypass(true);
 
-        if (! prepareToPlay (config->blockSize, config->sampleRate, true)) {
+        const auto prepared = onMessageThread ([this, &mixerPlanner, bounceRunsInserts]
+        {
+            if (auto* planner = mixerPlanner())
+                planner->setOfflineRendering (bounceRunsInserts);
+            audiumEngine.getPlayListScheduler()->prepareToPlay (config->blockSize, config->sampleRate);
+        });
+
+        if (! prepared) {
             // cancelled before anything changed: the device format stands
             config->userCanceled = true;
             linkAudioDevice->setBypass(false);
@@ -120,34 +120,32 @@ public:
 
         auto written = writeOutput(updateProgress);
 
-        // change back to device settings
-        auto restoreDeviceFormat = [scheduler = audiumEngine.getPlayListScheduler(),
-                                    deviceManager = audiumEngine.getAudioDeviceManager(),
-                                    setInsertsOffline]
+        // back to live rendering, at the device's format. Without a device
+        // there is no format to go back to, but the inserts are told all the
+        // same, by a prepare at the format they have: left for the next
+        // prepare to tell, the plugins would stay in offline mode until some
+        // device started
+        auto restoreLiveFormat = [scheduler = audiumEngine.getPlayListScheduler(),
+                                  deviceManager = audiumEngine.getAudioDeviceManager(),
+                                  mixerPlanner]
         {
-            setInsertsOffline (false);
+            auto* planner = mixerPlanner();
+            if (planner != nullptr)
+                planner->setOfflineRendering (false);
+
             if (auto* device = deviceManager->getCurrentAudioDevice())
                 scheduler->prepareToPlay (device->getCurrentBufferSizeSamples(), device->getCurrentSampleRate());
+            else if (planner != nullptr)
+                planner->prepare (planner->getSampleRate(), planner->getMaxBlockSize());
         };
 
-        auto restored = true;
-        if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice()) {
-            auto numSamples = device->getCurrentBufferSizeSamples();
-            auto sampleRate = device->getCurrentSampleRate();
-            restored = prepareToPlay (numSamples, sampleRate, false);
-        }
-        else {
-            // no device to prepare for: whichever prepare comes next is a live one
-            restored = onMessageThread ([&setInsertsOffline] { setInsertsOffline (false); });
-        }
-
-        if (! restored) {
+        if (! onMessageThread (restoreLiveFormat)) {
             // told to exit while waiting for the lock: the message thread,
             // once it is free again, puts the device format back and lifts
             // the bypass itself, so no block renders with the bounce's format
-            juce::MessageManager::callAsync ([restoreDeviceFormat, linkAudioDevice]
+            juce::MessageManager::callAsync ([restoreLiveFormat, linkAudioDevice]
             {
-                restoreDeviceFormat();
+                restoreLiveFormat();
                 linkAudioDevice->setBypass(false);
             });
             return written;
