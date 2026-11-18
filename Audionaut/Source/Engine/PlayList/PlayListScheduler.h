@@ -140,7 +140,10 @@ public:
                 data.transportPositionClocks = loopResult.positionResult;
             
             process(data.transportPositionClocks, numSamples, loopResult);
-            
+
+            // what the block's effects are told about the transport: a
+            // plugin asks for it from inside the render
+            publishRenderTransport(true, &loopResult);
         }
         else {
             // Stopped, nothing renders - but take the snapshots over anyway.
@@ -149,11 +152,12 @@ public:
             // snapshot without them. Left to the next play, a stopped
             // editing session kept every retired chain alive (#204).
             pullSnapshots();
-        }
 
-        // what the block's effects are told about the transport: a plugin
-        // asks for it from inside the render
-        publishRenderTransport(isPlaying && beats >= 0.0);
+            // ... and the loop as it is now: processLoop() takes it over
+            // only while playing
+            transportLoop->takeOverLoopData();
+            publishRenderTransport(false, nullptr);
+        }
         
         audioBusInterface->process(context);
     }
@@ -249,8 +253,9 @@ private:
     void pullSnapshots() noexcept;
 
     /// Render thread: publishes where the transport is for the block about
-    /// to be rendered (position, tempo, loop) to renderTransport.
-    void publishRenderTransport(bool playing) noexcept;
+    /// to be rendered (position, tempo, loop) to renderTransport. loopResult
+    /// is the playing block's, nullptr while the transport stands.
+    void publishRenderTransport(bool playing, const TransportLoop::LoopResult* loopResult) noexcept;
 
     // process sequencing
     void process(double absolutePosition,

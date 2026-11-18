@@ -8,6 +8,8 @@
 #include <atomic>
 #include <cstdint>
 
+#include <JuceHeader.h>
+
 namespace audium
 {
 
@@ -79,8 +81,7 @@ private:
     std::atomic<double> loopStartBeats { 0.0 };
     std::atomic<double> loopEndBeats { 0.0 };
 
-    RenderTransport (const RenderTransport&) = delete;
-    RenderTransport& operator= (const RenderTransport&) = delete;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RenderTransport)
 };
 
 } // namespace audium

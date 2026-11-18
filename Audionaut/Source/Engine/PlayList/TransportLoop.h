@@ -79,8 +79,12 @@ public:
      */
     bool isLoopActive() const;
 
-    /// Audio thread: whether the loop is on in the data the last processLoop() took over.
+    /// Audio thread: whether the loop is on in the data the audio thread took over last.
     bool isProcessedLoopActive() const noexcept { return processedLoopData.loopActive; }
+
+    /// Audio thread, transport standing: takes over the latest loop data as processLoop() does while
+    /// playing, so what is told about the loop (a plugin's playhead) follows a change made meanwhile.
+    void takeOverLoopData() { pullLoopData(); }
 
     /**
      * @brief Activates or deactivates the loop.

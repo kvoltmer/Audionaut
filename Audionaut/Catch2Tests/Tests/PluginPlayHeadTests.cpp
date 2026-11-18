@@ -132,6 +132,19 @@ SCENARIO ("a plugin in a bounce is told the position of the block being rendered
             }
         }
 
+        WHEN ("a bounce is over, the transport standing half a second into the project")
+        {
+            session.engine->getPlayListScheduler()->setAbsoluteStartPosition (0.5, audium::seconds);
+            bounceProject (*session.engine, 1.0, 0.25, kBlockSize, kSampleRate, 2);
+            const auto told = session.engine->getAudioTrackContainer()->getMixerPlanner()->getRegistry().getRenderTransport()->read();
+
+            THEN ("a plugin asking afterwards is told the transport stands there, not the bounce's last block")
+            {
+                REQUIRE_FALSE (told.playing);
+                REQUIRE (told.positionSeconds == Approx (0.5).margin (1.0e-6));
+            }
+        }
+
         WHEN ("the bounce starts a second into the project, the transport standing at its start")
         {
             session.engine->getPlayListScheduler()->setAbsoluteStartPosition (0.0, audium::seconds);
@@ -203,6 +216,71 @@ SCENARIO ("a plugin in playback is told whether the transport runs, where and ho
                     REQUIRE_FALSE (positions.empty());
                     REQUIRE_FALSE (positions.back().getIsPlaying());
                 }
+            }
+        }
+
+        WHEN ("the loop is set and switched on while the transport stands")
+        {
+            auto loop = session.engine->getPlayListScheduler()->getTransportLoop();
+            loop->setLoopPositionRange (session.engine->getAudioTrackContainer(), { 1.0, 3.0 }, audium::seconds);
+            loop->setLoopActive (true);
+            positions.clear();
+            driver.idle (2);
+
+            THEN ("the plugin hears of the loop without the transport having played")
+            {
+                REQUIRE_FALSE (positions.empty());
+                REQUIRE_FALSE (positions.back().getIsPlaying());
+                REQUIRE (positions.back().getIsLooping());
+                REQUIRE (positions.back().getLoopPoints().hasValue());
+                REQUIRE (positions.back().getLoopPoints()->ppqStart == Approx (beatsAt (1.0)).margin (1.0e-6));
+                REQUIRE (positions.back().getLoopPoints()->ppqEnd == Approx (beatsAt (3.0)).margin (1.0e-6));
+            }
+
+            AND_WHEN ("it is switched off again, still standing")
+            {
+                loop->setLoopActive (false);
+                positions.clear();
+                driver.idle (2);
+
+                THEN ("the plugin hears that too")
+                {
+                    REQUIRE_FALSE (positions.empty());
+                    REQUIRE_FALSE (positions.back().getIsLooping());
+                }
+            }
+        }
+
+        WHEN ("the transport plays through several wraps of a short loop")
+        {
+            // 0.2 s = 8820 samples, no multiple of the block: the wraps fall inside blocks
+            constexpr double loopStart = 1.0, loopEnd = 1.2;
+            auto loop = session.engine->getPlayListScheduler()->getTransportLoop();
+            loop->setLoopPositionRange (session.engine->getAudioTrackContainer(), { loopStart, loopEnd }, audium::seconds);
+            loop->setLoopActive (true);
+            driver.play (loopStart);
+            positions.clear();
+            driver.render (0.9);
+
+            THEN ("every block is told where it starts: a block on from the last, less the loop's length across a wrap")
+            {
+                const auto loopSamples = (loopEnd - loopStart) * kSampleRate;
+                constexpr double tolerance = 64.0;   // the live clock is the device's time, not a sample count
+                auto wraps = 0;
+                REQUIRE (positions.size() >= 60);
+                for (size_t i = 1; i < positions.size(); ++i)
+                {
+                    const auto from = static_cast<double> (*positions[i - 1].getTimeInSamples());
+                    const auto to = static_cast<double> (*positions[i].getTimeInSamples());
+                    const auto step = to - from;
+                    const auto wrapped = step < 0.0;
+                    wraps += wrapped ? 1 : 0;
+                    CAPTURE (i, from, to, step);
+                    REQUIRE (std::abs (step - (wrapped ? kBlockSize - loopSamples : kBlockSize)) <= tolerance);
+                    REQUIRE (to >= loopStart * kSampleRate - tolerance);
+                    REQUIRE (to < loopEnd * kSampleRate + tolerance);
+                }
+                REQUIRE (wraps >= 3);
             }
         }
 
