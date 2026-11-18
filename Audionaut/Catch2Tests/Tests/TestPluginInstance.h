@@ -214,7 +214,8 @@ public:
         return files;
     }
 
-    juce::FileSearchPath getDefaultLocationsToSearch() override { return {}; }
+    juce::FileSearchPath getDefaultLocationsToSearch() override { return defaultLocations; }
+    juce::FileSearchPath defaultLocations;   ///< none unless a test gives it some: a format that looks in folders
     bool requiresUnblockedMessageThreadDuringCreation (const juce::PluginDescription&) const override { return asyncOnly; }
 
     bool asyncOnly = false;   ///< behaves like AUv3: refuses synchronous creation

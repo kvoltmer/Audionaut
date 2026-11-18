@@ -200,7 +200,9 @@ why it is not offered. **Remove**, which appears while scanned or skipped
 entries are selected, takes them off the list (a skipped file is then tried
 again by the next scan; an Audio Unit goes back to not scanned), **Clear**
 forgets everything the scans found, and a click on a column title sorts by
-it. Scanning runs while you work.
+it. On Windows and Linux a **Folders…** button opens a list of folders to
+scan besides each format's standard ones; `scan-plugins` looks in them too.
+Scanning runs while you work.
 
 The list is kept in Audionaut's data folder, not in the project, so it is
 scanned once per machine. The command line shares it (`scan-plugins` and

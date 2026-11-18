@@ -229,6 +229,46 @@ juce::File PluginHost::getScanLogFile() const
     return dataDirectory.getChildFile ("Plugins").getChildFile ("ScanLog.txt");
 }
 
+juce::FileSearchPath PluginHost::getExtraScanFolders() const
+{
+    juce::FileSearchPath folders;
+    juce::StringArray lines;
+    dataDirectory.getChildFile ("Plugins").getChildFile ("ScanFolders.txt").readLines (lines);
+    for (const auto& line : lines)
+        if (juce::File::isAbsolutePath (line.trim()))
+            folders.addIfNotAlreadyThere (juce::File (line.trim()));
+    return folders;
+}
+
+bool PluginHost::setExtraScanFolders (const juce::FileSearchPath& folders) const
+{
+    const auto file = dataDirectory.getChildFile ("Plugins").getChildFile ("ScanFolders.txt");
+    if (folders.getNumPaths() == 0)
+        return ! file.existsAsFile() || file.deleteFile();
+
+    juce::StringArray lines;
+    for (auto i = 0; i < folders.getNumPaths(); ++i)
+        lines.add (folders[i].getFullPathName());
+    return file.getParentDirectory().createDirectory().wasOk()
+        && file.replaceWithText (lines.joinIntoString ("\n") + "\n");
+}
+
+juce::FileSearchPath PluginHost::getScanFolders (juce::AudioPluginFormat& format) const
+{
+    auto folders = format.getDefaultLocationsToSearch();
+    if (folders.getNumPaths() > 0)   // a format without folders of its own does not look in any
+        folders.addPath (getExtraScanFolders());
+    return folders;
+}
+
+bool PluginHost::scansFolders() const
+{
+    for (auto* format : formats.getFormats())
+        if (format->canScanForPlugins() && format->getDefaultLocationsToSearch().getNumPaths() > 0)
+            return true;
+    return false;
+}
+
 bool PluginHost::loadList()
 {
     const auto file = getListFile();
@@ -763,7 +803,7 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
             continue;
 
         juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, pedal);
-        juce::PluginDirectoryScanner scanner (list, *format, format->getDefaultLocationsToSearch(), true, pedal, true);
+        juce::PluginDirectoryScanner scanner (list, *format, getScanFolders (*format), true, pedal, true);
 
         juce::String file;
         auto more = scanner.getNextPluginFileThatWillBeScanned().isNotEmpty();

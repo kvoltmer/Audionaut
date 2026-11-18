@@ -28,7 +28,8 @@
  * through the platform's plugin folders (each file in a worker process,
  * so a plugin that crashes takes down only that and is skipped from then
  * on), Clear empties the list, Remove (there while something is selected)
- * takes entries off it. Under the list a line counts what the list holds: the
+ * takes entries off it. Where a format looks for its plugins in folders
+ * (VST3, LV2), a Folders button opens the list of extra ones to scan. Under the list a line counts what the list holds: the
  * effects the inserts can use, the instruments (listed, not hosted) and
  * the files the scan skips.
  *
@@ -99,6 +100,11 @@ public:
                                   "A plugin the system lists by itself is not scanned again."));
         remove.onClick = [this] { removeSelected(); };
         addChildComponent (remove);   // shown while something is selected
+        scanFolders.setButtonText (TRANS ("Folders..."));
+        scanFolders.setTooltip (TRANS ("Folders to look for plugins in, besides the standard ones."));
+        scanFolders.onClick = [this] { editFolders(); };
+        addChildComponent (scanFolders);
+        scanFolders.setVisible (host->scansFolders());   // not where the system finds the plugins (Audio Units)
 
         // a scan's progress, in the place of the details while it runs
         scanBar.setPercentageDisplay (false);
@@ -180,6 +186,7 @@ public:
         scanFile.setBounds (progress);
         bounds.removeFromBottom (4);
         auto buttons = bounds.removeFromBottom (buttonHeight);
+        scanFolders.setBounds (buttons.removeFromRight (80));
         for (auto* button : { &rescan, &clear, &remove })
         {
             button->setBounds (buttons.removeFromLeft (80));
@@ -307,7 +314,7 @@ private:
         Scan (PluginManagerComponent& owner_, juce::AudioPluginFormat& format) :
             owner (owner_),
             skippedBefore (owner.host->getList().getBlacklistedFiles()),
-            scanner (owner.host->getList(), format, format.getDefaultLocationsToSearch(), true, owner.host->getDeadMansPedalFile(), true)
+            scanner (owner.host->getList(), format, owner.host->getScanFolders (format), true, owner.host->getDeadMansPedalFile(), true)
         {
             pool.addJob (new Job (*this), true);
             startTimer (50);
@@ -393,6 +400,53 @@ private:
         std::atomic<bool> cancelled { false }, done { false };
         juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };   // one worker process at a time
     };
+
+    /// The extra folders in a list to add to and take from; what it holds when its window closes is
+    /// what the next scan looks in.
+    struct FoldersEditor final : public juce::Component
+    {
+        explicit FoldersEditor (std::shared_ptr<audium::PluginHost> host_) :
+            host (std::move (host_))
+        {
+            hint.setText (TRANS ("Audionaut looks for plugins in the standard folders of each format. Folders listed here are scanned as well."),
+                          juce::dontSendNotification);
+            hint.setFont (juce::FontOptions (12.0f));
+            hint.setJustificationType (juce::Justification::topLeft);
+            addAndMakeVisible (hint);
+            list.setPath (host->getExtraScanFolders());
+            addAndMakeVisible (list);
+            setSize (480, 280);
+        }
+
+        ~FoldersEditor() override
+        {
+            host->setExtraScanFolders (list.getPath());
+        }
+
+        void resized() override
+        {
+            auto bounds = getLocalBounds().reduced (8);
+            hint.setBounds (bounds.removeFromTop (34));
+            list.setBounds (bounds);
+        }
+
+        std::shared_ptr<audium::PluginHost> host;
+        juce::Label hint;
+        juce::FileSearchPathListComponent list;
+    };
+
+    void editFolders()
+    {
+        juce::DialogWindow::LaunchOptions options;
+        options.content.setOwned (new FoldersEditor (host));
+        options.dialogTitle = TRANS ("Plugin Folders");
+        options.dialogBackgroundColour = findColour (audium::secondaryBackgroundColourId);
+        options.componentToCentreAround = this;
+        options.escapeKeyTriggersCloseButton = true;
+        options.useNativeTitleBar = true;
+        options.resizable = true;
+        options.launchAsync();
+    }
 
     juce::PopupMenu rowMenu (int row)
     {
@@ -812,6 +866,7 @@ private:
     {
         const auto scanning = isScanning();
         rescan.setEnabled (host->isEnabled() && ! scanning);
+        scanFolders.setEnabled (host->isEnabled() && ! scanning);
         clear.setEnabled (host->isEnabled() && ! scanning);
         remove.setEnabled (host->isEnabled() && ! scanning);
     }
@@ -887,7 +942,7 @@ private:
     juce::String scanOutcome;   // what the last scan did, shown under the list until the selection changes
     Rows rows { *this };
     juce::TableListBox table;
-    juce::TextButton rescan, clear, remove;
+    juce::TextButton rescan, clear, remove, scanFolders;
     struct Listed
     {
         juce::PluginDescription description;

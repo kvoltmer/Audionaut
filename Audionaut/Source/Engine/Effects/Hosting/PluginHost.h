@@ -148,6 +148,17 @@ public:
     /// file a user can send along. Kept over several scans until it grows past a megabyte.
     juce::File getScanLogFile() const;
 
+    /// Folders a scan looks in besides the formats' standard ones, for the formats that look in folders
+    /// at all (VST3, LV2; Audio Units are the system's to find). Kept beside the list, one per line, so
+    /// the app and the command line scan the same places.
+    juce::FileSearchPath getExtraScanFolders() const;
+    /// False when the folder cannot be written.
+    bool setExtraScanFolders (const juce::FileSearchPath& folders) const;
+    /// Where a scan of the format looks: its standard folders and, if it has any, the extra ones.
+    juce::FileSearchPath getScanFolders (juce::AudioPluginFormat& format) const;
+    /// Whether one of this host's formats looks in folders, so that extra ones mean something here.
+    bool scansFolders() const;
+
     /// Reads the list file (and what the dead man's pedal left behind); false when there is none yet.
     bool loadList();
     /// Writes the list file; false when the folder cannot be written.
