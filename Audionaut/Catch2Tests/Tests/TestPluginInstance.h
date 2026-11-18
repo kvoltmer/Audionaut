@@ -201,7 +201,7 @@ public:
 
     bool fileMightContainThisPluginType (const juce::String& fileOrIdentifier) override { return fileOrIdentifier.startsWith ("/test/"); }
     juce::String getNameOfPluginFromIdentifier (const juce::String& fileOrIdentifier) override { return fileOrIdentifier; }
-    bool pluginNeedsRescanning (const juce::PluginDescription&) override { return false; }
+    bool pluginNeedsRescanning (const juce::PluginDescription& description) override { return description.lastInfoUpdateTime == juce::Time(); }   // listed without a scan
     bool doesPluginStillExist (const juce::PluginDescription&) override { return true; }
     bool canScanForPlugins() const override { return true; }
     bool isTrivialToScan() const override { return true; }

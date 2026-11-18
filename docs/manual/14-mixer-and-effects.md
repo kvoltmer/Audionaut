@@ -172,8 +172,8 @@ plugin that is listed as the system reports it and has not been loaded to
 be checked. Such a plugin is offered as an insert like any other. The
 first time you use one that runs inside Audionaut, it is checked in a
 separate process just before it loads: the slot passes the signal through
-for that moment, and a plugin that crashes there is marked **Skipped**
-instead of taking Audionaut down. On Windows and Linux the list is empty
+for that moment, and a plugin that crashes or does not load there is
+marked **Skipped** instead of taking Audionaut down. On Windows and Linux the list is empty
 until you scan.
 
 Nothing is scanned unless you click **Scan** under the list. A scan looks
@@ -184,7 +184,9 @@ stops it. When it is done, the line there says how many plugins it
 scanned. Each plugin file is examined in a separate process, so a plugin
 that crashes while it is examined takes nothing down with it; it is marked
 **Skipped** and not offered from then on, and the line under the list
-counts such files. On macOS a scan loads the plugins macOS asks about, so
+counts such files. The same goes for an Audio Unit the scan loaded and
+found no working plugin in. The plugins that are still waiting for their
+turn stay in the insert menus while the scan runs. On macOS a scan loads the plugins macOS asks about, so
 the question about the security settings may come up during it. A plugin
 that ran out of time while macOS may still have been waiting for your
 answer is not skipped for that; the next scan tries it again. If you

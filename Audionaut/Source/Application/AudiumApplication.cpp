@@ -180,6 +180,9 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // about before it loads them (it wants the app's security settings lowered). A headless run
     // above never gets here, and nothing is asked of a user who is not there.
     pluginHost->setLoweredSecurityAllowed (pluginsEnabled);
+    // And a plugin nobody has loaded yet goes through the scan worker before it is loaded in here: the
+    // slot waits for it. A headless run loads its plugins at once, as it waits for them anyway.
+    pluginHost->setChecksBeforeFirstLoad (true);
 
     // Single-instance behavior, handled manually after the CLI block (see
     // moreThanOneInstanceAllowed): a second GUI launch forwards its command

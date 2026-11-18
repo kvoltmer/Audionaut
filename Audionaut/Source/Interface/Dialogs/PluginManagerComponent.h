@@ -512,7 +512,7 @@ private:
         const auto selected = table.getSelectedRows();
         for (auto row = rows.getNumRows(); --row >= 0;)
         {
-            if (! selected.contains (row))
+            if (! selected.contains (row) || ! isRemovableAt (row))   // a not-scanned entry would be back at once
                 continue;
             if (const auto* description = pluginAt (row))
                 host->getList().removeType (*description);
@@ -604,7 +604,7 @@ private:
                 usable = false;
                 const auto& entry = skippedEntry (skipped);
                 text << entry.name << (entry.name != skipped ? " (" + skipped + ")" : juce::String()) << "\n"
-                     << TRANS ("Skipped: it crashed or took too long when it was scanned. Remove it from the list and the next scan tries it again.");
+                     << TRANS ("Skipped: it crashed, took too long or did not load when it was scanned. Remove it from the list and the next scan tries it again.");
             }
             else if (const auto description = pluginAt (row))
             {
@@ -665,7 +665,7 @@ private:
             return;
 
         showScanProgress (false);
-        host->finishScan();   // what the scan did not get to is listed as before
+        host->finishScan();   // the list as the scan left it, in line with what is installed
 
         // a scan with nothing to do is over at once: say that it ran
         const auto added = juce::jmax (0, numScanned() - scannedBeforeScan);
@@ -753,7 +753,8 @@ private:
 
         formatsToScan = std::move (formats);
         scannedBeforeScan = numScanned();
-        host->prepareScan();   // the plugins listed without a scan are scanned too
+        scannedShown = scannedBeforeScan;
+        host->syncWithInstalled();   // what was installed since is scanned too
         scanCancelled = false;
         scanOutcome.clear();
         scanNextFormat();
@@ -778,6 +779,10 @@ private:
     {
         showScanProgress (true);
         scanFraction = juce::jlimit (0.0, 1.0, fraction);   // the bar reads it
+
+        // a not-scanned entry the scan replaced where it was: the list does not tell of that by itself
+        if (const auto scannedNow = numScanned(); scannedNow != std::exchange (scannedShown, scannedNow))
+            host->getList().sendChangeMessage();
         scanFile.setText (pluginName.isEmpty() ? TRANS ("Looking for plugins...") : TRANS ("Scanning ") + pluginName,
                           juce::dontSendNotification);
     }
@@ -868,7 +873,7 @@ private:
         if (needLoweredSecurity > 0)
             text << ", " << needLoweredSecurity << (needLoweredSecurity == 1 ? TRANS (" needs") : TRANS (" need")) << TRANS (" lowered security settings");
         if (skipped > 0)
-            text << ", " << skipped << (skipped == 1 ? TRANS (" file skipped") : TRANS (" files skipped")) << TRANS (" (crashed or timed out when scanned)");
+            text << ", " << skipped << (skipped == 1 ? TRANS (" file skipped") : TRANS (" files skipped")) << TRANS (" (crashed, timed out or did not load when scanned)");
         status.setText (text, juce::dontSendNotification);
     }
 
@@ -877,6 +882,7 @@ private:
     std::vector<juce::AudioPluginFormat*> formatsToScan;   // the host's, waiting for their turn in scanFormats()
     juce::StringArray failedSoFar, skippedSoFar;
     int scannedBeforeScan = 0;
+    int scannedShown = 0;   // how many scanned entries the rows had when the scan last reported
     bool scanCancelled = false;
     juce::String scanOutcome;   // what the last scan did, shown under the list until the selection changes
     Rows rows { *this };

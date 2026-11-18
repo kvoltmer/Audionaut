@@ -78,6 +78,11 @@ public:
     /// long it took, and the workers' coming and going. Called on the scanning thread.
     void setLog (std::function<void (const juce::String&)> log_) { log = std::move (log_); }
 
+    /// Hears of every file a worker loaded and found no plugin in - not of a file that was not scanned
+    /// (no worker, a question nobody answered or the user declined, a cancelled scan), nor of a plugin
+    /// that was not loaded because the system's question may not be raised. Called on the scanning thread.
+    void setFoundNothing (std::function<void (const juce::String&)> heard) { foundNothing = std::move (heard); }
+
     /// How many workers were started so far.
     int getNumWorkersStarted() const noexcept { return workersStarted.load(); }
 
@@ -143,6 +148,7 @@ private:
     bool pipeUnusable = false;                 // the fallback, for the rest of this scanner's life
     std::atomic<int> workersStarted { 0 };
     std::function<void (const juce::String&)> log;
+    std::function<void (const juce::String&)> foundNothing;
     juce::String lastFailure;                  // why the file on its way failed, for the log
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChildProcessScanner)

@@ -775,7 +775,8 @@ SCENARIO ("the plugin host lists what the system knows to be installed without a
                 THEN ("what the scan loaded is scanned, the rest is listed as before")
                 {
                     REQUIRE (result.added == 2);
-                    REQUIRE (result.found == 3);
+                    REQUIRE (result.found == 2);
+                    REQUIRE (host.getList().getNumTypes() == 3);
                     REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
                     REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000202")));
                     REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00000303")));
@@ -789,6 +790,35 @@ SCENARIO ("the plugin host lists what the system knows to be installed without a
                         REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
                     }
                 }
+            }
+        }
+
+        WHEN ("a scan's worker loaded one of them and found no plugin in it")
+        {
+            host.syncWithInstalled();
+            host.noteLoadedEmpty (ghost.fileOrIdentifier);
+            host.finishScan();
+
+            THEN ("it is skipped from now on, and not listed as installed again")
+            {
+                REQUIRE (host.getList().getBlacklistedFiles().contains (ghost.fileOrIdentifier));
+                REQUIRE_FALSE (host.findByTypeId ("testa:00000303").has_value());
+                REQUIRE_FALSE (host.syncWithInstalled());
+                REQUIRE (host.getList().getNumTypes() == 2);
+            }
+        }
+
+        WHEN ("a plugin that is listed without a scan comes in a new version")
+        {
+            host.syncWithInstalled();
+            (*installed)[0].version = "2.0";
+            REQUIRE (host.syncWithInstalled());
+
+            THEN ("its entry says so, and is still not scanned")
+            {
+                REQUIRE (host.findByTypeId ("testa:00000101")->version == "2.0");
+                REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                REQUIRE (host.getList().getNumTypes() == 3);
             }
         }
 
@@ -829,6 +859,12 @@ SCENARIO ("a not-scanned plugin that runs in the host's process is checked by th
 
         std::shared_ptr<std::atomic<int>> asked;
         std::shared_ptr<std::atomic<bool>> crashes;
+    };
+
+    /// A scanner whose worker does not run: every file comes back without a verdict, and without a plugin.
+    struct NoWorkerScanner final : public juce::KnownPluginList::CustomScanner
+    {
+        bool findPluginTypesFor (juce::AudioPluginFormat&, juce::OwnedArray<juce::PluginDescription>&, const juce::String&) override { return true; }
     };
 
     GIVEN ("a host that lists an installed plugin without a scan, and checks before a first load")
@@ -889,6 +925,35 @@ SCENARIO ("a not-scanned plugin that runs in the host's process is checked by th
                 REQUIRE (host.getList().getBlacklistedFiles().contains (plugin.fileOrIdentifier));
                 REQUIRE (host.getList().getNumTypes() == 0);
                 REQUIRE_FALSE (host.syncWithInstalled());   // and does not come back as not scanned
+            }
+        }
+
+        WHEN ("the scanner's worker does not run")
+        {
+            host.getList().setCustomScanner (std::make_unique<NoWorkerScanner>());
+            auto effect = registry->create ("testa:00001111");
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("the plugin loads as it would without a check, and is not held to be scanned")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (effect.get())->isLoaded());
+                REQUIRE (host.getList().getBlacklistedFiles().isEmpty());
+                REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00001111")));
+            }
+        }
+
+        WHEN ("the worker loads it and finds no plugin in it")
+        {
+            host.getList().setCustomScanner (std::make_unique<NoWorkerScanner>());
+            host.noteLoadedEmpty (plugin.fileOrIdentifier);
+            auto effect = registry->create ("testa:00001111");
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("it is not loaded here, and skipped from now on")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (effect.get())->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (host.getList().getBlacklistedFiles().contains (plugin.fileOrIdentifier));
+                REQUIRE (host.getList().getNumTypes() == 0);
             }
         }
 
@@ -984,6 +1049,31 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
             }
         }
 
+        WHEN ("the host goes while one is on its way and others wait")
+        {
+            auto short_lived = std::make_unique<PluginHost> (temp.folder.getChildFile ("second"), false);
+            auto withheld = std::make_unique<TestPluginFormat> ("TestC", std::vector { named ("One", 0x0101), named ("Two", 0x0202) });
+            withheld->asyncOnly = true;
+            withheld->withhold = true;   // the system's question stays open
+            short_lived->getFormats().addFormat (std::move (withheld));
+            for (const auto& plugin : { named ("One", 0x0101), named ("Two", 0x0202) })
+                short_lived->getList().addType (TestPluginInstance::describe (plugin));
+            short_lived->setLoweredSecurityQuestion ([] (const juce::PluginDescription&) { return true; });
+            short_lived->setLoweredSecurityAllowed (true);
+            auto second = std::make_shared<EffectRegistry>();
+            short_lived->registerInto (*second, PluginHost::Mode::full);
+            auto first = second->create ("testc:00000101");
+            auto waiting = second->create ("testc:00000202");
+            REQUIRE (second->getPendingArrivals()->load() == 2);
+            short_lived.reset();
+
+            THEN ("the one that waited is not left waiting")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (waiting.get())->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (second->getPendingArrivals()->load() == 1);   // the one the system still holds
+            }
+        }
+
         WHEN ("one that waits its turn is gone before it comes")
         {
             format->refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
@@ -1037,6 +1127,10 @@ SCENARIO ("the system's list of Audio Units describes a plugin as a scan of it d
                 REQUIRE (delay->pluginFormatName == scanned[0]->pluginFormatName);
                 REQUIRE (delay->isInstrument == scanned[0]->isInstrument);
                 REQUIRE (PluginTypeId::make (*delay) == PluginTypeId::make (*scanned[0]));
+
+                // a scan loads the entry that is only listed, and leaves the scanned one alone
+                REQUIRE (formats.getFormat (0)->pluginNeedsRescanning (*delay));
+                REQUIRE_FALSE (formats.getFormat (0)->pluginNeedsRescanning (*scanned[0]));
             }
         }
     }
@@ -1419,6 +1513,39 @@ SCENARIO ("the child-process scanner has the system's question raised once per s
                 {
                     REQUIRE (raised->load() == 2);
                 }
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner tells of the files a worker found no plugin in", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers that find a plugin in one file, none in another, and die of a third")
+    {
+        ChildProcessScanner scanner ([]
+        {
+            return std::make_unique<ThreadWorker> ([] (const ChildProcessScanner::Request& request) -> json
+            {
+                if (request.file == "empty")
+                    return { { "ok", true }, { "plugins", json::array() } };
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        juce::StringArray heard;
+        scanner.setFoundNothing ([&heard] (const juce::String& file) { heard.add (file); });
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("they are scanned")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+            REQUIRE_FALSE (scanner.findPluginTypesFor (format, found, "dies"));
+
+            THEN ("only the empty one is told of")
+            {
+                REQUIRE (heard == juce::StringArray { "empty" });
             }
         }
     }

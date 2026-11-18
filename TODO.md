@@ -502,6 +502,11 @@ the one-gesture crossfade UX on top:
   not-scanned plugin that runs inside the app in the scan worker before
   its first load (the slot waits as "loading" meanwhile, no progress bar;
   a plugin that crashes there is skipped).
+- [ ] **Time the Audio Unit listing at startup on a machine with many
+  plugins.** `syncWithInstalled()` runs on the message thread before the
+  window is up and looks each component up by its codes; 10 ms for 23
+  Audio Units in a test run. If it shows, describe the components while
+  walking the registry once, or sync after the window is there.
 - [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
   are on by default and no scan runs by itself; consider a hint in the
   insert menu, or a first scan when the Manage Plugins window opens empty.
