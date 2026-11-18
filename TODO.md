@@ -519,6 +519,28 @@ the one-gesture crossfade UX on top:
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):
   let `FloatingPanel` switch resizability on, or reopen the window on arrival.
+- [ ] **Tell hosted plugins when a render is offline.** `HostedEffect` prepares
+  a plugin with `setRateAndBufferSizeDetails` and `prepareToPlay` only;
+  `setNonRealtime` is never called, so in a bounce (export, stem separation)
+  a plugin behaves as in live playback: no higher-quality offline mode, and
+  one that drops work to keep up with a callback may do so in the file. Set
+  the flag for the length of the offline render (`ScopedOfflineRender` /
+  `RenderTiming::isOffline` know when) and clear it afterwards; the plugin
+  API wants it changed outside `processBlock`, some plugins want a new
+  prepare after it. With it, a test that bounces through a hosted plugin -
+  none does today.
+- [ ] **Give hosted plugins a playhead.** No `setPlayHead` in the hosting
+  code: a plugin gets no tempo, position, time signature or playing state,
+  live or offline, so tempo-synced delays and LFOs run free. Needs an
+  `AudioPlayHead` fed from the scheduler's position and the project tempo
+  per block, read on the audio thread without locks, and right in a bounce
+  too (the position of the block being rendered, not the transport's).
+- [ ] **Export Audio while a plugin is still loading.** The CLI and MCP
+  verbs wait for pending loads before they render
+  (`ProjectSession::settlePlugins`); the Export Audio dialog does not, so a
+  bounce started right after opening a project can render without a plugin
+  that is on its way. To decide: wait with a progress note, or refuse with
+  a message until the slots are loaded.
 - [x] **Scan cost: one process per plugin file.** Done: one worker serves
   file after file over a named pipe (`scan-plugin --serve`), one file on its
   way at a time, so the worker that dies died of that file and the next file
