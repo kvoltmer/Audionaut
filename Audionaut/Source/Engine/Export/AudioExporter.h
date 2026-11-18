@@ -10,6 +10,8 @@
 #include "Engine/AudiumEngine.h"
 #include "Engine/Export/ExportFormat.h"
 #include "Engine/AudioSources/RenderTiming.h"
+#include "Engine/Effects/MixerPlanner.h"
+#include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Link/LinkAudioDevice.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/Region/AudioRegionContainer.h"
@@ -73,25 +75,43 @@ public:
         // (a frozen window until the timeout, then a killed thread that
         // never lifts the bypass). False when the thread was told to exit
         // before the lock came.
-        auto prepareToPlay = [this] (int blockSize, double sampleRate)
+        auto onMessageThread = [] (const std::function<void()>& work)
         {
             auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
             if (messageManager == nullptr || messageManager->isThisTheMessageThread()) {
-                audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+                work();
                 return true;
             }
 
             juce::MessageManagerLock lock (juce::Thread::getCurrentThread());
             if (! lock.lockWasGained())
                 return false;
-            audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+            work();
             return true;
+        };
+
+        // the inserts hear whether the render to come is this bounce or
+        // live again, in the prepare that follows: a plugin may compute
+        // differently offline, and is prepared again for the change
+        auto setInsertsOffline = [tracks = audiumEngine.getAudioTrackContainer()] (bool offline)
+        {
+            if (auto* planner = tracks != nullptr ? tracks->getMixerPlanner() : nullptr)
+                planner->setOfflineRendering (offline);
+        };
+
+        auto prepareToPlay = [this, &onMessageThread, &setInsertsOffline] (int blockSize, double sampleRate, bool offline)
+        {
+            return onMessageThread ([&]
+            {
+                setInsertsOffline (offline);
+                audiumEngine.getPlayListScheduler()->prepareToPlay (blockSize, sampleRate);
+            });
         };
 
         auto linkAudioDevice = audiumEngine.getLinkAudioDevice();
         linkAudioDevice->setBypass(true);
 
-        if (! prepareToPlay (config->blockSize, config->sampleRate)) {
+        if (! prepareToPlay (config->blockSize, config->sampleRate, true)) {
             // cancelled before anything changed: the device format stands
             config->userCanceled = true;
             linkAudioDevice->setBypass(false);
@@ -102,8 +122,10 @@ public:
 
         // change back to device settings
         auto restoreDeviceFormat = [scheduler = audiumEngine.getPlayListScheduler(),
-                                    deviceManager = audiumEngine.getAudioDeviceManager()]
+                                    deviceManager = audiumEngine.getAudioDeviceManager(),
+                                    setInsertsOffline]
         {
+            setInsertsOffline (false);
             if (auto* device = deviceManager->getCurrentAudioDevice())
                 scheduler->prepareToPlay (device->getCurrentBufferSizeSamples(), device->getCurrentSampleRate());
         };
@@ -112,7 +134,11 @@ public:
         if (auto device = audiumEngine.getAudioDeviceManager()->getCurrentAudioDevice()) {
             auto numSamples = device->getCurrentBufferSizeSamples();
             auto sampleRate = device->getCurrentSampleRate();
-            restored = prepareToPlay (numSamples, sampleRate);
+            restored = prepareToPlay (numSamples, sampleRate, false);
+        }
+        else {
+            // no device to prepare for: whichever prepare comes next is a live one
+            restored = onMessageThread ([&setInsertsOffline] { setInsertsOffline (false); });
         }
 
         if (! restored) {

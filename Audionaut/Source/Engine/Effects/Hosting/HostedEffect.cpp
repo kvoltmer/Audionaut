@@ -3,6 +3,14 @@
 //
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
+// before JUCE, whose names (Point, AudioBuffer) the system's headers would stumble over
+#if defined (__APPLE__)
+ #include <TargetConditionals.h>
+ #if TARGET_OS_OSX
+  #include <AudioToolbox/AudioToolbox.h>
+ #endif
+#endif
+
 #include "HostedEffect.h"
 
 #include <cmath>
@@ -42,6 +50,37 @@ void HostedEffect::takeInstance (std::unique_ptr<juce::AudioPluginInstance> crea
     buildParameterTable();
     instance->addListener (this);
     instance->setPlayHead (playHead.transport != nullptr ? &playHead : nullptr);
+    if (offlineRendering)
+        tellPluginRenderMode();   // a plugin that arrives during a bounce
+}
+
+void HostedEffect::setOfflineRendering (bool offline)
+{
+    if (offlineRendering == offline)
+        return;
+
+    offlineRendering = offline;
+    if (instance == nullptr)
+        return;   // a placeholder: the plugin is told when it comes
+
+    tellPluginRenderMode();
+    if (preparedChannels > 0)
+        prepareNeeded = true;   // a VST3 takes the mode when it is set up: the slot prepares it again
+}
+
+void HostedEffect::tellPluginRenderMode()
+{
+    instance->setNonRealtime (offlineRendering);
+
+   #if JUCE_MAC && JUCE_PLUGINHOST_AU
+    // the flag stays in the wrapper for an Audio Unit: the unit itself reads this property
+    if (const auto* client = instance->getAudioUnitClient())
+        if (auto unit = client->getAudioUnitHandle())
+        {
+            UInt32 offline = offlineRendering ? 1 : 0;
+            AudioUnitSetProperty (unit, kAudioUnitProperty_OfflineRender, kAudioUnitScope_Global, 0, &offline, sizeof (offline));   // a unit without the property says so, and renders as ever
+        }
+   #endif
 }
 
 void HostedEffect::setRenderTransport (std::shared_ptr<const RenderTransport> transport)

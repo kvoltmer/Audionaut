@@ -105,6 +105,11 @@ public:
     /// placeholder stood in a prepared slot): the slot prepares it anew before the next plan runs it.
     virtual bool needsPrepare() const noexcept { return false; }
 
+    /// Message thread, nothing rendering the effect: whether the renders to come are offline (a bounce, which
+    /// takes as long as it takes) or live. Nothing to a built-in, which computes the same either way; a hosted
+    /// plugin is told, and asks to be prepared again (needsPrepare) where the plugin reads the mode only then.
+    virtual void setOfflineRendering (bool offline) { juce::ignoreUnused (offline); }
+
     /// The effect turns the level down and can say by how much: an editor shows a gain reduction meter beside the dials.
     virtual bool hasGainReductionMeter() const noexcept { return false; }
 
