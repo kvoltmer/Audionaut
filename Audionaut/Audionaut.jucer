@@ -337,6 +337,10 @@
           <GROUP id="{9A4C7E21-3B5D-4F86-A0C9-7D2E8B1F6A53}" name="Hosting">
             <FILE id="EfHoCS" name="ChildProcessScanner.cpp" compile="1" resource="0"
                   file="Source/Engine/Effects/Hosting/ChildProcessScanner.cpp"/>
+            <FILE id="EfHoRC" name="AudioUnitRegistry.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/AudioUnitRegistry.cpp"/>
+            <FILE id="EfHoRH" name="AudioUnitRegistry.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/AudioUnitRegistry.h"/>
             <FILE id="EfHoSH" name="ChildProcessScanner.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/ChildProcessScanner.h"/>
             <FILE id="EfHoEC" name="HostedEffect.cpp" compile="1" resource="0"

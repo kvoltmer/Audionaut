@@ -66,7 +66,8 @@ public:
     bool findPluginTypesFor (juce::AudioPluginFormat& format,
                              juce::OwnedArray<juce::PluginDescription>& result,
                              const juce::String& fileOrIdentifier) override;
-    /// The list's word that a scan is over: the next one asks new workers about empty files again.
+    /// The list's word that a scan is over: the next one asks new workers about empty files again, and
+    /// may raise the system's question again where the user declined it.
     void scanFinished() override;
 
     /// Whether the worker may load plugins that make the system ask the user to lower the app's security
@@ -76,6 +77,11 @@ public:
     /// Where the scanner says what it does, a line at a time: every file with what came of it and how
     /// long it took, and the workers' coming and going. Called on the scanning thread.
     void setLog (std::function<void (const juce::String&)> log_) { log = std::move (log_); }
+
+    /// Hears of every file a worker loaded and found no plugin in - not of a file that was not scanned
+    /// (no worker, a question nobody answered or the user declined, a cancelled scan), nor of a plugin
+    /// that was not loaded because the system's question may not be raised. Called on the scanning thread.
+    void setFoundNothing (std::function<void (const juce::String&)> heard) { foundNothing = std::move (heard); }
 
     /// How many workers were started so far.
     int getNumWorkersStarted() const noexcept { return workersStarted.load(); }
@@ -109,7 +115,7 @@ public:
     static bool parseScanEnvelope (const juce::String& output, juce::OwnedArray<juce::PluginDescription>& result);
 
 private:
-    enum class Asked { found, nothing, failed, failedAfterOthers, abandoned, unavailable, unusable };
+    enum class Asked { found, nothing, failed, failedAfterOthers, abandoned, unanswered, declined, unavailable, unusable };
     enum class Started { ready, silent, failed, abandoned };
 
     Asked askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
@@ -117,6 +123,7 @@ private:
     Started startWorker();
     void dropWorker (bool kill);
     void note (const juce::String& line) const;
+    bool mayRaiseTheQuestion() const;          // lowered security settings allowed, and not declined by the user in this scan
     bool scanInProcessOfItsOwn (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,
                                 const juce::String& fileOrIdentifier);
 
@@ -134,9 +141,14 @@ private:
     int emptyAgainInNewWorker = 0;             // files of this scan a new worker found as empty as the one before it, since one last helped
     bool workerEverAnswered = false;           // a worker said hello, or a one-shot one wrote its envelope: workers do run here
     bool noVerdict = false;                    // the file on its way was not scanned for want of a worker
+    bool waitedForAnswer = false;              // the one-shot worker's plugin ran out of time where the system may have asked the user
+    juce::StringArray waitedForTheUser;        // files that did so once already
+    bool saidNo = false;                       // the one-shot worker's plugin was not loaded because the user declined the system's question
+    bool declinedInThisScan = false;           // the user did so in this scan: the question is not raised again before the next
     bool pipeUnusable = false;                 // the fallback, for the rest of this scanner's life
     std::atomic<int> workersStarted { 0 };
     std::function<void (const juce::String&)> log;
+    std::function<void (const juce::String&)> foundNothing;
     juce::String lastFailure;                  // why the file on its way failed, for the log
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChildProcessScanner)

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <deque>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -61,7 +62,19 @@ class HostedEffect;
  * the app does so together with turning the plugins on, a headless run
  * never does - it has nobody to answer. Not allowed, such a plugin is not
  * offered either (Availability::needsLoweredSecurity), and a scan does
- * not load it.
+ * not load it. Such plugins are loaded one at a time: when the user
+ * declines the question, the plugins waiting behind that one are not
+ * loaded either, so a project with many of them asks once.
+ *
+ * Where the system knows its plugins without loading them (the Audio
+ * Units on macOS), the list has them without a scan: syncWithInstalled()
+ * adds what is installed as not scanned (isScanned). Such a plugin is
+ * offered like any other and first loaded when it is used; a scan
+ * replaces the entry with what the loaded plugin says. Where such a plugin
+ * would run inside this process, its first load is preceded by a check in
+ * the scan worker (setChecksBeforeFirstLoad): the effect waits as a
+ * loading placeholder meanwhile, and a plugin that takes the worker down
+ * is skipped instead of taking the app down.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -105,6 +118,27 @@ public:
     void setEnabled (bool enabled, bool loweredSecurityAllowed);
     /// Which plugins those are; the platform's answer by default (tests bring their own).
     void setLoweredSecurityQuestion (std::function<bool (const juce::PluginDescription&)> asksForIt) { asksForLoweredSecurity = std::move (asksForIt); }
+
+    /// What is installed, as far as the system tells without loading anything: the platform's answer
+    /// by default (the Audio Units on macOS, nothing elsewhere; tests bring their own).
+    void setInstalledSource (std::function<std::vector<juce::PluginDescription>()> source) { installedSource = std::move (source); }
+    /// Message thread. Brings the list in line with what is installed: adds the plugins that are
+    /// neither listed nor skipped as not scanned, and drops not-scanned entries that are gone.
+    /// True when the list changed.
+    bool syncWithInstalled();
+    /// Whether the entry comes from a scan (the loaded plugin's word) or only from the system's list.
+    static bool isScanned (const juce::PluginDescription& description) noexcept { return description.lastInfoUpdateTime != juce::Time(); }
+    /// Message thread, after a scan of the list's (which loads the not-scanned entries too and
+    /// replaces them where they are): a not-scanned plugin the scan loaded and found nothing in is
+    /// skipped from now on, the list is in line with what is installed, and its listeners hear of it.
+    void finishScan();
+    /// The scanner's word that a worker loaded the file and found no plugin in it. Any thread.
+    void noteLoadedEmpty (const juce::String& fileOrIdentifier);
+    /// Whether a not-scanned plugin that runs inside this process is scanned (by the list's scanner,
+    /// off the message thread) before it is first loaded. Off by default: only a scanner in another
+    /// process makes that a safeguard, and the effect arrives later for it (an app turns it on, a
+    /// command that waits for its plugins does not).
+    void setChecksBeforeFirstLoad (bool checks_) noexcept { checksBeforeFirstLoad = checks_; }
 
     juce::AudioPluginFormatManager& getFormats() noexcept { return formats; }
     juce::KnownPluginList& getList() noexcept { return list; }
@@ -185,8 +219,8 @@ public:
 
     struct ScanResult
     {
-        int found = 0;         ///< plugins in the list after the scan
-        int added = 0;         ///< ... of which new
+        int found = 0;         ///< scanned plugins in the list after the scan (not those only listed as installed)
+        int added = 0;         ///< ... of which scanned by this scan for the first time
         int failed = 0;        ///< files that yielded no plugin (refused to load here: not sandbox-safe, wrong architecture, ...)
         int blacklisted = 0;   ///< ... of which crashed the worker or timed out, and are skipped from now on
     };
@@ -214,6 +248,45 @@ private:
     static bool waitUntilNone (const std::atomic<int>& pending, int timeoutMs);
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
+
+    /// The plugins the system asks the user about, waiting to be loaded one after the other.
+    struct Questions
+    {
+        struct Waiting
+        {
+            std::weak_ptr<const int> alive;   // the effect's
+            HostedEffect* effect = nullptr;
+            juce::AudioPluginFormat* format = nullptr;
+            std::shared_ptr<std::atomic<int>> arrivals;
+        };
+        std::deque<Waiting> waiting;
+        bool busy = false;     // one is loading
+        bool closed = false;   // the host is gone, and its formats with it
+    };
+    static void loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending);
+    static void settle (const Questions::Waiting& one, std::atomic<int>& pending,
+                        std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message);
+
+    /// Files a worker loaded and found no plugin in, since the host last asked.
+    struct LoadedEmpty
+    {
+        juce::CriticalSection lock;
+        juce::StringArray files;
+    };
+    bool takeLoadedEmpty (const juce::String& fileOrIdentifier) const;   // whether it was among them; not any more then
+    void skipNotScanned (const juce::String& fileOrIdentifier);          // off the list, and skipped from now on
+    int numScanned() const;
+
+    /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
+    struct Checks
+    {
+        explicit Checks (juce::KnownPluginList& list_) : list (list_) {}
+        juce::KnownPluginList& list;
+        std::shared_ptr<int> hostAlive = std::make_shared<int> (0);   // expires with the host
+        juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };
+    };
+    bool needsCheckBeforeLoad (const juce::PluginDescription& description) const;
+    void requestChecked (HostedEffect& effect) const;   // asynchronously: checked, then loaded, the effect adopts what comes
     juce::String listAsText() const;
     void registerIntoAttached();
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
@@ -233,6 +306,11 @@ private:
     bool enabled = true;
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner
     std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
+    std::function<std::vector<juce::PluginDescription>()> installedSource;
+    std::shared_ptr<Questions> questions = std::make_shared<Questions>();   // shared with the callbacks in flight
+    std::unique_ptr<Checks> checks = std::make_unique<Checks> (list);
+    bool checksBeforeFirstLoad = false;
+    std::shared_ptr<LoadedEmpty> loadedEmpty = std::make_shared<LoadedEmpty>();   // shared with the scanner
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)

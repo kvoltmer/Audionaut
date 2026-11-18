@@ -61,7 +61,7 @@ import and your export targets inside `~/Music` (for example in
 command and says so with `sandbox_denied`. The developer build of
 `audionaut-cli` has no such limit. Windows and Linux have none either.
 
-Plugins are off until you tick **Plugins enabled** in the app's Manage
+Plugins are on unless you untick **Plugins enabled** in the app's Manage
 Plugins window, and the commands the app runs follow that: with plugins off,
 `list-effects` names the built-ins only, `scan-plugins` fails with
 `plugins_disabled`, and a plugin insert shows up in `info` as a missing

@@ -32,15 +32,15 @@
  * effects the inserts can use, the instruments (listed, not hosted) and
  * the files the scan skips.
  *
- * Above the list a tick box turns plugins on. Off (the default) no plugin
- * is offered as an insert, none is loaded and the list cannot be scanned;
- * on, all of them are there. In a sandboxed app on macOS that includes the
- * Audio Units macOS only loads once the user agreed to lower the app's
- * security settings: it asks when the first of them loads, which a
- * message box explains before the box takes the tick (Cancel leaves
- * plugins off), and turning them on starts a scan of every format's
- * plugin folders. The choice goes to `onEnabledChanged`, which stores it
- * and tells the host.
+ * Above the list a tick box turns plugins off and on. Off, no plugin is
+ * offered as an insert, none is loaded and the list cannot be scanned;
+ * on (the default), all of them are there. The choice goes to
+ * `onEnabledChanged`, which stores it and tells the host.
+ *
+ * Nothing is scanned unless Scan is clicked. Where the system knows its
+ * plugins without loading them (the Audio Units on macOS) the host lists
+ * them all the same, and the Status column says "Not scanned" for those:
+ * they are offered as inserts and first loaded when they are used.
  *
  * The rows are drawn here (Rows): an entry the inserts cannot use - an
  * instrument, a plugin of a format not hosted, a file the scan skips - is
@@ -49,7 +49,7 @@
  *
  * A scan (Scan: one format's default folders, file after file on a thread
  * of its own) shows in the same place while it runs: a progress bar, the
- * plugin at hand and a Cancel button; the tick box and the Options button
+ * plugin at hand and a Cancel button; the tick box and the buttons
  * wait until it is done. Several formats are scanned one after the other,
  * and what the scan left out is said once, at the end.
  *
@@ -67,11 +67,12 @@ public:
     {
         using Header = juce::TableHeaderComponent;
         auto& header = table.getHeader();
-        header.addColumn (TRANS ("Name"),         Rows::nameColumn,         230, 100, 700);
+        header.addColumn (TRANS ("Name"),         Rows::nameColumn,         210, 100, 700);
         header.addColumn (TRANS ("Format"),       Rows::formatColumn,       80, 80, 80, Header::notResizable);
-        header.addColumn (TRANS ("Category"),     Rows::categoryColumn,     110, 80, 200);
-        header.addColumn (TRANS ("Manufacturer"), Rows::manufacturerColumn, 200, 100, 300, Header::defaultFlags | Header::sortedForwards);   // until a column is clicked
-        header.addColumn (TRANS ("Version"),      Rows::versionColumn,      90, 60, 300, Header::notSortable);
+        header.addColumn (TRANS ("Category"),     Rows::categoryColumn,     90, 70, 200);
+        header.addColumn (TRANS ("Manufacturer"), Rows::manufacturerColumn, 170, 100, 300, Header::defaultFlags | Header::sortedForwards);   // until a column is clicked
+        header.addColumn (TRANS ("Version"),      Rows::versionColumn,      70, 60, 300, Header::notSortable);
+        header.addColumn (TRANS ("Status"),       Rows::statusColumn,       90, 80, 200, Header::notSortable);
         header.setStretchToFitActive (true);   // the columns share the table's width, whatever size the window was left at: no horizontal scroll bar
         table.setHeaderHeight (22);
         table.setRowHeight (20);
@@ -79,20 +80,23 @@ public:
         table.setMultipleSelectionEnabled (true);
         addAndMakeVisible (table);
 
-        rescan.setButtonText (TRANS ("Rescan"));
-        rescan.setTooltip (TRANS ("Looks through the plugin folders for new and updated plugins."));
+        rescan.setButtonText (TRANS ("Scan"));
+        rescan.setTooltip (TRANS ("Loads every plugin once, in a process of its own, to see that it works: looks through the plugin folders for new and updated plugins, "
+                                  "and checks the ones listed as not scanned."));
         rescan.onClick = [this] { scanAllFormats(); };
         addAndMakeVisible (rescan);
         clear.setButtonText (TRANS ("Clear"));
-        clear.setTooltip (TRANS ("Empties the list, the skipped files included; Rescan fills it again."));
+        clear.setTooltip (TRANS ("Forgets what the scans found, the skipped files included; Scan finds it again."));
         clear.onClick = [this]
         {
             host->getList().clear();
             host->getList().clearBlacklistedFiles();
+            host->syncWithInstalled();   // what the system lists is there again, not scanned
         };
         addAndMakeVisible (clear);
         remove.setButtonText (TRANS ("Remove"));
-        remove.setTooltip (TRANS ("Takes the selected entries off the list; a skipped file is tried again by the next scan."));
+        remove.setTooltip (TRANS ("Takes the selected entries off the list; a skipped file is tried again by the next scan. "
+                                  "A plugin the system lists by itself is not scanned again."));
         remove.onClick = [this] { removeSelected(); };
         addChildComponent (remove);   // shown while something is selected
 
@@ -126,14 +130,7 @@ public:
         enablePlugins.setTooltip (TRANS ("Off, Audionaut offers no plugins and opens a project without them; a project that uses one keeps the slot and its settings. "
                                          "A project that is open follows when it is opened again."));
         enablePlugins.setToggleState (host->isEnabled(), juce::dontSendNotification);
-        enablePlugins.onClick = [this]
-        {
-            // turning them on in the sandboxed app: first what macOS will ask, and a way back
-            if (enablePlugins.getToggleState() && audium::PluginHost::isSandboxed())
-                askBeforeEnabling();
-            else
-                applyEnabled (enablePlugins.getToggleState());
-        };
+        enablePlugins.onClick = [this] { applyEnabled (enablePlugins.getToggleState()); };
         addAndMakeVisible (enablePlugins);
 
         showLog.setButtonText (TRANS ("Show Scan Log"));
@@ -148,7 +145,11 @@ public:
 
     ~PluginManagerComponent() override
     {
-        scan.reset();   // ends a scan that still runs, before anything it reports to goes
+        if (scan != nullptr)
+        {
+            scan.reset();   // ends a scan that still runs, before anything it reports to goes
+            host->finishScan();
+        }
         host->getList().removeChangeListener (this);
         table.setModel (nullptr);
     }
@@ -196,7 +197,7 @@ private:
     public:
         explicit Rows (PluginManagerComponent& owner_) : owner (owner_) {}
 
-        enum { nameColumn = 1, formatColumn, categoryColumn, manufacturerColumn, versionColumn };
+        enum { nameColumn = 1, formatColumn, categoryColumn, manufacturerColumn, versionColumn, statusColumn };
 
         int getNumRows() override
         {
@@ -221,7 +222,7 @@ private:
                     text = entry.name;
                 else if (columnId == formatColumn)
                     text = entry.format;
-                else if (columnId == categoryColumn)
+                else if (columnId == statusColumn)
                     text = TRANS ("Skipped");
             }
             else if (const auto description = owner.pluginAt (row))
@@ -234,6 +235,7 @@ private:
                     case categoryColumn:     text = description->category.isNotEmpty() ? description->category : "-"; break;
                     case manufacturerColumn: text = description->manufacturerName; break;
                     case versionColumn:      text = description->version; break;
+                    case statusColumn:       text = audium::PluginHost::isScanned (*description) ? juce::String() : TRANS ("Not scanned"); break;
                     default: break;
                 }
             }
@@ -401,7 +403,7 @@ private:
 
         juce::PopupMenu menu;
         menu.addItem (juce::PopupMenu::Item (TRANS ("Remove plug-in from list"))
-                          .setEnabled (! isScanning())
+                          .setEnabled (! isScanning() && isRemovableAt (row))
                           .setAction ([this, plugin, skipped] { removeEntry (plugin, skipped); }));
         if (const auto file = fileOfRow (row); file.exists())   // not for a plugin whose file is not known (the system's own Audio Units)
             menu.addItem (juce::PopupMenu::Item (TRANS ("Show folder containing plug-in"))
@@ -480,6 +482,25 @@ private:
             host->getList().removeType (*plugin);
         else if (skipped.isNotEmpty())
             host->getList().removeFromBlacklist (skipped);   // the next scan tries it again
+        host->syncWithInstalled();   // a plugin the system lists by itself stays, not scanned
+    }
+
+    /// Whether taking the row off the list changes anything: not for a plugin that is only there
+    /// because the system lists it, which would be back at once.
+    bool isRemovableAt (int row) const
+    {
+        if (const auto* description = pluginAt (row))
+            return audium::PluginHost::isScanned (*description);
+        return skippedFileAt (row).isNotEmpty();
+    }
+
+    bool isAnySelectedRemovable() const
+    {
+        const auto selected = table.getSelectedRows();
+        for (auto i = 0; i < selected.size(); ++i)
+            if (isRemovableAt (selected[i]))
+                return true;
+        return false;
     }
 
     void removeSelected()
@@ -491,13 +512,14 @@ private:
         const auto selected = table.getSelectedRows();
         for (auto row = rows.getNumRows(); --row >= 0;)
         {
-            if (! selected.contains (row))
+            if (! selected.contains (row) || ! isRemovableAt (row))   // a not-scanned entry would be back at once
                 continue;
             if (const auto* description = pluginAt (row))
                 host->getList().removeType (*description);
             else if (const auto skipped = skippedFileAt (row); skipped.isNotEmpty())
                 host->getList().removeFromBlacklist (skipped);
         }
+        host->syncWithInstalled();   // a plugin the system lists by itself stays, not scanned
     }
 
     /// The rows as the table shows them: the host's list and what it skips, copied when either changed,
@@ -582,7 +604,7 @@ private:
                 usable = false;
                 const auto& entry = skippedEntry (skipped);
                 text << entry.name << (entry.name != skipped ? " (" + skipped + ")" : juce::String()) << "\n"
-                     << TRANS ("Skipped: it crashed or took too long when it was scanned. Remove it from the list and the next scan tries it again.");
+                     << TRANS ("Skipped: it crashed, took too long or did not load when it was scanned. Remove it from the list and the next scan tries it again.");
             }
             else if (const auto description = pluginAt (row))
             {
@@ -600,6 +622,8 @@ private:
                     text << TRANS ("An instrument: listed, but only effects are used as inserts.");
                 else if (! usable)
                     text << TRANS ("Not offered as an insert: ") << audium::PluginHost::describe (host->availabilityOf (*description)) << ".";
+                else if (! audium::PluginHost::isScanned (*description))
+                    text << TRANS ("Offered as an insert. Not scanned: listed as the system reports it, and first loaded when it is used.");
                 else
                     text << TRANS ("Offered as an insert.");
 
@@ -641,13 +665,14 @@ private:
             return;
 
         showScanProgress (false);
+        host->finishScan();   // the list as the scan left it, in line with what is installed
 
-        // a scan that finds nothing new is over at once: say that it ran
-        const auto added = juce::jmax (0, host->getList().getNumTypes() - listedBeforeScan);
+        // a scan with nothing to do is over at once: say that it ran
+        const auto added = juce::jmax (0, numScanned() - scannedBeforeScan);
         scanOutcome = (scanCancelled ? TRANS ("Scan cancelled: ") : TRANS ("Scan complete: "))
                       + (added == 0 ? TRANS ("no new plugins found.")
-                                    : added == 1 ? TRANS ("1 new plugin found.")
-                                                 : juce::String (added) + TRANS (" new plugins found."));
+                                    : added == 1 ? TRANS ("1 plugin scanned.")
+                                                 : juce::String (added) + TRANS (" plugins scanned."));
         updateDetails();
         updateStatus();   // the log is there now, whether or not the list changed
 
@@ -687,33 +712,10 @@ private:
         table.getHeader().reSortTable();   // new entries take their place
         refreshRows();
         table.updateContent();
+        table.resized();   // the columns share what a scroll bar that came or went leaves them
         table.repaint();
         updateStatus();
         selectionChanged();   // the row may be another entry now
-    }
-
-    /// Says what macOS asks once plugins are on; OK turns them on, Cancel leaves them off.
-    void askBeforeEnabling()
-    {
-        enablePlugins.setToggleState (false, juce::dontSendNotification);   // not on before the answer
-
-        const auto options = juce::MessageBoxOptions()
-            .withIconType (juce::MessageBoxIconType::InfoIcon)
-            .withTitle (TRANS ("Enable plugins?"))
-            .withMessage (TRANS ("macOS will ask you to lower the security settings for Audionaut before it loads "
-                                 "Audio Units that are not built for the sandbox. If you agree, those plugins load "
-                                 "just fine. If you decline, they do not load; all others work either way."))
-            .withButton (TRANS ("OK"))
-            .withButton (TRANS ("Cancel"))
-            .withAssociatedComponent (this);
-
-        question = juce::NativeMessageBox::showScopedAsync (options, [this] (int result)
-        {
-            if (result != 1)   // the first button answers 1
-                return;
-            enablePlugins.setToggleState (true, juce::dontSendNotification);
-            applyEnabled (true);
-        });
     }
 
     void applyEnabled (bool enabled)
@@ -723,9 +725,14 @@ private:
         else
             host->setEnabled (enabled);
         pluginsSwitched();
+    }
 
-        if (enabled)
-            scanAllFormats();   // turned on, the list is brought up to date at once
+    int numScanned() const
+    {
+        auto count = 0;
+        for (const auto& description : host->getList().getTypes())
+            count += audium::PluginHost::isScanned (description) ? 1 : 0;
+        return count;
     }
 
     /// Scans every format's plugin folders.
@@ -745,7 +752,9 @@ private:
             return;
 
         formatsToScan = std::move (formats);
-        listedBeforeScan = host->getList().getNumTypes();
+        scannedBeforeScan = numScanned();
+        scannedShown = scannedBeforeScan;
+        host->syncWithInstalled();   // what was installed since is scanned too
         scanCancelled = false;
         scanOutcome.clear();
         scanNextFormat();
@@ -770,6 +779,10 @@ private:
     {
         showScanProgress (true);
         scanFraction = juce::jlimit (0.0, 1.0, fraction);   // the bar reads it
+
+        // a not-scanned entry the scan replaced where it was: the list does not tell of that by itself
+        if (const auto scannedNow = numScanned(); scannedNow != std::exchange (scannedShown, scannedNow))
+            host->getList().sendChangeMessage();
         scanFile.setText (pluginName.isEmpty() ? TRANS ("Looking for plugins...") : TRANS ("Scanning ") + pluginName,
                           juce::dontSendNotification);
     }
@@ -790,7 +803,7 @@ private:
 
     void selectionChanged()
     {
-        remove.setVisible (table.getNumSelectedRows() > 0);
+        remove.setVisible (isAnySelectedRemovable());
         updateDetails();
     }
 
@@ -828,9 +841,10 @@ private:
         }
 
         using Availability = audium::PluginHost::Availability;
-        int effects = 0, instruments = 0, formatMissing = 0, needLoweredSecurity = 0;
+        int effects = 0, instruments = 0, formatMissing = 0, needLoweredSecurity = 0, notScanned = 0;
         for (const auto& description : host->getList().getTypes())
         {
+            notScanned += audium::PluginHost::isScanned (description) ? 0 : 1;
             if (description.isInstrument) { ++instruments; continue; }
             switch (host->availabilityOf (description))
             {
@@ -842,8 +856,16 @@ private:
         }
         const auto skipped = host->getList().getBlacklistedFiles().size();
 
+        if (host->getList().getNumTypes() == 0 && skipped == 0 && ! isScanning())
+        {
+            status.setText (TRANS ("No plugins listed yet: Scan looks through the plugin folders"), juce::dontSendNotification);
+            return;
+        }
+
         juce::String text;
         text << effects << (effects == 1 ? TRANS (" effect") : TRANS (" effects")) << TRANS (" available as inserts");
+        if (notScanned > 0)
+            text << " (" << notScanned << TRANS (" not scanned") << ")";
         if (instruments > 0)
             text << ", " << instruments << (instruments == 1 ? TRANS (" instrument") : TRANS (" instruments")) << TRANS (" (not hosted)");
         if (formatMissing > 0)
@@ -851,7 +873,7 @@ private:
         if (needLoweredSecurity > 0)
             text << ", " << needLoweredSecurity << (needLoweredSecurity == 1 ? TRANS (" needs") : TRANS (" need")) << TRANS (" lowered security settings");
         if (skipped > 0)
-            text << ", " << skipped << (skipped == 1 ? TRANS (" file skipped") : TRANS (" files skipped")) << TRANS (" (crashed or timed out when scanned)");
+            text << ", " << skipped << (skipped == 1 ? TRANS (" file skipped") : TRANS (" files skipped")) << TRANS (" (crashed, timed out or did not load when scanned)");
         status.setText (text, juce::dontSendNotification);
     }
 
@@ -859,7 +881,8 @@ private:
     std::function<void (bool)> onEnabledChanged;
     std::vector<juce::AudioPluginFormat*> formatsToScan;   // the host's, waiting for their turn in scanFormats()
     juce::StringArray failedSoFar, skippedSoFar;
-    int listedBeforeScan = 0;
+    int scannedBeforeScan = 0;
+    int scannedShown = 0;   // how many scanned entries the rows had when the scan last reported
     bool scanCancelled = false;
     juce::String scanOutcome;   // what the last scan did, shown under the list until the selection changes
     Rows rows { *this };
@@ -881,7 +904,6 @@ private:
     juce::TextButton cancelScan;
     juce::Label status;
     juce::ToggleButton enablePlugins;
-    juce::ScopedMessageBox question;   // gone with the window: its answer never comes after it
     juce::ScopedMessageBox scanResult;
     juce::TextButton showLog;
     std::unique_ptr<Scan> scan;   // the one that runs, if one does

@@ -86,18 +86,53 @@ struct Worker
             juce::AudioPluginFormat* format = nullptr;
             juce::String fileOrIdentifier;
             juce::OwnedArray<juce::PluginDescription> found;
+            bool asksUser = false;
+            juce::String error;
         };
         auto work = std::make_shared<Scan>();
         work->format = format;
         work->fileOrIdentifier = fileOrIdentifier;
+        // a plugin the system asks the user about before it loads it here
+        work->asksUser = request.loweredSecurity && PluginFormats::asksUserBeforeLoading (formatName, fileOrIdentifier);
 
         // the plugin is loaded to read its description: on a thread of its own,
         // the message thread pumping, since some formats refuse to load on it
-        if (! PluginFormats::runWhilePumping ([work] { work->format->findAllTypesForFile (work->found, work->fileOrIdentifier); }, request.timeoutMs))
+        const auto load = [work]
+        {
+            if (! work->asksUser)
+            {
+                work->format->findAllTypesForFile (work->found, work->fileOrIdentifier);
+                return;
+            }
+
+            // such a plugin is one type, read off its instance - made here, for the reason it gives
+            // when the system does not load it
+            juce::PluginDescription wanted;
+            wanted.pluginFormatName = work->format->getName();
+            wanted.fileOrIdentifier = work->fileOrIdentifier;
+            if (auto instance = work->format->createInstanceFromDescription (wanted, 44100.0, 512, work->error))
+                work->found.add (new juce::PluginDescription (instance->getPluginDescription()));
+        };
+
+        if (! PluginFormats::runWhilePumping (load, request.timeoutMs))
         {
             stuck = true;
+
+            // A plugin the system asks the user about may have waited for that answer all the time, not
+            // for itself: the scanner is told, and does not hold the first such wait against the file.
+            if (work->asksUser)
+                return { { "ok", false }, { "code", "awaiting_consent" },
+                         { "message", "the plugin did not finish loading; macOS may have been waiting for the answer about its security settings" },
+                         { "last", true } };
+
             return { { "ok", false }, { "code", "timeout" }, { "message", "the plugin did not finish loading" }, { "last", true } };
         }
+
+        // The system's own word that the user said no to its question (userCanceledErr, in the reason the
+        // format gives): the scanner is told, so that it does not have it raised for every further plugin.
+        if (work->asksUser && work->found.isEmpty() && work->error.contains ("(-128)"))
+            return { { "ok", false }, { "code", "consent_declined" },
+                     { "message", "macOS did not load the plugin, the question about the security settings was declined" } };
 
         auto plugins = nlohmann::json::array();
         for (const auto* description : work->found)

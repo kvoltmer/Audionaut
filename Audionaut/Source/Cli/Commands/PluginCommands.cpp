@@ -111,7 +111,7 @@ int runScanPlugins (const juce::ArgumentList& args, CliContext& context)
     for (const auto& name : formatNames)
         formatList.push_back (name.toStdString());
 
-    context.log (juce::String (result.found) + " plugins known, " + juce::String (result.added) + " new, "
+    context.log (juce::String (result.found) + " plugins scanned, " + juce::String (result.added) + " new, "
                  + juce::String (result.failed) + " files without a plugin, " + juce::String (result.blacklisted) + " blacklisted");
     return context.ok ({ { "found", result.found },
                          { "added", result.added },
