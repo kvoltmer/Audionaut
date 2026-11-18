@@ -529,18 +529,23 @@ the one-gesture crossfade UX on top:
   API wants it changed outside `processBlock`, some plugins want a new
   prepare after it. With it, a test that bounces through a hosted plugin -
   none does today.
-- [ ] **Give hosted plugins a playhead.** No `setPlayHead` in the hosting
-  code: a plugin gets no tempo, position, time signature or playing state,
-  live or offline, so tempo-synced delays and LFOs run free. Needs an
-  `AudioPlayHead` fed from the scheduler's position and the project tempo
-  per block, read on the audio thread without locks, and right in a bounce
-  too (the position of the block being rendered, not the transport's).
+- [x] **Give hosted plugins a playhead.** Done: the scheduler publishes
+  where the transport is for each block (`RenderTransport`, one per engine:
+  playing, position in samples, seconds and quarter notes, tempo, loop)
+  before the renderer runs it, in the device callback and in a bounce
+  alike, and a `HostedEffect` answers the plugin's playhead from it. Left
+  out: a time signature and bars (the project has none), the recording
+  flag, and the latency in front of a plugin - the position is the
+  transport's, a plugin behind latent inserts hears the signal that much
+  later.
 - [ ] **Export Audio while a plugin is still loading.** The CLI and MCP
   verbs wait for pending loads before they render
-  (`ProjectSession::settlePlugins`); the Export Audio dialog does not, so a
+  (`ProjectSession::settlePlugins`); the Export Audio dialog
+  (`ExportUtil::exportAudio`) and the stem separation dialog do not, so a
   bounce started right after opening a project can render without a plugin
-  that is on its way. To decide: wait with a progress note, or refuse with
-  a message until the slots are loaded.
+  that is on its way (a loading slot passes its audio through). To decide:
+  wait with a progress note, or refuse with a message until the slots are
+  loaded.
 - [x] **Scan cost: one process per plugin file.** Done: one worker serves
   file after file over a named pipe (`scan-plugin --serve`), one file on its
   way at a time, so the worker that dies died of that file and the next file

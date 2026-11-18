@@ -255,7 +255,8 @@ public:
 
 private:
     std::unique_ptr<Effect> createEffect (const juce::PluginDescription&, const EffectTypeInfo& type, Mode mode,
-                                          std::shared_ptr<std::atomic<int>> arrivalCount = nullptr) const;
+                                          std::shared_ptr<std::atomic<int>> arrivalCount = nullptr,
+                                          std::shared_ptr<const RenderTransport> renderTransport = nullptr) const;
     static bool waitUntilNone (const std::atomic<int>& pending, int timeoutMs);
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes

@@ -41,6 +41,33 @@ void HostedEffect::takeInstance (std::unique_ptr<juce::AudioPluginInstance> crea
     instance = std::move (created);
     buildParameterTable();
     instance->addListener (this);
+    instance->setPlayHead (playHead.transport != nullptr ? &playHead : nullptr);
+}
+
+void HostedEffect::setRenderTransport (std::shared_ptr<const RenderTransport> transport)
+{
+    playHead.transport = std::move (transport);
+    if (instance != nullptr)
+        instance->setPlayHead (playHead.transport != nullptr ? &playHead : nullptr);
+}
+
+juce::Optional<juce::AudioPlayHead::PositionInfo> HostedEffect::PlayHead::getPosition() const
+{
+    if (transport == nullptr)
+        return {};
+
+    const auto block = transport->read();
+
+    PositionInfo info;
+    info.setIsPlaying (block.playing);
+    info.setTimeInSamples (static_cast<juce::int64> (block.positionSamples));
+    info.setTimeInSeconds (block.positionSeconds);
+    info.setPpqPosition (block.positionBeats);
+    info.setBpm (block.tempo);
+    info.setIsLooping (block.looping);
+    if (block.looping)
+        info.setLoopPoints (juce::AudioPlayHead::LoopPoints { block.loopStartBeats, block.loopEndBeats });
+    return info;
 }
 
 void HostedEffect::adopt (std::unique_ptr<juce::AudioPluginInstance> created, juce::String error_)
@@ -82,6 +109,7 @@ HostedEffect::~HostedEffect()
     if (instance != nullptr)
     {
         instance->removeListener (this);
+        instance->setPlayHead (nullptr);
         if (preparedChannels > 0)
             instance->releaseResources();
         instance.reset();

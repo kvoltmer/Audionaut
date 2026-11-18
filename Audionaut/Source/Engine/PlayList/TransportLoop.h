@@ -79,6 +79,9 @@ public:
      */
     bool isLoopActive() const;
 
+    /// Audio thread: whether the loop is on in the data the last processLoop() took over.
+    bool isProcessedLoopActive() const noexcept { return processedLoopData.loopActive; }
+
     /**
      * @brief Activates or deactivates the loop.
      * @param bActive True to activate the loop, false to deactivate.

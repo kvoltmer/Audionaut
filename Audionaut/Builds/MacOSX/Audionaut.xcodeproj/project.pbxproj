@@ -366,6 +366,7 @@
 		3F436BA69588E2039CDFB0F5 /* CoreMIDI.framework */ /* CoreMIDI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMIDI.framework; path = System/Library/Frameworks/CoreMIDI.framework; sourceTree = SDKROOT; };
 		3FE32735D97BDC4B1526F9D8 /* SincResampler.cpp */ /* SincResampler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SincResampler.cpp; path = ../../Source/Engine/Analysis/Dsp/SincResampler.cpp; sourceTree = SOURCE_ROOT; };
 		401ADB784677352C68E0DA29 /* AboutWindowComponent.h */ /* AboutWindowComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AboutWindowComponent.h; path = ../../Source/Interface/Dialogs/AboutWindowComponent.h; sourceTree = SOURCE_ROOT; };
+		40423A680CEA41633ACEF042 /* RenderTransport.h */ /* RenderTransport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RenderTransport.h; path = ../../Source/Engine/Playback/RenderTransport.h; sourceTree = SOURCE_ROOT; };
 		40B22223993C59F1CDBB666C /* zoomin-inv.svg */ /* zoomin-inv.svg */ = {isa = PBXFileReference; lastKnownFileType = file.svg; name = "zoomin-inv.svg"; path = "../../Resources/zoomin-inv.svg"; sourceTree = SOURCE_ROOT; };
 		40F533EE81D23394C58321C6 /* include_juce_gui_basics_2.cpp */ /* include_juce_gui_basics_2.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = include_juce_gui_basics_2.cpp; path = ../../JuceLibraryCode/include_juce_gui_basics_2.cpp; sourceTree = SOURCE_ROOT; };
 		41C5D3B1E81DCFA1BE08D14C /* LevelMeter.cpp */ /* LevelMeter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/Interface/Controls/LevelMeter.cpp; sourceTree = SOURCE_ROOT; };
@@ -1532,6 +1533,7 @@
 				BADBB9D9AEAFBB0D593D7915,
 				57022B94A9C351DA0F12B4CF,
 				F98594A24820592F045D6479,
+				40423A680CEA41633ACEF042,
 				AB4350B84F1ACE53A1CD83B5,
 				94B58655A219457B624D974B,
 				A98154367D711216399159CA,

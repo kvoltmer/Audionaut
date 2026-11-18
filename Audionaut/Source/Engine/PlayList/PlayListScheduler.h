@@ -17,6 +17,7 @@
 #include "Engine/Export/ExportAudioConfig.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Playback/RenderTransport.h"
 
 namespace audium {
 
@@ -51,7 +52,8 @@ public:
                       std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
-                      std::shared_ptr<TransportLoop> transportLoop_) :
+                      std::shared_ptr<TransportLoop> transportLoop_,
+                      std::shared_ptr<RenderTransport> renderTransport_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -60,7 +62,8 @@ public:
         voiceSourceContainer(voiceSourceContainer_),
         playback(playback_),
         audioBusInterface(audioBusInterface_),
-        transportLoop(transportLoop_)
+        transportLoop(transportLoop_),
+        renderTransport(renderTransport_)
     {        
         audioTrackContainer->addChangeListener(this);
     }
@@ -147,6 +150,10 @@ public:
             // editing session kept every retired chain alive (#204).
             pullSnapshots();
         }
+
+        // what the block's effects are told about the transport: a plugin
+        // asks for it from inside the render
+        publishRenderTransport(isPlaying && beats >= 0.0);
         
         audioBusInterface->process(context);
     }
@@ -241,6 +248,10 @@ private:
         released at the next commit (see VoiceSourceContainer::commit). */
     void pullSnapshots() noexcept;
 
+    /// Render thread: publishes where the transport is for the block about
+    /// to be rendered (position, tempo, loop) to renderTransport.
+    void publishRenderTransport(bool playing) noexcept;
+
     // process sequencing
     void process(double absolutePosition,
                  int numSamples,
@@ -277,6 +288,7 @@ private:
     std::shared_ptr<Playback> playback;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     std::shared_ptr<TransportLoop> transportLoop;
+    std::shared_ptr<RenderTransport> renderTransport;
     
     double externalSampleRate = 0.0;
     

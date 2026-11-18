@@ -600,3 +600,114 @@ SCENARIO ("a plugin that moves its own latency gets the chain a new plan", "[eng
         }
     }
 }
+
+SCENARIO ("a hosted effect tells the plugin where the transport is", "[engine][effects][hosting][playhead]")
+{
+    GIVEN ("a plugin whose effect was given the engine's render transport")
+    {
+        Hosted hosted;
+        auto& effect = *hosted.effect;
+        auto transport = std::make_shared<RenderTransport>();
+        effect.setRenderTransport (transport);
+        effect.prepare (kSampleRate, kBlockSize, 2);
+
+        WHEN ("a block is rendered while the transport plays inside a loop")
+        {
+            RenderTransport::Block block;
+            block.playing = true;
+            block.positionSamples = 96000;
+            block.positionSeconds = 2.0;
+            block.positionBeats = 4.0;
+            block.tempo = 120.0;
+            block.looping = true;
+            block.loopStartBeats = 2.0;
+            block.loopEndBeats = 6.0;
+            transport->publish (block);
+
+            auto buffer = makeDc (2, 0.5f);
+            run (effect, buffer);
+
+            THEN ("the plugin's playhead says so")
+            {
+                REQUIRE (hosted.plugin->positions.size() == 1);
+                const auto& position = hosted.plugin->positions.back();
+                REQUIRE (position.getIsPlaying());
+                REQUIRE (position.getTimeInSamples() == juce::Optional<juce::int64> (96000));
+                REQUIRE (*position.getTimeInSeconds() == Approx (2.0));
+                REQUIRE (*position.getPpqPosition() == Approx (4.0));
+                REQUIRE (*position.getBpm() == Approx (120.0));
+                REQUIRE (position.getIsLooping());
+                REQUIRE (position.getLoopPoints().hasValue());
+                REQUIRE (position.getLoopPoints()->ppqStart == Approx (2.0));
+                REQUIRE (position.getLoopPoints()->ppqEnd == Approx (6.0));
+            }
+
+            THEN ("what the project does not have is not made up")
+            {
+                const auto& position = hosted.plugin->positions.back();
+                REQUIRE_FALSE (position.getTimeSignature().hasValue());
+                REQUIRE_FALSE (position.getPpqPositionOfLastBarStart().hasValue());
+                REQUIRE_FALSE (position.getIsRecording());
+            }
+        }
+
+        WHEN ("a block is rendered while the transport stands")
+        {
+            RenderTransport::Block block;
+            block.positionSamples = 48000;
+            block.positionSeconds = 1.0;
+            block.positionBeats = 1.5;
+            block.tempo = 90.0;
+            transport->publish (block);
+
+            auto buffer = makeDc (2, 0.5f);
+            run (effect, buffer);
+
+            THEN ("the plugin hears of the position and the tempo, not playing and without a loop")
+            {
+                REQUIRE (hosted.plugin->positions.size() == 1);
+                const auto& position = hosted.plugin->positions.back();
+                REQUIRE_FALSE (position.getIsPlaying());
+                REQUIRE (*position.getPpqPosition() == Approx (1.5));
+                REQUIRE (*position.getBpm() == Approx (90.0));
+                REQUIRE_FALSE (position.getIsLooping());
+                REQUIRE_FALSE (position.getLoopPoints().hasValue());
+            }
+        }
+    }
+
+    GIVEN ("a plugin whose effect has no render transport")
+    {
+        Hosted hosted;
+        hosted.effect->prepare (kSampleRate, kBlockSize, 2);
+        auto buffer = makeDc (2, 0.5f);
+        run (*hosted.effect, buffer);
+
+        THEN ("the plugin has no playhead to ask")
+        {
+            REQUIRE (hosted.plugin->processCount == 1);
+            REQUIRE (hosted.plugin->getPlayHead() == nullptr);
+            REQUIRE (hosted.plugin->positions.empty());
+        }
+    }
+
+    GIVEN ("a loading placeholder that was given the render transport")
+    {
+        MessageThread messageThread;
+        const auto description = TestPluginInstance::describe ({});
+        HostedEffect effect (PluginTypeId::typeInfo (description), description, HostedEffect::Loading {});
+        effect.setRenderTransport (std::make_shared<RenderTransport>());
+
+        WHEN ("its plugin arrives")
+        {
+            auto instance = std::make_unique<TestPluginInstance>();
+            auto* plugin = instance.get();
+            effect.adopt (std::move (instance), {});
+
+            THEN ("the plugin gets the playhead too")
+            {
+                REQUIRE (plugin->getPlayHead() != nullptr);
+            }
+        }
+    }
+}

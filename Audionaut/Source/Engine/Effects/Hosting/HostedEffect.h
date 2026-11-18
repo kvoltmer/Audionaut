@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/Effects/Effect.h"
+#include "Engine/Playback/RenderTransport.h"
 
 namespace audium
 {
@@ -47,6 +48,14 @@ namespace audium
  * reports (AudioProcessorListener) can come from any thread: they set
  * flags and counters, and a latency change reaches onLatencyChanged on the
  * message thread without allocating where it was reported.
+ *
+ * The plugin's playhead answers from the engine's RenderTransport, when the
+ * effect was given one: playing or not, the position of the block being
+ * rendered in samples, seconds and quarter notes, the tempo and the loop -
+ * what a tempo-synced delay or LFO runs by, in playback and in a bounce.
+ * The project has no time signature, so none is reported, nor bars. The
+ * position is the transport's: a plugin behind latent inserts hears the
+ * signal later than that by their latency.
  *
  * What the user does in the plugin's own window is the plugin's to report:
  * getPluginChangeCount() moves with every such report, isGestureOpen() says
@@ -92,6 +101,10 @@ public:
     /// a plugin requested for this effect, now or later, is counted there. None for an effect made outside a registry.
     void setArrivalCount (std::shared_ptr<std::atomic<int>> count) { arrivalCount = std::move (count); }
     const std::shared_ptr<std::atomic<int>>& getArrivalCount() const noexcept { return arrivalCount; }
+
+    /// Message thread, before the effect enters a plan: where the plugin's playhead reads the transport
+    /// from (the engine's, see EffectRegistry::getRenderTransport). Without one the plugin has no playhead.
+    void setRenderTransport (std::shared_ptr<const RenderTransport> transport);
 
     const juce::PluginDescription& getDescription() const noexcept { return description; }
     juce::AudioPluginInstance* getInstance() const noexcept { return instance.get(); }
@@ -142,7 +155,16 @@ private:
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details) override;
     void handleAsyncUpdate() override;   // message thread: a latency change the plugin reported
 
+    /// What the plugin asks the host about the transport, answered from the engine's RenderTransport.
+    class PlayHead final : public juce::AudioPlayHead
+    {
+    public:
+        juce::Optional<PositionInfo> getPosition() const override;
+        std::shared_ptr<const RenderTransport> transport;
+    };
+
     juce::PluginDescription description;
+    PlayHead playHead;   // before the instance, which holds a pointer to it
     std::unique_ptr<juce::AudioPluginInstance> instance;
     std::atomic<Status> status;   // read on the render thread, written on the message thread
     juce::String error;

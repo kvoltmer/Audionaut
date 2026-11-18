@@ -546,6 +546,27 @@ bool PlayListScheduler::isPlaying() const
     return false;
 }
 
+void PlayListScheduler::publishRenderTransport(bool playing) noexcept
+{
+    if (renderTransport == nullptr)
+        return;
+
+    const auto positionClocks = data.transportPositionClocks;
+    const auto positionSeconds = tempoProvider->clocksToSeconds(positionClocks);
+    const auto loopRange = transportLoop->getProcessedLoopPositionRange(audium::clocks);
+
+    RenderTransport::Block block;
+    block.playing = playing;
+    block.positionSeconds = positionSeconds;
+    block.positionSamples = static_cast<std::int64_t>(std::llround(positionSeconds * externalSampleRate));
+    block.positionBeats = TempoProvider::clocksToBeats(positionClocks);
+    block.tempo = tempoProvider->getTempo();
+    block.looping = transportLoop->isProcessedLoopActive() && ! loopRange.isEmpty();
+    block.loopStartBeats = TempoProvider::clocksToBeats(loopRange.getStart());
+    block.loopEndBeats = TempoProvider::clocksToBeats(loopRange.getEnd());
+    renderTransport->publish(block);
+}
+
 double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::clocks) {
