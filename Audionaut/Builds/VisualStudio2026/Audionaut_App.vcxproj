@@ -307,6 +307,7 @@
     <ClCompile Include="..\..\Source\Engine\Effects\AuxBus.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\AuxBusContainer.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\ChildProcessScanner.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Effects\Hosting\AudioUnitRegistry.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\HostedEffect.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginHost.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.cpp"/>
@@ -3562,6 +3563,7 @@
     <ClInclude Include="..\..\Source\Engine\Effects\AuxBus.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\AuxBusContainer.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Effect.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\AudioUnitRegistry.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ChildProcessScanner.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\HostedEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.h"/>

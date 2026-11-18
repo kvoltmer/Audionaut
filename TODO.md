@@ -493,10 +493,23 @@ the one-gesture crossfade UX on top:
   says that this may happen. The sandbox-safe flag and the component's name
   are readable without loading (`AudioComponentGetDescription`), so the
   message could name the number, or be left out where there are none.
-- [ ] **Remember a declined security prompt for the app's own loads.** The
-  scan raises macOS's question once per scan (a declined load fails with
-  `userCanceledErr`, -128, and the scanner leaves the other such plugins
-  out); a project's inserts still ask once per plugin.
+- [ ] **Try the Audio Unit listing without a scan with real plugins.** The
+  list comes from the system's registry (`AudioUnitRegistry`), not scanned
+  entries are offered as inserts and first loaded when used, and the
+  plugins macOS asks about load one at a time (a declined question answers
+  for those waiting). Not exercised by hand yet: the prompt on a first
+  insert, a project with several such inserts, and the check of a
+  not-scanned plugin that runs inside the app in the scan worker before
+  its first load (the slot waits as "loading" meanwhile, no progress bar;
+  a plugin that crashes there is skipped).
+- [ ] **Time the Audio Unit listing at startup on a machine with many
+  plugins.** `syncWithInstalled()` runs on the message thread before the
+  window is up and looks each component up by its codes; 10 ms for 23
+  Audio Units in a test run. If it shows, describe the components while
+  walking the registry once, or sync after the window is there.
+- [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
+  are on by default and no scan runs by itself; consider a hint in the
+  insert menu, or a first scan when the Manage Plugins window opens empty.
 - [ ] **Measure the out-of-process render cost.** Every block of a plugin in
   the hosting service is a cross-process call; small buffers with many such
   plugins may cost noticeably more than in-process hosting. Bench a chain of
@@ -506,6 +519,28 @@ the one-gesture crossfade UX on top:
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):
   let `FloatingPanel` switch resizability on, or reopen the window on arrival.
+- [ ] **Tell hosted plugins when a render is offline.** `HostedEffect` prepares
+  a plugin with `setRateAndBufferSizeDetails` and `prepareToPlay` only;
+  `setNonRealtime` is never called, so in a bounce (export, stem separation)
+  a plugin behaves as in live playback: no higher-quality offline mode, and
+  one that drops work to keep up with a callback may do so in the file. Set
+  the flag for the length of the offline render (`ScopedOfflineRender` /
+  `RenderTiming::isOffline` know when) and clear it afterwards; the plugin
+  API wants it changed outside `processBlock`, some plugins want a new
+  prepare after it. With it, a test that bounces through a hosted plugin -
+  none does today.
+- [ ] **Give hosted plugins a playhead.** No `setPlayHead` in the hosting
+  code: a plugin gets no tempo, position, time signature or playing state,
+  live or offline, so tempo-synced delays and LFOs run free. Needs an
+  `AudioPlayHead` fed from the scheduler's position and the project tempo
+  per block, read on the audio thread without locks, and right in a bounce
+  too (the position of the block being rendered, not the transport's).
+- [ ] **Export Audio while a plugin is still loading.** The CLI and MCP
+  verbs wait for pending loads before they render
+  (`ProjectSession::settlePlugins`); the Export Audio dialog does not, so a
+  bounce started right after opening a project can render without a plugin
+  that is on its way. To decide: wait with a progress note, or refuse with
+  a message until the slots are loaded.
 - [x] **Scan cost: one process per plugin file.** Done: one worker serves
   file after file over a named pipe (`scan-plugin --serve`), one file on its
   way at a time, so the worker that dies died of that file and the next file

@@ -12,6 +12,7 @@
 #include <thread>
 #include <utility>
 
+#include "AudioUnitRegistry.h"
 #include "ChildProcessScanner.h"
 #include "HostedEffect.h"
 #include "PluginFormats.h"
@@ -43,6 +44,9 @@ PluginHost::PluginHost (juce::File dataDirectory_, bool withPlatformFormats) :
                 && ! plain->requiresUnblockedMessageThreadDuringCreation (description);
         };
        #endif
+
+        // empty where the system has no list of its plugins
+        installedSource = [this] { return AudioUnitRegistry::installed (formats); };
     }
     list.addChangeListener (this);
 
@@ -54,6 +58,109 @@ PluginHost::PluginHost (juce::File dataDirectory_, bool withPlatformFormats) :
 PluginHost::~PluginHost()
 {
     list.removeChangeListener (this);
+    questions->closed = true;   // a load still under way finds nothing more to start
+    for (const auto& one : std::exchange (questions->waiting, {}))   // and those waiting behind it are not left waiting
+        settle (one, *pendingLoads, nullptr, {});
+    checks->hostAlive.reset();
+    checks->pool.removeAllJobs (true, 60000);   // a check under way gives up its plugin
+}
+
+bool PluginHost::syncWithInstalled()
+{
+    if (! installedSource)
+        return false;
+
+    const auto installed = installedSource();
+    const auto isInstalled = [&installed] (const juce::PluginDescription& description)
+    {
+        return std::any_of (installed.begin(), installed.end(), [&description] (const juce::PluginDescription& other)
+        {
+            return other.pluginFormatName == description.pluginFormatName && other.fileOrIdentifier == description.fileOrIdentifier;
+        });
+    };
+
+    auto changed = false;
+    for (const auto& description : list.getTypes())   // a copy
+    {
+        if (! isScanned (description) && ! isInstalled (description))
+        {
+            list.removeType (description);
+            changed = true;
+        }
+    }
+
+    const auto skipped = list.getBlacklistedFiles();   // a plugin a scan gave up on stays skipped
+    auto refreshed = false;
+    for (const auto& description : installed)
+    {
+        if (skipped.contains (description.fileOrIdentifier))
+            continue;
+
+        const auto listed = list.getTypeForFile (description.fileOrIdentifier);
+        if (listed == nullptr)
+        {
+            changed = list.addType (description) || changed;
+        }
+        else if (! isScanned (*listed)
+                 && (listed->name != description.name || listed->version != description.version
+                     || listed->manufacturerName != description.manufacturerName))
+        {
+            list.addType (description);   // an update of the plugin: the entry takes the new words
+            refreshed = true;
+        }
+    }
+    if (refreshed)
+        list.sendChangeMessage();   // replacing an entry is not news to the list by itself
+    return changed || refreshed;
+}
+
+void PluginHost::finishScan()
+{
+    juce::StringArray empty;
+    {
+        const juce::ScopedLock lock (loadedEmpty->lock);
+        empty.swapWith (loadedEmpty->files);
+    }
+    for (const auto& file : empty)
+        skipNotScanned (file);
+
+    syncWithInstalled();
+    list.sendChangeMessage();   // a scan replaces not-scanned entries where they are, which the list does not tell of
+}
+
+void PluginHost::noteLoadedEmpty (const juce::String& fileOrIdentifier)
+{
+    const juce::ScopedLock lock (loadedEmpty->lock);
+    loadedEmpty->files.addIfNotAlreadyThere (fileOrIdentifier);
+}
+
+bool PluginHost::takeLoadedEmpty (const juce::String& fileOrIdentifier) const
+{
+    const juce::ScopedLock lock (loadedEmpty->lock);
+    const auto index = loadedEmpty->files.indexOf (fileOrIdentifier);
+    if (index >= 0)
+        loadedEmpty->files.remove (index);
+    return index >= 0;
+}
+
+void PluginHost::skipNotScanned (const juce::String& fileOrIdentifier)
+{
+    for (const auto& listed : list.getTypes())   // a copy
+    {
+        if (listed.fileOrIdentifier == fileOrIdentifier && ! isScanned (listed))
+        {
+            list.removeType (listed);
+            list.addToBlacklist (fileOrIdentifier);   // or it would be back as installed
+        }
+    }
+}
+
+int PluginHost::numScanned() const
+{
+    auto count = 0;
+    for (const auto& description : list.getTypes())
+        count += isScanned (description) ? 1 : 0;
+    return count;
 }
 
 juce::File PluginHost::defaultDataDirectory()
@@ -338,6 +445,15 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
         return effect;
     }
 
+    // a plugin nobody has loaded yet, which would run in here: the scan worker loads it first
+    if (needsCheckBeforeLoad (description))
+    {
+        auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
+        effect->setArrivalCount (std::move (arrivalCount));
+        requestChecked (*effect);
+        return effect;
+    }
+
     // the format the planner prepares with comes later; the plugin is told the real one in prepare()
     if (loadsOutOfProcess (description))
     {
@@ -365,7 +481,19 @@ void PluginHost::requestInstance (HostedEffect& effect) const
     if (arrivals != nullptr)
         ++*arrivals;
 
-    formatOf (effect.getDescription())->createPluginInstanceAsync (effect.getDescription(), 44100.0, 512,
+    auto* format = formatOf (effect.getDescription());
+
+    // A plugin the system asks the user about waits its turn: one question at a time, and a "no"
+    // answers for those waiting behind it.
+    if (asksForLoweredSecurity && asksForLoweredSecurity (effect.getDescription()))
+    {
+        questions->waiting.push_back ({ effect.getAliveToken(), &effect, format, arrivals });
+        if (! questions->busy)
+            loadNextAsked (questions, pendingLoads);
+        return;
+    }
+
+    format->createPluginInstanceAsync (effect.getDescription(), 44100.0, 512,
                                        [alive = effect.getAliveToken(), waiting = &effect, pending = pendingLoads, arrivals]
                                        (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
                                        {
@@ -379,6 +507,115 @@ void PluginHost::requestInstance (HostedEffect& effect) const
                                        });
 }
 
+void PluginHost::settle (const Questions::Waiting& one, std::atomic<int>& pending,
+                         std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
+{
+    // an effect that left meanwhile (an undo, a closed project) has nothing to adopt
+    if (one.alive.lock() != nullptr)
+        one.effect->adopt (std::move (instance), describeLoadError (message));
+    --pending;
+    if (one.arrivals != nullptr)
+        --*one.arrivals;
+}
+
+void PluginHost::loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending)
+{
+    while (! questions->waiting.empty())
+    {
+        const auto next = questions->waiting.front();
+        questions->waiting.pop_front();
+        if (questions->closed || next.alive.lock() == nullptr)
+        {
+            settle (next, *pending, nullptr, {});
+            continue;
+        }
+
+        questions->busy = true;
+        next.format->createPluginInstanceAsync (next.effect->getDescription(), 44100.0, 512,
+                                                [questions, pending, next]
+                                                (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
+                                                {
+                                                    // message thread
+                                                    const auto declined = instance == nullptr && message.contains ("(-128)");   // userCanceledErr
+                                                    settle (next, *pending, std::move (instance), message);
+
+                                                    // the user said no: not asked again for each plugin that waited meanwhile
+                                                    if (declined)
+                                                    {
+                                                        for (const auto& other : std::exchange (questions->waiting, {}))
+                                                            settle (other, *pending, nullptr, message);
+                                                    }
+
+                                                    questions->busy = false;
+                                                    loadNextAsked (questions, pending);
+                                                });
+        return;
+    }
+    questions->busy = false;
+}
+
+bool PluginHost::needsCheckBeforeLoad (const juce::PluginDescription& description) const
+{
+    // a plugin in a process of its own takes nothing down with it
+    if (! checksBeforeFirstLoad || loadsOutOfProcess (description))
+        return false;
+
+    const auto listed = list.getTypeForFile (description.fileOrIdentifier);   // as the list has it now
+    return listed != nullptr && ! isScanned (*listed);
+}
+
+void PluginHost::requestChecked (HostedEffect& effect) const
+{
+    const auto arrivals = effect.getArrivalCount();
+    ++*pendingLoads;
+    if (arrivals != nullptr)
+        ++*arrivals;
+
+    checks->pool.addJob ([this, &known = checks->list, format = formatOf (effect.getDescription()), description = effect.getDescription(),
+                          hostAlive = std::weak_ptr<int> (checks->hostAlive), alive = effect.getAliveToken(), waiting = &effect,
+                          pending = pendingLoads, arrivals]
+    {
+        // the list's scanner loads it (in the worker process), and the list has the scan's word after
+        juce::OwnedArray<juce::PluginDescription> found;
+        known.scanAndAddFile (description.fileOrIdentifier, false, found, *format);
+
+        juce::MessageManager::callAsync ([this, &known, description, hostAlive, alive, waiting, pending, arrivals, loads = ! found.isEmpty()]
+        {
+            std::unique_ptr<juce::AudioPluginInstance> instance;
+            juce::String error ("the plugin could not be loaded");
+
+            if (hostAlive.lock() != nullptr)   // else the list and the formats are gone
+            {
+                auto* host = const_cast<PluginHost*> (this);   // alive, and this is the message thread
+                if (known.getBlacklistedFiles().contains (description.fileOrIdentifier))
+                {
+                    // it took the worker down, or too long: skipped from now on, not listed any more
+                    host->skipNotScanned (description.fileOrIdentifier);
+                    error = TRANS ("the plugin crashed or took too long when it was checked before its first load, and is skipped from now on");
+                }
+                else if (! loads && takeLoadedEmpty (description.fileOrIdentifier))
+                {
+                    // the worker loaded it, and there was no plugin
+                    host->skipNotScanned (description.fileOrIdentifier);
+                    error = TRANS ("the plugin did not load when it was checked before its first load, and is skipped from now on");
+                }
+                else if (alive.lock() != nullptr)
+                {
+                    // checked - or not, where no worker runs here: then it loads as it would without one
+                    instance = createInstance (description, 44100.0, 512, error);
+                }
+                known.sendChangeMessage();   // the entry is a scanned one now, or gone
+            }
+
+            if (alive.lock() != nullptr)
+                waiting->adopt (std::move (instance), error);
+            --*pending;
+            if (arrivals != nullptr)
+                --*arrivals;
+        });
+    });
+}
+
 bool PluginHost::load (HostedEffect& effect) const
 {
     if (effect.isLoaded() || effect.getStatus() == HostedEffect::Status::loading)
@@ -388,6 +625,11 @@ bool PluginHost::load (HostedEffect& effect) const
         return false;
 
     effect.expectPlugin();
+    if (needsCheckBeforeLoad (effect.getDescription()))
+    {
+        requestChecked (effect);
+        return true;
+    }
     if (loadsOutOfProcess (effect.getDescription()))
     {
         requestInstance (effect);
@@ -442,6 +684,11 @@ void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
     // else the flag changes nothing in the worker, and the scanner need not start new workers over it.
     if (isSandboxed())
         scanner->setLoweredSecurityFlag (loweredSecurityAllowed);
+    scanner->setFoundNothing ([empty = loadedEmpty] (const juce::String& fileOrIdentifier)
+    {
+        const juce::ScopedLock lock (empty->lock);
+        empty->files.addIfNotAlreadyThere (fileOrIdentifier);
+    });
 
     // The scan's log, for a user to send along when a scan goes wrong: a heading whenever the scanner
     // takes up work again after a pause (a new scan), then its lines with the time of day.
@@ -502,7 +749,8 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
                                             const juce::String& onlyFormat)
 {
     ScanResult result;
-    const auto before = list.getNumTypes();
+    syncWithInstalled();   // what was installed since is scanned too
+    const auto before = numScanned();
     const auto blacklistedBefore = list.getBlacklistedFiles().size();
     const auto pedal = getDeadMansPedalFile();
     pedal.getParentDirectory().createDirectory();
@@ -530,8 +778,9 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
         result.failed += scanner.getFailedFiles().size();
     }
 
-    result.found = list.getNumTypes();
-    result.added = result.found - before;
+    finishScan();
+    result.found = numScanned();
+    result.added = juce::jmax (0, result.found - before);
     result.blacklisted = list.getBlacklistedFiles().size() - blacklistedBefore;
     saveList();
     return result;

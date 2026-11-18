@@ -165,6 +165,7 @@
 		A6FBC87A45142F657A2D086F /* ArrangementModel.cpp */ = {isa = PBXBuildFile; fileRef = 77F5EEA514A977EB5821D4E6; };
 		A84383E1E03B4FB486F7627C /* AudioRecorder.cpp */ = {isa = PBXBuildFile; fileRef = 663B080BB58B01830F242528; };
 		A9632FD019E4A0C2FA3462B4 /* SendList.cpp */ = {isa = PBXBuildFile; fileRef = 5783A8FA110861F893C3C6CD; };
+		A9D30B8EC340E2F389E7EFCA /* AudioUnitRegistry.cpp */ = {isa = PBXBuildFile; fileRef = 6D98D228CF88EAB2EFB8C292; };
 		A9F88A3C4FB0E0075FEA0E66 /* WebKit.framework */ = {isa = PBXBuildFile; fileRef = B49AA8C79C8A8C9FCDA5A44C; };
 		AC12B745E66A082394669AF4 /* ClipFadeSpec.cpp */ = {isa = PBXBuildFile; fileRef = 8534F57B49669B5BDA634A63; };
 		AEE9A17ABC568A10F160B166 /* TempoEstimator.cpp */ = {isa = PBXBuildFile; fileRef = C4E6D7EC0DBABAB156264D21; };
@@ -463,6 +464,7 @@
 		6C547AE4E9347FA218C4951B /* AudioClipView.h */ /* AudioClipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioClipView.h; path = ../../Source/Interface/Views/AudioClipView.h; sourceTree = SOURCE_ROOT; };
 		6CF79CC87DC41EFA1EAA7107 /* LockFreeCommander.h */ /* LockFreeCommander.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LockFreeCommander.h; path = ../../Source/Engine/Core/LockFreeCommander.h; sourceTree = SOURCE_ROOT; };
 		6D8AC9B6CB6D3128D93BC4FA /* ChannelMapping.cpp */ /* ChannelMapping.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ChannelMapping.cpp; path = ../../Source/Engine/Resource/ChannelMapping.cpp; sourceTree = SOURCE_ROOT; };
+		6D98D228CF88EAB2EFB8C292 /* AudioUnitRegistry.cpp */ /* AudioUnitRegistry.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioUnitRegistry.cpp; path = ../../Source/Engine/Effects/Hosting/AudioUnitRegistry.cpp; sourceTree = SOURCE_ROOT; };
 		6DA263F7CDEFFDFAC0EB223E /* RegionSelector.h */ /* RegionSelector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegionSelector.h; path = ../../Source/Interface/Controls/RegionSelector.h; sourceTree = SOURCE_ROOT; };
 		6E8033EA1E1FCCFBE1AF27F7 /* SelectionManager.h */ /* SelectionManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectionManager.h; path = ../../Source/Engine/Selection/SelectionManager.h; sourceTree = SOURCE_ROOT; };
 		6ED79F6C594EFFE31DB3C689 /* SelectableObjectContainer.h */ /* SelectableObjectContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SelectableObjectContainer.h; path = ../../Source/Engine/Selection/SelectableObjectContainer.h; sourceTree = SOURCE_ROOT; };
@@ -531,6 +533,7 @@
 		8BCD03141D928D9D3A3230A4 /* encdec.cpp */ /* encdec.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = encdec.cpp; path = ../../../Submodules/demucs.cpp/src/encdec.cpp; sourceTree = SOURCE_ROOT; };
 		8C238AD3D8E35EC69AA2CD0B /* Mfcc.cpp */ /* Mfcc.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Mfcc.cpp; path = ../../Source/Engine/Analysis/Dsp/Mfcc.cpp; sourceTree = SOURCE_ROOT; };
 		8CE8DDBBB951A6855D357741 /* MixerBusGroupComponent.h */ /* MixerBusGroupComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MixerBusGroupComponent.h; path = ../../Source/Interface/Components/MixerPanel/MixerBusGroupComponent.h; sourceTree = SOURCE_ROOT; };
+		8CF39B41067CB55D7C559EA2 /* AudioUnitRegistry.h */ /* AudioUnitRegistry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioUnitRegistry.h; path = ../../Source/Engine/Effects/Hosting/AudioUnitRegistry.h; sourceTree = SOURCE_ROOT; };
 		8D1EDD187514668E32C8530C /* AnalysisAudioLoader.cpp */ /* AnalysisAudioLoader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisAudioLoader.cpp; path = ../../Source/Engine/Analysis/AnalysisAudioLoader.cpp; sourceTree = SOURCE_ROOT; };
 		8D37E966475206DF93CB732C /* PlayListContainer.h */ /* PlayListContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PlayListContainer.h; path = ../../Source/Engine/PlayList/PlayListContainer.h; sourceTree = SOURCE_ROOT; };
 		8EC473C889FD7C33CE00166E /* PluginHost.h */ /* PluginHost.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PluginHost.h; path = ../../Source/Engine/Effects/Hosting/PluginHost.h; sourceTree = SOURCE_ROOT; };
@@ -1331,6 +1334,8 @@
 			isa = PBXGroup;
 			children = (
 				1FE2DD9C7C9FB3E62D25C4F9,
+				6D98D228CF88EAB2EFB8C292,
+				8CF39B41067CB55D7C559EA2,
 				9C45B22D912F9D0C6562881B,
 				1659A781C224CFA6BFCA0001,
 				DEBEFCF782D2EE381AEC72A4,
@@ -2056,6 +2061,7 @@
 				9724275A51B89C2CAF363CA3,
 				A17CA85C839D5D545898A97E,
 				1474C44967BA900B2CCBE1A1,
+				A9D30B8EC340E2F389E7EFCA,
 				0139FAFE0A09A07641C44945,
 				65AF51FC71F4D60DB8C56AB2,
 				D0071E555BB62A72AB31B804,

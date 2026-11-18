@@ -7,6 +7,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/Hosting/AudioUnitRegistry.h"
 #include "Engine/Effects/Hosting/ChildProcessScanner.h"
 #include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
@@ -708,6 +709,434 @@ SCENARIO ("a plugin the system asks the user about is only there where that is a
     }
 }
 
+SCENARIO ("the plugin host lists what the system knows to be installed without a scan", "[engine][effects][hosting][installed]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    const auto named = [] (const juce::String& name, int uid)
+    {
+        auto options = gainIn ("TestA", uid);
+        options.name = name;
+        return options;
+    };
+    const auto one = TestPluginInstance::describe (named ("One", 0x0101));
+    const auto two = TestPluginInstance::describe (named ("Two", 0x0202));
+    const auto ghost = TestPluginInstance::describe (named ("Ghost", 0x0303));   // installed, but no scan finds it
+
+    GIVEN ("a host whose system lists three plugins, two of which its format can load")
+    {
+        PluginHost host (temp.folder, false);
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { named ("One", 0x0101), named ("Two", 0x0202) }));
+        auto installed = std::make_shared<std::vector<juce::PluginDescription>> (std::vector { one, two, ghost });
+        host.setInstalledSource ([installed] { return *installed; });
+        auto registry = std::make_shared<EffectRegistry>();
+
+        WHEN ("the list is brought in line with it")
+        {
+            REQUIRE (host.syncWithInstalled());
+
+            THEN ("all three are listed as not scanned, and offered as inserts")
+            {
+                REQUIRE (host.getList().getNumTypes() == 3);
+                for (const auto& description : host.getList().getTypes())
+                    REQUIRE_FALSE (PluginHost::isScanned (description));
+                host.registerInto (*registry, PluginHost::Mode::full);
+                REQUIRE (registry->hasType ("testa:00000101"));
+                REQUIRE (registry->hasType ("testa:00000303"));
+                REQUIRE_FALSE (host.syncWithInstalled());   // nothing more to do
+            }
+
+            THEN ("a host that reads the saved list has them as not scanned too")
+            {
+                REQUIRE (host.saveList());
+                PluginHost second (temp.folder, false);
+                REQUIRE (second.loadList());
+                REQUIRE (second.getList().getNumTypes() == 3);
+                REQUIRE_FALSE (PluginHost::isScanned (second.getList().getTypes()[0]));
+            }
+
+            AND_WHEN ("one of them is no longer installed")
+            {
+                installed->pop_back();
+                REQUIRE (host.syncWithInstalled());
+
+                THEN ("it leaves the list")
+                {
+                    REQUIRE (host.getList().getNumTypes() == 2);
+                    REQUIRE_FALSE (host.findByTypeId ("testa:00000303").has_value());
+                }
+            }
+
+            AND_WHEN ("the host scans")
+            {
+                const auto result = host.scanAll();
+
+                THEN ("what the scan loaded is scanned, the rest is listed as before")
+                {
+                    REQUIRE (result.added == 2);
+                    REQUIRE (result.found == 2);
+                    REQUIRE (host.getList().getNumTypes() == 3);
+                    REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                    REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000202")));
+                    REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00000303")));
+                }
+
+                AND_WHEN ("the list is brought in line again")
+                {
+                    THEN ("the scanned entries stay as the scan left them")
+                    {
+                        REQUIRE_FALSE (host.syncWithInstalled());
+                        REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                    }
+                }
+            }
+        }
+
+        WHEN ("a scan's worker loaded one of them and found no plugin in it")
+        {
+            host.syncWithInstalled();
+            host.noteLoadedEmpty (ghost.fileOrIdentifier);
+            host.finishScan();
+
+            THEN ("it is skipped from now on, and not listed as installed again")
+            {
+                REQUIRE (host.getList().getBlacklistedFiles().contains (ghost.fileOrIdentifier));
+                REQUIRE_FALSE (host.findByTypeId ("testa:00000303").has_value());
+                REQUIRE_FALSE (host.syncWithInstalled());
+                REQUIRE (host.getList().getNumTypes() == 2);
+            }
+        }
+
+        WHEN ("a plugin that is listed without a scan comes in a new version")
+        {
+            host.syncWithInstalled();
+            (*installed)[0].version = "2.0";
+            REQUIRE (host.syncWithInstalled());
+
+            THEN ("its entry says so, and is still not scanned")
+            {
+                REQUIRE (host.findByTypeId ("testa:00000101")->version == "2.0");
+                REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                REQUIRE (host.getList().getNumTypes() == 3);
+            }
+        }
+
+        WHEN ("one of them is a file a scan gave up on")
+        {
+            host.getList().addToBlacklist (two.fileOrIdentifier);
+            host.syncWithInstalled();
+
+            THEN ("it stays skipped, and is not listed")
+            {
+                REQUIRE (host.getList().getNumTypes() == 2);
+                REQUIRE_FALSE (host.findByTypeId ("testa:00000202").has_value());
+            }
+        }
+    }
+}
+
+SCENARIO ("a not-scanned plugin that runs in the host's process is checked by the scanner before its first load", "[engine][effects][hosting][installed]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    /// Stands in for the worker process: counts what it is asked, and takes a plugin for one that crashes when told to.
+    struct CountingScanner final : public juce::KnownPluginList::CustomScanner
+    {
+        CountingScanner (std::shared_ptr<std::atomic<int>> asked_, std::shared_ptr<std::atomic<bool>> crashes_) :
+            asked (std::move (asked_)), crashes (std::move (crashes_)) {}
+
+        bool findPluginTypesFor (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,
+                                 const juce::String& fileOrIdentifier) override
+        {
+            ++*asked;
+            if (crashes->load())
+                return false;
+            format.findAllTypesForFile (result, fileOrIdentifier);
+            return true;
+        }
+
+        std::shared_ptr<std::atomic<int>> asked;
+        std::shared_ptr<std::atomic<bool>> crashes;
+    };
+
+    /// A scanner whose worker does not run: every file comes back without a verdict, and without a plugin.
+    struct NoWorkerScanner final : public juce::KnownPluginList::CustomScanner
+    {
+        bool findPluginTypesFor (juce::AudioPluginFormat&, juce::OwnedArray<juce::PluginDescription>&, const juce::String&) override { return true; }
+    };
+
+    GIVEN ("a host that lists an installed plugin without a scan, and checks before a first load")
+    {
+        PluginHost host (temp.folder, false);
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { gainIn ("TestA", 0x1111) }));
+        const auto plugin = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+        host.setInstalledSource ([plugin] { return std::vector { plugin }; });
+        auto asked = std::make_shared<std::atomic<int>> (0);
+        auto crashes = std::make_shared<std::atomic<bool>> (false);
+        host.getList().setCustomScanner (std::make_unique<CountingScanner> (asked, crashes));
+        host.setChecksBeforeFirstLoad (true);
+        host.syncWithInstalled();
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        WHEN ("it is created as an effect")
+        {
+            auto effect = registry->create ("testa:00001111");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (hosted != nullptr);
+
+            THEN ("it waits as a loading placeholder, is scanned once, and loads")
+            {
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+                REQUIRE (host.getNumPendingLoads() == 1);
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (asked->load() == 1);
+                REQUIRE (hosted->isLoaded());
+                REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00001111")));
+            }
+
+            AND_WHEN ("it is created again")
+            {
+                REQUIRE (host.waitForPendingLoads (5000));
+                messageThread.pump();   // the registry hears of the scanned entry
+                auto again = registry->create ("testa:00001111");
+
+                THEN ("it loads at once, without another check")
+                {
+                    REQUIRE (dynamic_cast<HostedEffect*> (again.get())->isLoaded());
+                    REQUIRE (asked->load() == 1);
+                }
+            }
+        }
+
+        WHEN ("it takes the scanner's worker down")
+        {
+            crashes->store (true);
+            auto effect = registry->create ("testa:00001111");
+            auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("it is not loaded here, is skipped from now on and leaves the list")
+            {
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (hosted->getError().contains ("skipped"));
+                REQUIRE (host.getList().getBlacklistedFiles().contains (plugin.fileOrIdentifier));
+                REQUIRE (host.getList().getNumTypes() == 0);
+                REQUIRE_FALSE (host.syncWithInstalled());   // and does not come back as not scanned
+            }
+        }
+
+        WHEN ("the scanner's worker does not run")
+        {
+            host.getList().setCustomScanner (std::make_unique<NoWorkerScanner>());
+            auto effect = registry->create ("testa:00001111");
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("the plugin loads as it would without a check, and is not held to be scanned")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (effect.get())->isLoaded());
+                REQUIRE (host.getList().getBlacklistedFiles().isEmpty());
+                REQUIRE_FALSE (PluginHost::isScanned (*host.findByTypeId ("testa:00001111")));
+            }
+        }
+
+        WHEN ("the worker loads it and finds no plugin in it")
+        {
+            host.getList().setCustomScanner (std::make_unique<NoWorkerScanner>());
+            host.noteLoadedEmpty (plugin.fileOrIdentifier);
+            auto effect = registry->create ("testa:00001111");
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("it is not loaded here, and skipped from now on")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (effect.get())->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (host.getList().getBlacklistedFiles().contains (plugin.fileOrIdentifier));
+                REQUIRE (host.getList().getNumTypes() == 0);
+            }
+        }
+
+        WHEN ("the effect is gone before the check is done")
+        {
+            auto effect = registry->create ("testa:00001111");
+            effect.reset();
+
+            THEN ("nothing is left pending")
+            {
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+            }
+        }
+    }
+}
+
+SCENARIO ("plugins the system asks the user about are loaded one at a time, and a no answers for those waiting", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    const auto named = [] (const juce::String& name, int uid)
+    {
+        auto options = gainIn ("TestC", uid);
+        options.name = name;
+        return options;
+    };
+
+    GIVEN ("a host with three such plugins, which load in a process of their own")
+    {
+        PluginHost host (temp.folder, false);
+        auto owned = std::make_unique<TestPluginFormat> ("TestC", std::vector { named ("One", 0x0101), named ("Two", 0x0202), named ("Three", 0x0303) });
+        auto* format = owned.get();
+        format->asyncOnly = true;
+        auto asked = std::make_shared<int> (0);
+        format->onCreate = [asked] { ++*asked; };
+        host.getFormats().addFormat (std::move (owned));
+        for (const auto& plugin : { named ("One", 0x0101), named ("Two", 0x0202), named ("Three", 0x0303) })
+            host.getList().addType (TestPluginInstance::describe (plugin));
+        host.setLoweredSecurityQuestion ([] (const juce::PluginDescription& description) { return description.pluginFormatName == "TestC"; });
+        host.setLoweredSecurityAllowed (true);
+        auto registry = std::make_shared<EffectRegistry>();
+        host.registerInto (*registry, PluginHost::Mode::full);
+
+        WHEN ("all three are created and the user declines the question")
+        {
+            format->refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
+            auto first = registry->create ("testc:00000101");
+            auto second = registry->create ("testc:00000202");
+            auto third = registry->create ("testc:00000303");
+            REQUIRE (host.getNumPendingLoads() == 3);
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("the question came up once, and none of them is loaded")
+            {
+                REQUIRE (*asked == 1);
+                for (auto* effect : { first.get(), second.get(), third.get() })
+                {
+                    auto* hosted = dynamic_cast<HostedEffect*> (effect);
+                    REQUIRE (hosted != nullptr);
+                    REQUIRE (hosted->getStatus() == HostedEffect::Status::notLoaded);
+                    REQUIRE (hosted->getError().contains ("declined"));
+                }
+            }
+
+            AND_WHEN ("one is created again and the user agrees")
+            {
+                format->refuseWith.clear();
+                auto again = registry->create ("testc:00000101");
+                REQUIRE (host.waitForPendingLoads (5000));
+
+                THEN ("it was asked for, and loads")
+                {
+                    REQUIRE (*asked == 2);
+                    REQUIRE (dynamic_cast<HostedEffect*> (again.get())->isLoaded());
+                }
+            }
+        }
+
+        WHEN ("all three are created and the user agrees")
+        {
+            auto first = registry->create ("testc:00000101");
+            auto second = registry->create ("testc:00000202");
+            auto third = registry->create ("testc:00000303");
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("each one loads")
+            {
+                REQUIRE (*asked == 3);
+                for (auto* effect : { first.get(), second.get(), third.get() })
+                    REQUIRE (dynamic_cast<HostedEffect*> (effect)->isLoaded());
+            }
+        }
+
+        WHEN ("the host goes while one is on its way and others wait")
+        {
+            auto short_lived = std::make_unique<PluginHost> (temp.folder.getChildFile ("second"), false);
+            auto withheld = std::make_unique<TestPluginFormat> ("TestC", std::vector { named ("One", 0x0101), named ("Two", 0x0202) });
+            withheld->asyncOnly = true;
+            withheld->withhold = true;   // the system's question stays open
+            short_lived->getFormats().addFormat (std::move (withheld));
+            for (const auto& plugin : { named ("One", 0x0101), named ("Two", 0x0202) })
+                short_lived->getList().addType (TestPluginInstance::describe (plugin));
+            short_lived->setLoweredSecurityQuestion ([] (const juce::PluginDescription&) { return true; });
+            short_lived->setLoweredSecurityAllowed (true);
+            auto second = std::make_shared<EffectRegistry>();
+            short_lived->registerInto (*second, PluginHost::Mode::full);
+            auto first = second->create ("testc:00000101");
+            auto waiting = second->create ("testc:00000202");
+            REQUIRE (second->getPendingArrivals()->load() == 2);
+            short_lived.reset();
+
+            THEN ("the one that waited is not left waiting")
+            {
+                REQUIRE (dynamic_cast<HostedEffect*> (waiting.get())->getStatus() == HostedEffect::Status::notLoaded);
+                REQUIRE (second->getPendingArrivals()->load() == 1);   // the one the system still holds
+            }
+        }
+
+        WHEN ("one that waits its turn is gone before it comes")
+        {
+            format->refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
+            auto first = registry->create ("testc:00000101");
+            auto second = registry->create ("testc:00000202");
+            second.reset();
+
+            THEN ("nothing is left pending")
+            {
+                REQUIRE (host.waitForPendingLoads (5000));
+                REQUIRE (host.getNumPendingLoads() == 0);
+            }
+        }
+    }
+}
+
+#if JUCE_MAC
+SCENARIO ("the system's list of Audio Units describes a plugin as a scan of it does", "[engine][effects][hosting][installed][audiounit]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("the platform's formats")
+    {
+        juce::AudioPluginFormatManager formats;
+        PluginHost::addPlatformFormats (formats);
+
+        WHEN ("the installed Audio Units are listed")
+        {
+            const auto started = juce::Time::getMillisecondCounterHiRes();
+            const auto installed = AudioUnitRegistry::installed (formats);
+            WARN ("listed " << installed.size() << " Audio Units in " << juce::Time::getMillisecondCounterHiRes() - started << " ms");
+
+            THEN ("Apple's delay is among them, as its scan describes it but for the scan's time and its channels")
+            {
+                const auto delay = std::find_if (installed.begin(), installed.end(), [] (const juce::PluginDescription& description)
+                {
+                    return description.fileOrIdentifier == "AudioUnit:Effects/aufx,dely,appl";
+                });
+                REQUIRE (delay != installed.end());
+                REQUIRE_FALSE (PluginHost::isScanned (*delay));
+
+                juce::OwnedArray<juce::PluginDescription> scanned;
+                formats.getFormat (0)->findAllTypesForFile (scanned, delay->fileOrIdentifier);
+                REQUIRE (scanned.size() == 1);
+                REQUIRE (PluginHost::isScanned (*scanned[0]));
+                REQUIRE (delay->isDuplicateOf (*scanned[0]));
+                REQUIRE (delay->name == scanned[0]->name);
+                REQUIRE (delay->manufacturerName == scanned[0]->manufacturerName);
+                REQUIRE (delay->version == scanned[0]->version);
+                REQUIRE (delay->category == scanned[0]->category);
+                REQUIRE (delay->pluginFormatName == scanned[0]->pluginFormatName);
+                REQUIRE (delay->isInstrument == scanned[0]->isInstrument);
+                REQUIRE (PluginTypeId::make (*delay) == PluginTypeId::make (*scanned[0]));
+
+                // a scan loads the entry that is only listed, and leaves the scanned one alone
+                REQUIRE (formats.getFormat (0)->pluginNeedsRescanning (*delay));
+                REQUIRE_FALSE (formats.getFormat (0)->pluginNeedsRescanning (*scanned[0]));
+            }
+        }
+    }
+}
+#endif
+
 SCENARIO ("an engine waits for its own plugins, not for another engine's", "[engine][effects][hosting]")
 {
     MessageThread messageThread;
@@ -1084,6 +1513,39 @@ SCENARIO ("the child-process scanner has the system's question raised once per s
                 {
                     REQUIRE (raised->load() == 2);
                 }
+            }
+        }
+    }
+}
+
+SCENARIO ("the child-process scanner tells of the files a worker found no plugin in", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("workers that find a plugin in one file, none in another, and die of a third")
+    {
+        ChildProcessScanner scanner ([]
+        {
+            return std::make_unique<ThreadWorker> ([] (const ChildProcessScanner::Request& request) -> json
+            {
+                if (request.file == "empty")
+                    return { { "ok", true }, { "plugins", json::array() } };
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        juce::StringArray heard;
+        scanner.setFoundNothing ([&heard] (const juce::String& file) { heard.add (file); });
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("they are scanned")
+        {
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+            REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
+            REQUIRE_FALSE (scanner.findPluginTypesFor (format, found, "dies"));
+
+            THEN ("only the empty one is told of")
+            {
+                REQUIRE (heard == juce::StringArray { "empty" });
             }
         }
     }

@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ChildProcessScanner.h"
+#include "PluginFormats.h"
 
 namespace audium
 {
@@ -262,7 +263,16 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
         }
         return verdict;
     };
-    const auto found = [&] { return result.size() == before ? juce::String ("no plugin found") : juce::String (result.size() - before) + " found"; };
+    const auto found = [&]
+    {
+        if (result.size() != before)
+            return juce::String (result.size() - before) + " found";
+
+        // loaded, and nothing in it - unless it is a plugin the worker was not to load at all
+        if (foundNothing != nullptr && (mayRaiseTheQuestion() || ! PluginFormats::asksUserBeforeLoading (format.getName(), fileOrIdentifier)))
+            foundNothing (fileOrIdentifier);
+        return juce::String ("no plugin found");
+    };
     const auto failure = [&] { return "FAILED, file skipped: " + (lastFailure.isNotEmpty() ? lastFailure : juce::String ("the worker gave no answer")); };
 
     // A plugin that waited for the user's answer to the system's question until its time was up: nobody

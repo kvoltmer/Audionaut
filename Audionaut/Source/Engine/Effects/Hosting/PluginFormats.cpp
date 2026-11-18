@@ -28,6 +28,12 @@ namespace
                     effects.add (identifier);
             return effects;
         }
+
+        /// An entry no scan has made yet (listed as the system reports it) is one a scan loads.
+        bool pluginNeedsRescanning (const juce::PluginDescription& description) override
+        {
+            return description.lastInfoUpdateTime == juce::Time() || juce::AudioUnitPluginFormat::pluginNeedsRescanning (description);
+        }
     };
 }
 #endif
