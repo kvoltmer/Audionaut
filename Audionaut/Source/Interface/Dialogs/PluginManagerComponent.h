@@ -42,6 +42,8 @@
  * plugins without loading them (the Audio Units on macOS) the host lists
  * them all the same, and the Status column says "Not scanned" for those:
  * they are offered as inserts and first loaded when they are used.
+ * Removing such a plugin leaves its row, with the Status "Removed" and not
+ * offered, until its menu or a scan puts it back; Clear does that to all.
  *
  * The rows are drawn here (Rows): an entry the inserts cannot use - an
  * instrument, a plugin of a format not hosted, a file the scan skips - is
@@ -87,17 +89,12 @@ public:
         rescan.onClick = [this] { scanAllFormats(); };
         addAndMakeVisible (rescan);
         clear.setButtonText (TRANS ("Clear"));
-        clear.setTooltip (TRANS ("Forgets what the scans found, the skipped files included; Scan finds it again."));
-        clear.onClick = [this]
-        {
-            host->getList().clear();
-            host->getList().clearBlacklistedFiles();
-            host->syncWithInstalled();   // what the system lists is there again, not scanned
-        };
+        clear.setTooltip (TRANS ("Forgets what the scans found, the skipped files included, and takes every plugin off the insert menus; Scan brings them back."));
+        clear.onClick = [this] { host->clear(); };
         addAndMakeVisible (clear);
         remove.setButtonText (TRANS ("Remove"));
         remove.setTooltip (TRANS ("Takes the selected entries off the list; a skipped file is tried again by the next scan. "
-                                  "A plugin the system lists by itself is not scanned again."));
+                                  "A plugin the system lists by itself stays as removed and is not offered until it is put back."));
         remove.onClick = [this] { removeSelected(); };
         addChildComponent (remove);   // shown while something is selected
         scanFolders.setButtonText (TRANS ("Folders..."));
@@ -242,7 +239,8 @@ private:
                     case categoryColumn:     text = description->category.isNotEmpty() ? description->category : "-"; break;
                     case manufacturerColumn: text = description->manufacturerName; break;
                     case versionColumn:      text = description->version; break;
-                    case statusColumn:       text = audium::PluginHost::isScanned (*description) ? juce::String() : TRANS ("Not scanned"); break;
+                    case statusColumn:       text = owner.host->isRemoved (*description) ? TRANS ("Removed")
+                                                  : audium::PluginHost::isScanned (*description) ? juce::String() : TRANS ("Not scanned"); break;
                     default: break;
                 }
             }
@@ -456,9 +454,14 @@ private:
         const auto skipped = skippedFileAt (row);
 
         juce::PopupMenu menu;
-        menu.addItem (juce::PopupMenu::Item (TRANS ("Remove plug-in from list"))
-                          .setEnabled (! isScanning() && isRemovableAt (row))
-                          .setAction ([this, plugin, skipped] { removeEntry (plugin, skipped); }));
+        if (plugin && host->isRemoved (*plugin))
+            menu.addItem (juce::PopupMenu::Item (TRANS ("Put plug-in back on the list"))
+                              .setEnabled (! isScanning())
+                              .setAction ([this, plugin] { if (! isScanning()) host->restore (*plugin); }));
+        else
+            menu.addItem (juce::PopupMenu::Item (TRANS ("Remove plug-in from list"))
+                              .setEnabled (! isScanning() && isRemovableAt (row))
+                              .setAction ([this, plugin, skipped] { removeEntry (plugin, skipped); }));
         if (const auto file = fileOfRow (row); file.exists())   // not for a plugin whose file is not known (the system's own Audio Units)
             menu.addItem (juce::PopupMenu::Item (TRANS ("Show folder containing plug-in"))
                               .setAction ([file] { file.revealToUser(); }));
@@ -533,18 +536,21 @@ private:
             return;
 
         if (plugin)
-            host->getList().removeType (*plugin);
+        {
+            host->remove ({ *plugin });   // a plugin the system lists by itself stays, as removed
+        }
         else if (skipped.isNotEmpty())
+        {
             host->getList().removeFromBlacklist (skipped);   // the next scan tries it again
-        host->syncWithInstalled();   // a plugin the system lists by itself stays, not scanned
+            host->syncWithInstalled();                       // one the system lists by itself is back, not scanned
+        }
     }
 
-    /// Whether taking the row off the list changes anything: not for a plugin that is only there
-    /// because the system lists it, which would be back at once.
+    /// Whether taking the row off the list changes anything: not for a plugin that is removed already.
     bool isRemovableAt (int row) const
     {
         if (const auto* description = pluginAt (row))
-            return audium::PluginHost::isScanned (*description);
+            return ! host->isRemoved (*description);
         return skippedFileAt (row).isNotEmpty();
     }
 
@@ -564,16 +570,26 @@ private:
 
         // by what the rows are now: the list tells of each removal later, all at once
         const auto selected = table.getSelectedRows();
+        std::vector<juce::PluginDescription> plugins;
+        auto anySkipped = false;
         for (auto row = rows.getNumRows(); --row >= 0;)
         {
-            if (! selected.contains (row) || ! isRemovableAt (row))   // a not-scanned entry would be back at once
+            if (! selected.contains (row) || ! isRemovableAt (row))
                 continue;
             if (const auto* description = pluginAt (row))
-                host->getList().removeType (*description);
+            {
+                plugins.push_back (*description);
+            }
             else if (const auto skipped = skippedFileAt (row); skipped.isNotEmpty())
+            {
                 host->getList().removeFromBlacklist (skipped);
+                anySkipped = true;
+            }
         }
-        host->syncWithInstalled();   // a plugin the system lists by itself stays, not scanned
+        if (! plugins.empty())
+            host->remove (plugins);   // a plugin the system lists by itself stays, as removed
+        if (anySkipped)
+            host->syncWithInstalled();   // one the system lists by itself is back, not scanned
     }
 
     /// The rows as the table shows them: the host's list and what it skips, copied when either changed,
@@ -674,6 +690,8 @@ private:
                 usable = isOfferedAt (row);
                 if (description->isInstrument)
                     text << TRANS ("An instrument: listed, but only effects are used as inserts.");
+                else if (host->isRemoved (*description))
+                    text << TRANS ("Removed: not offered as an insert. Its menu puts it back on the list, and so does Scan.");
                 else if (! usable)
                     text << TRANS ("Not offered as an insert: ") << audium::PluginHost::describe (host->availabilityOf (*description)) << ".";
                 else if (! audium::PluginHost::isScanned (*description))
@@ -808,7 +826,9 @@ private:
         formatsToScan = std::move (formats);
         scannedBeforeScan = numScanned();
         scannedShown = scannedBeforeScan;
-        host->syncWithInstalled();   // what was installed since is scanned too
+        for (auto* format : formatsToScan)
+            host->restoreRemoved (format->getName());   // a scan brings back what was taken off the list
+        host->syncWithInstalled();                      // what was installed since is scanned too
         scanCancelled = false;
         scanOutcome.clear();
         scanNextFormat();
@@ -896,9 +916,10 @@ private:
         }
 
         using Availability = audium::PluginHost::Availability;
-        int effects = 0, instruments = 0, formatMissing = 0, needLoweredSecurity = 0, notScanned = 0;
+        int effects = 0, instruments = 0, formatMissing = 0, needLoweredSecurity = 0, notScanned = 0, removed = 0;
         for (const auto& description : host->getList().getTypes())
         {
+            if (host->isRemoved (description)) { ++removed; continue; }
             notScanned += audium::PluginHost::isScanned (description) ? 0 : 1;
             if (description.isInstrument) { ++instruments; continue; }
             switch (host->availabilityOf (description))
@@ -906,6 +927,7 @@ private:
                 case Availability::available:      ++effects; break;
                 case Availability::formatMissing:  ++formatMissing; break;
                 case Availability::disabled:       break;
+                case Availability::removed:        break;
                 case Availability::needsLoweredSecurity: ++needLoweredSecurity; break;
             }
         }
@@ -927,6 +949,8 @@ private:
             text << ", " << formatMissing << TRANS (" in a format not hosted here");
         if (needLoweredSecurity > 0)
             text << ", " << needLoweredSecurity << (needLoweredSecurity == 1 ? TRANS (" needs") : TRANS (" need")) << TRANS (" lowered security settings");
+        if (removed > 0)
+            text << ", " << removed << TRANS (" removed");
         if (skipped > 0)
             text << ", " << skipped << (skipped == 1 ? TRANS (" file skipped") : TRANS (" files skipped")) << TRANS (" (crashed, timed out or did not load when scanned)");
         status.setText (text, juce::dontSendNotification);

@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -75,6 +76,13 @@ class HostedEffect;
  * the scan worker (setChecksBeforeFirstLoad): the effect waits as a
  * loading placeholder meanwhile, and a plugin that takes the worker down
  * is skipped instead of taking the app down.
+ *
+ * What the user takes off the list (remove, clear) leaves it, unless the
+ * system lists the plugin by itself: such an entry would be back with the
+ * next look at what is installed, so it stays, marked as removed
+ * (isRemoved), and is not offered (Availability::removed) until it is put
+ * back (restore) or a scan puts all of them back. The marks are kept in
+ * the list file.
  */
 class PluginHost final : private juce::ChangeListener
 {
@@ -140,6 +148,19 @@ public:
     /// command that waits for its plugins does not).
     void setChecksBeforeFirstLoad (bool checks_) noexcept { checksBeforeFirstLoad = checks_; }
 
+    /// Message thread. Takes the plugins off the list. One the system lists by itself stays on it,
+    /// marked as removed and not offered any more; the others are gone until a scan finds them again.
+    void remove (const std::vector<juce::PluginDescription>& descriptions);
+    /// Whether the entry is one the user removed and the system still lists.
+    bool isRemoved (const juce::PluginDescription& description) const { return removed.count (description.fileOrIdentifier) > 0; }
+    /// Message thread. Puts a removed plugin back, as it was listed before.
+    void restore (const juce::PluginDescription& description);
+    /// Message thread. Puts every removed plugin back (one format's with `onlyFormat`), as a scan does first.
+    void restoreRemoved (const juce::String& onlyFormat = {});
+    /// Message thread. Forgets what the scans found, the skipped files included. What the system lists
+    /// by itself is on the list again, not scanned and removed; elsewhere the list is empty.
+    void clear();
+
     juce::AudioPluginFormatManager& getFormats() noexcept { return formats; }
     juce::KnownPluginList& getList() noexcept { return list; }
     juce::File getListFile() const;
@@ -183,6 +204,7 @@ public:
         available,
         formatMissing,          ///< a format this process does not host
         disabled,               ///< plugins are turned off here
+        removed,                ///< the user took it off the list
         needsLoweredSecurity    ///< the system would ask the user to lower the security settings, and that is not allowed here
     };
     Availability availabilityOf (const juce::PluginDescription& description) const;
@@ -299,7 +321,9 @@ private:
     };
     bool needsCheckBeforeLoad (const juce::PluginDescription& description) const;
     void requestChecked (HostedEffect& effect) const;   // asynchronously: checked, then loaded, the effect adopts what comes
+    std::unique_ptr<juce::XmlElement> listAsXml() const;   // the list, its blacklist and the removed marks
     juce::String listAsText() const;
+    bool pruneRemoved();   // marks without an entry go; true when one did
     void registerIntoAttached();
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
 
@@ -314,6 +338,7 @@ private:
     juce::File dataDirectory;
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
+    std::set<juce::String> removed;   // fileOrIdentifier of the listed entries the user removed
     mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
     bool enabled = true;
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner

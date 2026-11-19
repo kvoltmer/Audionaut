@@ -202,12 +202,15 @@ that would raise it, and it is asked once more by the next scan.
 Entries the inserts cannot use are greyed out: the skipped files,
 instruments, and plugins in a format Audionaut does not host here. Click an
 entry and the lines under the list say what it is and, for a greyed one,
-why it is not offered. **Remove**, which appears while scanned or skipped
-entries are selected, takes them off the list (a skipped file is then tried
-again by the next scan; an Audio Unit goes back to not scanned), **Clear**
-forgets everything the scans found, and a click on a column title sorts by
-it. On Windows and Linux a **Folders…** button opens a list of folders to
-scan besides each format's standard ones; `scan-plugins` looks in them too.
+why it is not offered. **Remove**, which appears while entries are selected,
+takes them off the list; a skipped file is then tried again by the next
+scan. An Audio Unit stays in the list, since macOS keeps reporting it, but
+with the status *Removed*: it is greyed out and no longer offered as an
+insert until you right-click it and choose **Put plug-in back on the
+list**. **Clear** forgets everything the scans found and removes every
+plugin in this way; **Scan** puts all removed plugins back. A click on a
+column title sorts by it. On Windows and Linux a **Folders…** button opens
+a list of folders to scan besides each format's standard ones; `scan-plugins` looks in them too.
 Scanning runs while you work.
 
 The list is kept in Audionaut's data folder, not in the project, so it is

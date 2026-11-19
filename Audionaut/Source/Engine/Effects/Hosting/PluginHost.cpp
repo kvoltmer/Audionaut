@@ -65,24 +65,29 @@ PluginHost::~PluginHost()
     checks->pool.removeAllJobs (true, 60000);   // a check under way gives up its plugin
 }
 
+namespace
+{
+bool isAmong (const std::vector<juce::PluginDescription>& installed, const juce::PluginDescription& description)
+{
+    return std::any_of (installed.begin(), installed.end(), [&description] (const juce::PluginDescription& other)
+    {
+        return other.pluginFormatName == description.pluginFormatName && other.fileOrIdentifier == description.fileOrIdentifier;
+    });
+}
+}
+
 bool PluginHost::syncWithInstalled()
 {
     if (! installedSource)
         return false;
 
     const auto installed = installedSource();
-    const auto isInstalled = [&installed] (const juce::PluginDescription& description)
-    {
-        return std::any_of (installed.begin(), installed.end(), [&description] (const juce::PluginDescription& other)
-        {
-            return other.pluginFormatName == description.pluginFormatName && other.fileOrIdentifier == description.fileOrIdentifier;
-        });
-    };
 
     auto changed = false;
     for (const auto& description : list.getTypes())   // a copy
     {
-        if (! isScanned (description) && ! isInstalled (description))
+        // a removed entry is only kept because the system lists the plugin
+        if ((! isScanned (description) || isRemoved (description)) && ! isAmong (installed, description))
         {
             list.removeType (description);
             changed = true;
@@ -109,9 +114,63 @@ bool PluginHost::syncWithInstalled()
             refreshed = true;
         }
     }
-    if (refreshed)
+    const auto pruned = pruneRemoved();
+    if (refreshed || pruned)
         list.sendChangeMessage();   // replacing an entry is not news to the list by itself
-    return changed || refreshed;
+    return changed || refreshed || pruned;
+}
+
+bool PluginHost::pruneRemoved()
+{
+    const auto before = removed.size();
+    for (auto it = removed.begin(); it != removed.end();)
+        it = list.getTypeForFile (*it) == nullptr ? removed.erase (it) : std::next (it);
+    return removed.size() != before;
+}
+
+void PluginHost::remove (const std::vector<juce::PluginDescription>& descriptions)
+{
+    const auto installed = installedSource ? installedSource() : std::vector<juce::PluginDescription>();
+    for (const auto& description : descriptions)
+    {
+        if (isAmong (installed, description) && list.getTypeForFile (description.fileOrIdentifier) != nullptr)
+            removed.insert (description.fileOrIdentifier);   // it would be back as installed: it stays, marked
+        else
+            list.removeType (description);
+    }
+    pruneRemoved();
+    list.sendChangeMessage();
+}
+
+void PluginHost::restore (const juce::PluginDescription& description)
+{
+    if (removed.erase (description.fileOrIdentifier) > 0)
+        list.sendChangeMessage();
+}
+
+void PluginHost::restoreRemoved (const juce::String& onlyFormat)
+{
+    const auto before = removed.size();
+    if (onlyFormat.isEmpty())
+        removed.clear();
+    else
+        for (const auto& description : list.getTypes())
+            if (description.pluginFormatName == onlyFormat)
+                removed.erase (description.fileOrIdentifier);
+
+    if (removed.size() != before)
+        list.sendChangeMessage();
+}
+
+void PluginHost::clear()
+{
+    list.clear();
+    list.clearBlacklistedFiles();
+    removed.clear();
+    syncWithInstalled();   // what the system lists is there again, not scanned
+    for (const auto& description : list.getTypes())
+        removed.insert (description.fileOrIdentifier);
+    list.sendChangeMessage();
 }
 
 void PluginHost::finishScan()
@@ -280,6 +339,10 @@ bool PluginHost::loadList()
         return false;
 
     list.recreateFromXml (*xml);
+    removed.clear();
+    for (const auto* mark : xml->getChildWithTagNameIterator ("REMOVED"))
+        removed.insert (mark->getStringAttribute ("id"));
+    pruneRemoved();
     persisted = listAsText();   // before the pedal's verdicts: those are news the file does not have
     // a scan this process did not survive: the file it was on goes on the blacklist
     juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, getDeadMansPedalFile());
@@ -292,7 +355,7 @@ bool PluginHost::saveList() const
     if (! file.getParentDirectory().createDirectory())
         return false;
 
-    auto xml = list.createXml();
+    auto xml = listAsXml();
     if (xml == nullptr || ! xml->writeTo (file))
         return false;
 
@@ -305,9 +368,18 @@ bool PluginHost::saveListIfChanged() const
     return listAsText() == persisted || saveList();
 }
 
-juce::String PluginHost::listAsText() const
+std::unique_ptr<juce::XmlElement> PluginHost::listAsXml() const
 {
     auto xml = list.createXml();
+    if (xml != nullptr)
+        for (const auto& fileOrIdentifier : removed)   // a tag the list itself passes over when it reads the file
+            xml->createNewChildElement ("REMOVED")->setAttribute ("id", fileOrIdentifier);
+    return xml;
+}
+
+juce::String PluginHost::listAsText() const
+{
+    auto xml = listAsXml();
     return xml != nullptr ? xml->toString() : juce::String();
 }
 
@@ -324,6 +396,8 @@ PluginHost::Availability PluginHost::availabilityOf (const juce::PluginDescripti
         return Availability::formatMissing;
     if (! enabled)
         return Availability::disabled;
+    if (isRemoved (description))
+        return Availability::removed;
     if (! isLoweredSecurityAllowed() && asksForLoweredSecurity && asksForLoweredSecurity (description))
         return Availability::needsLoweredSecurity;
     return Availability::available;
@@ -336,6 +410,7 @@ juce::String PluginHost::describe (Availability availability)
         case Availability::available:      return {};
         case Availability::formatMissing:  return TRANS ("its format is not hosted on this platform");
         case Availability::disabled:       return TRANS ("plugins are turned off; Manage Plugins turns them on");
+        case Availability::removed:        return TRANS ("it was removed from the plugin list; Manage Plugins puts it back");
         case Availability::needsLoweredSecurity:
             return TRANS ("macOS only loads it with lowered security settings, which a command run without the app cannot ask for");
     }
@@ -795,7 +870,8 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
                                             const juce::String& onlyFormat)
 {
     ScanResult result;
-    syncWithInstalled();   // what was installed since is scanned too
+    restoreRemoved (onlyFormat);   // a scan brings back what was taken off the list
+    syncWithInstalled();           // what was installed since is scanned too
     const auto before = numScanned();
     const auto blacklistedBefore = list.getBlacklistedFiles().size();
     const auto pedal = getDeadMansPedalFile();

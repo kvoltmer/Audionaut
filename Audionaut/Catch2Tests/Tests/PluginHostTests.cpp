@@ -893,6 +893,209 @@ SCENARIO ("the plugin host lists what the system knows to be installed without a
     }
 }
 
+SCENARIO ("a plugin the user removed stays off the menus until it is put back", "[engine][effects][hosting][installed]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    const auto named = [] (const juce::String& name, int uid)
+    {
+        auto options = gainIn ("TestA", uid);
+        options.name = name;
+        return options;
+    };
+    const auto one = TestPluginInstance::describe (named ("One", 0x0101));
+    const auto two = TestPluginInstance::describe (named ("Two", 0x0202));
+    const auto ghost = TestPluginInstance::describe (named ("Ghost", 0x0303));   // installed, but no scan finds it
+
+    GIVEN ("a host whose system lists two plugins, and whose scan finds one more")
+    {
+        PluginHost host (temp.folder, false);
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { named ("One", 0x0101), named ("Two", 0x0202) }));
+        auto installed = std::make_shared<std::vector<juce::PluginDescription>> (std::vector { one, ghost });
+        host.setInstalledSource ([installed] { return *installed; });
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+        host.syncWithInstalled();
+
+        WHEN ("a plugin that is listed without a scan is removed")
+        {
+            host.remove ({ ghost });
+
+            THEN ("it stays listed, as removed, and is not offered")
+            {
+                REQUIRE (host.getList().getNumTypes() == 2);
+                const auto listed = host.findByTypeId ("testa:00000303");
+                REQUIRE (listed.has_value());
+                REQUIRE (host.isRemoved (*listed));
+                REQUIRE (host.availabilityOf (*listed) == PluginHost::Availability::removed);
+                REQUIRE (PluginHost::describe (PluginHost::Availability::removed).isNotEmpty());
+                REQUIRE_FALSE (host.findSubstitute (ghost.name, ghost.manufacturerName).has_value());
+
+                host.registerInto (*registry, PluginHost::Mode::full);
+                REQUIRE_FALSE (registry->hasType ("testa:00000303"));
+                REQUIRE (registry->hasType ("testa:00000101"));
+            }
+
+            THEN ("a look at what is installed does not bring it back")
+            {
+                REQUIRE_FALSE (host.syncWithInstalled());
+                REQUIRE (host.isRemoved (ghost));
+            }
+
+            THEN ("a host that reads the saved list has it as removed too")
+            {
+                REQUIRE (host.saveList());
+                PluginHost second (temp.folder, false);
+                second.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { named ("One", 0x0101) }));
+                REQUIRE (second.loadList());
+                REQUIRE (second.getList().getNumTypes() == 2);
+                REQUIRE (second.isRemoved (ghost));
+                REQUIRE_FALSE (second.isRemoved (one));
+                REQUIRE (second.saveListIfChanged());   // nothing to write, and the marks are still there
+                PluginHost third (temp.folder, false);
+                REQUIRE (third.loadList());
+                REQUIRE (third.isRemoved (ghost));
+            }
+
+            AND_WHEN ("it is put back")
+            {
+                host.restore (ghost);
+
+                THEN ("it is offered again, not scanned as before")
+                {
+                    const auto listed = host.findByTypeId ("testa:00000303");
+                    REQUIRE_FALSE (host.isRemoved (*listed));
+                    REQUIRE_FALSE (PluginHost::isScanned (*listed));
+                    host.registerInto (*registry, PluginHost::Mode::full);
+                    REQUIRE (registry->hasType ("testa:00000303"));
+                }
+            }
+
+            AND_WHEN ("it is no longer installed")
+            {
+                installed->pop_back();
+                REQUIRE (host.syncWithInstalled());
+
+                THEN ("it leaves the list, and its mark with it")
+                {
+                    REQUIRE (host.getList().getNumTypes() == 1);
+                    REQUIRE_FALSE (host.isRemoved (ghost));
+                }
+            }
+
+            AND_WHEN ("the host scans")
+            {
+                host.scanAll();
+
+                THEN ("the scan put it back")
+                {
+                    REQUIRE (host.findByTypeId ("testa:00000303").has_value());
+                    REQUIRE_FALSE (host.isRemoved (ghost));
+                }
+            }
+        }
+
+        WHEN ("the host scanned")
+        {
+            host.scanAll();
+            REQUIRE (host.getList().getNumTypes() == 3);
+            const auto scannedOne = *host.findByTypeId ("testa:00000101");
+            const auto scannedTwo = *host.findByTypeId ("testa:00000202");
+            REQUIRE (PluginHost::isScanned (scannedOne));
+
+            AND_WHEN ("a scanned plugin the system lists is removed and put back")
+            {
+                host.remove ({ scannedOne });
+
+                THEN ("it keeps what the scan said of it")
+                {
+                    REQUIRE (host.isRemoved (scannedOne));
+                    REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                    REQUIRE_FALSE (host.syncWithInstalled());
+
+                    host.restore (scannedOne);
+                    REQUIRE_FALSE (host.isRemoved (scannedOne));
+                    REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                    REQUIRE (host.canCreate (scannedOne));
+                }
+            }
+
+            AND_WHEN ("a plugin only the scan found is removed")
+            {
+                host.remove ({ scannedTwo });
+
+                THEN ("it is off the list")
+                {
+                    REQUIRE (host.getList().getNumTypes() == 2);
+                    REQUIRE_FALSE (host.findByTypeId ("testa:00000202").has_value());
+                    REQUIRE_FALSE (host.isRemoved (scannedTwo));
+                }
+            }
+
+            AND_WHEN ("the list is cleared")
+            {
+                host.getList().addToBlacklist ("/somewhere/Crashed.plugin");
+                host.clear();
+
+                THEN ("what the system lists is there, not scanned and removed; the rest is forgotten")
+                {
+                    REQUIRE (host.getList().getNumTypes() == 2);
+                    REQUIRE (host.getList().getBlacklistedFiles().isEmpty());
+                    for (const auto& description : host.getList().getTypes())
+                    {
+                        REQUIRE_FALSE (PluginHost::isScanned (description));
+                        REQUIRE (host.isRemoved (description));
+                        REQUIRE_FALSE (host.canCreate (description));
+                    }
+                    REQUIRE_FALSE (host.syncWithInstalled());
+                }
+
+                AND_WHEN ("the host scans again")
+                {
+                    host.scanAll();
+
+                    THEN ("everything is back")
+                    {
+                        REQUIRE (host.getList().getNumTypes() == 3);
+                        for (const auto& description : host.getList().getTypes())
+                            REQUIRE_FALSE (host.isRemoved (description));
+                        REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00000101")));
+                    }
+                }
+            }
+        }
+    }
+
+    GIVEN ("a host whose system lists nothing by itself")
+    {
+        PluginHost host (temp.folder, false);
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { named ("One", 0x0101), named ("Two", 0x0202) }));
+        host.scanAll();
+        REQUIRE (host.getList().getNumTypes() == 2);
+
+        WHEN ("a plugin is removed")
+        {
+            host.remove ({ *host.findByTypeId ("testa:00000101") });
+
+            THEN ("it is off the list")
+            {
+                REQUIRE (host.getList().getNumTypes() == 1);
+            }
+        }
+
+        WHEN ("the list is cleared")
+        {
+            host.clear();
+
+            THEN ("it is empty")
+            {
+                REQUIRE (host.getList().getNumTypes() == 0);
+            }
+        }
+    }
+}
+
 SCENARIO ("a not-scanned plugin that runs in the host's process is checked by the scanner before its first load", "[engine][effects][hosting][installed]")
 {
     MessageThread messageThread;
