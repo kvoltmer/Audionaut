@@ -519,28 +519,34 @@ the one-gesture crossfade UX on top:
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):
   let `FloatingPanel` switch resizability on, or reopen the window on arrival.
-- [ ] **Tell hosted plugins when a render is offline.** `HostedEffect` prepares
-  a plugin with `setRateAndBufferSizeDetails` and `prepareToPlay` only;
-  `setNonRealtime` is never called, so in a bounce (export, stem separation)
-  a plugin behaves as in live playback: no higher-quality offline mode, and
-  one that drops work to keep up with a callback may do so in the file. Set
-  the flag for the length of the offline render (`ScopedOfflineRender` /
-  `RenderTiming::isOffline` know when) and clear it afterwards; the plugin
-  API wants it changed outside `processBlock`, some plugins want a new
-  prepare after it. With it, a test that bounces through a hosted plugin -
-  none does today.
-- [ ] **Give hosted plugins a playhead.** No `setPlayHead` in the hosting
-  code: a plugin gets no tempo, position, time signature or playing state,
-  live or offline, so tempo-synced delays and LFOs run free. Needs an
-  `AudioPlayHead` fed from the scheduler's position and the project tempo
-  per block, read on the audio thread without locks, and right in a bounce
-  too (the position of the block being rendered, not the transport's).
+- [x] **Tell hosted plugins when a render is offline.** Done: for a project
+  bounce the exporter tells the mixer planner before it prepares for the
+  bounce and again after it (`MixerPlanner::setOfflineRendering`), the
+  planner tells the effects in that prepare, and a `HostedEffect` passes it
+  on as the plugin's non-realtime flag - plus, for an Audio Unit, the
+  unit's offline render property, which JUCE's wrapper does not set (few
+  units have it: of Apple's effects only AURoundTripAAC; the others refuse
+  it and render as ever). Only a VST3 is prepared again for it. A clip
+  bounce (one clip's export, a stem separation's render) runs no insert
+  and leaves the plugins alone. Not tried by ear with a plugin that
+  computes differently offline.
+- [x] **Give hosted plugins a playhead.** Done: the scheduler publishes
+  where the transport is for each block (`RenderTransport`, one per engine:
+  playing, position in samples, seconds and quarter notes, tempo, loop)
+  before the renderer runs it, in the device callback and in a bounce
+  alike, and a `HostedEffect` answers the plugin's playhead from it. Left
+  out: a time signature and bars (the project has none), the recording
+  flag, and the latency in front of a plugin - the position is the
+  transport's, a plugin behind latent inserts hears the signal that much
+  later.
 - [ ] **Export Audio while a plugin is still loading.** The CLI and MCP
   verbs wait for pending loads before they render
-  (`ProjectSession::settlePlugins`); the Export Audio dialog does not, so a
+  (`ProjectSession::settlePlugins`); the Export Audio dialog
+  (`ExportUtil::exportAudio`) and the stem separation dialog do not, so a
   bounce started right after opening a project can render without a plugin
-  that is on its way. To decide: wait with a progress note, or refuse with
-  a message until the slots are loaded.
+  that is on its way (a loading slot passes its audio through). To decide:
+  wait with a progress note, or refuse with a message until the slots are
+  loaded.
 - [x] **Scan cost: one process per plugin file.** Done: one worker serves
   file after file over a named pipe (`scan-plugin --serve`), one file on its
   way at a time, so the worker that dies died of that file and the next file

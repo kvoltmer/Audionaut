@@ -408,9 +408,10 @@ void PluginHost::registerInto (EffectRegistry& registry, Mode mode) const
             formatOfName[key] = description.pluginFormatName;
 
         fresh.insert (info.id);
-        registry.add (info, [this, description, info, mode, arrivals = registry.getPendingArrivals()]
+        registry.add (info, [this, description, info, mode, arrivals = registry.getPendingArrivals(),
+                             transport = std::shared_ptr<const RenderTransport> (registry.getRenderTransport())]
         {
-            return createEffect (description, info, mode, arrivals);
+            return createEffect (description, info, mode, arrivals, transport);
         });
     }
 
@@ -476,12 +477,14 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
 }
 
 std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription& description, const EffectTypeInfo& type, Mode mode,
-                                                  std::shared_ptr<std::atomic<int>> arrivalCount) const
+                                                  std::shared_ptr<std::atomic<int>> arrivalCount,
+                                                  std::shared_ptr<const RenderTransport> renderTransport) const
 {
     if (mode == Mode::catalogueOnly)
     {
         auto effect = std::make_unique<HostedEffect> (type, description, nullptr, "not loaded in this session");
         effect->setArrivalCount (std::move (arrivalCount));   // for a load() later
+        effect->setRenderTransport (std::move (renderTransport));
         return effect;
     }
 
@@ -490,6 +493,7 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
     {
         auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
         effect->setArrivalCount (std::move (arrivalCount));
+        effect->setRenderTransport (std::move (renderTransport));
         requestChecked (*effect);
         return effect;
     }
@@ -500,6 +504,7 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
         // the plugin comes through the message queue: a placeholder stands in until then
         auto effect = std::make_unique<HostedEffect> (type, description, HostedEffect::Loading {});
         effect->setArrivalCount (std::move (arrivalCount));
+        effect->setRenderTransport (std::move (renderTransport));
         requestInstance (*effect);
         return effect;
     }
@@ -510,6 +515,7 @@ std::unique_ptr<Effect> PluginHost::createEffect (const juce::PluginDescription&
         error = "the plugin could not be loaded";
     auto effect = std::make_unique<HostedEffect> (type, description, std::move (instance), error);
     effect->setArrivalCount (std::move (arrivalCount));
+    effect->setRenderTransport (std::move (renderTransport));
     return effect;
 }
 

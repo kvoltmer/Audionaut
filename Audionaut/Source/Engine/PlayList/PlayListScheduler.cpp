@@ -546,6 +546,38 @@ bool PlayListScheduler::isPlaying() const
     return false;
 }
 
+void PlayListScheduler::publishRenderTransport(bool playing, const TransportLoop::LoopResult* loopResult) noexcept
+{
+    if (renderTransport == nullptr)
+        return;
+
+    const auto loopRange = transportLoop->getProcessedLoopPositionRange(audium::clocks);
+
+    // The block in which the loop wraps starts before the loop's end, and
+    // that is its position. The transport's is the loop's start by then:
+    // processLoop() moves it there, where the clips after the wrap are
+    // scheduled from.
+    auto positionClocks = data.transportPositionClocks;
+    if (loopResult != nullptr && loopResult->loopEvent) {
+        const auto untilLoopClocks = loopResult->context == audium::seconds
+                                   ? tempoProvider->secondsToClocks(loopResult->timeUntilLoop)
+                                   : loopResult->timeUntilLoop;
+        positionClocks = loopRange.getEnd() - untilLoopClocks;
+    }
+    const auto positionSeconds = tempoProvider->clocksToSeconds(positionClocks);
+
+    RenderTransport::Block block;
+    block.playing = playing;
+    block.positionSeconds = positionSeconds;
+    block.positionSamples = static_cast<std::int64_t>(std::llround(positionSeconds * externalSampleRate));
+    block.positionBeats = TempoProvider::clocksToBeats(positionClocks);
+    block.tempo = tempoProvider->getTempo();
+    block.looping = transportLoop->isProcessedLoopActive() && ! loopRange.isEmpty();
+    block.loopStartBeats = TempoProvider::clocksToBeats(loopRange.getStart());
+    block.loopEndBeats = TempoProvider::clocksToBeats(loopRange.getEnd());
+    renderTransport->publish(block);
+}
+
 double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::clocks) {
@@ -836,6 +868,11 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
 
     moveTransportTo(lastPosition);
     stopPlaying();
+
+    // the last block published was the bounce's: playing, at its end. The
+    // transport stands where it stood before, and that is what a plugin
+    // asking between two renders is told
+    publishRenderTransport(false, nullptr);
 
     return written;
 }

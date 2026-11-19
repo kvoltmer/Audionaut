@@ -138,6 +138,12 @@ window included. It takes a moment longer to appear after you add it (the
 slot passes the signal through until it is there), and a plugin that
 crashes takes down only that service, not Audionaut.
 
+A plugin is told where the transport is: whether it plays, the position,
+the project's tempo and the loop. A delay or modulation set to note values
+therefore follows the project's tempo, in playback and in an export alike.
+A project has no time signature, so a plugin that counts bars uses its own
+default.
+
 Plugins are on unless you turn them off: untick **Plugins enabled** above
 the Manage Plugins list, and Audionaut offers no plugin as an insert and
 loads none, the list cannot be scanned, and a project that uses a plugin

@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/Effects/Effect.h"
+#include "Engine/Playback/RenderTransport.h"
 
 namespace audium
 {
@@ -47,6 +48,21 @@ namespace audium
  * reports (AudioProcessorListener) can come from any thread: they set
  * flags and counters, and a latency change reaches onLatencyChanged on the
  * message thread without allocating where it was reported.
+ *
+ * The plugin's playhead answers from the engine's RenderTransport, when the
+ * effect was given one: playing or not, the position of the block being
+ * rendered in samples, seconds and quarter notes, the tempo and the loop -
+ * what a tempo-synced delay or LFO runs by, in playback and in a bounce.
+ * The project has no time signature, so none is reported, nor bars. The
+ * position is the transport's: a plugin behind latent inserts hears the
+ * signal later than that by their latency.
+ *
+ * A bounce is announced to the plugin (setOfflineRendering): it may then
+ * take the time it needs, choose a better and slower way to compute, and
+ * need not drop work to keep up with a device. The plugin is told through
+ * its format's own means - the non-realtime flag, and for an Audio Unit
+ * the offline render property, which the flag alone does not reach. A
+ * VST3 is prepared again for it, since it reads the mode when it is set up.
  *
  * What the user does in the plugin's own window is the plugin's to report:
  * getPluginChangeCount() moves with every such report, isGestureOpen() says
@@ -93,6 +109,10 @@ public:
     void setArrivalCount (std::shared_ptr<std::atomic<int>> count) { arrivalCount = std::move (count); }
     const std::shared_ptr<std::atomic<int>>& getArrivalCount() const noexcept { return arrivalCount; }
 
+    /// Message thread, before the effect enters a plan: where the plugin's playhead reads the transport
+    /// from (the engine's, see EffectRegistry::getRenderTransport). Without one the plugin has no playhead.
+    void setRenderTransport (std::shared_ptr<const RenderTransport> transport);
+
     const juce::PluginDescription& getDescription() const noexcept { return description; }
     juce::AudioPluginInstance* getInstance() const noexcept { return instance.get(); }
     /// Whether the plugin is there (running or refusing the layout); false for a placeholder of either kind.
@@ -109,6 +129,8 @@ public:
     juce::uint32 getHostEditCount() const noexcept { return hostEdits; }
 
     void prepare (double sampleRate, int maxBlockSize, int numChannels) override;
+    void setOfflineRendering (bool offline) override;
+    bool isOfflineRendering() const noexcept { return offlineRendering; }
     void release() override;
     void reset() noexcept override;
     void process (juce::dsp::AudioBlock<float>& block) noexcept override;
@@ -135,6 +157,7 @@ private:
     static std::string blobOf (const json& state);
 
     void takeInstance (std::unique_ptr<juce::AudioPluginInstance> created);
+    void tellPluginRenderMode();   // offline or live, by the format's means
 
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override;
     void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override;
@@ -142,11 +165,21 @@ private:
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details) override;
     void handleAsyncUpdate() override;   // message thread: a latency change the plugin reported
 
+    /// What the plugin asks the host about the transport, answered from the engine's RenderTransport.
+    class PlayHead final : public juce::AudioPlayHead
+    {
+    public:
+        juce::Optional<PositionInfo> getPosition() const override;
+        std::shared_ptr<const RenderTransport> transport;
+    };
+
     juce::PluginDescription description;
+    PlayHead playHead;   // before the instance, which holds a pointer to it
     std::unique_ptr<juce::AudioPluginInstance> instance;
     std::atomic<Status> status;   // read on the render thread, written on the message thread
     juce::String error;
-    bool prepareNeeded = false;   // message thread: the plugin arrived into a slot prepared without it
+    bool prepareNeeded = false;   // message thread: the plugin arrived into a slot prepared without it, or the render mode changed
+    bool offlineRendering = false;   // message thread: the renders to come are a bounce's
 
     // the parameter table: the infos point into these, which live as long as the effect
     std::vector<std::string> ids, names, units;

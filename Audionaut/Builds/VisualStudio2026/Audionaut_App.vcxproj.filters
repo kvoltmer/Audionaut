@@ -5244,6 +5244,9 @@
     <ClInclude Include="..\..\Source\Engine\Playback\AudioBusRenderer.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Playback\RenderTransport.h">
+      <Filter>Audionaut\Source\Engine\Playback</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Playback\RenderLoadMeter.h">
       <Filter>Audionaut\Source\Engine\Playback</Filter>
     </ClInclude>

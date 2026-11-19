@@ -465,6 +465,8 @@
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.h"/>
+          <FILE id="RndTrn" name="RenderTransport.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderTransport.h"/>
           <FILE id="RLdMtH" name="RenderLoadMeter.h" compile="0" resource="0"
                 file="Source/Engine/Playback/RenderLoadMeter.h"/>
           <FILE id="RThPlC" name="RenderThreadPool.cpp" compile="1" resource="0"

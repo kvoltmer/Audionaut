@@ -91,7 +91,10 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
     // container, which gets the planner right after its construction. The
     // built-ins first, then the plugins the host knows, which it keeps
     // registering as its list changes
-    auto effectRegistry             = std::make_shared<EffectRegistry>();
+    // where the transport is for the block being rendered: the scheduler
+    // publishes it, the plugins the registry creates read it
+    auto renderTransport            = std::make_shared<RenderTransport>();
+    auto effectRegistry             = std::make_shared<EffectRegistry>(renderTransport);
     effectRegistry->addBuiltInEffects();
     if (pluginHost != nullptr)
         pluginHost->attach(effectRegistry, pluginMode);
@@ -131,7 +134,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                           voiceSourceContainer,
                                                                           playback,
                                                                           audioBusInterface,
-                                                                          transportLoop);
+                                                                          transportLoop,
+                                                                          renderTransport);
     
     auto recordingActionHandler     = std::make_shared<RecordingActionHandler>(audioTrackContainer,
                                                                                audioResourceContainer,

@@ -107,7 +107,7 @@ public:
 
     //==============================================================================
     const juce::String getName() const override { return options.name; }
-    void prepareToPlay (double, int) override { ++prepareCount; }
+    void prepareToPlay (double, int) override { ++prepareCount; preparedOffline = isNonRealtime(); }
     void releaseResources() override { ++releaseCount; }
     double getTailLengthSeconds() const override { return options.tail; }
     bool acceptsMidi() const override { return false; }
@@ -138,6 +138,12 @@ public:
         buffer.applyGain (mute->get() >= 0.5f ? 0.0f : gain->get());
         ++processCount;
         lastNumChannels = buffer.getNumChannels();
+        (isNonRealtime() ? offlineBlocks : liveBlocks) += 1;
+
+        // what the host says about the transport, asked where a plugin asks: inside the block
+        if (auto* playHead = getPlayHead())
+            if (const auto position = playHead->getPosition())
+                positions.push_back (*position);
     }
 
     /// "gain|mute|generation": deterministic for a given state.
@@ -171,6 +177,9 @@ public:
     int generation = 0;
     int prepareCount = 0, releaseCount = 0, processCount = 0, setStateCount = 0;
     int lastNumChannels = 0;
+    bool preparedOffline = false;            ///< the non-realtime flag as the last prepareToPlay found it
+    int offlineBlocks = 0, liveBlocks = 0;   ///< blocks processed with the flag set, and without
+    std::vector<juce::AudioPlayHead::PositionInfo> positions;   ///< one per block the host gave a position for
 };
 
 /**

@@ -113,6 +113,17 @@ public:
      */
     void prepare (double sampleRate, int maxBlockSize);
 
+    /**
+     * Message thread, before the prepare() of a bounce and again before the
+     * one after it: whether the renders to come are offline. The effects
+     * hear of it in that prepare (Effect::setOfflineRendering), which builds
+     * a plan even for the same rate and block size, and prepares again the
+     * slots whose effect asks for it - a plugin whose format reads the mode
+     * only when it is prepared.
+     */
+    void setOfflineRendering (bool offline) noexcept { offlineRendering = offline; }
+    bool isOfflineRendering() const noexcept { return offlineRendering; }
+
     double getSampleRate() const noexcept { return sampleRate; }
     int getMaxBlockSize() const noexcept { return maxBlockSize; }
 
@@ -155,6 +166,8 @@ private:
 
     double sampleRate = 0.0;
     int maxBlockSize = 0;
+    bool offlineRendering = false;   // what the next prepare() tells the effects
+    bool preparedOffline = false;    // what the last one told them
     int batchDepth = 0;
     bool rebuildPending = false;
     bool prepareDeferred = false;   // a slot waits outside the plan for its new format

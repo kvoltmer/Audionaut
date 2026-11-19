@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Effect.h"
+#include "Engine/Playback/RenderTransport.h"
 
 namespace audium
 {
@@ -34,7 +35,13 @@ class EffectRegistry
 public:
     using Factory = std::function<std::unique_ptr<Effect>()>;
 
-    EffectRegistry() = default;
+    /// `renderTransport`: the engine's, which every plugin created here reads its playhead from; a
+    /// registry made without one (a test's) gets one of its own, which nobody publishes to.
+    explicit EffectRegistry (std::shared_ptr<RenderTransport> renderTransport_ = std::make_shared<RenderTransport>()) :
+        renderTransport (std::move (renderTransport_))
+    {
+        jassert (renderTransport != nullptr);
+    }
 
     /// Registers a type; a second registration of the same id replaces the first.
     void add (EffectTypeInfo type, Factory factory);
@@ -66,11 +73,16 @@ public:
     /// none of them should wait for another's plugins.
     const std::shared_ptr<std::atomic<int>>& getPendingArrivals() const noexcept { return pendingArrivals; }
 
+    /// Where the transport is for the block being rendered by this registry's engine: handed to the
+    /// effects that tell a plugin about it (see HostedEffect::setRenderTransport).
+    const std::shared_ptr<RenderTransport>& getRenderTransport() const noexcept { return renderTransport; }
+
 private:
     std::vector<EffectTypeInfo> types;
     std::vector<Factory> factories;
     SubstituteResolver substituteResolver;
     std::shared_ptr<std::atomic<int>> pendingArrivals = std::make_shared<std::atomic<int>> (0);   // shared with the creations in flight
+    std::shared_ptr<RenderTransport> renderTransport;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EffectRegistry)
 };
