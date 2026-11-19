@@ -85,12 +85,14 @@ void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
     // block size, smaller as well as larger (a bounce's, the device's own
     // after it), or another rate makes every slot's format stale and the
     // rebuild prepares them again - in place: nothing renders now
-    const auto unchanged = sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_;
+    // ... as does the change between a bounce and live rendering
+    const auto unchanged = sampleRate == sampleRate_ && maxBlockSize == maxBlockSize_ && preparedOffline == offlineRendering;
     if (unchanged && plans->getCurrent() != nullptr)
         return;
 
     maxBlockSize = maxBlockSize_;
     sampleRate = sampleRate_;
+    preparedOffline = offlineRendering;
     rebuild (true);
 }
 
@@ -317,6 +319,11 @@ void MixerPlanner::collect (InsertChain& chain, int numChannels, std::vector<Eff
     for (auto i = 0; i < chain.size(); ++i)
     {
         auto slot = chain.getSlot (i);
+
+        // offline or live, as the last prepare() said: told where nothing can
+        // be rendering the effect - in that prepare, or to a slot new to the plans
+        if (nothingRenders || ! slot->isInAPlan())
+            slot->getEffect().setOfflineRendering (preparedOffline);
 
         if (prepared && ! slot->isPreparedFor (sampleRate, maxBlockSize, numChannels))
         {

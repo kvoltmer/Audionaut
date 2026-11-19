@@ -57,6 +57,13 @@ namespace audium
  * position is the transport's: a plugin behind latent inserts hears the
  * signal later than that by their latency.
  *
+ * A bounce is announced to the plugin (setOfflineRendering): it may then
+ * take the time it needs, choose a better and slower way to compute, and
+ * need not drop work to keep up with a device. The plugin is told through
+ * its format's own means - the non-realtime flag, and for an Audio Unit
+ * the offline render property, which the flag alone does not reach. A
+ * VST3 is prepared again for it, since it reads the mode when it is set up.
+ *
  * What the user does in the plugin's own window is the plugin's to report:
  * getPluginChangeCount() moves with every such report, isGestureOpen() says
  * a control is held, and getHostEditCount() moves when the host itself put
@@ -122,6 +129,8 @@ public:
     juce::uint32 getHostEditCount() const noexcept { return hostEdits; }
 
     void prepare (double sampleRate, int maxBlockSize, int numChannels) override;
+    void setOfflineRendering (bool offline) override;
+    bool isOfflineRendering() const noexcept { return offlineRendering; }
     void release() override;
     void reset() noexcept override;
     void process (juce::dsp::AudioBlock<float>& block) noexcept override;
@@ -148,6 +157,7 @@ private:
     static std::string blobOf (const json& state);
 
     void takeInstance (std::unique_ptr<juce::AudioPluginInstance> created);
+    void tellPluginRenderMode();   // offline or live, by the format's means
 
     void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override;
     void audioProcessorParameterChangeGestureBegin (juce::AudioProcessor*, int) override;
@@ -168,7 +178,8 @@ private:
     std::unique_ptr<juce::AudioPluginInstance> instance;
     std::atomic<Status> status;   // read on the render thread, written on the message thread
     juce::String error;
-    bool prepareNeeded = false;   // message thread: the plugin arrived into a slot prepared without it
+    bool prepareNeeded = false;   // message thread: the plugin arrived into a slot prepared without it, or the render mode changed
+    bool offlineRendering = false;   // message thread: the renders to come are a bounce's
 
     // the parameter table: the infos point into these, which live as long as the effect
     std::vector<std::string> ids, names, units;

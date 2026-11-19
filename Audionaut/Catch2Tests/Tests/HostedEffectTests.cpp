@@ -711,3 +711,123 @@ SCENARIO ("a hosted effect tells the plugin where the transport is", "[engine][e
         }
     }
 }
+
+SCENARIO ("a hosted effect tells the plugin when the renders to come are a bounce's", "[engine][effects][hosting][offline]")
+{
+    GIVEN ("a plugin prepared for live rendering")
+    {
+        Hosted hosted;
+        auto& effect = *hosted.effect;
+        effect.prepare (kSampleRate, kBlockSize, 2);
+        REQUIRE_FALSE (hosted.plugin->isNonRealtime());
+        REQUIRE_FALSE (effect.needsPrepare());
+
+        WHEN ("the effect hears that a bounce comes")
+        {
+            effect.setOfflineRendering (true);
+
+            THEN ("the plugin has the flag at once, and needs no new prepare for it")
+            {
+                REQUIRE (hosted.plugin->isNonRealtime());
+                REQUIRE_FALSE (effect.needsPrepare());
+            }
+
+            AND_WHEN ("it runs a block")
+            {
+                auto buffer = makeDc (2, 0.5f);
+                run (effect, buffer);
+
+                THEN ("the plugin ran in offline mode")
+                {
+                    REQUIRE (hosted.plugin->offlineBlocks == 1);
+                    REQUIRE (hosted.plugin->liveBlocks == 0);
+                }
+            }
+
+            AND_WHEN ("the bounce is over")
+            {
+                effect.setOfflineRendering (false);
+
+                THEN ("the plugin is back to live")
+                {
+                    REQUIRE_FALSE (hosted.plugin->isNonRealtime());
+                    REQUIRE_FALSE (effect.needsPrepare());
+                    REQUIRE (hosted.plugin->prepareCount == 1);
+                }
+            }
+        }
+    }
+
+    GIVEN ("a VST3 plugin prepared for live rendering")
+    {
+        TestPluginInstance::Options options;
+        options.format = "VST3";
+        Hosted hosted (options);
+        auto& effect = *hosted.effect;
+        effect.prepare (kSampleRate, kBlockSize, 2);
+
+        WHEN ("the effect hears that a bounce comes")
+        {
+            effect.setOfflineRendering (true);
+
+            THEN ("the effect asks to be prepared again: a VST3 reads the mode when it is set up")
+            {
+                REQUIRE (hosted.plugin->isNonRealtime());
+                REQUIRE (effect.needsPrepare());
+            }
+
+            AND_WHEN ("it is prepared")
+            {
+                effect.prepare (kSampleRate, kBlockSize, 2);
+
+                THEN ("the plugin was prepared in offline mode")
+                {
+                    REQUIRE_FALSE (effect.needsPrepare());
+                    REQUIRE (hosted.plugin->preparedOffline);
+                }
+
+                AND_WHEN ("the bounce is over")
+                {
+                    effect.setOfflineRendering (false);
+
+                    THEN ("it is to be prepared again, for live rendering")
+                    {
+                        REQUIRE_FALSE (hosted.plugin->isNonRealtime());
+                        REQUIRE (effect.needsPrepare());
+                    }
+                }
+            }
+        }
+
+        WHEN ("it is told live rendering again, which it is prepared for")
+        {
+            effect.setOfflineRendering (false);
+
+            THEN ("nothing changes")
+            {
+                REQUIRE_FALSE (effect.needsPrepare());
+                REQUIRE (hosted.plugin->prepareCount == 1);
+            }
+        }
+    }
+
+    GIVEN ("a loading placeholder that hears of a bounce")
+    {
+        MessageThread messageThread;
+        const auto description = TestPluginInstance::describe ({});
+        HostedEffect effect (PluginTypeId::typeInfo (description), description, HostedEffect::Loading {});
+        effect.setOfflineRendering (true);
+
+        WHEN ("its plugin arrives")
+        {
+            auto instance = std::make_unique<TestPluginInstance>();
+            auto* plugin = instance.get();
+            effect.adopt (std::move (instance), {});
+
+            THEN ("the plugin is told at once")
+            {
+                REQUIRE (plugin->isNonRealtime());
+            }
+        }
+    }
+}
