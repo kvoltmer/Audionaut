@@ -51,7 +51,7 @@ public:
         showProblem (hostedProblem (slot->getEffect()));
 
         // a plugin on its way arrives, or fails to, without a change of the chain: the row looks for itself
-        if (isLoading())
+        if (isSettling())
             startTimerHz (4);
     }
 
@@ -113,15 +113,17 @@ public:
     }
 
 private:
-    bool isLoading() const
+    /// On its way, or arrived and not yet asked for the chain's channel count: the planner prepares the
+    /// slot once the plans that ran its placeholder are gone, and only then is it known whether it runs.
+    bool isSettling() const
     {
         auto* hosted = dynamic_cast<const HostedEffect*> (&slot->getEffect());
-        return hosted != nullptr && hosted->getStatus() == HostedEffect::Status::loading;
+        return hosted != nullptr && (hosted->getStatus() == HostedEffect::Status::loading || hosted->needsPrepare());
     }
 
     void timerCallback() override
     {
-        if (isLoading())
+        if (isSettling())
             return;
         stopTimer();
         refreshProblem();

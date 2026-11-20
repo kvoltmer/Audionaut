@@ -1231,6 +1231,144 @@ SCENARIO ("a not-scanned plugin that runs in the host's process is checked by th
     }
 }
 
+SCENARIO ("a not-scanned plugin that arrives into a slot whose channel count it refuses passes the signal through", "[engine][effects][hosting][installed]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    constexpr auto sampleRate = 48000.0;
+    constexpr auto blockSize = 256;
+
+    const auto dc = [] (int numChannels, float level)
+    {
+        juce::AudioBuffer<float> buffer (numChannels, blockSize);
+        for (auto channel = 0; channel < numChannels; ++channel)
+            juce::FloatVectorOperations::fill (buffer.getWritePointer (channel), level, blockSize);
+        return buffer;
+    };
+
+    const auto run = [] (EffectSlot& slot, juce::AudioBuffer<float>& buffer)
+    {
+        juce::dsp::AudioBlock<float> block (buffer);
+        slot.process (block);
+    };
+
+    /// A host that lists the one plugin without a scan and checks it before its first load, as the app does.
+    const auto listNotScanned = [] (PluginHost& host, const TestPluginInstance::Options& options)
+    {
+        struct Scanner final : public juce::KnownPluginList::CustomScanner
+        {
+            bool findPluginTypesFor (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,
+                                     const juce::String& fileOrIdentifier) override
+            {
+                format.findAllTypesForFile (result, fileOrIdentifier);
+                return true;
+            }
+        };
+
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> (options.format, std::vector { options }));
+        const auto plugin = TestPluginInstance::describe (options);
+        host.setInstalledSource ([plugin] { return std::vector { plugin }; });
+        host.getList().setCustomScanner (std::make_unique<Scanner>());
+        host.setChecksBeforeFirstLoad (true);
+        host.syncWithInstalled();
+    };
+
+    GIVEN ("a not-scanned plugin that takes two channels at most, in a slot prepared for a track of three")
+    {
+        auto options = gainIn ("TestA", 0x1111);
+        options.maxChannels = 2;
+        PluginHost host (temp.folder, false);
+        listNotScanned (host, options);
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        EffectSlot slot (registry->create ("testa:00001111"));
+        auto* hosted = dynamic_cast<HostedEffect*> (&slot.getEffect());
+        REQUIRE (hosted != nullptr);
+        REQUIRE (hosted->getStatus() == HostedEffect::Status::loading);
+        slot.prepare (sampleRate, blockSize, 3);   // the placeholder's: no plugin to ask yet
+
+        WHEN ("the plugin arrives")
+        {
+            REQUIRE (host.waitForPendingLoads (5000));
+
+            THEN ("the slot wants preparing again, and passes the signal through until then")
+            {
+                REQUIRE (hosted->isLoaded());
+                REQUIRE_FALSE (slot.isPreparedFor (sampleRate, blockSize, 3));
+                auto buffer = dc (3, 0.5f);
+                run (slot, buffer);
+                REQUIRE (buffer.getSample (2, 10) == Catch::Approx (0.5f));
+            }
+
+            AND_WHEN ("the slot is prepared again")
+            {
+                slot.prepare (sampleRate, blockSize, 3);
+                hosted->setParameter (1, 1.0f);   // mute: would silence everything if it ran
+                auto buffer = dc (3, 0.5f);
+                run (slot, buffer);
+
+                THEN ("the plugin is there, refuses the three channels, and the slot says why and passes through")
+                {
+                    REQUIRE (hosted->isLoaded());
+                    REQUIRE (hosted->getStatus() == HostedEffect::Status::incompatibleLayout);
+                    REQUIRE (hosted->getError().contains ("3 channels"));
+                    REQUIRE (slot.isPreparedFor (sampleRate, blockSize, 3));
+                    REQUIRE (slot.getLatencySamples() == 0);
+                    for (auto channel = 0; channel < 3; ++channel)
+                        REQUIRE (buffer.getSample (channel, 10) == Catch::Approx (0.5f));
+                    REQUIRE (PluginHost::isScanned (*host.findByTypeId ("testa:00001111")));   // the check counted as its scan
+                }
+
+                AND_WHEN ("the track loses a channel")
+                {
+                    slot.prepare (sampleRate, blockSize, 2);
+                    auto stereo = dc (2, 0.5f);
+                    run (slot, stereo);
+
+                    THEN ("the plugin runs")
+                    {
+                        REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                        REQUIRE (hosted->getError().isEmpty());
+                        REQUIRE (stereo.getSample (1, 10) == Catch::Approx (0.0f));   // muted
+                    }
+                }
+            }
+        }
+    }
+
+    GIVEN ("a not-scanned plugin that only runs in stereo, in a slot prepared for a mono track")
+    {
+        auto options = gainIn ("TestA", 0x1111);
+        options.stereoOnly = true;
+        PluginHost host (temp.folder, false);
+        listNotScanned (host, options);
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        EffectSlot slot (registry->create ("testa:00001111"));
+        auto* hosted = dynamic_cast<HostedEffect*> (&slot.getEffect());
+        REQUIRE (hosted != nullptr);
+        slot.prepare (sampleRate, blockSize, 1);
+
+        WHEN ("the plugin arrives and the slot is prepared again")
+        {
+            REQUIRE (host.waitForPendingLoads (5000));
+            slot.prepare (sampleRate, blockSize, 1);
+            hosted->setParameter (0, 0.25f);   // half gain
+            auto buffer = dc (1, 0.8f);
+            run (slot, buffer);
+
+            THEN ("it runs in stereo on the one channel")
+            {
+                REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (buffer.getSample (0, 10) == Catch::Approx (0.4f));
+            }
+        }
+    }
+}
+
 SCENARIO ("plugins the system asks the user about are loaded one at a time, and a no answers for those waiting", "[engine][effects][hosting][security]")
 {
     MessageThread messageThread;
