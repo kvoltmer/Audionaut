@@ -8,6 +8,7 @@
 #include <limits>
 
 #include "Interface/ColourIds.h"
+#include "Interface/Controls/LevelMeter.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 using namespace audium;
@@ -18,6 +19,7 @@ HostedEffectEditorComponent::HostedEffectEditorComponent (MixerContext context_,
     slot (std::move (slot_)),
     hosted (dynamic_cast<HostedEffect&> (slot->getEffect()))
 {
+    shownStatus = hosted.getStatus();
     createEditor();
     followEditorSize();
     refresh();
@@ -158,7 +160,16 @@ HostedEffectEditorComponent::SizeLimits HostedEffectEditorComponent::getSizeLimi
         limits.maximumWidth = juce::jmax (limits.minimumWidth, juce::jmin (limits.maximumWidth, constrainer->getMaximumWidth()));
         limits.maximumHeight = juce::jmax (limits.minimumHeight, juce::jmin (limits.maximumHeight, constrainer->getMaximumHeight()));
     }
+    // the strip's room is on top of the editor's
+    limits.minimumHeight += warningHeight();
+    limits.maximumHeight = juce::jmin (limits.maximumHeight, std::numeric_limits<int>::max() / 2 - warningHeight()) + warningHeight();
     return limits;
+}
+
+int HostedEffectEditorComponent::warningHeight() const
+{
+    // the plugin is there, with its editor, and does not run: the strip over the editor says why
+    return editor != nullptr && shownStatus == audium::HostedEffect::Status::incompatibleLayout ? warningStripHeight : 0;
 }
 
 void HostedEffectEditorComponent::followEditorSize()
@@ -168,7 +179,7 @@ void HostedEffectEditorComponent::followEditorSize()
     if (editor == nullptr)
         setSize (messageWidth, messageHeight);
     else
-        setSize (juce::jmax (minimumWidth, editor->getWidth()), juce::jmax (1, editor->getHeight()));
+        setSize (juce::jmax (minimumWidth, editor->getWidth()), juce::jmax (1, editor->getHeight()) + warningHeight());
 }
 
 void HostedEffectEditorComponent::childBoundsChanged (juce::Component* child)
@@ -182,10 +193,10 @@ void HostedEffectEditorComponent::resized()
     if (editor == nullptr)
         return;
 
-    const auto bounds = getLocalBounds();
+    const auto bounds = getLocalBounds().withTrimmedTop (warningHeight());
     if (following || ! editor->isResizable()) {
         // the editor keeps its own size, centred when the window is wider than it
-        editor->setTopLeftPosition ((bounds.getWidth() - editor->getWidth()) / 2, 0);
+        editor->setTopLeftPosition ((bounds.getWidth() - editor->getWidth()) / 2, bounds.getY());
         return;
     }
     // the window was resized: its room is the editor's, within what the editor's own rules allow
@@ -234,6 +245,8 @@ void HostedEffectEditorComponent::timerCallback()
     }
     if (const auto status = hosted.getStatus(); status != shownStatus) {
         shownStatus = status;
+        if (editor != nullptr)
+            followEditorSize();   // the strip over the editor comes or goes with a refused channel count
         repaint();   // a placeholder's text follows: loading, then the plugin - or why it did not come
     }
     trackEdits();
@@ -245,7 +258,19 @@ void HostedEffectEditorComponent::paint (juce::Graphics& g)
     g.fillAll (findColour (audium::secondaryBackgroundColourId));
 
     if (editor != nullptr)
+    {
+        // the plugin's editor is the window - unless the plugin does not run: then the reason stands over it
+        if (auto strip = getLocalBounds().removeFromTop (warningHeight()); ! strip.isEmpty())
+        {
+            strip = strip.reduced (margin, 0);
+            g.setColour (MeterColours::orange.withAlpha (0.9f));
+            g.fillEllipse (strip.removeFromLeft (12).withSizeKeepingCentre (6, 6).toFloat());
+            g.setColour (findColour (audium::defaultTextColourId));
+            g.setFont (juce::FontOptions (11.0f));
+            g.drawFittedText (TRANS ("Passing through: ") + hosted.getError(), strip, juce::Justification::centredLeft, 2);
+        }
         return;
+    }
 
     // a placeholder: the plugin's name and why it is not running
     const auto textColour = findColour (audium::defaultTextColourId);

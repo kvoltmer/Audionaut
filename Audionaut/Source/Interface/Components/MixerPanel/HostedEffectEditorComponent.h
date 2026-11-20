@@ -15,6 +15,8 @@
  * The editor window content of a hosted plugin: the plugin's own editor,
  * nothing around it. A plugin without one gets JUCE's generic parameter
  * list; a placeholder (the plugin failed to load) gets the reason as text.
+ * A plugin that is there but refuses the chain's channel count keeps its
+ * editor, with a strip over it that says the signal passes through and why.
  * Bypass is the slot's (its menu in the mixer); a bypassed slot's editor
  * is dimmed.
  *
@@ -46,6 +48,7 @@ public:
     static constexpr int messageWidth = 300;    ///< a placeholder's text box
     static constexpr int messageHeight = 90;
     static constexpr int margin = 10;
+    static constexpr int warningStripHeight = 28;   ///< over the editor of a plugin that does not run
 
     HostedEffectEditorComponent (MixerContext context, audium::InsertChainAddress address, std::shared_ptr<audium::EffectSlot> slot);
     ~HostedEffectEditorComponent() override;
@@ -70,6 +73,7 @@ private:
     void createEditor();
     void deleteEditor();
     void followEditorSize();
+    int warningHeight() const;
     void startTrackingEdits();
     void trackEdits();
     void commitEdit();
