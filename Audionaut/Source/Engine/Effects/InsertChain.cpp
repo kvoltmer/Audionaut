@@ -112,6 +112,10 @@ void InsertChain::writeToJson (json& output, const char* key) const
                          { "state", slot->getEffect().getState() } };
         if (auto plugin = slot->getEffect().getPluginInfo(); ! plugin.is_null())
             element["plugin"] = std::move (plugin);   // how another machine finds the plugin
+        if (const auto position = slot->getEditorPosition())
+            element["editor"] = { { "x", position->x }, { "y", position->y } };
+        if (slot->isEditorOpen())
+            element["editor"]["open"] = true;
         inserts.push_back (std::move (element));
     }
 
@@ -172,6 +176,14 @@ void InsertChain::readFromJson (const json& input, const char* key)
                 continue;
             }
             adopt (*slot);
+
+            // a new slot only: a kept one's window is where the user has it now, whatever an undo step recorded
+            if (element.contains ("editor") && element["editor"].is_object()) {
+                const auto& editor = element["editor"];
+                if (editor.contains ("x") && editor["x"].is_number_integer() && editor.contains ("y") && editor["y"].is_number_integer())
+                    slot->setEditorPosition (juce::Point<int> (editor["x"].get<int>(), editor["y"].get<int>()));
+                slot->setEditorOpen (editor.contains ("open") && editor["open"].is_boolean() && editor["open"].get<bool>());
+            }
         }
 
         if (element.contains ("enabled") && element["enabled"].is_boolean())

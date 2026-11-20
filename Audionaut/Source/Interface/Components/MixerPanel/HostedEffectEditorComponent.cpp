@@ -45,6 +45,7 @@ void HostedEffectEditorComponent::deleteEditor()
     // the plugin made this its active editor: it hears that the editor goes before it does
     if (auto* instance = hosted.getInstance(); instance != nullptr && instance->getActiveEditor() == editor.get())
         instance->editorBeingDeleted (editor.get());
+    editor->setComponentEffect (nullptr);
     editor.reset();
 }
 
@@ -56,6 +57,8 @@ void HostedEffectEditorComponent::createEditor()
 
     if (instance->hasEditor())
         editor.reset (instance->createEditorAndMakeActive());
+    if (editor != nullptr && instance->getPluginDescription().pluginFormatName == "AudioUnit")
+        editor->setComponentEffect (&paintsNothing);
     if (editor == nullptr)
         editor = std::make_unique<juce::GenericAudioProcessorEditor> (*instance);
 

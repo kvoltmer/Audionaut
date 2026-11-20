@@ -68,7 +68,8 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
             if (auto slot = chain->getSlot (index))
                 effectName = slot->getEffect().getType().name;
         return busName() + " / " + effectName;
-    });
+    },
+    [this] { return busColour (auxId); });
     insertsRoom.hold (*inserts);
     addAndMakeVisible (insertsRoom);
 

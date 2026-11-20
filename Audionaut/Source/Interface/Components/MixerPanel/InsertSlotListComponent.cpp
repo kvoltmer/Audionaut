@@ -33,10 +33,48 @@ namespace
             return TRANS ("Passing through: ") + hosted->getError();
         return TRANS ("Not loaded: ") + hosted->getError();
     }
+
+    /// The bypass control: a ring open at the top with a stroke through the gap.
+    void paintPowerIcon (juce::Graphics& g, juce::Point<float> centre)
+    {
+        const auto radius = 3.5f;
+        const auto gap = 0.7f;
+        juce::Path icon;
+        icon.addCentredArc (centre.x, centre.y + 0.5f, radius, radius, 0.0f, gap, juce::MathConstants<float>::twoPi - gap, true);
+        icon.startNewSubPath (centre.x, centre.y - radius - 0.5f);
+        icon.lineTo (centre.x, centre.y);
+        g.strokePath (icon, juce::PathStrokeType (1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+
+    /// The editor control: three faders lying on their sides.
+    void paintFadersIcon (juce::Graphics& g, juce::Point<float> centre)
+    {
+        const auto halfWidth = 7.0f;
+        const float knobs[] = { -2.5f, 3.0f, -1.0f };
+        for (int line = 0; line < 3; ++line) {
+            const auto y = centre.y + static_cast<float> (line - 1) * 3.0f;
+            g.drawLine (centre.x - halfWidth, y, centre.x + halfWidth, y, 1.0f);
+            g.fillEllipse (juce::Rectangle<float> (3.0f, 3.0f).withCentre ({ centre.x + knobs[line], y }));
+        }
+    }
+
+    /// The menu control: a chevron up over a chevron down.
+    void paintChevronsIcon (juce::Graphics& g, juce::Point<float> centre)
+    {
+        juce::Path icon;
+        for (const auto direction : { -1.0f, 1.0f }) {
+            icon.startNewSubPath (centre.x - 2.5f, centre.y + direction * 1.5f);
+            icon.lineTo (centre.x, centre.y + direction * 4.0f);
+            icon.lineTo (centre.x + 2.5f, centre.y + direction * 1.5f);
+        }
+        g.strokePath (icon, juce::PathStrokeType (1.2f, juce::PathStrokeType::mitered, juce::PathStrokeType::rounded));
+    }
 }
 
 //==============================================================================
-/// One slot: the effect's name, click = editor, right-click = menu, drag = reorder.
+/// One slot: the effect's name and, under the mouse, its controls in the name's place - bypass at the left,
+/// the editor's window, opened and closed, in the middle, at the right the menu that removes it or replaces
+/// it with another effect type. Drag = reorder.
 class InsertSlotListComponent::SlotRow : public juce::Component,
                                          public juce::SettableTooltipClient,
                                          private juce::Timer
@@ -73,27 +111,58 @@ public:
     void paint (juce::Graphics& g) override
     {
         const auto enabled = slot->isEnabled();
-        auto area = getLocalBounds().toFloat().reduced (0.5f);
+        const auto active = enabled && problem.isEmpty();   // running: lit in its strip's colour
+        const auto hovered = isMouseOver (true) || isMouseButtonDown();
+        auto foreground = findColour (audium::defaultTextColourId);
+        const auto body = getLocalBounds().toFloat().reduced (0.5f);
 
-        g.setColour (findColour (audium::backgroundColourId).withAlpha (isMouseOver() ? 1.0f : 0.8f));
-        g.fillRoundedRectangle (area, 2.0f);
+        if (active)
+        {
+            // the background of a selected track's header: a tint of the colour on the strip's background
+            const auto fill = findColour (audium::secondaryBackgroundColourId).overlaidWith (owner.colour().withAlpha (0.25f));
+            g.setColour (hovered ? fill.brighter (0.15f) : fill);
+            g.fillRoundedRectangle (body, 2.0f);
+            foreground = fill.getPerceivedBrightness() > 0.6f ? juce::Colours::black : juce::Colours::white;
+        }
+        else
+        {
+            g.setColour (findColour (audium::backgroundColourId).withAlpha (hovered ? 1.0f : 0.8f));
+            g.fillRoundedRectangle (body, 2.0f);
+        }
+
+        if (hovered) {
+            paintControls (g, foreground, enabled);
+            return;
+        }
 
         auto text = getLocalBounds().reduced (4, 0);
         if (problem.isNotEmpty()) {
             paintWarningMarker (g, getLocalBounds());
             text.removeFromRight (8);
         }
-        g.setColour (findColour (audium::defaultTextColourId).withAlpha (enabled ? 1.0f : 0.4f));
+        g.setColour (foreground.withAlpha (enabled ? 1.0f : 0.4f));
         g.setFont (juce::FontOptions (10.0f));
         g.drawText (juce::String (slot->getEffect().getType().name), text, juce::Justification::centredLeft, true);
+    }
+
+    void mouseMove (const juce::MouseEvent& e) override
+    {
+        if (const auto zone = zoneAt (e.x); zone != hoverZone) {
+            hoverZone = zone;
+            repaint();
+        }
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        hoverZone = Zone::none;
+        repaint();
     }
 
     void mouseDown (const juce::MouseEvent& e) override
     {
         dragged = false;
-        if (e.mods.isPopupMenu())
-            InsertChainActions::slotMenu (owner.context, owner.address, index, owner.editorTitle (index))
-                .showMenuAsync (MixerContext::menuOptions (this));
+        hoverZone = zoneAt (e.x);
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -108,11 +177,60 @@ public:
     void mouseUp (const juce::MouseEvent& e) override
     {
         // own threshold, not mouseWasClicked(): JUCE counts a one pixel wobble as a drag
-        if (! dragged && ! e.mods.isPopupMenu())
-            owner.context.openEditor (owner.address, slot, owner.editorTitle (index));
+        if (dragged || e.mods.isPopupMenu())
+            return;
+
+        switch (zoneAt (e.getMouseDownX()))
+        {
+            case Zone::bypass:
+                InsertChainActions::setEnabled (owner.context, owner.address, index, ! slot->isEnabled());
+                break;
+            case Zone::replace:
+                InsertChainActions::replaceMenu (owner.context, owner.address, index).showMenuAsync (MixerContext::menuOptions (this));
+                break;
+            case Zone::edit:
+            case Zone::none:
+                owner.context.toggleEditor (owner.address, slot, owner.editorTitle (index));
+                break;
+        }
     }
 
 private:
+    enum class Zone { none, bypass, edit, replace };
+
+    /// The outer controls are as wide as the row allows, the editor's takes what is left between them.
+    int sideWidth() const { return juce::jmin (22, getWidth() / 3); }
+
+    Zone zoneAt (int x) const
+    {
+        if (x < sideWidth())
+            return Zone::bypass;
+        return x >= getWidth() - sideWidth() ? Zone::replace : Zone::edit;
+    }
+
+    void paintControls (juce::Graphics& g, juce::Colour foreground, bool enabled)
+    {
+        auto area = getLocalBounds();
+        const auto left = area.removeFromLeft (sideWidth());
+        const auto right = area.removeFromRight (sideWidth());
+
+        const auto zoneBounds = [&] (Zone zone) { return zone == Zone::bypass ? left : zone == Zone::replace ? right : area; };
+        if (hoverZone != Zone::none) {
+            g.setColour (foreground.withAlpha (0.12f));
+            g.fillRoundedRectangle (zoneBounds (hoverZone).toFloat().reduced (1.0f, 1.5f), 2.0f);
+        }
+
+        g.setColour (juce::Colours::black.withAlpha (0.45f));
+        g.fillRect (left.getRight(), 2, 1, getHeight() - 4);
+        g.fillRect (right.getX() - 1, 2, 1, getHeight() - 4);
+
+        g.setColour (foreground.withAlpha (enabled ? 1.0f : 0.4f));   // dim while bypassed, as the name is
+        paintPowerIcon (g, left.toFloat().getCentre());
+        g.setColour (foreground);
+        paintFadersIcon (g, area.toFloat().getCentre());
+        paintChevronsIcon (g, right.toFloat().getCentre());
+    }
+
     /// On its way, or arrived and not yet asked for the chain's channel count: the planner prepares the
     /// slot once the plans that ran its placeholder are gone, and only then is it known whether it runs.
     bool isSettling() const
@@ -133,6 +251,7 @@ private:
     const int index;
     const std::shared_ptr<EffectSlot> slot;
     juce::String problem;
+    Zone hoverZone = Zone::none;
     bool dragged = false;
 };
 
@@ -237,10 +356,12 @@ public:
 
 //==============================================================================
 InsertSlotListComponent::InsertSlotListComponent (MixerContext context_, InsertChainAddress address_,
-                                                  std::function<juce::String (int index)> editorTitle_) :
+                                                  std::function<juce::String (int index)> editorTitle_,
+                                                  std::function<juce::Colour()> colour_) :
     context (std::move (context_)),
     address (address_),
     editorTitle (std::move (editorTitle_)),
+    colour (std::move (colour_)),
     chainKey (keyFor (address_))
 {
     refresh();

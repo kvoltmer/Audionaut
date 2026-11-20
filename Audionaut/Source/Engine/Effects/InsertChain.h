@@ -34,7 +34,10 @@ class MixerPlanner;
  * read and written back in its place, so saving the project does not lose
  * it; it is not a slot and nothing runs for it. A hosted plugin's element
  * carries a "plugin" block beside the type (name, manufacturer, format,
- * file), and an element whose type id this machine lacks may be read with
+ * file), a slot whose editor window the user moved or has open an
+ * "editor" block ({"x", "y"}, the window's place on the desktop, and
+ * "open"; read for a new slot only), and an element whose type id this
+ * machine lacks may be read with
  * the same plugin in another format - the planner asks the registry.
  *
  * A hosted plugin can move its own latency (a look-ahead switched on in its

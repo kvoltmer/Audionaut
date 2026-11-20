@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 
 #include "Effect.h"
 #include "PdcDelay.h"
@@ -43,6 +44,12 @@ namespace audium
  * output is the signal - aligned, and without a hole. So a latent effect
  * comes back its latency later than it was switched on, at the cost of no
  * extra work in the block that switches it.
+ *
+ * The slot also keeps where the user left its editor window and whether
+ * the window is open (message thread only), so the window opens there
+ * again, and by itself in a project saved with it open; the chain saves
+ * both with the project. They are no part of the sound and no edit:
+ * nothing is told when they change.
  */
 class EffectSlot
 {
@@ -58,6 +65,15 @@ public:
 
     bool isEnabled() const noexcept { return enabled.load (std::memory_order_relaxed); }
     void setEnabled (bool shouldBeEnabled) noexcept { enabled.store (shouldBeEnabled, std::memory_order_relaxed); }
+
+    /// Where the user left the editor window (its top left corner on the desktop), none while it was never moved.
+    std::optional<juce::Point<int>> getEditorPosition() const noexcept { return editorPosition; }
+    void setEditorPosition (std::optional<juce::Point<int>> topLeft) noexcept { editorPosition = topLeft; }
+
+    /// Whether the editor window is open, or is to be: a slot read from a project saved with the window
+    /// open says yes before any window is there, and the mixer opens it. Without windows (the CLI) it stays as read.
+    bool isEditorOpen() const noexcept { return editorOpen; }
+    void setEditorOpen (bool open) noexcept { editorOpen = open; }
 
     /// Message thread, nothing rendering the slot: sizes the effect and the bypass for this format, again if need be.
     void prepare (double sampleRate_, int maxBlockSize_, int numChannels_)
@@ -200,6 +216,8 @@ private:
 
     std::unique_ptr<Effect> effect;
     std::atomic<bool> enabled { true };
+    std::optional<juce::Point<int>> editorPosition;   // message thread
+    bool editorOpen = false;                          // message thread
 
     double sampleRate = 0.0;
     int maxBlockSize = 0;

@@ -59,7 +59,8 @@ MixerTrackGroupComponent::MixerTrackGroupComponent (MixerContext context_, std::
     band = std::make_unique<Band> (*this);
     addAndMakeVisible (band.get());
 
-    inserts = std::make_unique<InsertSlotListComponent> (context, chainAddress(), [this] (int index) { return editorTitle (index); });
+    inserts = std::make_unique<InsertSlotListComponent> (context, chainAddress(), [this] (int index) { return editorTitle (index); },
+                                                         [this] { return track->getViewState().getColour(); });
     insertsRoom.hold (*inserts);
     addAndMakeVisible (insertsRoom);
 

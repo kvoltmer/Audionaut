@@ -37,6 +37,15 @@ public:
     /// For a resizable panel: how far the user may drag it (the content's size, without the title bar).
     void setResizeLimits (int minimumWidth, int minimumHeight, int maximumWidth, int maximumHeight);
 
+    /// Puts the window's top left corner at a place on the desktop (it opens centred over the window in front).
+    void setTopLeft (juce::Point<int> topLeft);
+
+    /// Told the window's top left corner on the desktop whenever the window moved.
+    std::function<void (juce::Point<int> topLeft)> onMoved;
+
+    /// Told when the user closes the window (the close button or Escape), before it goes.
+    std::function<void()> onUserClosed;
+
     /// Brings the panel to the front and gives it the keyboard.
     void bringToFront();
 

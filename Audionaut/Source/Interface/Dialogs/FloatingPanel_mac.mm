@@ -13,6 +13,7 @@
 @public
     std::function<void()> onClose;
     std::function<void()> onResize;
+    std::function<void()> onMove;
 }
 @end
 
@@ -25,6 +26,13 @@
     return NO;
 }
 
+- (void) windowDidMove: (NSNotification*) notification
+{
+    juce::ignoreUnused (notification);
+    if (onMove != nullptr)
+        onMove();
+}
+
 - (void) windowDidResize: (NSNotification*) notification
 {
     juce::ignoreUnused (notification);
@@ -32,6 +40,15 @@
         onResize();
 }
 @end
+
+namespace
+{
+    /// The height Cocoa's bottom-up screen points are counted from, to turn them into JUCE's top-down ones and back.
+    CGFloat primaryScreenHeight()
+    {
+        return [[[NSScreen screens] objectAtIndex: 0] frame].size.height;
+    }
+}
 
 //==============================================================================
 struct FloatingPanel::Native
@@ -77,6 +94,13 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
             juce::ScopedValueSetter<bool> guard (nativeResizing, true);
             setSize (static_cast<int> (size.width), static_cast<int> (size.height));
         };
+        native->delegate->onMove = [this]
+        {
+            if (onMoved == nullptr)
+                return;
+            const auto frame = [native->panel frame];
+            onMoved ({ static_cast<int> (frame.origin.x), static_cast<int> (primaryScreenHeight() - NSMaxY (frame)) });
+        };
         [native->panel setDelegate: native->delegate];
 
         addToDesktop (0, [native->panel contentView]);
@@ -88,10 +112,9 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
         if (auto* focused = juce::Component::getCurrentlyFocusedComponent())
             area = focused->getTopLevelComponent()->getScreenBounds();
         const auto frame = [native->panel frame];
-        const auto primaryHeight = [[[NSScreen screens] objectAtIndex: 0] frame].size.height;
         const auto left = area.getCentreX() - frame.size.width / 2;
         const auto top = area.getCentreY() - frame.size.height / 2;
-        [native->panel setFrameTopLeftPoint: NSMakePoint (left, primaryHeight - top)];
+        [native->panel setFrameTopLeftPoint: NSMakePoint (left, primaryScreenHeight() - top)];
 
         [native->panel makeKeyAndOrderFront: nil];
     }
@@ -110,6 +133,12 @@ FloatingPanel::~FloatingPanel()
         [native->panel release];
         [native->delegate release];
     }
+}
+
+void FloatingPanel::setTopLeft (juce::Point<int> topLeft)
+{
+    if (native->panel != nil)
+        [native->panel setFrameTopLeftPoint: NSMakePoint (topLeft.x, primaryScreenHeight() - topLeft.y)];
 }
 
 void FloatingPanel::bringToFront()

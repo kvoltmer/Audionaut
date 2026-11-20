@@ -185,6 +185,58 @@ SCENARIO ("effect parameters and state round trip deterministically", "[engine][
     }
 }
 
+SCENARIO ("an insert chain saves where a slot's editor window was left and whether it is open", "[engine][effects][inserts]")
+{
+    GIVEN ("a chain with a trim and an EQ, the EQ's editor window moved")
+    {
+        auto registry = std::make_shared<EffectRegistry>();
+        registry->addBuiltInEffects();
+        MixerPlanner planner (registry, std::make_shared<MixPlanContainer>());
+        InsertChain chain (&planner);
+        REQUIRE (chain.add ("builtin:trim") != nullptr);
+        REQUIRE (chain.add ("builtin:eq3") != nullptr);
+        chain.getSlot (1)->setEditorPosition (juce::Point<int> (640, -120));
+        chain.getSlot (0)->setEditorOpen (true);   // open where it came up, never moved
+
+        json saved;
+        chain.writeToJson (saved);
+
+        THEN ("the moved window's slot carries its place, the open one that it is open")
+        {
+            REQUIRE_FALSE (saved["inserts"][0]["editor"].contains ("x"));
+            REQUIRE (saved["inserts"][0]["editor"]["open"] == true);
+            REQUIRE_FALSE (saved["inserts"][1]["editor"].contains ("open"));
+            REQUIRE (saved["inserts"][1]["editor"]["x"] == 640);
+            REQUIRE (saved["inserts"][1]["editor"]["y"] == -120);
+        }
+
+        WHEN ("another chain reads it")
+        {
+            InsertChain loaded (&planner);
+            loaded.readFromJson (saved);
+
+            THEN ("its new slots have the places, and the open window is to open again")
+            {
+                REQUIRE (loaded.getSlot (0)->isEditorOpen());
+                REQUIRE_FALSE (loaded.getSlot (1)->isEditorOpen());
+                REQUIRE_FALSE (loaded.getSlot (0)->getEditorPosition().has_value());
+                REQUIRE (loaded.getSlot (1)->getEditorPosition() == juce::Point<int> (640, -120));
+            }
+        }
+
+        WHEN ("the window moves on and the chain reads the earlier state again, as an undo step does")
+        {
+            chain.getSlot (1)->setEditorPosition (juce::Point<int> (10, 20));
+            chain.readFromJson (saved);
+
+            THEN ("the kept slot's window stays where it is now")
+            {
+                REQUIRE (chain.getSlot (1)->getEditorPosition() == juce::Point<int> (10, 20));
+            }
+        }
+    }
+}
+
 SCENARIO ("an insert chain keeps what it cannot create", "[engine][effects][inserts]")
 {
     GIVEN ("a chain with a planner that knows the built-ins only")

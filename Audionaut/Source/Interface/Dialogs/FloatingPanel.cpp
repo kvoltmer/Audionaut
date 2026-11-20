@@ -35,6 +35,9 @@ void FloatingPanel::resized()
 
 void FloatingPanel::requestClose()
 {
+    if (onUserClosed != nullptr)
+        onUserClosed();
+
     juce::MessageManager::callAsync ([safeThis = juce::Component::SafePointer<FloatingPanel> (this)]
     {
         if (safeThis != nullptr)
@@ -80,6 +83,13 @@ struct FloatingPanel::Native final : public juce::DocumentWindow,
         panel.requestClose();
     }
 
+    void moved() override
+    {
+        juce::DocumentWindow::moved();
+        if (panel.onMoved != nullptr)
+            panel.onMoved (getPosition());
+    }
+
     bool keyPressed (const juce::KeyPress& key) override
     {
         return panel.keyPressed (key) || juce::DocumentWindow::keyPressed (key);
@@ -123,6 +133,11 @@ void FloatingPanel::setResizeLimits (int minimumWidth, int minimumHeight, int ma
 void FloatingPanel::applySizeToNative()
 {
     // nothing to do: the panel is the window's content, and the window sizes itself to it
+}
+
+void FloatingPanel::setTopLeft (juce::Point<int> topLeft)
+{
+    native->setTopLeftPosition (topLeft);
 }
 
 void FloatingPanel::bringToFront()

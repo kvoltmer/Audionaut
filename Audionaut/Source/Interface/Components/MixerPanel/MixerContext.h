@@ -33,6 +33,9 @@ struct MixerContext
     /// Opens, or raises, the editor window of a slot; the title says where the slot sits ("Track 2 / ch 1 / EQ3").
     std::function<void (const audium::InsertChainAddress&, std::shared_ptr<audium::EffectSlot>, const juce::String& title)> openEditor;
 
+    /// Closes the slot's editor window if it is open, opens it otherwise.
+    std::function<void (const audium::InsertChainAddress&, std::shared_ptr<audium::EffectSlot>, const juce::String& title)> toggleEditor;
+
     /// Opens the Manage Plugins window; unset where there is none (the headless builds).
     std::function<void()> openPluginManager;
 
@@ -183,47 +186,16 @@ namespace InsertChainActions
         return menu;
     }
 
-    /// The context menu of one slot: Edit, Bypass or Enable, Replace, Move, Remove.
-    inline juce::PopupMenu slotMenu (const MixerContext& ctx, const InsertChainAddress& address, int index, const juce::String& editorTitle)
+    /// The menu of a slot's replace control: Remove, then the effect types to put in the slot's place.
+    inline juce::PopupMenu replaceMenu (const MixerContext& ctx, const InsertChainAddress& address, int index)
     {
         juce::PopupMenu menu;
-        auto* chain = ctx.chain (address);
-        auto slot = chain != nullptr ? chain->getSlot (index) : nullptr;
-        if (slot == nullptr)
-            return menu;
-
-        const auto enabled = slot->isEnabled();
-        const auto last = chain->size() - 1;
-
-        menu.addItem (TRANS ("Edit..."), [ctx, address, slot, editorTitle] { ctx.openEditor (address, slot, editorTitle); });
-        menu.addItem (enabled ? TRANS ("Bypass") : TRANS ("Enable"), [ctx, address, index, enabled] { setEnabled (ctx, address, index, ! enabled); });
-        menu.addSubMenu (TRANS ("Replace"), typesMenu (ctx, [ctx, address, index] (const std::string& id) { replace (ctx, address, index, id); }));
-        menu.addSeparator();
-        menu.addItem (TRANS ("Move Up"), index > 0, false, [ctx, address, index] { move (ctx, address, index, index - 1); });
-        menu.addItem (TRANS ("Move Down"), index < last, false, [ctx, address, index] { move (ctx, address, index, index + 1); });
-        menu.addSeparator();
         menu.addItem (TRANS ("Remove"), [ctx, address, index] { remove (ctx, address, index); });
-        return menu;
-    }
+        menu.addSeparator();
 
-    /// The menu of a whole chain where there is no room for slot rows: one submenu per slot, then Add.
-    inline juce::PopupMenu chainMenu (const MixerContext& ctx, const InsertChainAddress& address,
-                                      const std::function<juce::String (int index)>& editorTitle)
-    {
-        juce::PopupMenu menu;
-        if (auto* chain = ctx.chain (address)) {
-            int index = 0;
-            for (const auto& slot : chain->getSlots()) {
-                auto name = juce::String (slot->getEffect().getType().name);
-                if (! slot->isEnabled())
-                    name += TRANS (" (bypassed)");
-                menu.addSubMenu (name, slotMenu (ctx, address, index, editorTitle (index)));
-                ++index;
-            }
-            if (index > 0)
-                menu.addSeparator();
-        }
-        menu.addSubMenu (TRANS ("Add"), typesMenu (ctx, [ctx, address, editorTitle] (const std::string& id) { addAndEdit (ctx, address, id, editorTitle); }));
+        const auto types = typesMenu (ctx, [ctx, address, index] (const std::string& id) { replace (ctx, address, index, id); });
+        for (juce::PopupMenu::MenuItemIterator item (types); item.next();)
+            menu.addItem (item.getItem());
         return menu;
     }
 }
