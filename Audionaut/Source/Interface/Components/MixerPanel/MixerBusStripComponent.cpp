@@ -262,6 +262,7 @@ void MixerBusStripComponent::resized()
 
     auto faderArea = placement.faderArea;
     faderArea.removeFromTop (faderY);
+    faderArea.translate ((getWidth() - stripWidth) / 2, 0);   // the fader and the meter stand as in a channel strip, in the middle of the wider one
     fader.setBounds (faderArea.withX (faderArea.getX() + faderX).withWidth (faderWidth));
 
     // the stereo meter: the scale, the left bar and the right bar, both bars lined up with the fader's travel
