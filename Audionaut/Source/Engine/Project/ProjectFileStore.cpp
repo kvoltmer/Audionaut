@@ -602,12 +602,33 @@ static void eraseSelection (json& node)
     }
 }
 
+/** Erases where the insert editors' windows are and whether they are open
+    from an insert chain's array, if `owner` has one under `key`. */
+static void eraseEditorWindows (json& owner, const char* key)
+{
+    if (! owner.is_object())
+        return;
+    auto inserts = owner.find (key);
+    if (inserts == owner.end() || ! inserts->is_array())
+        return;
+    for (auto& insert : *inserts)
+        if (insert.is_object())
+            insert.erase ("editor");
+}
+
 json ProjectFileStore::documentOf (json state)
 {
     if (auto audium = state.find ("audium"); audium != state.end() && audium->is_object()) {
         audium->erase ("scheduler");
         audium->erase ("ui_state");
         eraseSelection (*audium); // clip selection: a click, not an edit
+
+        // an insert editor's window moved, opened or closed: not an edit either
+        eraseEditorWindows (*audium, "master_inserts");
+        for (const auto* owners : { "audio_tracks", "aux_buses" })
+            if (auto list = audium->find (owners); list != audium->end() && list->is_array())
+                for (auto& owner : *list)
+                    eraseEditorWindows (owner, "inserts");
     }
     return state;
 }

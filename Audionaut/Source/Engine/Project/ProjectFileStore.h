@@ -248,7 +248,8 @@ public:
     /**
      * @brief The state minus what moves without the user editing anything:
      *        the playhead while playing, scroll and zoom, the clip
-     *        selection. Two states that agree on this are the same document.
+     *        selection, the insert editors' windows. Two states that agree
+     *        on this are the same document.
      */
     static json documentOf(json state);
 

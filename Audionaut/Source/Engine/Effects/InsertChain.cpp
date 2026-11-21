@@ -204,7 +204,7 @@ void InsertChain::readFromJson (const json& input, const char* key)
             adopt (*slot);
 
             // a new slot only: a kept one's window is where the user has it now, whatever an undo step recorded
-            // (a step that replaces the whole track hands the windows over, AudioTrackContainer::restoreFromJson)
+            // (a read that replaces the whole track hands the windows over, AudioTrackContainer::readFromJson)
             if (element.contains ("editor") && element["editor"].is_object()) {
                 const auto& editor = element["editor"];
                 if (editor.contains ("x") && editor["x"].is_number_integer() && editor.contains ("y") && editor["y"].is_number_integer())

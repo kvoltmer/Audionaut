@@ -99,8 +99,8 @@ public:
     std::vector<EditorWindow> getEditorWindows() const;
     /// Gives windows taken from a chain to this one's slots: each to the first slot of its type that has none
     /// yet, in order - the way readFromJson() keeps instances. A slot left over keeps what it has. For a read
-    /// that replaced the chain (an undo step that rebuilds its track): the windows are where the user has
-    /// them, not where the step recorded them.
+    /// that replaced the chain (an undo step or an agent's edit that rebuilds its track): the windows are
+    /// where the user has them, not where the state read recorded them.
     void setEditorWindows (const std::vector<EditorWindow>& windows);
 
     /// Writes the chain under `key` when it has slots or unresolved elements; a project without effects serializes as before.

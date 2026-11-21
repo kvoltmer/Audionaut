@@ -462,6 +462,60 @@ SCENARIO ("the master inserts go with the project they belong to", "[engine][eff
     }
 }
 
+SCENARIO ("the insert editors' windows are no part of the document, and any read that replaces the tracks leaves them", "[engine][effects][inserts][project]")
+{
+    MessageThread messageThread;
+
+    GIVEN ("two tracks with a trim each and the project's state")
+    {
+        Session session (2);
+        auto& container = session.tracks();
+        auto serializer = session.engine->getProjectSerializer();
+        auto first = addTrim (session.track (0)->getTrackInserts(), -6.0f);
+        auto second = addTrim (session.track (1)->getTrackInserts(), -3.0f);
+        addTrim (container.getMasterInserts(), -1.0f);
+        const auto secondName = session.track (1)->getAudioTrackName();
+
+        json state;
+        REQUIRE (serializer->writeToJson (state));
+
+        WHEN ("editor windows are opened and moved")
+        {
+            first->setEditorOpen (true);
+            second->setEditorPosition (juce::Point<int> (300, 200));
+            container.getMasterInserts().getSlot (0)->setEditorOpen (true);
+            json moved;
+            REQUIRE (serializer->writeToJson (moved));
+
+            THEN ("the state differs, the document does not")
+            {
+                REQUIRE (moved != state);
+                REQUIRE (ProjectFileStore::documentOf (moved) == ProjectFileStore::documentOf (state));
+            }
+        }
+
+        WHEN ("the first track goes, the other's window moves, and the state is applied as an agent's or a reload's is")
+        {
+            second->setEditorOpen (true);
+            second->setEditorPosition (juce::Point<int> (300, 200));
+            REQUIRE (container.deleteAudioTrack (session.track (0)));
+            auto applied = state;
+            REQUIRE (serializer->applyProjectJson (applied, true));
+
+            THEN ("the tracks are new ones, and the one that stayed is found by its name and keeps its window")
+            {
+                REQUIRE (container.getNumItems() == 2);
+                REQUIRE (session.track (1)->getAudioTrackName() == secondName);
+                auto newSecond = session.track (1)->getTrackInserts().getSlot (0);
+                REQUIRE (newSecond != second);
+                REQUIRE (newSecond->isEditorOpen());
+                REQUIRE (newSecond->getEditorPosition() == juce::Point<int> (300, 200));
+                REQUIRE_FALSE (session.track (0)->getTrackInserts().getSlot (0)->isEditorOpen());
+            }
+        }
+    }
+}
+
 SCENARIO ("an editor window's change is something to save, though no undo step", "[engine][effects][inserts][project]")
 {
     MessageThread messageThread;

@@ -118,6 +118,7 @@ public:
     {
         if (auto current = hostedProblem (slot->getEffect()); current != problem)
             showProblem (std::move (current));
+        refreshHoverZone();
     }
 
     void showProblem (juce::String current)
@@ -186,10 +187,11 @@ public:
         repaint();
     }
 
-    void mouseDown (const juce::MouseEvent&) override
+    void mouseDown (const juce::MouseEvent& e) override
     {
         dragged = false;
-        pressedZone = hoverZone;   // the control under the mouse as it is shown; none while the name shows
+        // the control under the mouse as it is shown; none while the name shows
+        pressedZone = hoverZone == Zone::none ? Zone::none : zoneAt (e.x);
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -237,6 +239,18 @@ private:
         return hosted != nullptr && hosted->getStatus() == HostedEffect::Status::notLoaded;
     }
 
+    /// The controls a row shows depend on whether its plugin is there, which changes without the mouse
+    /// moving (a plugin arrives, or fails to): the zone under a resting mouse is looked up again.
+    void refreshHoverZone()
+    {
+        if (hoverZone == Zone::none)
+            return;
+        if (const auto zone = zoneAt (getMouseXYRelative().x); zone != hoverZone) {
+            hoverZone = zone;
+            repaint();
+        }
+    }
+
     Zone zoneAt (int x) const
     {
         if (x >= getWidth() - sideWidth())
@@ -282,7 +296,7 @@ private:
         if (isSettling())
             return;
         stopTimer();
-        refreshProblem();
+        refreshProblem();   // and the zone under the mouse
     }
 
     InsertSlotListComponent& owner;
