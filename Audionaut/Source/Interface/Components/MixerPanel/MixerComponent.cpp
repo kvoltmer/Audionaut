@@ -92,9 +92,6 @@ MixerComponent::MixerComponent (std::shared_ptr<AudiumEngine> engine)
         if (safeThis != nullptr)
             safeThis->toggleEditor (address, slot, title);
     };
-   #ifndef AUDIONAUT_HEADLESS
-    context.openPluginManager = [] { AudiumApplication::getCommandManager().invokeDirectly (CommandIDs::showPluginManager, true); };
-   #endif
 
     content = std::make_unique<Content>();
     viewport.setViewedComponent (content.get(), false);
@@ -249,7 +246,15 @@ juce::String MixerComponent::structureSignature() const
 void MixerComponent::updateUI()
 {
     closeEditorsWhoseSlotIsGone();   // the editor windows stand on their own, mixer open or closed
-    openEditorsLeftOpen();
+
+    // a slot that says its window is open and has none is a new one, read from a project or a snapshot:
+    // only then is there a window to open, not at every refresh
+    const auto structure = structureSignature();
+    if (structure != editorsStructure) {
+        editorsStructure = structure;
+        openEditorsLeftOpen();
+    }
+
     preferredHeightMayHaveChanged();   // the body's height follows the aux buses, open or closed: the owner sizes it either way
 
     // closed, the mixer shows nothing to refresh: the strips go (nothing holds a track that may be removed
@@ -262,7 +267,6 @@ void MixerComponent::updateUI()
         return;
     }
 
-    const auto structure = structureSignature();
     if (structure != shownStructure) {
         shownStructure = structure;
         content->rebuild (context);
@@ -279,6 +283,7 @@ void MixerComponent::updateUI()
 void MixerComponent::rebuildUI()
 {
     shownStructure.clear();   // the groups hold the tracks they were built from, which may be gone though the structure reads the same
+    editorsStructure.clear();   // and a slot may be a new one at the address an old one had
     updateUI();
 }
 
@@ -375,29 +380,42 @@ void MixerComponent::openEditor (const InsertChainAddress& address, std::shared_
 #ifndef AUDIONAUT_HEADLESS
 void MixerComponent::placeEditor (FloatingPanel& panel, const std::shared_ptr<EffectSlot>& slot)
 {
-    // back where the user left it, as long as that place is still on a screen
-    // (a project may come from a machine with other screens)
+    // back where the user left it, as long as enough of the title bar to take hold of is still on a
+    // screen there (a project may come from a machine with other screens)
     if (const auto place = slot->getEditorPosition())
     {
-        const auto titleBar = juce::Rectangle<int> (place->x, place->y, panel.getWidth(), 20);
+        const auto titleBarHeight = 20;
+        const auto hold = juce::jmin (80, panel.getWidth());
+        const auto titleBar = juce::Rectangle<int> (place->x, place->y, panel.getWidth(), titleBarHeight);
         for (const auto& display : juce::Desktop::getInstance().getDisplays().displays)
-            if (display.userArea.intersects (titleBar)) {
+        {
+            const auto onScreen = display.userArea.getIntersection (titleBar);
+            if (onScreen.getWidth() >= hold && onScreen.getHeight() >= titleBarHeight) {
                 panel.setTopLeft (*place);
                 break;
             }
+        }
     }
 
-    panel.onMoved = [weakSlot = std::weak_ptr<EffectSlot> (slot)] (juce::Point<int> topLeft)
+    // the user moving, opening or closing the window is something to save
+    panel.onMoved = [ctx = context, weakSlot = std::weak_ptr<EffectSlot> (slot)] (juce::Point<int> topLeft)
     {
-        if (auto moved = weakSlot.lock())
+        if (auto moved = weakSlot.lock()) {
             moved->setEditorPosition (topLeft);
+            ctx.editorWindowChanged();
+        }
     };
 
-    slot->setEditorOpen (true);
-    panel.onUserClosed = [weakSlot = std::weak_ptr<EffectSlot> (slot)]
+    if (! slot->isEditorOpen()) {   // not a window the project was saved with, opened again
+        slot->setEditorOpen (true);
+        context.editorWindowChanged();
+    }
+    panel.onUserClosed = [ctx = context, weakSlot = std::weak_ptr<EffectSlot> (slot)]
     {
-        if (auto closed = weakSlot.lock())
+        if (auto closed = weakSlot.lock()) {
             closed->setEditorOpen (false);
+            ctx.editorWindowChanged();
+        }
     };
 }
 #endif
@@ -409,8 +427,9 @@ void MixerComponent::toggleEditor (const InsertChainAddress& address, std::share
 
     // an entry without a window is one the user closed
     if (const auto open = editorWindows.find (slot.get()); open != editorWindows.end() && open->second != nullptr) {
+        slot->setEditorOpen (false);   // first: the editor going may commit an edit, and nothing is to open the window again for it
+        context.editorWindowChanged();
         editorWindows.erase (open);
-        slot->setEditorOpen (false);
     }
     else
         openEditor (address, slot, title);
@@ -418,24 +437,26 @@ void MixerComponent::toggleEditor (const InsertChainAddress& address, std::share
 
 void MixerComponent::openEditorsLeftOpen()
 {
-    const auto openThoseOf = [this] (const InsertChainAddress& address, const InsertChain& chain, const juce::String& owner)
+    const auto openThoseOf = [this] (const InsertChainAddress& address, const InsertChain& chain)
     {
-        for (const auto& slot : chain.getSlots())
+        const auto slots = chain.getSlots();   // a copy: nothing an opening window does is to pull the list away
+        for (int index = 0; index < static_cast<int> (slots.size()); ++index)
         {
+            const auto& slot = slots[static_cast<size_t> (index)];
             if (! slot->isEditorOpen())
                 continue;
             if (const auto window = editorWindows.find (slot.get()); window != editorWindows.end() && window->second != nullptr)
                 continue;
-            openEditor (address, slot, owner + " / " + juce::String (slot->getEffect().getType().name));   // titled as its strip titles it
+            openEditor (address, slot, InsertChainActions::editorTitle (context, address, index));
         }
     };
 
     auto& container = context.container();
     for (const auto& track : container.getAudioTracks())
-        openThoseOf (InsertChainAddress::ofTrack (track->getId()), track->getTrackInserts(), track->getAudioTrackName());
+        openThoseOf (InsertChainAddress::ofTrack (track->getId()), track->getTrackInserts());
     for (const auto& bus : container.getAuxBuses().getBuses())
-        openThoseOf (InsertChainAddress::ofAux (bus->getId()), bus->getInserts(), juce::String (bus->getName()));
-    openThoseOf (InsertChainAddress::ofMaster(), container.getMasterInserts(), TRANS ("Main"));
+        openThoseOf (InsertChainAddress::ofAux (bus->getId()), bus->getInserts());
+    openThoseOf (InsertChainAddress::ofMaster(), container.getMasterInserts());
 }
 
 void MixerComponent::closeEditorsWhoseSlotIsGone()

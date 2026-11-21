@@ -91,7 +91,10 @@ private:
     /// editor component, which paints itself white under the plugin's native view: a view that draws no
     /// background (the system's generic one, some of Apple's own) takes its colours from the window's dark
     /// appearance, and its white labels on that white could not be read. Without it the window's own
-    /// background is behind the view. The native view is no part of the painting and stays as it is.
+    /// background is behind the view - this component's, which is why the editor is made non-opaque with it:
+    /// behind an opaque component nothing is painted. The native view is no part of the painting and stays
+    /// as it is. The editor is still rendered, into an image that is dropped; it is a plain fill, and it
+    /// repaints only when its size or its alpha (bypass) changes.
     struct PaintsNothing final : public juce::ImageEffectFilter
     {
         void applyEffect (juce::Image&, juce::Graphics&, float, float) override {}

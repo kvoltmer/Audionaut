@@ -81,7 +81,8 @@ private:
     void toggleEditor (const audium::InsertChainAddress& address, std::shared_ptr<audium::EffectSlot> slot, const juce::String& title);
     void closeEditorsWhoseSlotIsGone();
 
-    /// Opens the editor windows of the slots that say theirs is open and have none: those of a project saved with them open.
+    /// Opens the editor windows of the slots that say theirs is open and have none: those of a project saved
+    /// with them open. Called when the structure changed, which a new slot always does.
     void openEditorsLeftOpen();
     juce::String structureSignature() const;
 
@@ -106,6 +107,7 @@ private:
     std::unique_ptr<MixerBusGroupComponent> buses;   ///< right of the viewport, so it stays while the strips scroll
     bool auxBusesVisible = true;
     juce::String shownStructure;
+    juce::String editorsStructure;   ///< the structure the editor windows left open were last opened for
     int lastPreferredHeight = 0;
 
     std::map<audium::EffectSlot*, std::unique_ptr<juce::Component>> editorWindows;

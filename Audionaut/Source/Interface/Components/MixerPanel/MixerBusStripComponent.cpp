@@ -61,15 +61,7 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
     context (std::move (context_)),
     auxId (auxId_)
 {
-    inserts = std::make_unique<InsertSlotListComponent> (context, address(), [this] (int index)
-    {
-        juce::String effectName;
-        if (auto* chain = context.chain (address()))
-            if (auto slot = chain->getSlot (index))
-                effectName = slot->getEffect().getType().name;
-        return busName() + " / " + effectName;
-    },
-    [this] { return busColour (auxId); });
+    inserts = std::make_unique<InsertSlotListComponent> (context, address(), [this] { return busColour (auxId); });
     insertsRoom.hold (*inserts);
     addAndMakeVisible (insertsRoom);
 

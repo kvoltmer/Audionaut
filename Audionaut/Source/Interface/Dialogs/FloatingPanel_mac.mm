@@ -96,10 +96,8 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
         };
         native->delegate->onMove = [this]
         {
-            if (onMoved == nullptr)
-                return;
             const auto frame = [native->panel frame];
-            onMoved ({ static_cast<int> (frame.origin.x), static_cast<int> (primaryScreenHeight() - NSMaxY (frame)) });
+            nativeMovedTo ({ static_cast<int> (frame.origin.x), static_cast<int> (primaryScreenHeight() - NSMaxY (frame)) });
         };
         [native->panel setDelegate: native->delegate];
 
@@ -114,7 +112,12 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
         const auto frame = [native->panel frame];
         const auto left = area.getCentreX() - frame.size.width / 2;
         const auto top = area.getCentreY() - frame.size.height / 2;
-        [native->panel setFrameTopLeftPoint: NSMakePoint (left, primaryScreenHeight() - top)];
+        {
+            juce::ScopedValueSetter<bool> guard (placing, true);
+            [native->panel setFrameTopLeftPoint: NSMakePoint (left, primaryScreenHeight() - top)];
+        }
+        const auto placed = [native->panel frame];
+        lastTopLeft = { static_cast<int> (placed.origin.x), static_cast<int> (primaryScreenHeight() - NSMaxY (placed)) };
 
         [native->panel makeKeyAndOrderFront: nil];
     }
@@ -137,8 +140,11 @@ FloatingPanel::~FloatingPanel()
 
 void FloatingPanel::setTopLeft (juce::Point<int> topLeft)
 {
-    if (native->panel != nil)
-        [native->panel setFrameTopLeftPoint: NSMakePoint (topLeft.x, primaryScreenHeight() - topLeft.y)];
+    if (native->panel == nil)
+        return;
+    juce::ScopedValueSetter<bool> guard (placing, true);
+    [native->panel setFrameTopLeftPoint: NSMakePoint (topLeft.x, primaryScreenHeight() - topLeft.y)];
+    lastTopLeft = topLeft;
 }
 
 void FloatingPanel::bringToFront()
@@ -166,6 +172,7 @@ void FloatingPanel::applySizeToNative()
     if (static_cast<int> (current.width) == getWidth() && static_cast<int> (current.height) == getHeight())
         return;
 
+    juce::ScopedValueSetter<bool> guard (placing, true);   // the top left stays where it is: no move
     [native->panel setContentSize: NSMakeSize (getWidth(), getHeight())];
     [native->panel setFrameTopLeftPoint: NSMakePoint (frame.origin.x, NSMaxY (frame))];
 }

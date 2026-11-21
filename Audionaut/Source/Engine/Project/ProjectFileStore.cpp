@@ -206,6 +206,7 @@ bool ProjectFileStore::open (juce::File inFile, std::function<void (std::string)
                     playListScheduler->commitPlayListData();
                     refreshDiskStamps();
                     changedExternally = false;
+                    viewChanged = false;
 
                     auto audioDir = AudioResourceContainer::getAudioFileDirectory(getProjectDirectory());
                     audioResourceContainer->deleteObsoleteAudioFiles(audioDir);
@@ -352,6 +353,7 @@ bool ProjectFileStore::save (const juce::File& file_, std::function<void (std::s
 
             // the on-disk file now reflects this session's state
             changedExternally = false;
+            viewChanged = false;
             return true;
         }
 
@@ -483,10 +485,24 @@ void ProjectFileStore::deleteObsoleteAudioFiles()
     audioResourceContainer->trashRedundantFiles(findObsoleteAudioFiles());
 }
 
+void ProjectFileStore::markViewChanged()
+{
+    if (viewChanged)
+        return;
+    viewChanged = true;
+    undoManager->sendChangeMessage();   // what there is to save changed, as with an edit
+}
+
+bool ProjectFileStore::hasUnsavedChanges() const
+{
+    return viewChanged || undoManager->canUndo();
+}
+
 void ProjectFileStore::closeProject()
 {
     currentProjectFile = juce::File();
     changedExternally = false;
+    viewChanged = false;
     currentAgentBatch.reset();
 }
 

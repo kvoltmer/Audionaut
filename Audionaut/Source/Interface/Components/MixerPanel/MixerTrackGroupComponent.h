@@ -39,7 +39,6 @@ private:
     class Band;
 
     audium::InsertChainAddress chainAddress() const;
-    juce::String editorTitle (int slotIndex) const;
 
     MixerContext context;
     std::shared_ptr<audium::AudioTrack> track;

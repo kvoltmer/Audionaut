@@ -232,9 +232,36 @@ void AudioTrackContainer::deleteUnusedRegions()
 
 bool AudioTrackContainer::restoreFromJson (const json& state, bool rebuild)
 {
+    // The insert editors' windows are no part of an edit. A read that replaces the tracks replaces their
+    // slots, and the new ones would take their windows from the snapshot: a window closed since would open
+    // again, a moved one jump back. So the windows are taken along - track by track where the number of
+    // tracks stays, by the tracks' names where a track came or went. A slot the snapshot brings back keeps
+    // what the snapshot says.
+    struct TrackWindows
+    {
+        juce::String trackName;
+        std::vector<InsertChain::EditorWindow> windows;
+        bool given = false;
+    };
+    std::vector<TrackWindows> windowsBefore;
+    for (const auto& track : audioTracks)
+        windowsBefore.push_back ({ track->getAudioTrackName(), track->getTrackInserts().getEditorWindows() });
+
     // readFromJson may modify what it reads - the snapshot is applied again on redo
     auto input = state;
     if (readFromJson(input, rebuild)) {
+        const auto sameTracks = windowsBefore.size() == audioTracks.size();
+        for (size_t i = 0; i < audioTracks.size(); ++i)
+        {
+            auto before = sameTracks ? windowsBefore.begin() + static_cast<std::ptrdiff_t> (i)
+                                     : std::find_if (windowsBefore.begin(), windowsBefore.end(), [&] (const TrackWindows& candidate)
+                                                     { return ! candidate.given && candidate.trackName == audioTracks[i]->getAudioTrackName(); });
+            if (before == windowsBefore.end())
+                continue;
+            before->given = true;
+            audioTracks[i]->getTrackInserts().setEditorWindows (before->windows);
+        }
+
         // change message for UI
         sendActionMessage(rebuild ? rebuildAll : updateAll);
         

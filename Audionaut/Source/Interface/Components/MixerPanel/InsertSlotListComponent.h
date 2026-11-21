@@ -16,9 +16,12 @@
  * runs, plain and dim while it is bypassed - and an unused slot is dark.
  * Under the mouse a used slot shows three controls in the name's place:
  * bypass, the editor (a click opens its window, the next closes it), and
- * a menu that removes the slot or replaces it with another effect type.
+ * a menu that replaces the slot with another effect type or removes it.
  * A click on an empty slot lists the effect types; a drag within the list
  * reorders. A chain longer than the rows scrolls with the mouse wheel.
+ *
+ * A slot whose plugin is not loaded has nothing to bypass and no editor:
+ * under the mouse it shows the menu alone, beside its name.
  *
  * An element the chain keeps for a plugin this machine lacks shows as a
  * dimmed row with a marker at the place it was saved in, named after the
@@ -32,10 +35,8 @@ class InsertSlotListComponent : public juce::Component,
 public:
     static constexpr int rowHeight = 18;   ///< as high as a track's name band (MixerLayout::bandHeight)
 
-    /// editorTitle names a slot's window ("Track 2 / ch 1 / EQ3") from its index; colour is that of the
-    /// chain's track or bus, asked for at each paint as a track's can change.
+    /// colour is that of the chain's track or bus, asked for at each paint as a track's can change.
     InsertSlotListComponent (MixerContext context, audium::InsertChainAddress address,
-                             std::function<juce::String (int index)> editorTitle,
                              std::function<juce::Colour()> colour);
     ~InsertSlotListComponent() override;   // the row classes are complete in the .cpp only
 
@@ -79,7 +80,6 @@ private:
 
     MixerContext context;
     audium::InsertChainAddress address;
-    std::function<juce::String (int index)> editorTitle;
     std::function<juce::Colour()> colour;
     juce::String chainKey;
 

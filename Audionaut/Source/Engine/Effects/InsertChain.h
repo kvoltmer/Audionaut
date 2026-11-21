@@ -87,6 +87,22 @@ public:
     /// a plan is requested where that changed the effect's latency. False out of range.
     bool setState (int index, const json& state);
 
+    /// A slot's editor window: where the user left it and whether it is open, with the slot's type to find the slot by.
+    struct EditorWindow
+    {
+        std::string typeId;
+        std::optional<juce::Point<int>> position;
+        bool open = false;
+    };
+
+    /// The slots' editor windows as they are now, in the chain's order.
+    std::vector<EditorWindow> getEditorWindows() const;
+    /// Gives windows taken from a chain to this one's slots: each to the first slot of its type that has none
+    /// yet, in order - the way readFromJson() keeps instances. A slot left over keeps what it has. For a read
+    /// that replaced the chain (an undo step that rebuilds its track): the windows are where the user has
+    /// them, not where the step recorded them.
+    void setEditorWindows (const std::vector<EditorWindow>& windows);
+
     /// Writes the chain under `key` when it has slots or unresolved elements; a project without effects serializes as before.
     void writeToJson (json& output, const char* key = "inserts") const;
     /// Reads the chain under `key` (an absent key empties it), keeping instances where the types line up.

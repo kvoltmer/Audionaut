@@ -57,8 +57,10 @@ void HostedEffectEditorComponent::createEditor()
 
     if (instance->hasEditor())
         editor.reset (instance->createEditorAndMakeActive());
-    if (editor != nullptr && instance->getPluginDescription().pluginFormatName == "AudioUnit")
+    if (editor != nullptr && instance->getPluginDescription().pluginFormatName == "AudioUnit") {
         editor->setComponentEffect (&paintsNothing);
+        editor->setOpaque (false);   // it paints nothing now: this component's background is to be painted behind it
+    }
     if (editor == nullptr)
         editor = std::make_unique<juce::GenericAudioProcessorEditor> (*instance);
 

@@ -69,12 +69,32 @@ namespace
         }
         g.strokePath (icon, juce::PathStrokeType (1.2f, juce::PathStrokeType::mitered, juce::PathStrokeType::rounded));
     }
+
+    /// The width of a row's outer controls: as wide as the row allows.
+    int controlWidth (int rowWidth) { return juce::jmin (22, rowWidth / 3); }
+
+    /// The menu control alone at a row's right, for a row whose plugin is not there: it has nothing to
+    /// bypass and no editor, and its name stays beside the control. Returns the room left for the name.
+    juce::Rectangle<int> paintMenuControl (juce::Graphics& g, juce::Rectangle<int> row, juce::Colour foreground, bool underMouse)
+    {
+        const auto control = row.removeFromRight (controlWidth (row.getWidth()));
+        if (underMouse) {
+            g.setColour (foreground.withAlpha (0.12f));
+            g.fillRoundedRectangle (control.toFloat().reduced (1.0f, 1.5f), 2.0f);
+        }
+        g.setColour (juce::Colours::black.withAlpha (0.45f));
+        g.fillRect (control.getX() - 1, 2, 1, row.getHeight() - 4);
+        g.setColour (foreground);
+        paintChevronsIcon (g, control.toFloat().getCentre());
+        return row;
+    }
 }
 
 //==============================================================================
 /// One slot: the effect's name and, under the mouse, its controls in the name's place - bypass at the left,
-/// the editor's window, opened and closed, in the middle, at the right the menu that removes it or replaces
-/// it with another effect type. Drag = reorder.
+/// the editor's window, opened and closed, in the middle, at the right the menu that replaces it with
+/// another effect type or removes it. A plugin that is not loaded has nothing to bypass and no editor: its
+/// slot shows the menu alone, beside the name. Drag = reorder.
 class InsertSlotListComponent::SlotRow : public juce::Component,
                                          public juce::SettableTooltipClient,
                                          private juce::Timer
@@ -130,13 +150,16 @@ public:
             g.fillRoundedRectangle (body, 2.0f);
         }
 
-        if (hovered) {
+        if (hoverZone != Zone::none && ! isNotLoaded()) {
             paintControls (g, foreground, enabled);
             return;
         }
 
         auto text = getLocalBounds().reduced (4, 0);
-        if (problem.isNotEmpty()) {
+        if (hoverZone != Zone::none) {
+            text = paintMenuControl (g, getLocalBounds(), foreground, hoverZone == Zone::replace).withTrimmedLeft (4);
+        }
+        else if (problem.isNotEmpty()) {
             paintWarningMarker (g, getLocalBounds());
             text.removeFromRight (8);
         }
@@ -145,9 +168,13 @@ public:
         g.drawText (juce::String (slot->getEffect().getType().name), text, juce::Justification::centredLeft, true);
     }
 
+    void mouseEnter (const juce::MouseEvent& e) override { mouseMove (e); }
+
     void mouseMove (const juce::MouseEvent& e) override
     {
-        if (const auto zone = zoneAt (e.x); zone != hoverZone) {
+        // a finger does not hover: it gets no controls, and its tap is a click on the name
+        const auto zone = e.source.isTouch() ? Zone::none : zoneAt (e.x);
+        if (zone != hoverZone) {
             hoverZone = zone;
             repaint();
         }
@@ -159,10 +186,10 @@ public:
         repaint();
     }
 
-    void mouseDown (const juce::MouseEvent& e) override
+    void mouseDown (const juce::MouseEvent&) override
     {
         dragged = false;
-        hoverZone = zoneAt (e.x);
+        pressedZone = hoverZone;   // the control under the mouse as it is shown; none while the name shows
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -180,32 +207,43 @@ public:
         if (dragged || e.mods.isPopupMenu())
             return;
 
-        switch (zoneAt (e.getMouseDownX()))
+        switch (pressedZone)
         {
             case Zone::bypass:
                 InsertChainActions::setEnabled (owner.context, owner.address, index, ! slot->isEnabled());
                 break;
             case Zone::replace:
-                InsertChainActions::replaceMenu (owner.context, owner.address, index).showMenuAsync (MixerContext::menuOptions (this));
+                InsertChainActions::slotMenu (owner.context, owner.address, index).showMenuAsync (MixerContext::menuOptions (this));
                 break;
             case Zone::edit:
             case Zone::none:
-                owner.context.toggleEditor (owner.address, slot, owner.editorTitle (index));
+                owner.context.toggleEditor (owner.address, slot, InsertChainActions::editorTitle (owner.context, owner.address, index));
+                break;
+            case Zone::name:
                 break;
         }
     }
 
 private:
-    enum class Zone { none, bypass, edit, replace };
+    enum class Zone { none, bypass, edit, replace, name };   ///< name: beside the menu of a plugin that is not loaded, no control
 
     /// The outer controls are as wide as the row allows, the editor's takes what is left between them.
-    int sideWidth() const { return juce::jmin (22, getWidth() / 3); }
+    int sideWidth() const { return controlWidth (getWidth()); }
+
+    /// A placeholder without an instance: nothing runs, and there is no editor to open.
+    bool isNotLoaded() const
+    {
+        auto* hosted = dynamic_cast<const HostedEffect*> (&slot->getEffect());
+        return hosted != nullptr && hosted->getStatus() == HostedEffect::Status::notLoaded;
+    }
 
     Zone zoneAt (int x) const
     {
-        if (x < sideWidth())
-            return Zone::bypass;
-        return x >= getWidth() - sideWidth() ? Zone::replace : Zone::edit;
+        if (x >= getWidth() - sideWidth())
+            return Zone::replace;
+        if (isNotLoaded())
+            return Zone::name;
+        return x < sideWidth() ? Zone::bypass : Zone::edit;
     }
 
     void paintControls (juce::Graphics& g, juce::Colour foreground, bool enabled)
@@ -251,12 +289,14 @@ private:
     const int index;
     const std::shared_ptr<EffectSlot> slot;
     juce::String problem;
-    Zone hoverZone = Zone::none;
+    Zone hoverZone = Zone::none;     ///< the control under the mouse; none while the row shows the name
+    Zone pressedZone = Zone::none;   ///< the one the mouse went down on
     bool dragged = false;
 };
 
 //==============================================================================
-/// An element kept for a plugin this machine lacks: dimmed, with the marker; right-click removes it.
+/// An element kept for a plugin this machine lacks: dimmed, with the marker. Under the mouse it shows the
+/// menu control at its right, as a slot whose plugin is not loaded does; the menu removes it.
 class InsertSlotListComponent::MissingRow : public juce::Component,
                                             public juce::SettableTooltipClient
 {
@@ -301,15 +341,44 @@ public:
         g.setColour (findColour (audium::backgroundColourId).withAlpha (isMouseOver() ? 1.0f : 0.8f));
         g.fillRoundedRectangle (getLocalBounds().toFloat().reduced (0.5f), 2.0f);
 
-        paintWarningMarker (g, getLocalBounds());
+        auto text = getLocalBounds().reduced (4, 0).withTrimmedRight (8);
+        if (hovering)
+            text = paintMenuControl (g, getLocalBounds(), findColour (audium::defaultTextColourId), overMenu).withTrimmedLeft (4);
+        else
+            paintWarningMarker (g, getLocalBounds());
         g.setColour (findColour (audium::defaultTextColourId).withAlpha (0.4f));
         g.setFont (juce::FontOptions (10.0f, juce::Font::italic));
-        g.drawText (name, getLocalBounds().reduced (4, 0).withTrimmedRight (8), juce::Justification::centredLeft, true);
+        g.drawText (name, text, juce::Justification::centredLeft, true);
     }
 
-    void mouseDown (const juce::MouseEvent& e) override
+    void mouseEnter (const juce::MouseEvent& e) override { mouseMove (e); }
+
+    void mouseMove (const juce::MouseEvent& e) override
     {
-        if (! e.mods.isPopupMenu())
+        // a finger does not hover: it gets no control
+        const auto nowHovering = ! e.source.isTouch();
+        const auto nowOverMenu = nowHovering && e.x >= getWidth() - controlWidth (getWidth());
+        if (nowHovering != hovering || nowOverMenu != overMenu) {
+            hovering = nowHovering;
+            overMenu = nowOverMenu;
+            repaint();
+        }
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        hovering = overMenu = false;
+        repaint();
+    }
+
+    void mouseDown (const juce::MouseEvent&) override
+    {
+        pressedOnMenu = overMenu;   // the control as it is shown
+    }
+
+    void mouseUp (const juce::MouseEvent& e) override
+    {
+        if (! pressedOnMenu || e.mods.isPopupMenu() || ! contains (e.getPosition()))
             return;
         juce::PopupMenu menu;
         menu.addItem (TRANS ("Remove"), [ctx = owner.context, chainAddress = owner.address, at = position]
@@ -322,6 +391,9 @@ public:
     InsertSlotListComponent& owner;
     const int position;
     juce::String name;
+    bool hovering = false;        ///< the mouse is over the row: the menu control shows
+    bool overMenu = false;        ///< ... and over that control
+    bool pressedOnMenu = false;   ///< the mouse went down on it
 };
 
 //==============================================================================
@@ -346,8 +418,7 @@ public:
     {
         auto ctx = owner.context;
         auto chainAddress = owner.address;
-        auto title = owner.editorTitle;
-        InsertChainActions::typesMenu (ctx, [ctx, chainAddress, title] (const std::string& id) { InsertChainActions::addAndEdit (ctx, chainAddress, id, title); })
+        InsertChainActions::typesMenu (ctx, [ctx, chainAddress] (const std::string& id) { InsertChainActions::addAndEdit (ctx, chainAddress, id); })
             .showMenuAsync (MixerContext::menuOptions (this));
     }
 
@@ -356,11 +427,9 @@ public:
 
 //==============================================================================
 InsertSlotListComponent::InsertSlotListComponent (MixerContext context_, InsertChainAddress address_,
-                                                  std::function<juce::String (int index)> editorTitle_,
                                                   std::function<juce::Colour()> colour_) :
     context (std::move (context_)),
     address (address_),
-    editorTitle (std::move (editorTitle_)),
     colour (std::move (colour_)),
     chainKey (keyFor (address_))
 {
