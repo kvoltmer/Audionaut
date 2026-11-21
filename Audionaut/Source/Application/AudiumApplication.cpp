@@ -627,7 +627,7 @@ void AudiumApplication::askToSaveIfDirtyAndInvoke(std::function<void ()> callbac
 {
     jassert(callback != nullptr);
     
-    if (!audiumEngine->getUndoManager()->canUndo())
+    if (!fileStore->hasUnsavedChanges())
     {
         NullCheckedInvocation::invoke(callback);
     }
@@ -1007,7 +1007,7 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         // also queried by initCommandManager(), before the engine exists
         result.setActive (fileStore != nullptr && audiumEngine != nullptr &&
                           fileStore->getCurrentProjectFile().existsAsFile() &&
-                          audiumEngine->getUndoManager()->canUndo());
+                          fileStore->hasUnsavedChanges());
         break;
     case CommandIDs::showAboutWindow:
         result.setInfo ("About", "Shows the 'About' page.", CommandCategories::general, 0);

@@ -20,6 +20,7 @@
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/PlayList/PlayListScheduler.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Project/ProjectFileStore.h"
 
 /**
  * What the mixer's parts share: the engine and the mixer's services. Copied
@@ -33,12 +34,19 @@ struct MixerContext
     /// Opens, or raises, the editor window of a slot; the title says where the slot sits ("Track 2 / ch 1 / EQ3").
     std::function<void (const audium::InsertChainAddress&, std::shared_ptr<audium::EffectSlot>, const juce::String& title)> openEditor;
 
-    /// Opens the Manage Plugins window; unset where there is none (the headless builds).
-    std::function<void()> openPluginManager;
+    /// Closes the slot's editor window if it is open, opens it otherwise.
+    std::function<void (const audium::InsertChainAddress&, std::shared_ptr<audium::EffectSlot>, const juce::String& title)> toggleEditor;
 
     audium::AudioTrackContainer& container() const { return *engine->getAudioTrackContainer(); }
     audium::MixerPlanner* planner() const { return container().getMixerPlanner(); }
     juce::UndoManager& undoManager() const { return *container().getUndoManager(); }
+
+    /// An insert editor's window was moved, opened or closed by the user: saved with the project, though no edit.
+    void editorWindowChanged() const
+    {
+        if (auto store = engine->getProjectFileStore())
+            store->markViewChanged();
+    }
 
     /// The chain an address names right now, nullptr once its owner is gone.
     audium::InsertChain* chain (const audium::InsertChainAddress& address) const { return address.resolve (container()); }
@@ -75,9 +83,28 @@ namespace InsertChainActions
         return edit (ctx, address, "Add Insert", [&] (InsertChain& chain) { return chain.add (typeId, at) != nullptr; });
     }
 
+    /// The title of a slot's editor window: the track or bus the chain belongs to, then the effect ("Track 2 / EQ3").
+    inline juce::String editorTitle (const MixerContext& ctx, const InsertChainAddress& address, int index)
+    {
+        juce::String owner;
+        if (address.kind == InsertChainAddress::Kind::master)
+            owner = TRANS ("Main");
+        else if (address.kind == InsertChainAddress::Kind::aux) {
+            if (auto bus = ctx.container().getAuxBuses().get (address.id))
+                owner = juce::String (bus->getName());
+        }
+        else if (auto track = ctx.container().getAudioTrack (address.id))
+            owner = track->getAudioTrackName();
+
+        juce::String effect;
+        if (auto* chain = ctx.chain (address))
+            if (auto slot = chain->getSlot (index))
+                effect = slot->getEffect().getType().name;
+        return owner + " / " + effect;
+    }
+
     /// Adds at the end of the chain and opens the new slot's editor at once.
-    inline bool addAndEdit (const MixerContext& ctx, const InsertChainAddress& address, const std::string& typeId,
-                            const std::function<juce::String (int index)>& editorTitle)
+    inline bool addAndEdit (const MixerContext& ctx, const InsertChainAddress& address, const std::string& typeId)
     {
         if (! add (ctx, address, typeId))
             return false;
@@ -86,7 +113,7 @@ namespace InsertChainActions
             return true;
         const auto index = chain->size() - 1;
         if (ctx.openEditor != nullptr)
-            ctx.openEditor (address, chain->getSlot (index), editorTitle (index));
+            ctx.openEditor (address, chain->getSlot (index), editorTitle (ctx, address, index));
         return true;
     }
 
@@ -126,8 +153,7 @@ namespace InsertChainActions
 
     /// The effect types in two sections, the built-in effects and below them the plugins. The built-ins are
     /// listed by name on the section's own level; the plugins get a submenu per manufacturer, one without a
-    /// manufacturer going below the submenus. Submenus and names are in alphabetical order. Last, where the
-    /// app has one, the Manage Plugins window.
+    /// manufacturer going below the submenus. Submenus and names are in alphabetical order.
     inline juce::PopupMenu typesMenu (const MixerContext& ctx, std::function<void (const std::string& typeId)> onPick)
     {
         juce::PopupMenu menu;
@@ -175,55 +201,19 @@ namespace InsertChainActions
 
         addSection (TRANS ("Built-in"), true);
         addSection (TRANS ("Plugins"), false);
-
-        if (ctx.openPluginManager != nullptr) {
-            menu.addSeparator();
-            menu.addItem (TRANS ("Manage Plugins..."), [open = ctx.openPluginManager] { open(); });
-        }
         return menu;
     }
 
-    /// The context menu of one slot: Edit, Bypass or Enable, Replace, Move, Remove.
-    inline juce::PopupMenu slotMenu (const MixerContext& ctx, const InsertChainAddress& address, int index, const juce::String& editorTitle)
+    /// The menu of a slot's menu control: the effect types to put in the slot's place, then Remove at the bottom.
+    inline juce::PopupMenu slotMenu (const MixerContext& ctx, const InsertChainAddress& address, int index)
     {
         juce::PopupMenu menu;
-        auto* chain = ctx.chain (address);
-        auto slot = chain != nullptr ? chain->getSlot (index) : nullptr;
-        if (slot == nullptr)
-            return menu;
+        const auto types = typesMenu (ctx, [ctx, address, index] (const std::string& id) { replace (ctx, address, index, id); });
+        for (juce::PopupMenu::MenuItemIterator item (types); item.next();)
+            menu.addItem (item.getItem());
 
-        const auto enabled = slot->isEnabled();
-        const auto last = chain->size() - 1;
-
-        menu.addItem (TRANS ("Edit..."), [ctx, address, slot, editorTitle] { ctx.openEditor (address, slot, editorTitle); });
-        menu.addItem (enabled ? TRANS ("Bypass") : TRANS ("Enable"), [ctx, address, index, enabled] { setEnabled (ctx, address, index, ! enabled); });
-        menu.addSubMenu (TRANS ("Replace"), typesMenu (ctx, [ctx, address, index] (const std::string& id) { replace (ctx, address, index, id); }));
-        menu.addSeparator();
-        menu.addItem (TRANS ("Move Up"), index > 0, false, [ctx, address, index] { move (ctx, address, index, index - 1); });
-        menu.addItem (TRANS ("Move Down"), index < last, false, [ctx, address, index] { move (ctx, address, index, index + 1); });
         menu.addSeparator();
         menu.addItem (TRANS ("Remove"), [ctx, address, index] { remove (ctx, address, index); });
-        return menu;
-    }
-
-    /// The menu of a whole chain where there is no room for slot rows: one submenu per slot, then Add.
-    inline juce::PopupMenu chainMenu (const MixerContext& ctx, const InsertChainAddress& address,
-                                      const std::function<juce::String (int index)>& editorTitle)
-    {
-        juce::PopupMenu menu;
-        if (auto* chain = ctx.chain (address)) {
-            int index = 0;
-            for (const auto& slot : chain->getSlots()) {
-                auto name = juce::String (slot->getEffect().getType().name);
-                if (! slot->isEnabled())
-                    name += TRANS (" (bypassed)");
-                menu.addSubMenu (name, slotMenu (ctx, address, index, editorTitle (index)));
-                ++index;
-            }
-            if (index > 0)
-                menu.addSeparator();
-        }
-        menu.addSubMenu (TRANS ("Add"), typesMenu (ctx, [ctx, address, editorTitle] (const std::string& id) { addAndEdit (ctx, address, id, editorTitle); }));
         return menu;
     }
 }

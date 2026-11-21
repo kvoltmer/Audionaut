@@ -26,7 +26,7 @@ MixerBusGroupComponent::~MixerBusGroupComponent() = default;
 
 int MixerBusGroupComponent::getPreferredWidth() const
 {
-    return static_cast<int> (strips.size()) * (stripWidth + stripGap) - stripGap;
+    return static_cast<int> (strips.size()) * (busStripWidth + stripGap) - stripGap;
 }
 
 void MixerBusGroupComponent::setShown (const Shown& shown)
@@ -53,7 +53,7 @@ void MixerBusGroupComponent::resized()
     auto bounds = getLocalBounds();
     bounds.removeFromTop (bandHeight);
     for (auto& strip : strips) {
-        strip->setBounds (bounds.removeFromLeft (stripWidth));
+        strip->setBounds (bounds.removeFromLeft (busStripWidth));
         bounds.removeFromLeft (stripGap);
     }
 }
@@ -74,7 +74,7 @@ void MixerBusGroupComponent::paint (juce::Graphics& g)
         g.drawText (title, area.reduced (4, 0), juce::Justification::centredLeft, true);
     };
     if (numAux > 0) {
-        drawBand (band.removeFromLeft (numAux * (stripWidth + stripGap) - stripGap), 0, TRANS ("Aux"));
+        drawBand (band.removeFromLeft (numAux * (busStripWidth + stripGap) - stripGap), 0, TRANS ("Aux"));
         band.removeFromLeft (stripGap);
     }
     drawBand (band, MixerBusStripComponent::masterBus, TRANS ("Main"));

@@ -99,6 +99,32 @@ bool InsertChain::removeUnresolved (int position)
     return true;
 }
 
+std::vector<InsertChain::EditorWindow> InsertChain::getEditorWindows() const
+{
+    std::vector<EditorWindow> windows;
+    for (const auto& slot : slots)
+        windows.push_back ({ slot->getEffect().getType().id, slot->getEditorPosition(), slot->isEditorOpen() });
+    return windows;
+}
+
+void InsertChain::setEditorWindows (const std::vector<EditorWindow>& windows)
+{
+    std::vector<bool> given (slots.size(), false);
+    for (const auto& window : windows)
+    {
+        for (size_t i = 0; i < slots.size(); ++i)
+        {
+            if (! given[i] && slots[i]->getEffect().getType().id == window.typeId)
+            {
+                given[i] = true;
+                slots[i]->setEditorPosition (window.position);
+                slots[i]->setEditorOpen (window.open);
+                break;
+            }
+        }
+    }
+}
+
 void InsertChain::writeToJson (json& output, const char* key) const
 {
     if (slots.empty() && unresolved.empty())
@@ -112,6 +138,10 @@ void InsertChain::writeToJson (json& output, const char* key) const
                          { "state", slot->getEffect().getState() } };
         if (auto plugin = slot->getEffect().getPluginInfo(); ! plugin.is_null())
             element["plugin"] = std::move (plugin);   // how another machine finds the plugin
+        if (const auto position = slot->getEditorPosition())
+            element["editor"] = { { "x", position->x }, { "y", position->y } };
+        if (slot->isEditorOpen())
+            element["editor"]["open"] = true;
         inserts.push_back (std::move (element));
     }
 
@@ -172,6 +202,15 @@ void InsertChain::readFromJson (const json& input, const char* key)
                 continue;
             }
             adopt (*slot);
+
+            // a new slot only: a kept one's window is where the user has it now, whatever an undo step recorded
+            // (a read that replaces the whole track hands the windows over, AudioTrackContainer::readFromJson)
+            if (element.contains ("editor") && element["editor"].is_object()) {
+                const auto& editor = element["editor"];
+                if (editor.contains ("x") && editor["x"].is_number_integer() && editor.contains ("y") && editor["y"].is_number_integer())
+                    slot->setEditorPosition (juce::Point<int> (editor["x"].get<int>(), editor["y"].get<int>()));
+                slot->setEditorOpen (editor.contains ("open") && editor["open"].is_boolean() && editor["open"].get<bool>());
+            }
         }
 
         if (element.contains ("enabled") && element["enabled"].is_boolean())

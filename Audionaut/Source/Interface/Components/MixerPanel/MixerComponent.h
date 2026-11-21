@@ -13,6 +13,8 @@
 #include "Interface/Components/MixerPanel/MixerBusGroupComponent.h"
 #include "Interface/Controls/PanelHeaderBar.h"
 
+class FloatingPanel;
+
 /**
  * The mixer at the bottom of the middle panel: one strip per channel,
  * grouped by track in arrangement order, scrolling horizontally, with the
@@ -76,7 +78,12 @@ private:
 
     void timerCallback() override;
     void openEditor (const audium::InsertChainAddress& address, std::shared_ptr<audium::EffectSlot> slot, const juce::String& title);
+    void toggleEditor (const audium::InsertChainAddress& address, std::shared_ptr<audium::EffectSlot> slot, const juce::String& title);
     void closeEditorsWhoseSlotIsGone();
+
+    /// Opens the editor windows of the slots that say theirs is open and have none: those of a project saved
+    /// with them open. Called when the structure changed, which a new slot always does.
+    void openEditorsLeftOpen();
     juce::String structureSignature() const;
 
     void readPreferences();
@@ -100,9 +107,14 @@ private:
     std::unique_ptr<MixerBusGroupComponent> buses;   ///< right of the viewport, so it stays while the strips scroll
     bool auxBusesVisible = true;
     juce::String shownStructure;
+    juce::String editorsStructure;   ///< the structure the editor windows left open were last opened for
     int lastPreferredHeight = 0;
 
     std::map<audium::EffectSlot*, std::unique_ptr<juce::Component>> editorWindows;
+
+    /// Puts a slot's new editor window where the user left it (the slot keeps the place) and has it remember
+    /// where it goes; the slot hears that its window is open, and when the user closes it.
+    void placeEditor (FloatingPanel& panel, const std::shared_ptr<audium::EffectSlot>& slot);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixerComponent)
 };

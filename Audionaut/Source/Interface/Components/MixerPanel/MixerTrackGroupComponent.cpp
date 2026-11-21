@@ -59,7 +59,7 @@ MixerTrackGroupComponent::MixerTrackGroupComponent (MixerContext context_, std::
     band = std::make_unique<Band> (*this);
     addAndMakeVisible (band.get());
 
-    inserts = std::make_unique<InsertSlotListComponent> (context, chainAddress(), [this] (int index) { return editorTitle (index); });
+    inserts = std::make_unique<InsertSlotListComponent> (context, chainAddress(), [this] { return track->getViewState().getColour(); });
     insertsRoom.hold (*inserts);
     addAndMakeVisible (insertsRoom);
 
@@ -88,15 +88,6 @@ MixerTrackGroupComponent::~MixerTrackGroupComponent() = default;
 InsertChainAddress MixerTrackGroupComponent::chainAddress() const
 {
     return InsertChainAddress::ofTrack (track->getId());
-}
-
-juce::String MixerTrackGroupComponent::editorTitle (int slotIndex) const
-{
-    juce::String effectName;
-    if (auto* chain = context.chain (chainAddress()))
-        if (auto slot = chain->getSlot (slotIndex))
-            effectName = slot->getEffect().getType().name;
-    return track->getAudioTrackName() + " / " + effectName;
 }
 
 int MixerTrackGroupComponent::getPreferredWidth() const

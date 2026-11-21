@@ -78,8 +78,10 @@ private:
     static constexpr int toggleSize = 20;
     juce::Range<int> faderRange;
 
-    /// One section's icon on a small plate: the plate lit grey while the
-    /// section is shown, dark while it is hidden.
+    /// One section's glyph, drawn like the buttons that show and hide the
+    /// window's panels: fine rounded outlines with one solid part, in the
+    /// accent colour while the section is shown and in the dimmed text
+    /// colour while it is hidden.
     class Toggle : public juce::Button
     {
     public:
@@ -93,46 +95,52 @@ private:
 
         void paintButton (juce::Graphics& g, bool highlighted, bool down) override
         {
-            const auto on = getToggleState();
             const auto active = highlighted || down;
-            const auto text = findColour (audium::defaultTextColourId);
-            const auto plate = getLocalBounds().toFloat().reduced (0.5f);
-
-            // the plate: a lit grey key while on (not the accent blue of the transport toggles), a dark one while off
-            if (on)
-                g.setColour (text.withAlpha (active ? 0.45f : 0.32f));
-            else
-                g.setColour (findColour (audium::backgroundColourId).darker (0.3f).withAlpha (active ? 0.7f : 1.0f));
-            g.fillRoundedRectangle (plate, 3.0f);
-            g.setColour (juce::Colours::black.withAlpha (on ? 0.45f : 0.3f));
-            g.drawRoundedRectangle (plate, 3.0f, 1.0f);
-
-            const auto colour = text.withAlpha (on ? 0.95f : (active ? 0.6f : 0.4f));
-            g.setColour (colour);
-            drawIcon (g, colour, getLocalBounds().toFloat().withSizeKeepingCentre (13.0f, 13.0f), on);
+            g.setColour (getToggleState() ? juce::Colour (audium::toggledOnColour).brighter (active ? 0.2f : 0.0f)
+                                          : findColour (audium::defaultTextColourId).withAlpha (active ? 0.9f : 0.6f));
+            drawGlyph (g, getLocalBounds().toFloat().withSizeKeepingCentre (glyphSize, glyphSize));
         }
 
         const MixerLayout::Section section;
 
     private:
-        void drawIcon (juce::Graphics& g, juce::Colour colour, juce::Rectangle<float> b, bool on) const
+        // the glyphs' measurements, to tune by eye
+        static constexpr float glyphSize = 14.0f;
+        static constexpr float lineThickness = 0.8f;   ///< the outlines' stroke
+        static constexpr float strokeThickness = 1.0f; ///< the open lines' (arrows)
+        static constexpr float cornerSize = 1.5f;
+        static constexpr float barThickness = 2.0f;    ///< the solid bars
+        static constexpr float arrowHead = 2.5f;
+
+        void drawGlyph (juce::Graphics& g, juce::Rectangle<float> b) const
         {
             using namespace MixerLayout;
-            const auto stroke = 1.1f;
-            const auto fillAlpha = on ? 0.3f : 0.0f;
 
             switch (section) {
+                case Section::io:
+                {
+                    // in at the top: an arrow into a bar; out at the bottom: an arrow away from one
+                    const auto barHeight = 5.5f;
+                    const auto y1 = b.getY() + barHeight / 2.0f + 0.25f;
+                    const auto y2 = b.getBottom() - barHeight / 2.0f - 0.25f;
+                    bar (g, { b.getRight() - barThickness, y1 - barHeight / 2.0f, barThickness, barHeight });
+                    arrow (g, { b.getX() + 0.5f, y1 }, { b.getRight() - barThickness - 2.0f, y1 });
+                    bar (g, { b.getX(), y2 - barHeight / 2.0f, barThickness, barHeight });
+                    arrow (g, { b.getX() + barThickness + 2.0f, y2 }, { b.getRight() - 0.5f, y2 });
+                    break;
+                }
+
                 case Section::inserts:
                 {
-                    // a column of slots
-                    auto slots = b.reduced (1.5f, 1.0f);
-                    const auto rowHeight = slots.getHeight() / 3.0f;
+                    // a column of slots, the first one taken
+                    const auto gap = 1.75f;
+                    const auto rowHeight = (b.getHeight() - 2.0f * gap) / 3.0f;
                     for (int i = 0; i < 3; ++i) {
-                        const auto row = slots.removeFromTop (rowHeight).reduced (0.0f, 0.9f);
-                        g.setColour (colour.withMultipliedAlpha (fillAlpha));
-                        g.fillRoundedRectangle (row, 1.0f);
-                        g.setColour (colour);
-                        g.drawRoundedRectangle (row, 1.0f, stroke);
+                        const auto row = b.withHeight (rowHeight).translated (0.0f, static_cast<float> (i) * (rowHeight + gap));
+                        if (i == 0)
+                            g.fillRoundedRectangle (row, cornerSize);
+                        else
+                            g.drawRoundedRectangle (row.reduced (lineThickness / 2.0f), cornerSize, lineThickness);
                     }
                     break;
                 }
@@ -140,70 +148,56 @@ private:
                 case Section::sends:
                 {
                     // out of a bar, off to the right
-                    const auto bar = juce::Rectangle<float> (b.getX() + 1.0f, b.getY() + 2.5f, 1.8f, b.getHeight() - 5.0f);
-                    g.setColour (colour.withMultipliedAlpha (on ? 1.0f : 0.8f));
-                    g.fillRoundedRectangle (bar, 1.0f);
-                    arrow (g, { b.getX() + 5.0f, b.getCentreY() }, { b.getRight() - 1.0f, b.getCentreY() }, stroke);
-                    break;
-                }
-
-                case Section::io:
-                {
-                    // in at the top: an arrow into a bar; out at the bottom: an arrow away from one
-                    const auto y1 = b.getY() + 3.5f;
-                    const auto y2 = b.getBottom() - 3.5f;
-                    g.fillRoundedRectangle (b.getRight() - 3.0f, y1 - 2.5f, 1.8f, 5.0f, 1.0f);
-                    arrow (g, { b.getX() + 0.5f, y1 }, { b.getRight() - 4.5f, y1 }, stroke);
-                    g.fillRoundedRectangle (b.getX() + 1.0f, y2 - 2.5f, 1.8f, 5.0f, 1.0f);
-                    arrow (g, { b.getX() + 4.5f, y2 }, { b.getRight() - 0.5f, y2 }, stroke);
+                    bar (g, b.withWidth (barThickness).reduced (0.0f, 2.0f));
+                    arrow (g, { b.getX() + barThickness + 2.5f, b.getCentreY() }, { b.getRight() - 0.5f, b.getCentreY() }, 3.0f);
                     break;
                 }
 
                 case Section::pan:
                 {
-                    // a knob: an open arc with its pointer at the top
-                    const auto centre = juce::Point<float> (b.getCentreX(), b.getCentreY() + 1.0f);
-                    const auto radius = b.getWidth() * 0.4f;
-                    juce::Path arc;   // angles run clockwise from the top: from 7 o'clock over the top to 5 o'clock
-                    arc.addCentredArc (centre.x, centre.y, radius, radius, 0.0f,
-                                       -juce::MathConstants<float>::pi * 0.75f, juce::MathConstants<float>::pi * 0.75f, true);
-                    if (on) {
-                        juce::Path disc;
-                        disc.addEllipse (centre.x - radius, centre.y - radius, radius * 2.0f, radius * 2.0f);
-                        g.setColour (colour.withMultipliedAlpha (fillAlpha));
-                        g.fillPath (disc);
-                        g.setColour (colour);
-                    }
-                    g.strokePath (arc, juce::PathStrokeType (stroke, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-                    g.drawLine (centre.x, centre.y, centre.x, centre.y - radius + 0.5f, stroke + 0.3f);
+                    // a knob: its rim, and a solid pointer at the centre position
+                    const auto rim = b.reduced (lineThickness / 2.0f);
+                    g.drawEllipse (rim, lineThickness);
+                    const auto pointerInset = 2.75f;
+                    bar (g, { b.getCentreX() - barThickness / 2.0f, b.getY() + pointerInset, barThickness, b.getHeight() / 2.0f - pointerInset + barThickness / 2.0f });
                     break;
                 }
 
                 case Section::buttons:
                 {
-                    // two rows of two
-                    auto grid = b.reduced (1.0f, 2.0f);
-                    const auto cellWidth = grid.getWidth() / 2.0f;
-                    const auto cellHeight = grid.getHeight() / 2.0f;
+                    // two rows of two, the first one lit
+                    const auto gap = 2.0f;
+                    const auto cellSize = (b.getWidth() - gap) / 2.0f;
                     for (int row = 0; row < 2; ++row)
                         for (int column = 0; column < 2; ++column) {
-                            const auto cell = juce::Rectangle<float> (grid.getX() + column * cellWidth, grid.getY() + row * cellHeight, cellWidth, cellHeight).reduced (1.0f);
-                            g.setColour (colour.withMultipliedAlpha (fillAlpha));
-                            g.fillRoundedRectangle (cell, 1.0f);
-                            g.setColour (colour);
-                            g.drawRoundedRectangle (cell, 1.0f, stroke);
+                            const auto cell = juce::Rectangle<float> (b.getX() + static_cast<float> (column) * (cellSize + gap),
+                                                                      b.getY() + static_cast<float> (row) * (cellSize + gap), cellSize, cellSize);
+                            if (row == 0 && column == 0)
+                                g.fillRoundedRectangle (cell, cornerSize);
+                            else
+                                g.drawRoundedRectangle (cell.reduced (lineThickness / 2.0f), cornerSize, lineThickness);
                         }
                     break;
                 }
             }
         }
 
-        static void arrow (juce::Graphics& g, juce::Point<float> from, juce::Point<float> to, float stroke)
+        /// A solid bar with round ends.
+        static void bar (juce::Graphics& g, juce::Rectangle<float> area)
         {
-            g.drawLine (from.x, from.y, to.x - 1.0f, to.y, stroke);
-            juce::Path head;
-            head.addTriangle (to.x, to.y, to.x - 3.5f, to.y - 2.5f, to.x - 3.5f, to.y + 2.5f);
-            g.fillPath (head);
+            g.fillRoundedRectangle (area, juce::jmin (area.getWidth(), area.getHeight()) / 2.0f);
+        }
+
+        /// A line to the right with an open head, its ends and corner rounded.
+        static void arrow (juce::Graphics& g, juce::Point<float> from, juce::Point<float> to, float head = arrowHead)
+        {
+            juce::Path path;
+            path.startNewSubPath (from);
+            path.lineTo (to);
+            path.startNewSubPath (to.x - head, to.y - head);
+            path.lineTo (to);
+            path.lineTo (to.x - head, to.y + head);
+            g.strokePath (path, juce::PathStrokeType (strokeThickness, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         }
     };
 

@@ -26,6 +26,7 @@ namespace MixerLayout
 {
     constexpr int headerHeight = AudiumLookAndFeel::dividerHeight;   ///< the band across the mixer's top: the seam and the handle
     constexpr int stripWidth = 60;
+    constexpr int busStripWidth = stripWidth * 5 / 4;   ///< an aux return's and the master's strip: a quarter wider than a channel's
     constexpr int stripGap = 1;
     constexpr int groupGap = 6;
     constexpr int bandHeight = 18;

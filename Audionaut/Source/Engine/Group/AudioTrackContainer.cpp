@@ -267,6 +267,23 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     // one plan for the whole read, after every chain and channel is in
     MixerPlanner::ScopedBatch planBatch (mixerPlanner.get());
 
+    // The insert editors' windows are no part of an edit. A read that replaces the tracks replaces their
+    // slots, and the new ones would take their windows from what is read (an undo step's snapshot, an
+    // agent's state, the file a reload reads): a window closed since would open again, a moved one jump
+    // back. So the tracks there are now hand their windows to the tracks of the same name the read leaves
+    // - names, as a track has nothing else to be known by, and positions shift where a track comes or
+    // goes; of two tracks with one name the first takes the first's. A slot the read brings back keeps
+    // what was read, and so does every slot of a project opened: nothing is there before it.
+    struct TrackWindows
+    {
+        juce::String trackName;
+        std::vector<InsertChain::EditorWindow> windows;
+        bool given = false;
+    };
+    std::vector<TrackWindows> windowsBefore;
+    for (const auto& track : audioTracks)
+        windowsBefore.push_back ({ track->getAudioTrackName(), track->getTrackInserts().getEditorWindows() });
+
     json jsonTracks;
     if (input.contains("audio_tracks")) {
         jsonTracks = input["audio_tracks"];
@@ -321,6 +338,16 @@ bool AudioTrackContainer::readFromJson (json& input, bool rebuild)
     
     if (input.contains("loop_data")) {
         transportLoop->setLoopData(input["loop_data"].get<LoopData>());
+    }
+
+    for (const auto& track : audioTracks)
+    {
+        const auto before = std::find_if (windowsBefore.begin(), windowsBefore.end(), [&] (const TrackWindows& candidate)
+                                          { return ! candidate.given && candidate.trackName == track->getAudioTrackName(); });
+        if (before == windowsBefore.end())
+            continue;
+        before->given = true;
+        track->getTrackInserts().setEditorWindows (before->windows);
     }
     
     return true;

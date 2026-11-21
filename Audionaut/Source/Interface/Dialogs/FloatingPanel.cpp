@@ -33,8 +33,19 @@ void FloatingPanel::resized()
     applySizeToNative();
 }
 
+void FloatingPanel::nativeMovedTo (juce::Point<int> topLeft)
+{
+    const auto userMoved = ! placing && topLeft != lastTopLeft;
+    lastTopLeft = topLeft;
+    if (userMoved && onMoved != nullptr)
+        onMoved (topLeft);
+}
+
 void FloatingPanel::requestClose()
 {
+    if (onUserClosed != nullptr)
+        onUserClosed();
+
     juce::MessageManager::callAsync ([safeThis = juce::Component::SafePointer<FloatingPanel> (this)]
     {
         if (safeThis != nullptr)
@@ -80,6 +91,12 @@ struct FloatingPanel::Native final : public juce::DocumentWindow,
         panel.requestClose();
     }
 
+    void moved() override
+    {
+        juce::DocumentWindow::moved();
+        panel.nativeMovedTo (getPosition());
+    }
+
     bool keyPressed (const juce::KeyPress& key) override
     {
         return panel.keyPressed (key) || juce::DocumentWindow::keyPressed (key);
@@ -105,7 +122,11 @@ FloatingPanel::FloatingPanel (const juce::String& title, juce::Component* conten
 {
     addAndMakeVisible (content.get());
     setSize (content->getWidth(), content->getHeight());
-    native = std::make_unique<Native> (*this, title, shortcuts, userResizable);
+    {
+        juce::ScopedValueSetter<bool> guard (placing, true);
+        native = std::make_unique<Native> (*this, title, shortcuts, userResizable);
+    }
+    lastTopLeft = native->getPosition();
     owner.reset (this);
 }
 
@@ -123,6 +144,13 @@ void FloatingPanel::setResizeLimits (int minimumWidth, int minimumHeight, int ma
 void FloatingPanel::applySizeToNative()
 {
     // nothing to do: the panel is the window's content, and the window sizes itself to it
+}
+
+void FloatingPanel::setTopLeft (juce::Point<int> topLeft)
+{
+    juce::ScopedValueSetter<bool> guard (placing, true);
+    native->setTopLeftPosition (topLeft);
+    lastTopLeft = topLeft;
 }
 
 void FloatingPanel::bringToFront()

@@ -87,6 +87,20 @@ private:
     std::shared_ptr<audium::EffectSlot> slot;   ///< strong: the plugin lives as long as its editor
     audium::HostedEffect& hosted;
 
+    /// Keeps a component's own painting off the screen, so what is behind it shows. For an Audio Unit's
+    /// editor component, which paints itself white under the plugin's native view: a view that draws no
+    /// background (the system's generic one, some of Apple's own) takes its colours from the window's dark
+    /// appearance, and its white labels on that white could not be read. Without it the window's own
+    /// background is behind the view - this component's, which is why the editor is made non-opaque with it:
+    /// behind an opaque component nothing is painted. The native view is no part of the painting and stays
+    /// as it is. The editor is still rendered, into an image that is dropped; it is a plain fill, and it
+    /// repaints only when its size or its alpha (bypass) changes.
+    struct PaintsNothing final : public juce::ImageEffectFilter
+    {
+        void applyEffect (juce::Image&, juce::Graphics&, float, float) override {}
+    };
+    PaintsNothing paintsNothing;
+
     std::unique_ptr<juce::AudioProcessorEditor> editor;
     bool following = false;   ///< sizing this to the editor right now: its bounds are not to be written back
     audium::HostedEffect::Status shownStatus = audium::HostedEffect::Status::loaded;   ///< what the placeholder's text was painted for
