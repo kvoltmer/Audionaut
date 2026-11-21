@@ -142,5 +142,6 @@ Planned or under consideration, not available today:
 - Speech-specific tools (silence or filler-word removal)
 - Flatpak, and a code-signed Windows installer
 
-Ideas and requests are welcome in
+The [roadmap](../ROADMAP.md) says what is being worked on and what comes
+next. Ideas and requests are welcome in
 [GitHub Discussions](https://github.com/kvoltmer/Audionaut/discussions).
