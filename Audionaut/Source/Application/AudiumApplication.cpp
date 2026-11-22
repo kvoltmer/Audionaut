@@ -193,6 +193,12 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         return;
     }
 
+    // The system's process for Audio Units that run out of process is started here, before the event
+    // loop runs and before a project brings the first such plugin: started later, it leaves the
+    // plugins' editors with a mouse they barely follow (Native Instruments' knobs).
+    if (pluginsEnabled)
+        pluginHost->startHostingServiceEarly();
+
     // What the system knows to be installed is listed without a scan (the Audio Units on macOS):
     // none is loaded before it is used.
     if (pluginsEnabled)

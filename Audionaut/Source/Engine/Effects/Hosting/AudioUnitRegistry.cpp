@@ -13,6 +13,9 @@
 
 #include "AudioUnitRegistry.h"
 
+#include <mutex>
+#include <utility>
+
 namespace audium
 {
 
@@ -123,6 +126,69 @@ std::vector<juce::PluginDescription> AudioUnitRegistry::installed (juce::AudioPl
    #endif
     juce::ignoreUnused (formats);
     return result;
+}
+
+#if JUCE_MAC && JUCE_PLUGINHOST_AU
+namespace
+{
+    /// The effect that keeps the hosting process: it arrives on a thread of the system's, maybe
+    /// after nobody wants it any more.
+    struct HostingServiceUnit
+    {
+        std::mutex lock;
+        AudioComponentInstance unit = nullptr;
+        bool released = false;
+    };
+
+    struct HostingServiceToken
+    {
+        explicit HostingServiceToken (std::shared_ptr<HostingServiceUnit> state_) : state (std::move (state_)) {}
+
+        ~HostingServiceToken()
+        {
+            const std::lock_guard<std::mutex> guard (state->lock);
+            state->released = true;
+            if (auto* unit = std::exchange (state->unit, nullptr))
+                AudioComponentInstanceDispose (unit);
+        }
+
+        std::shared_ptr<HostingServiceUnit> state;
+    };
+}
+#endif
+
+std::shared_ptr<void> AudioUnitRegistry::startHostingService()
+{
+   #if JUCE_MAC && JUCE_PLUGINHOST_AU
+    // Apple's delay: on every Mac, and loaded out of process without a question to the user
+    AudioComponentDescription delay {};
+    delay.componentType = kAudioUnitType_Effect;
+    delay.componentSubType = kAudioUnitSubType_Delay;
+    delay.componentManufacturer = kAudioUnitManufacturer_Apple;
+
+    auto* component = AudioComponentFindNext (nullptr, &delay);
+    if (component == nullptr)
+        return {};
+
+    auto state = std::make_shared<HostingServiceUnit>();
+    AudioComponentInstantiate (component, kAudioComponentInstantiation_LoadOutOfProcess,
+                               ^(AudioComponentInstance unit, OSStatus)
+                               {
+                                   const std::lock_guard<std::mutex> guard (state->lock);
+                                   if (state->released)
+                                   {
+                                       if (unit != nullptr)
+                                           AudioComponentInstanceDispose (unit);
+                                   }
+                                   else
+                                   {
+                                       state->unit = unit;
+                                   }
+                               });
+    return std::make_shared<HostingServiceToken> (state);
+   #else
+    return {};
+   #endif
 }
 
 } // namespace audium
