@@ -168,12 +168,21 @@ std::shared_ptr<void> AudioUnitRegistry::startHostingService()
 
     auto* component = AudioComponentFindNext (nullptr, &delay);
     if (component == nullptr)
+    {
+        juce::Logger::writeToLog ("Audio Units: the hosting process was not started early, Apple's delay effect is missing");
         return {};
+    }
 
     auto state = std::make_shared<HostingServiceUnit>();
     AudioComponentInstantiate (component, kAudioComponentInstantiation_LoadOutOfProcess,
-                               ^(AudioComponentInstance unit, OSStatus)
+                               ^(AudioComponentInstance unit, OSStatus status)
                                {
+                                   // without the effect the process comes with the first plugin, too late
+                                   // for its editors: said here, so slow knobs can be traced to it
+                                   if (unit == nullptr)
+                                       juce::Logger::writeToLog ("Audio Units: the hosting process was not started early, OSStatus "
+                                                                 + juce::String (static_cast<int> (status)));
+
                                    const std::lock_guard<std::mutex> guard (state->lock);
                                    if (state->released)
                                    {
