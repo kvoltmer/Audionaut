@@ -135,7 +135,13 @@ public:
 
     void processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override
     {
-        buffer.applyGain (mute->get() >= 0.5f ? 0.0f : gain->get());
+        // the sidechain's channels come after the main bus's
+        const auto mainChannels = getChannelCountOfBus (true, 0);
+        sidechainPeak = 0.0f;
+        for (auto channel = mainChannels; channel < buffer.getNumChannels(); ++channel)
+            sidechainPeak = juce::jmax (sidechainPeak, buffer.getMagnitude (channel, 0, buffer.getNumSamples()));
+        for (auto channel = 0; channel < juce::jmin (mainChannels, buffer.getNumChannels()); ++channel)
+            buffer.applyGain (channel, 0, buffer.getNumSamples(), mute->get() >= 0.5f ? 0.0f : gain->get());
         ++processCount;
         lastNumChannels = buffer.getNumChannels();
         (isNonRealtime() ? offlineBlocks : liveBlocks) += 1;
@@ -177,6 +183,7 @@ public:
     int generation = 0;
     int prepareCount = 0, releaseCount = 0, processCount = 0, setStateCount = 0;
     int lastNumChannels = 0;
+    float sidechainPeak = 0.0f;   ///< the loudest sample of the last block's sidechain channels
     bool preparedOffline = false;            ///< the non-realtime flag as the last prepareToPlay found it
     int offlineBlocks = 0, liveBlocks = 0;   ///< blocks processed with the flag set, and without
     std::vector<juce::AudioPlayHead::PositionInfo> positions;   ///< one per block the host gave a position for

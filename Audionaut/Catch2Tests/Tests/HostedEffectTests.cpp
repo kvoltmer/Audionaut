@@ -302,7 +302,7 @@ SCENARIO ("a hosted effect runs the plugin on the chain's channels", "[engine][e
     }
 }
 
-SCENARIO ("a plugin with a bus it will not switch off is not run on the main bus alone", "[engine][effects][hosting]")
+SCENARIO ("a plugin with a bus it will not switch off runs with silence on that bus", "[engine][effects][hosting]")
 {
     GIVEN ("a plugin that insists on its stereo sidechain input")
     {
@@ -311,19 +311,42 @@ SCENARIO ("a plugin with a bus it will not switch off is not run on the main bus
         Hosted hosted (options);
         auto& effect = *hosted.effect;
 
-        WHEN ("prepared for a stereo chain")
+        WHEN ("prepared for a stereo chain and run twice at half gain")
         {
             effect.prepare (kSampleRate, kBlockSize, 2);
-            auto buffer = makeDc (2, 0.8f);
-            effect.setParameter (0, 0.25f);
-            run (effect, buffer);
+            effect.setParameter (0, 0.25f);   // gain 0.5
+            auto first = makeDc (2, 0.8f);
+            run (effect, first);
+            auto second = makeDc (2, 0.8f);
+            run (effect, second);
 
-            THEN ("the layout is refused and the signal passes: the plugin would expect four channels in the block")
+            THEN ("the plugin gets the chain's pair and a silent sidechain, and the chain gets the main bus back")
             {
-                REQUIRE (effect.getStatus() == HostedEffect::Status::incompatibleLayout);
-                REQUIRE (effect.getError().isNotEmpty());
-                REQUIRE (hosted.plugin->processCount == 0);
-                REQUIRE (buffer.getSample (0, 10) == Approx (0.8f));
+                REQUIRE (effect.getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (effect.getError().isEmpty());
+                REQUIRE (hosted.plugin->processCount == 2);
+                REQUIRE (hosted.plugin->lastNumChannels == 4);
+                REQUIRE (hosted.plugin->sidechainPeak == 0.0f);
+                REQUIRE (second.getSample (0, 10) == Approx (0.4f));
+                REQUIRE (second.getSample (1, 10) == Approx (0.4f));
+            }
+        }
+
+        WHEN ("prepared for a mono chain")
+        {
+            options.stereoOnly = true;
+            Hosted stereoOnly (options);
+            stereoOnly.effect->prepare (kSampleRate, kBlockSize, 1);
+            stereoOnly.effect->setParameter (0, 0.25f);
+            auto buffer = makeDc (1, 0.8f);
+            run (*stereoOnly.effect, buffer);
+
+            THEN ("the one channel goes through the plugin's pair, the sidechain silent beside it")
+            {
+                REQUIRE (stereoOnly.effect->getStatus() == HostedEffect::Status::loaded);
+                REQUIRE (stereoOnly.plugin->lastNumChannels == 4);
+                REQUIRE (stereoOnly.plugin->sidechainPeak == 0.0f);
+                REQUIRE (buffer.getSample (0, 10) == Approx (0.4f));
             }
         }
     }
