@@ -246,6 +246,12 @@ bool PluginHost::isSandboxed()
    #endif
 }
 
+void PluginHost::startHostingServiceEarly()
+{
+    if (hostingService == nullptr)
+        hostingService = AudioUnitRegistry::startHostingService();
+}
+
 void PluginHost::setEnabled (bool enabled_)
 {
     if (std::exchange (enabled, enabled_) == enabled_)
