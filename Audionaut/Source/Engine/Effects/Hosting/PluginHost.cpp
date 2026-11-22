@@ -343,10 +343,14 @@ bool PluginHost::loadList()
     for (const auto* mark : xml->getChildWithTagNameIterator ("REMOVED"))
         removed.insert (mark->getStringAttribute ("id"));
     pruneRemoved();
-    persisted = listAsText();   // before the pedal's verdicts: those are news the file does not have
-    // a scan this process did not survive: the file it was on goes on the blacklist
-    juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, getDeadMansPedalFile());
+    persisted = listAsText();
     return true;
+}
+
+void PluginHost::skipWhatTheLastScanDiedOf()
+{
+    // after loadList has noted what the file holds: the pedal's verdicts are news the file does not have
+    juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, getDeadMansPedalFile());
 }
 
 bool PluginHost::saveList() const

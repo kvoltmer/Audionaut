@@ -193,6 +193,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         return;
     }
 
+    // A scan the app did not survive: the file it was on is skipped from now on. Only here, as the
+    // one app instance: a verb run above, or a second launch, may sit beside a scan that is still
+    // running, and would take the file it is on for one that crashed.
+    pluginHost->skipWhatTheLastScanDiedOf();
+
     // What the system knows to be installed is listed without a scan (the Audio Units on macOS):
     // none is loaded before it is used.
     if (pluginsEnabled)
