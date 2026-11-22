@@ -799,8 +799,9 @@ next to the right-panel button toggle it.
 ### Phase 7: Plugin hosting (AU on macOS; VST3 on Windows; VST3 and LV2 on Linux)
 
 Decided with Klaus 2026-11-14: **macOS stays sandboxed on both channels** (App Store and DMG
-share one container), so the Mac hosts Audio Units only - AUv2 in-process when sandbox-safe,
-otherwise (and every AUv3) out of process, see 7c; Windows hosts VST3, Linux VST3 and LV2. The
+share one container), so the Mac hosts Audio Units only - AUv2 in-process (those that are not
+sandbox-safe through the `audio-unit-host` entitlement, see "Replaced after 7c"), AUv3 out of
+process; Windows hosts VST3, Linux VST3 and LV2. The
 three `JUCE_PLUGINHOST_*` flags are set globally (jucer `JUCEOPTIONS`, test CMake), the formats a
 process hosts are chosen at runtime (`PluginHost::addPlatformFormats`). Cross-format recall:
 the slot JSON carries a `"plugin"` block (name, manufacturer, format, file, version) beside the
@@ -893,12 +894,34 @@ project, after `add-insert`, in `list-effects --type` and before a save (`Projec
 come asynchronously; the editor window of a loading slot shows
 "Loading the plugin..." and takes the editor when it comes. AUv3 came along for free.
 
+**Replaced after 7c (in-process loading, PR #275).** The out-of-process path for AUv2 is gone, and
+with it the JUCE patch: the submodule is stock JUCE 9.0.2 again, there is no
+`setProcessIsolation`, and what 7c says about it above is history. Hosted in Apple's service, a
+plugin's editor was a remote view, and Native Instruments' knobs did not follow the mouse in it
+(Phasis). The app now carries `com.apple.security.temporary-exception.audio-unit-host`
+(`App.entitlements`), with which the sandbox opens an AUv2 that is not sandbox-safe inside the app
+itself, like any other: synchronously, with its own Cocoa view. macOS still asks the user first to
+lower the app's security settings (declined: -128), and `setLoweredSecurityAllowed` still decides
+whether such plugins are offered at all (`Availability::needsLoweredSecurity` where not - a
+headless run). Which plugins those are is told from the component's flags without loading
+(`PluginFormats::asksUserBeforeLoading`, `AudioUnitRegistry::isSandboxSafe`). A decline answers for
+the further such plugins created in the same turn of the message queue (`PluginHost::createInstance`),
+so a project with many of them asks once. The scan helper has not the entitlement and cannot load
+these plugins: a scan loads them in the app, on the message thread (`ChildProcessScanner`,
+`setAsksUser`; a worker asked all the same answers `needs_app`), and nothing checks them before
+their first load. In place of that check stands a dead man's pedal: while such a plugin loads for
+the first time it is noted in `Plugins/LoadInProgress.txt` (`PluginHost::getLoadPedalFile`); a run
+that dies of it leaves the note, and the next launch of the app - past its single-instance check,
+not a CLI verb - puts the plugin on the blacklist and writes the list before the note goes
+(`skipWhatTheLastRunDiedOf`). A plugin that has loaded once becomes a scanned entry and loads
+without a note from then on. Only AUv3 is still created asynchronously (`loadsOutOfProcess`).
+
 Open after 7c: the editor windows saved with the project (TODO.md, mixer follow-ups); measuring the
 cross-process render cost; a window opened on a loading placeholder stays non-resizable until reopened.
 
 - Jucer: `JUCE_PLUGINHOST_VST3=1`, `JUCE_PLUGINHOST_AU=1` (macOS, `AudioUnit` framework),
-  `JUCE_PLUGINHOST_LV2=1` (Linux). Sandbox allows AU only (in-process when sandbox-safe, out
-  of process otherwise, see 7c) - on both macOS channels, see above.
+  `JUCE_PLUGINHOST_LV2=1` (Linux). Sandbox allows AU only (AUv2 in-process, AUv3 out
+  of process, see "Replaced after 7c") - on both macOS channels, see above.
 - `PluginRegistry` service (per process, injected, not static): `juce::AudioPluginFormatManager`
   + `KnownPluginList` persisted as XML in `Preferences::applicationDataDirectory()`; scanning in
   a child process (JUCE `ChildProcessCoordinator`, dead-man list so a crashing plugin is skipped

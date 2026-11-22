@@ -179,6 +179,26 @@ namespace
         return {};
     }
 
+    /// A plugin loaded in this process, and what it said of itself. Shared between the scanning thread
+    /// and the message that does the loading: whichever is done with it last lets it go.
+    struct LoadedHere
+    {
+        juce::WaitableEvent done;
+        std::atomic<bool> abandoned { false };   // the scan no longer waits: nothing is loaded for it any more
+        std::unique_ptr<juce::PluginDescription> description;
+        juce::String error;
+    };
+
+    /// Message thread (or a process without one): the plugin is created, asked, and let go again here.
+    void loadOnThisThread (juce::AudioPluginFormat& format, const juce::String& fileOrIdentifier, LoadedHere& loaded)
+    {
+        juce::PluginDescription wanted;
+        wanted.pluginFormatName = format.getName();
+        wanted.fileOrIdentifier = fileOrIdentifier;
+        if (auto instance = format.createInstanceFromDescription (wanted, 44100.0, 512, loaded.error))
+            loaded.description = std::make_unique<juce::PluginDescription> (instance->getPluginDescription());
+    }
+
     /// This executable as the serving worker.
     class ProcessWorker final : public ChildProcessScanner::Worker
     {
@@ -284,13 +304,42 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
         if (declinedInThisScan)
             return logged (true, "NOT SCANNED: lowering the security settings was declined earlier in this scan");
 
-        juce::PluginDescription wanted;
-        wanted.pluginFormatName = format.getName();
-        wanted.fileOrIdentifier = fileOrIdentifier;
-        juce::String error;
-        if (auto instance = format.createInstanceFromDescription (wanted, 44100.0, 512, error))
+        // The plugin lives on the message thread from its creation to its end, as every plugin of the
+        // app does: a scan runs on a thread of its own, and a plugin made on one thread and asked and
+        // destroyed on another, inside the app, has no worker to take the fall. The scanning thread
+        // only waits - and gives up when the scan is abandoned: the message thread may be the one
+        // waiting for this thread to end (a scan window that closes), and would never get to the load.
+        auto loaded = std::make_shared<LoadedHere>();
+        auto* messageManager = juce::MessageManager::getInstanceWithoutCreating();
+        if (messageManager == nullptr || messageManager->isThisTheMessageThread())
         {
-            result.add (new juce::PluginDescription (instance->getPluginDescription()));
+            loadOnThisThread (format, fileOrIdentifier, *loaded);
+        }
+        else
+        {
+            // the format is the host's, as this scanner is (through its list), and both go on the
+            // message thread: while the scanner lives there, so does the format
+            juce::MessageManager::callAsync ([loaded, &format, fileOrIdentifier, scannerAlive = std::weak_ptr<int> (alive)]
+            {
+                if (! loaded->abandoned.load() && scannerAlive.lock() != nullptr)
+                    loadOnThisThread (format, fileOrIdentifier, *loaded);
+                loaded->done.signal();
+            });
+
+            while (! loaded->done.wait (pollMs))
+            {
+                if (shouldExit())
+                {
+                    loaded->abandoned.store (true);
+                    return logged (true, "scan cancelled");   // no verdict on the file
+                }
+            }
+        }
+
+        const auto& error = loaded->error;
+        if (loaded->description != nullptr)
+        {
+            result.add (loaded->description.release());
             return logged (true, found() + ", in this process");
         }
 
@@ -327,6 +376,7 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
             case Asked::failed:
             case Asked::failedAfterOthers: return logged (false, failure());   // the plugin took the worker down, or kept it too long
             case Asked::abandoned:         return logged (true, "scan cancelled");   // by the user: no verdict on the file
+            case Asked::needsApp:          return logged (true, "NOT SCANNED: " + lastFailure);   // nothing tried it: no verdict either
             case Asked::unavailable:       break;          // no worker this time: this file in a process of its own
             case Asked::unusable:
                 pipeUnusable = true;
@@ -398,6 +448,13 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
             {
                 if (answer.contains ("bye"))
                     break;   // it left without taking the request
+
+                // a plugin the worker leaves to the app: it loaded nothing, and goes on
+                if (! answer.value ("ok", false) && answer.value ("code", std::string()) == "needs_app")
+                {
+                    lastFailure = juce::String (answer.value ("message", std::string ("only the app itself loads this plugin")));
+                    return Asked::needsApp;
+                }
 
                 if (! answer.value ("ok", false))
                     return answer.value ("code", std::string()) == "unknown_format"
@@ -558,6 +615,16 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
         return true;
     }
     workerEverAnswered = workerEverAnswered || answered;
+
+    // the worker left the plugin to the app and loaded nothing: not a crash, and not an empty file
+    if (answered && errorCodeOf (envelope) == "needs_app")
+    {
+        lastFailure = "only the app itself loads this plugin";
+        if (envelope.contains ("error") && envelope["error"].is_object())
+            lastFailure = juce::String (envelope["error"].value ("message", lastFailure.toStdString()));
+        noVerdict = true;
+        return true;
+    }
 
     if (child.getExitCode() != 0)
         return answered && declinedTheFormat (envelope);   // the plugin took the worker down - unless the worker said that it has no such format

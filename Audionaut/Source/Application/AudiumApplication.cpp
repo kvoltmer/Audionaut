@@ -193,6 +193,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         return;
     }
 
+    // A plugin the last run died of while it loaded it for the first time is skipped from now on.
+    // Only here, as the one app instance: a command run beside the app, or a second launch that
+    // handed its command line over above, would take the note of a plugin just loading for a crash.
+    pluginHost->skipWhatTheLastRunDiedOf();
+
     // What the system knows to be installed is listed without a scan (the Audio Units on macOS):
     // none is loaded before it is used.
     if (pluginsEnabled)

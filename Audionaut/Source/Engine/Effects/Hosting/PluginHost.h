@@ -69,7 +69,9 @@ class HostedEffect;
  * entitlement - so a scan loads it in the app itself, and nothing checks it
  * before its first load. In place of that check, the plugin is noted in a
  * file while it loads for the first time (getLoadPedalFile): a run that
- * dies of it leaves the note, and the next one skips the plugin.
+ * dies of it leaves the note, and the next one skips the plugin
+ * (skipWhatTheLastRunDiedOf). Once it has loaded, its entry is a scanned
+ * one and it loads without a note.
  *
  * Where the system knows its plugins without loading them (the Audio
  * Units on macOS), the list has them without a scan: syncWithInstalled()
@@ -168,8 +170,14 @@ public:
     juce::File getDeadMansPedalFile() const;
     /// Where the plugin stands that is being loaded for the first time with nothing having tried it
     /// before (one the system asks the user about, which no worker loads). A run that dies of the plugin
-    /// leaves the note behind, and loadList() of the next run skips the plugin from then on.
+    /// leaves the note behind, and skipWhatTheLastRunDiedOf() of the next run skips the plugin from then on.
     juce::File getLoadPedalFile() const;
+    /// Message thread, after loadList(). Skips the plugins the load pedal names and writes the list;
+    /// the note goes once the list is written. True when a plugin was skipped. Only for the process
+    /// that loads such plugins and knows itself to be the only one doing so (the app, once it is past
+    /// its single-instance check): to any other - a command run beside the app, a second launch that
+    /// hands its command line over - the note may be that of a plugin just loading in the app.
+    bool skipWhatTheLastRunDiedOf();
     /// What the child-process scanner did, file by file (useChildProcessScanner writes it); a text
     /// file a user can send along. Kept over several scans until it grows past a megabyte.
     juce::File getScanLogFile() const;
@@ -185,8 +193,7 @@ public:
     /// Whether one of this host's formats looks in folders, so that extra ones mean something here.
     bool scansFolders() const;
 
-    /// Reads the list file (and what the dead man's pedals of a scan and of a first load left behind);
-    /// false when there is none yet.
+    /// Reads the list file (and what the dead man's pedal of a scan left behind); false when there is none yet.
     bool loadList();
     /// Writes the list file; false when the folder cannot be written.
     bool saveList() const;
@@ -297,7 +304,8 @@ private:
     };
     bool takeLoadedEmpty (const juce::String& fileOrIdentifier) const;   // whether it was among them; not any more then
     void skipNotScanned (const juce::String& fileOrIdentifier);          // off the list, and skipped from now on
-    void skipWhatTheLastRunDiedOf();                                     // the plugins the load pedal names
+    void noteFirstLoad (const juce::PluginDescription& description,      // a plugin the load pedal stood for has loaded:
+                        const juce::AudioPluginInstance& instance);      // its entry is a scanned one from now on
     int numScanned() const;
 
     /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
@@ -328,6 +336,7 @@ private:
     juce::AudioPluginFormatManager formats;
     juce::KnownPluginList list;
     std::set<juce::String> removed;   // fileOrIdentifier of the listed entries the user removed
+    std::set<juce::String> tried;     // ... of the plugins that loaded here with the load pedal down (also those not listed)
     mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
     bool enabled = true;
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner

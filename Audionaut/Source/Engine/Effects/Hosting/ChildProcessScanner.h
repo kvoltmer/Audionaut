@@ -45,7 +45,12 @@ namespace audium
  * system opens it in the app itself only, so the scanner loads it in the
  * process it runs in, where that is allowed (setLoweredSecurityFlag) - with
  * no worker to take the fall if it crashes - and leaves it not scanned
- * where it is not. When the user declines the question, the further such
+ * where it is not. In a process with a message thread the plugin is
+ * created, asked and destroyed on that thread, whichever thread scans; the
+ * format handed to findPluginTypesFor must then live as long as the scanner
+ * and end on the message thread (a host's formats do). A worker that is
+ * asked about such a plugin all the same answers `needs_app` without
+ * loading it, which leaves the file not scanned and not skipped. When the user declines the question, the further such
  * plugins of that scan are left alone, so that it comes up once.
  */
 class ChildProcessScanner final : public juce::KnownPluginList::CustomScanner
@@ -122,7 +127,7 @@ public:
     static bool parseScanEnvelope (const juce::String& output, juce::OwnedArray<juce::PluginDescription>& result);
 
 private:
-    enum class Asked { found, nothing, failed, failedAfterOthers, abandoned, unavailable, unusable };
+    enum class Asked { found, nothing, failed, failedAfterOthers, abandoned, needsApp, unavailable, unusable };
     enum class Started { ready, silent, failed, abandoned };
 
     Asked askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
@@ -139,6 +144,7 @@ private:
     int helloTimeoutMs;
     std::function<bool (const juce::String&, const juce::String&)> asksUser;
     std::shared_ptr<const std::atomic<bool>> loweredSecurity;
+    std::shared_ptr<int> alive = std::make_shared<int> (0);   // expires with the scanner, for a load still in the message queue
 
     juce::CriticalSection workerLock;          // one file on its way at a time
     std::unique_ptr<juce::NamedPipe> pipe;

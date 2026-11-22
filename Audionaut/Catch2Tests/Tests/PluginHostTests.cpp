@@ -1502,6 +1502,26 @@ SCENARIO ("a plugin nothing could try before is skipped by the run after the one
                 REQUIRE (noteWhileLoading.contains (notScanned.fileOrIdentifier));
                 REQUIRE_FALSE (host.getLoadPedalFile().existsAsFile());
             }
+
+            THEN ("its entry is a scanned one from now on")
+            {
+                const auto listed = host.getList().getTypeForFile (notScanned.fileOrIdentifier);
+                REQUIRE (listed != nullptr);
+                REQUIRE (PluginHost::isScanned (*listed));
+                REQUIRE (host.getList().getNumTypes() == 2);
+            }
+
+            AND_WHEN ("it is loaded once more")
+            {
+                auto noted = false;
+                asking->onCreate = [&] { noted = host.getLoadPedalFile().existsAsFile(); };
+                REQUIRE (host.createInstance (notScanned, 44100.0, 512, error) != nullptr);
+
+                THEN ("nothing is noted: it has loaded here before")
+                {
+                    REQUIRE_FALSE (noted);
+                }
+            }
         }
 
         WHEN ("it fails to load")
@@ -1541,7 +1561,24 @@ SCENARIO ("a plugin nothing could try before is skipped by the run after the one
             next.setLoweredSecurityAllowed (true);
             next.setInstalledSource ([notScanned, plain] { return std::vector<juce::PluginDescription> { notScanned, plain }; });
             REQUIRE (next.loadList());
+
+            THEN ("reading the list alone leaves the note and the plugin: to a process beside the app, it may just be loading there")
+            {
+                REQUIRE (next.getLoadPedalFile().existsAsFile());
+                REQUIRE (next.getList().getTypeForFile (notScanned.fileOrIdentifier) != nullptr);
+                REQUIRE_FALSE (next.getList().getBlacklistedFiles().contains (notScanned.fileOrIdentifier));
+            }
+
+            REQUIRE (next.skipWhatTheLastRunDiedOf());
             next.syncWithInstalled();
+
+            THEN ("the list file has the verdict at once, for a run that does not end as it should")
+            {
+                PluginHost afterThat (temp.folder, false);
+                REQUIRE (afterThat.loadList());
+                REQUIRE (afterThat.getList().getBlacklistedFiles().contains (notScanned.fileOrIdentifier));
+                REQUIRE (afterThat.getList().getTypeForFile (notScanned.fileOrIdentifier) == nullptr);
+            }
 
             THEN ("the plugin is off the list and skipped, the other one stays, and the note is gone")
             {
@@ -1873,6 +1910,57 @@ SCENARIO ("the child-process scanner loads a plugin the system asks the user abo
             }
         }
 
+        WHEN ("it is scanned on a thread of its own, as the app scans")
+        {
+            allowed->store (true);
+            auto createdOnMessageThread = std::make_shared<std::atomic<bool>> (false);
+            format.onCreate = [createdOnMessageThread]
+            {
+                createdOnMessageThread->store (juce::MessageManager::getInstance()->isThisTheMessageThread());
+            };
+            auto verdict = false;
+            REQUIRE (PluginHost::runWhilePumping ([&] { verdict = scanner.findPluginTypesFor (format, found, asking); }, 10000));
+
+            THEN ("the plugin was created on the message thread, and found")
+            {
+                INFO (lines.joinIntoString ("\n"));
+                REQUIRE (verdict);
+                REQUIRE (found.size() == 1);
+                REQUIRE (createdOnMessageThread->load());
+                REQUIRE (lines[lines.size() - 1].contains ("1 found, in this process"));
+            }
+        }
+
+        WHEN ("the scan is abandoned while the message thread waits for it to end")
+        {
+            allowed->store (true);
+            juce::ThreadPool pool (juce::ThreadPoolOptions{}.withNumberOfThreads (1));
+            std::atomic<bool> started { false }, verdict { false };
+            pool.addJob ([&]
+            {
+                started.store (true);
+                verdict.store (scanner.findPluginTypesFor (format, found, asking));
+            });
+            while (! started.load())
+                juce::Thread::sleep (1);
+            juce::Thread::sleep (100);   // the scanning thread waits for the message thread by now
+
+            // as a scan window that closes does: this thread, the message thread, delivers nothing meanwhile
+            const auto ended = pool.removeAllJobs (true, 5000);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (50);   // the load that was asked for comes up now
+
+            THEN ("the scanning thread ends at once, and the plugin is not loaded after all")
+            {
+                INFO (lines.joinIntoString ("\n"));
+                REQUIRE (ended);
+                REQUIRE (verdict.load());   // no verdict on the file
+                REQUIRE (*raised == 0);
+                REQUIRE (found.isEmpty());
+                REQUIRE (empty.isEmpty());
+                REQUIRE (lines[lines.size() - 1].contains ("scan cancelled"));
+            }
+        }
+
         WHEN ("the user declines the question")
         {
             allowed->store (true);
@@ -1916,6 +2004,45 @@ SCENARIO ("the child-process scanner loads a plugin the system asks the user abo
                 REQUIRE (empty.isEmpty());
                 REQUIRE (lines[lines.size() - 1].contains ("NOT SCANNED: not loaded in this process"));
                 REQUIRE (lines[lines.size() - 1].contains ("-3000"));
+            }
+        }
+    }
+}
+
+SCENARIO ("a worker that leaves a plugin to the app has not failed on it", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner that was not told which plugins the system asks about, and a worker that knows one")
+    {
+        ChildProcessScanner scanner ([]
+        {
+            return std::make_unique<ThreadWorker> ([] (const ChildProcessScanner::Request& request) -> json
+            {
+                if (request.file == "asks")
+                    return { { "ok", false }, { "code", "needs_app" }, { "message", "macOS only loads this plugin into the app itself" } };
+                return describedIn (request);
+            }, patientIdleMs);
+        }, patientTimeoutMs);
+        juce::StringArray lines, empty;
+        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+        scanner.setFoundNothing ([&empty] (const juce::String& file) { empty.add (file); });
+        juce::OwnedArray<juce::PluginDescription> found;
+
+        WHEN ("that plugin is scanned, and another after it")
+        {
+            const auto verdict = scanner.findPluginTypesFor (format, found, "asks");
+            const auto log = lines.joinIntoString ("\n");
+            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+
+            THEN ("it is not to be skipped, not taken for empty, and the same worker goes on")
+            {
+                INFO (log);
+                REQUIRE (verdict);
+                REQUIRE (empty.isEmpty());
+                REQUIRE (log.contains ("NOT SCANNED: macOS only loads this plugin into the app itself"));
+                REQUIRE (found.size() == 1);
+                REQUIRE (scanner.getNumWorkersStarted() == 1);
             }
         }
     }

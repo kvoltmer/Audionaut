@@ -307,32 +307,55 @@ bool PluginHost::scansFolders() const
     return false;
 }
 
-void PluginHost::skipWhatTheLastRunDiedOf()
+bool PluginHost::skipWhatTheLastRunDiedOf()
 {
     // A plugin nothing could try before this process loaded it, and the process did not get past it
     // (a crash - or it was quit while the plugin loaded): skipped from now on, so that the project
     // which has it opens. Clear in Manage Plugins forgets the skipped files.
     const auto pedal = getLoadPedalFile();
     if (! pedal.existsAsFile())
-        return;
+        return false;
 
     juce::StringArray died;
     pedal.readLines (died);
-    pedal.deleteFile();
+    auto skipped = false;
     for (const auto& fileOrIdentifier : died)
     {
         if (fileOrIdentifier.trim().isEmpty())
             continue;
         skipNotScanned (fileOrIdentifier);
         list.addToBlacklist (fileOrIdentifier);   // also where it was not listed yet: it is not listed as installed then
+        skipped = true;
     }
+
+    // The verdict is in the list file before the note goes: a run that ends before it wrote the list
+    // (quit by force, or dead of something else) leaves the note, and the next one reads it again.
+    if (! skipped || saveList())
+        pedal.deleteFile();
+    return skipped;
+}
+
+void PluginHost::noteFirstLoad (const juce::PluginDescription& description, const juce::AudioPluginInstance& instance)
+{
+    tried.insert (description.fileOrIdentifier);
+
+    const auto listed = list.getTypeForFile (description.fileOrIdentifier);
+    if (listed == nullptr || isScanned (*listed))
+        return;
+
+    // the entry becomes a scanned one, as a scan would have made it: with the loaded plugin's word
+    // where that is the same plugin to the list, with the time alone where it is not
+    auto loaded = instance.getPluginDescription();
+    if (! listed->isDuplicateOf (loaded))
+        loaded = *listed;
+    if (! isScanned (loaded))
+        loaded.lastInfoUpdateTime = juce::Time::getCurrentTime();
+    list.addType (loaded);
+    list.sendChangeMessage();   // replacing an entry is not news to the list by itself
 }
 
 bool PluginHost::loadList()
 {
-    // whatever becomes of the list file, the last run's verdict counts
-    struct AtExit { PluginHost& host; ~AtExit() { host.skipWhatTheLastRunDiedOf(); } } atExit { *this };
-
     const auto file = getListFile();
     if (! file.existsAsFile())
         return false;
@@ -559,7 +582,7 @@ std::unique_ptr<juce::AudioPluginInstance> PluginHost::createInstance (const juc
     // a note of it stands in a file. A crash leaves the note, and the next launch skips the plugin.
     const auto untried = [&]
     {
-        if (! asks)
+        if (! asks || tried.count (description.fileOrIdentifier) > 0)
             return false;
         const auto listed = list.getTypeForFile (description.fileOrIdentifier);
         return listed == nullptr || ! isScanned (*listed);
@@ -581,12 +604,21 @@ std::unique_ptr<juce::AudioPluginInstance> PluginHost::createInstance (const juc
             pedal.deleteFile();
         else
             pedal.replaceWithText (loading.joinIntoString ("\n") + "\n", false, false, "\n");
+
+        // It loaded: from now on it is a plugin like any other, with no note while it loads. Without
+        // this, every later load would stand in the file again, and a run that is quit during one of
+        // them would have a plugin skipped that has worked all along.
+        if (instance != nullptr)
+            const_cast<PluginHost*> (this)->noteFirstLoad (description, *instance);   // message thread
     }
 
     if (asks && instance == nullptr && error.contains ("(-128)"))   // userCanceledErr
     {
         *declinedForNow = true;
-        juce::MessageManager::callAsync ([declined = declinedForNow] { *declined = false; });   // once this go is over
+        // Once this go is over: the next turn of the message queue. That covers a project's plugins,
+        // which are created one after the other without the queue running in between
+        // (MixerPlanner); what pumps messages (waitForPendingLoads) does so after them.
+        juce::MessageManager::callAsync ([declined = declinedForNow] { *declined = false; });
     }
     error = describeLoadError (error);
     return instance;
