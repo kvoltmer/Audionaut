@@ -148,6 +148,12 @@ public:
     /// command that waits for its plugins does not).
     void setChecksBeforeFirstLoad (bool checks_) noexcept { checksBeforeFirstLoad = checks_; }
 
+    /// Starts the system's process for plugins that run out of process, and keeps it while this host
+    /// lives (AudioUnitRegistry::startHostingService; nothing where no such process is used). For an
+    /// application to call before its event loop runs, and before the first plugin is loaded: a
+    /// process started later leaves the editors of its plugins with a mouse they barely follow.
+    void startHostingServiceEarly();
+
     /// Message thread. Takes the plugins off the list. One the system lists by itself stays on it,
     /// marked as removed and not offered any more; the others are gone until a scan finds them again.
     void remove (const std::vector<juce::PluginDescription>& descriptions);
@@ -354,6 +360,7 @@ private:
     std::unique_ptr<Checks> checks = std::make_unique<Checks> (list);
     bool checksBeforeFirstLoad = false;
     std::shared_ptr<LoadedEmpty> loadedEmpty = std::make_shared<LoadedEmpty>();   // shared with the scanner
+    std::shared_ptr<void> hostingService;   // the system's process for out-of-process plugins, kept running
     std::vector<Attached> attached;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHost)
