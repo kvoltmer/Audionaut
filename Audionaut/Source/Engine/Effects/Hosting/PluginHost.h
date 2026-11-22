@@ -183,7 +183,8 @@ public:
     /// Reads the list file; false when there is none yet.
     bool loadList();
     /// Puts the file a scan was on when its process died on the blacklist (the dead man's pedal names
-    /// it). For the app instance alone, once it knows it is the only one: to a process started beside
+    /// it), and removes the note, so a file the user takes off the skipped list later stays off it.
+    /// For the app instance alone, once it knows it is the only one: to a process started beside
     /// a running scan, the file being scanned right now looks just like one a scan died of. A scan
     /// (scanAll) reads the pedal by itself.
     void skipWhatTheLastScanDiedOf();

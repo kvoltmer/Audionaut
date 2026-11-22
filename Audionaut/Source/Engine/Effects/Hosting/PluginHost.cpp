@@ -350,7 +350,11 @@ bool PluginHost::loadList()
 void PluginHost::skipWhatTheLastScanDiedOf()
 {
     // after loadList has noted what the file holds: the pedal's verdicts are news the file does not have
-    juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, getDeadMansPedalFile());
+    const auto pedal = getDeadMansPedalFile();
+    juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, pedal);
+    // the note has said what it had to say: left in place, it would put a file the user takes off the
+    // skipped list back on it at every start
+    pedal.deleteFile();
 }
 
 bool PluginHost::saveList() const

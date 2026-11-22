@@ -669,6 +669,22 @@ SCENARIO ("only the app takes the file a scan is on for one the scan died of", "
                 REQUIRE (next.host.loadList());
                 REQUIRE (next.host.getList().getBlacklistedFiles().contains ("/test/being-scanned.testa"));
             }
+
+            AND_WHEN ("the user takes the file off the skipped list, and the app starts again")
+            {
+                app.host.getList().removeFromBlacklist ("/test/being-scanned.testa");
+                REQUIRE (app.host.saveListIfChanged());
+
+                TestHost next (temp.folder, false);
+                REQUIRE (next.host.loadList());
+                next.host.skipWhatTheLastScanDiedOf();
+
+                THEN ("the note is gone, and the file stays off the list")
+                {
+                    REQUIRE_FALSE (next.host.getDeadMansPedalFile().existsAsFile());
+                    REQUIRE (next.host.getList().getBlacklistedFiles().isEmpty());
+                }
+            }
         }
     }
 }
