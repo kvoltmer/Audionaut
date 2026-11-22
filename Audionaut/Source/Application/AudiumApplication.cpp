@@ -193,6 +193,11 @@ void AudiumApplication::initialise (const juce::String& commandLine)
         return;
     }
 
+    // A scan the app did not survive: the file it was on is skipped from now on. Only here, as the
+    // one app instance: a verb run above, or a second launch, may sit beside a scan that is still
+    // running, and would take the file it is on for one that crashed.
+    pluginHost->skipWhatTheLastScanDiedOf();
+
     // The system's process for Audio Units that run out of process is started here, before the event
     // loop runs and before a project brings the first such plugin: started later, it leaves the
     // plugins' editors with a mouse they barely follow (Native Instruments' knobs). With plugins

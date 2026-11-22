@@ -627,6 +627,68 @@ SCENARIO ("a host that started without a list file leaves another process's list
     }
 }
 
+SCENARIO ("only the app takes the file a scan is on for one the scan died of", "[engine][effects][hosting][scan]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a saved list, and a scan elsewhere that is on a file right now")
+    {
+        TestHost scanning (temp.folder);
+        REQUIRE (scanning.host.saveList());
+        // what a scanner leaves while it loads a file, and what stays if its process dies there
+        REQUIRE (scanning.host.getDeadMansPedalFile().replaceWithText ("/test/being-scanned.testa"));
+
+        WHEN ("a process started beside it loads the list and saves what changed")
+        {
+            TestHost beside (temp.folder, false);
+            REQUIRE (beside.host.loadList());
+
+            THEN ("the file is not skipped, and the list file is left alone")
+            {
+                REQUIRE (beside.host.getList().getBlacklistedFiles().isEmpty());
+                const auto written = beside.host.getListFile().getLastModificationTime();
+                const auto text = beside.host.getListFile().loadFileAsString();
+                REQUIRE (beside.host.saveListIfChanged());
+                REQUIRE (beside.host.getListFile().loadFileAsString() == text);
+                REQUIRE (beside.host.getListFile().getLastModificationTime() == written);
+            }
+        }
+
+        WHEN ("the app starts after the scan's process died there")
+        {
+            TestHost app (temp.folder, false);
+            REQUIRE (app.host.loadList());
+            app.host.skipWhatTheLastScanDiedOf();
+
+            THEN ("the file is skipped, and that is news to write")
+            {
+                REQUIRE (app.host.getList().getBlacklistedFiles().contains ("/test/being-scanned.testa"));
+                REQUIRE (app.host.saveListIfChanged());
+                TestHost next (temp.folder, false);
+                REQUIRE (next.host.loadList());
+                REQUIRE (next.host.getList().getBlacklistedFiles().contains ("/test/being-scanned.testa"));
+            }
+
+            AND_WHEN ("the user takes the file off the skipped list, and the app starts again")
+            {
+                app.host.getList().removeFromBlacklist ("/test/being-scanned.testa");
+                REQUIRE (app.host.saveListIfChanged());
+
+                TestHost next (temp.folder, false);
+                REQUIRE (next.host.loadList());
+                next.host.skipWhatTheLastScanDiedOf();
+
+                THEN ("the note is gone, and the file stays off the list")
+                {
+                    REQUIRE_FALSE (next.host.getDeadMansPedalFile().existsAsFile());
+                    REQUIRE (next.host.getList().getBlacklistedFiles().isEmpty());
+                }
+            }
+        }
+    }
+}
+
 SCENARIO ("a host that is turned off offers no plugins", "[engine][effects][hosting][security]")
 {
     MessageThread messageThread;
