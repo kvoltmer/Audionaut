@@ -35,6 +35,7 @@ juce_generate_juce_header(AudionautScanHelper)
 target_sources(AudionautScanHelper
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/ScanHelperMain.cpp
+        ${SCAN_HELPER_SRC}/Engine/Effects/Hosting/AudioUnitRegistry.cpp
         ${SCAN_HELPER_SRC}/Engine/Effects/Hosting/ChildProcessScanner.cpp
         ${SCAN_HELPER_SRC}/Engine/Effects/Hosting/PluginFormats.cpp
         ${SCAN_HELPER_SRC}/Engine/Effects/Hosting/ScanWorker.cpp)

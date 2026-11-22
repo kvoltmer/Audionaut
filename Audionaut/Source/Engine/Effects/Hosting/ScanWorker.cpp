@@ -70,14 +70,17 @@ struct Worker
         const auto& formatName = request.format;
         const auto& fileOrIdentifier = request.file;
 
-        // only when the app that asked allows it: otherwise the system would ask this worker's
-        // (absent) user to lower the security settings, and such a plugin simply fails to load
-        PluginFormats::applyLoweredSecurity (formats, request.loweredSecurity);
-
         auto* format = formatNamed (formatName);
         if (format == nullptr)
             return { { "ok", false }, { "code", "unknown_format" },
                      { "message", "this build hosts no " + formatName.toStdString() + " plugins" } };
+
+        // A plugin the system asks the user about is the app's to load: the scan helper has not the
+        // entitlement the system opens it for, and where the app's own binary is the worker (a command
+        // run without the app) nobody is there to answer. Said, not tried: it would look like an empty file.
+        if (PluginFormats::asksUserBeforeLoading (formatName, fileOrIdentifier))
+            return { { "ok", false }, { "code", "needs_app" },
+                     { "message", "macOS only loads this plugin into the app itself, with lowered security settings" } };
 
         // The scan's work is shared with its thread, not lent: a plugin that is still loading when the
         // time is up goes on using the format and the result after this function has returned.
@@ -86,53 +89,20 @@ struct Worker
             juce::AudioPluginFormat* format = nullptr;
             juce::String fileOrIdentifier;
             juce::OwnedArray<juce::PluginDescription> found;
-            bool asksUser = false;
-            juce::String error;
         };
         auto work = std::make_shared<Scan>();
         work->format = format;
         work->fileOrIdentifier = fileOrIdentifier;
-        // a plugin the system asks the user about before it loads it here
-        work->asksUser = request.loweredSecurity && PluginFormats::asksUserBeforeLoading (formatName, fileOrIdentifier);
 
         // the plugin is loaded to read its description: on a thread of its own,
         // the message thread pumping, since some formats refuse to load on it
-        const auto load = [work]
-        {
-            if (! work->asksUser)
-            {
-                work->format->findAllTypesForFile (work->found, work->fileOrIdentifier);
-                return;
-            }
-
-            // such a plugin is one type, read off its instance - made here, for the reason it gives
-            // when the system does not load it
-            juce::PluginDescription wanted;
-            wanted.pluginFormatName = work->format->getName();
-            wanted.fileOrIdentifier = work->fileOrIdentifier;
-            if (auto instance = work->format->createInstanceFromDescription (wanted, 44100.0, 512, work->error))
-                work->found.add (new juce::PluginDescription (instance->getPluginDescription()));
-        };
+        const auto load = [work] { work->format->findAllTypesForFile (work->found, work->fileOrIdentifier); };
 
         if (! PluginFormats::runWhilePumping (load, request.timeoutMs))
         {
             stuck = true;
-
-            // A plugin the system asks the user about may have waited for that answer all the time, not
-            // for itself: the scanner is told, and does not hold the first such wait against the file.
-            if (work->asksUser)
-                return { { "ok", false }, { "code", "awaiting_consent" },
-                         { "message", "the plugin did not finish loading; macOS may have been waiting for the answer about its security settings" },
-                         { "last", true } };
-
             return { { "ok", false }, { "code", "timeout" }, { "message", "the plugin did not finish loading" }, { "last", true } };
         }
-
-        // The system's own word that the user said no to its question (userCanceledErr, in the reason the
-        // format gives): the scanner is told, so that it does not have it raised for every further plugin.
-        if (work->asksUser && work->found.isEmpty() && work->error.contains ("(-128)"))
-            return { { "ok", false }, { "code", "consent_declined" },
-                     { "message", "macOS did not load the plugin, the question about the security settings was declined" } };
 
         auto plugins = nlohmann::json::array();
         for (const auto* description : work->found)

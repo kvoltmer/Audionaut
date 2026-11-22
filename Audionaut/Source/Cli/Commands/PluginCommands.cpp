@@ -48,7 +48,6 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
     const auto pipeName = takeOptionValue (working, "--serve");
     const auto timeoutText = takeOptionValue (working, "--timeout-ms");
     const auto timeoutMs = timeoutText.getIntValue() > 0 ? timeoutText.getIntValue() : 50000;
-    const auto loweredSecurity = working.removeOptionIfFound ("--allow-lowered-security");
     ScopedCoutToStderr guard (context.json || pipeName.isNotEmpty());   // whatever a plugin prints while loading stays off the envelope
 
     const auto ownsMessageManager = ! HeadlessEngineSession::usesExternalMessageManager();
@@ -63,7 +62,7 @@ int runScanPlugin (const juce::ArgumentList& args, CliContext& context)
         return context.fail (exitUsage, "usage", "scan-plugin requires the plugin file or identifier");
     const auto fileOrIdentifier = working[1].text;
 
-    const auto answer = ScanWorker::scanOneFile ({ formatName, fileOrIdentifier, timeoutMs, loweredSecurity }, ownsMessageManager);
+    const auto answer = ScanWorker::scanOneFile ({ formatName, fileOrIdentifier, timeoutMs }, ownsMessageManager);
     if (! answer.value ("ok", false))
     {
         const auto code = answer.value ("code", std::string ("failed"));

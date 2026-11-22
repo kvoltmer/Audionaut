@@ -1369,7 +1369,7 @@ SCENARIO ("a not-scanned plugin that arrives into a slot whose channel count it 
     }
 }
 
-SCENARIO ("plugins the system asks the user about are loaded one at a time, and a no answers for those waiting", "[engine][effects][hosting][security]")
+SCENARIO ("when the user declines the system's question, the plugins loaded in the same go are not asked for", "[engine][effects][hosting][security]")
 {
     MessageThread messageThread;
     TempFolder temp;
@@ -1381,12 +1381,11 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
         return options;
     };
 
-    GIVEN ("a host with three such plugins, which load in a process of their own")
+    GIVEN ("a host with three plugins the system asks the user about")
     {
         PluginHost host (temp.folder, false);
         auto owned = std::make_unique<TestPluginFormat> ("TestC", std::vector { named ("One", 0x0101), named ("Two", 0x0202), named ("Three", 0x0303) });
         auto* format = owned.get();
-        format->asyncOnly = true;
         auto asked = std::make_shared<int> (0);
         format->onCreate = [asked] { ++*asked; };
         host.getFormats().addFormat (std::move (owned));
@@ -1397,18 +1396,22 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
         auto registry = std::make_shared<EffectRegistry>();
         host.registerInto (*registry, PluginHost::Mode::full);
 
+        THEN ("they run in the host's process, like any other plugin")
+        {
+            REQUIRE_FALSE (host.loadsOutOfProcess (TestPluginInstance::describe (named ("One", 0x0101))));
+        }
+
         WHEN ("all three are created and the user declines the question")
         {
             format->refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
             auto first = registry->create ("testc:00000101");
             auto second = registry->create ("testc:00000202");
             auto third = registry->create ("testc:00000303");
-            REQUIRE (host.getNumPendingLoads() == 3);
-            REQUIRE (host.waitForPendingLoads (5000));
 
             THEN ("the question came up once, and none of them is loaded")
             {
                 REQUIRE (*asked == 1);
+                REQUIRE (host.getNumPendingLoads() == 0);
                 for (auto* effect : { first.get(), second.get(), third.get() })
                 {
                     auto* hosted = dynamic_cast<HostedEffect*> (effect);
@@ -1418,11 +1421,11 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
                 }
             }
 
-            AND_WHEN ("one is created again and the user agrees")
+            AND_WHEN ("one is created again later and the user agrees")
             {
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (50);   // that go is over
                 format->refuseWith.clear();
                 auto again = registry->create ("testc:00000101");
-                REQUIRE (host.waitForPendingLoads (5000));
 
                 THEN ("it was asked for, and loads")
                 {
@@ -1437,7 +1440,6 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
             auto first = registry->create ("testc:00000101");
             auto second = registry->create ("testc:00000202");
             auto third = registry->create ("testc:00000303");
-            REQUIRE (host.waitForPendingLoads (5000));
 
             THEN ("each one loads")
             {
@@ -1447,42 +1449,116 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
             }
         }
 
-        WHEN ("the host goes while one is on its way and others wait")
+        WHEN ("a plugin fails for another reason")
         {
-            auto short_lived = std::make_unique<PluginHost> (temp.folder.getChildFile ("second"), false);
-            auto withheld = std::make_unique<TestPluginFormat> ("TestC", std::vector { named ("One", 0x0101), named ("Two", 0x0202) });
-            withheld->asyncOnly = true;
-            withheld->withhold = true;   // the system's question stays open
-            short_lived->getFormats().addFormat (std::move (withheld));
-            for (const auto& plugin : { named ("One", 0x0101), named ("Two", 0x0202) })
-                short_lived->getList().addType (TestPluginInstance::describe (plugin));
-            short_lived->setLoweredSecurityQuestion ([] (const juce::PluginDescription&) { return true; });
-            short_lived->setLoweredSecurityAllowed (true);
-            auto second = std::make_shared<EffectRegistry>();
-            short_lived->registerInto (*second, PluginHost::Mode::full);
-            auto first = second->create ("testc:00000101");
-            auto waiting = second->create ("testc:00000202");
-            REQUIRE (second->getPendingArrivals()->load() == 2);
-            short_lived.reset();
+            format->refuseWith = "An OS error occurred during initialisation of the plug-in (-3000)";
+            auto first = registry->create ("testc:00000101");
+            format->refuseWith.clear();
+            auto second = registry->create ("testc:00000202");
 
-            THEN ("the one that waited is not left waiting")
+            THEN ("that is not taken for a no: the next one is asked for, and loads")
             {
-                REQUIRE (dynamic_cast<HostedEffect*> (waiting.get())->getStatus() == HostedEffect::Status::notLoaded);
-                REQUIRE (second->getPendingArrivals()->load() == 1);   // the one the system still holds
+                REQUIRE (*asked == 2);
+                REQUIRE_FALSE (dynamic_cast<HostedEffect*> (first.get())->isLoaded());
+                REQUIRE (dynamic_cast<HostedEffect*> (second.get())->isLoaded());
+            }
+        }
+    }
+}
+
+SCENARIO ("a plugin nothing could try before is skipped by the run after the one that died loading it", "[engine][effects][hosting][security]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    auto notScanned = TestPluginInstance::describe (gainIn ("TestB", 0x2222));
+    notScanned.lastInfoUpdateTime = juce::Time();
+    const auto plain = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+    const auto asksAboutTestB = [] (const juce::PluginDescription& description) { return description.pluginFormatName == "TestB"; };
+
+    GIVEN ("a host with a not-scanned plugin the system asks the user about, and one it does not")
+    {
+        PluginHost host (temp.folder, false);
+        auto owned = std::make_unique<TestPluginFormat> ("TestB", std::vector { gainIn ("TestB", 0x2222) });
+        auto* asking = owned.get();
+        host.getFormats().addFormat (std::move (owned));
+        host.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { gainIn ("TestA", 0x1111) }));
+        host.getList().addType (notScanned);
+        host.getList().addType (plain);
+        host.setLoweredSecurityQuestion (asksAboutTestB);
+        host.setLoweredSecurityAllowed (true);
+        REQUIRE (host.saveList());
+
+        WHEN ("the plugin is loaded")
+        {
+            juce::String noteWhileLoading;
+            asking->onCreate = [&] { noteWhileLoading = host.getLoadPedalFile().loadFileAsString(); };
+            juce::String error;
+            auto instance = host.createInstance (notScanned, 44100.0, 512, error);
+
+            THEN ("it was noted while it loaded, and the note is gone once it is there")
+            {
+                REQUIRE (instance != nullptr);
+                REQUIRE (noteWhileLoading.contains (notScanned.fileOrIdentifier));
+                REQUIRE_FALSE (host.getLoadPedalFile().existsAsFile());
             }
         }
 
-        WHEN ("one that waits its turn is gone before it comes")
+        WHEN ("it fails to load")
         {
-            format->refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
-            auto first = registry->create ("testc:00000101");
-            auto second = registry->create ("testc:00000202");
-            second.reset();
+            asking->refuseWith = "An OS error occurred during initialisation of the plug-in (-3000)";
+            juce::String error;
+            REQUIRE (host.createInstance (notScanned, 44100.0, 512, error) == nullptr);
 
-            THEN ("nothing is left pending")
+            THEN ("the note is gone as well: the run got past the plugin")
             {
-                REQUIRE (host.waitForPendingLoads (5000));
-                REQUIRE (host.getNumPendingLoads() == 0);
+                REQUIRE_FALSE (host.getLoadPedalFile().existsAsFile());
+            }
+        }
+
+        WHEN ("the other plugin is loaded")
+        {
+            auto* other = dynamic_cast<TestPluginFormat*> (host.getFormats().getFormat (1));
+            REQUIRE (other != nullptr);
+            auto noted = false;
+            other->onCreate = [&] { noted = host.getLoadPedalFile().existsAsFile(); };
+            juce::String error;
+            REQUIRE (host.createInstance (plain, 44100.0, 512, error) != nullptr);
+
+            THEN ("nothing is noted: a worker can try that one")
+            {
+                REQUIRE_FALSE (noted);
+            }
+        }
+
+        WHEN ("a run died while the plugin loaded, and the next one reads the list")
+        {
+            host.getLoadPedalFile().replaceWithText (notScanned.fileOrIdentifier + "\n");
+            PluginHost next (temp.folder, false);
+            next.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestB", std::vector { gainIn ("TestB", 0x2222) }));
+            next.getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { gainIn ("TestA", 0x1111) }));
+            next.setLoweredSecurityQuestion (asksAboutTestB);
+            next.setLoweredSecurityAllowed (true);
+            next.setInstalledSource ([notScanned, plain] { return std::vector<juce::PluginDescription> { notScanned, plain }; });
+            REQUIRE (next.loadList());
+            next.syncWithInstalled();
+
+            THEN ("the plugin is off the list and skipped, the other one stays, and the note is gone")
+            {
+                REQUIRE (next.getList().getTypeForFile (notScanned.fileOrIdentifier) == nullptr);
+                REQUIRE (next.getList().getBlacklistedFiles().contains (notScanned.fileOrIdentifier));
+                REQUIRE (next.getList().getTypeForFile (plain.fileOrIdentifier) != nullptr);
+                REQUIRE_FALSE (next.getLoadPedalFile().existsAsFile());
+            }
+
+            AND_WHEN ("the user clears the list")
+            {
+                next.clear();
+
+                THEN ("the plugin is listed again as installed")
+                {
+                    REQUIRE (next.getList().getTypeForFile (notScanned.fileOrIdentifier) != nullptr);
+                }
             }
         }
     }
@@ -1689,93 +1765,10 @@ namespace
         };
     }
 
-    /// Workers that find nothing in a "late" file once they have loaded something else before it, and
-    /// nothing in "empty" ever.
-    ChildProcessScanner::WorkerFactory workersThatGoBlind (int idleMs)
-    {
-        return [idleMs]
-        {
-            auto loaded = std::make_shared<int> (0);
-            return std::make_unique<ThreadWorker> ([loaded] (const ChildProcessScanner::Request& request) -> json
-            {
-                const auto blind = request.file.startsWith ("late") && *loaded > 0;
-                ++*loaded;
-                if (blind || request.file == "empty")
-                    return { { "ok", true }, { "plugins", json::array() } };
-                return describedIn (request);
-            }, idleMs);
-        };
-    }
-
     // Generous, so that a busy machine does not decide a test: the scenarios that are about time
     // running out set their own.
     constexpr auto patientIdleMs = 20000;
     constexpr auto patientTimeoutMs = 20000;
-}
-
-SCENARIO ("the child-process scanner asks a new worker about a file the used one found nothing in", "[engine][effects][hosting][scan]")
-{
-    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
-
-    GIVEN ("workers that find nothing in some files once they have loaded another")
-    {
-        ChildProcessScanner scanner (workersThatGoBlind (patientIdleMs), patientTimeoutMs);
-        juce::OwnedArray<juce::PluginDescription> found;
-
-        WHEN ("the system may ask the user about plugins")
-        {
-            scanner.setLoweredSecurityFlag (std::make_shared<const std::atomic<bool>> (true));
-            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
-            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
-
-            THEN ("a new worker found the plugin, and goes on with the next files")
-            {
-                REQUIRE (found.size() == 2);
-                REQUIRE (scanner.getNumWorkersStarted() == 2);
-                REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
-                REQUIRE (scanner.getNumWorkersStarted() == 2);
-            }
-
-            AND_WHEN ("files are empty in a new worker too")
-            {
-                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                const auto started = scanner.getNumWorkersStarted();
-                REQUIRE (started == 4);
-
-                THEN ("after two of them in a row no further worker is started for an empty file")
-                {
-                    REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                    REQUIRE (scanner.getNumWorkersStarted() == started);
-                    REQUIRE (found.size() == 2);
-
-                    AND_THEN ("a file with a plugin in it does not start the count again, the next scan does")
-                    {
-                        REQUIRE (scanner.findPluginTypesFor (format, found, "55"));
-                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                        REQUIRE (scanner.getNumWorkersStarted() == started);
-
-                        scanner.scanFinished();
-                        REQUIRE (scanner.findPluginTypesFor (format, found, "empty"));
-                        REQUIRE (scanner.getNumWorkersStarted() == started + 1);
-                        REQUIRE (found.size() == 3);
-                    }
-                }
-            }
-        }
-
-        WHEN ("it may not")
-        {
-            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
-            REQUIRE (scanner.findPluginTypesFor (format, found, "late 22"));
-
-            THEN ("the file counts as empty and the worker stays")
-            {
-                REQUIRE (found.size() == 1);
-                REQUIRE (scanner.getNumWorkersStarted() == 1);
-            }
-        }
-    }
 }
 
 SCENARIO ("the child-process scanner holds a worker that does not run against no file", "[engine][effects][hosting][scan]")
@@ -1809,108 +1802,120 @@ SCENARIO ("the child-process scanner holds a worker that does not run against no
     }
 }
 
-SCENARIO ("the child-process scanner does not skip a plugin for the first wait for the user's answer", "[engine][effects][hosting][scan]")
+SCENARIO ("the child-process scanner loads a plugin the system asks the user about in its own process", "[engine][effects][hosting][scan]")
 {
+    MessageThread messageThread;
     TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+    const auto asking = TestPluginInstance::describe (gainIn ("TestA", 0x1111)).fileOrIdentifier;
 
-    GIVEN ("workers whose plugin runs out of time while the system may be asking the user")
+    GIVEN ("a scanner told which plugins those are, and workers that count what they are asked")
     {
-        ChildProcessScanner scanner ([]
+        auto askedOfWorkers = std::make_shared<std::atomic<int>> (0);
+        ChildProcessScanner scanner ([askedOfWorkers]
         {
-            return std::make_unique<ThreadWorker> ([] (const ChildProcessScanner::Request& request) -> json
+            return std::make_unique<ThreadWorker> ([askedOfWorkers] (const ChildProcessScanner::Request& request) -> json
             {
-                if (request.file == "asks")
-                    return { { "ok", false }, { "code", "awaiting_consent" }, { "message", "waited for the answer" }, { "last", true } };
+                ++*askedOfWorkers;
                 return describedIn (request);
             }, patientIdleMs);
         }, patientTimeoutMs);
-        juce::StringArray lines;
+        scanner.setAsksUser ([asking] (const juce::String&, const juce::String& file) { return file == asking; });
+        auto allowed = std::make_shared<std::atomic<bool>> (false);
+        scanner.setLoweredSecurityFlag (allowed);
+        auto raised = std::make_shared<int> (0);
+        format.onCreate = [raised] { ++*raised; };
+        juce::StringArray lines, empty;
         scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
+        scanner.setFoundNothing ([&empty] (const juce::String& file) { empty.add (file); });
         juce::OwnedArray<juce::PluginDescription> found;
 
-        WHEN ("such a file is scanned")
+        WHEN ("such a plugin is scanned where the question may not be raised")
         {
-            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
-            const auto first = scanner.findPluginTypesFor (format, found, "asks");
+            const auto verdict = scanner.findPluginTypesFor (format, found, asking);
 
-            THEN ("it is not to be skipped, the log says why, and the next file gets a new worker")
+            THEN ("it is not loaded anywhere, not to be skipped, and not taken for empty")
             {
                 INFO (lines.joinIntoString ("\n"));
-                REQUIRE (first);
+                REQUIRE (verdict);
+                REQUIRE (found.isEmpty());
+                REQUIRE (*raised == 0);
+                REQUIRE (askedOfWorkers->load() == 0);
+                REQUIRE (empty.isEmpty());
+                REQUIRE (lines[lines.size() - 1].contains ("NOT SCANNED"));
+            }
+        }
+
+        WHEN ("it is scanned where the question may be raised")
+        {
+            allowed->store (true);
+            const auto verdict = scanner.findPluginTypesFor (format, found, asking);
+
+            THEN ("it is loaded here, and no worker was asked")
+            {
+                INFO (lines.joinIntoString ("\n"));
+                REQUIRE (verdict);
                 REQUIRE (found.size() == 1);
-                REQUIRE (lines[lines.size() - 1].startsWith ("TestA  asks  ->  NOT SCANNED: waited for the answer"));
-                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
-                REQUIRE (found.size() == 2);
-                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (*raised == 1);
+                REQUIRE (askedOfWorkers->load() == 0);
+                REQUIRE (scanner.getNumWorkersStarted() == 0);
+                REQUIRE (lines[lines.size() - 1].contains ("1 found, in this process"));
             }
 
-            AND_WHEN ("it runs out of time again")
+            AND_WHEN ("another plugin is scanned")
             {
-                const auto second = scanner.findPluginTypesFor (format, found, "asks");
+                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
 
-                THEN ("it is skipped from now on")
+                THEN ("that one goes to a worker")
                 {
-                    REQUIRE_FALSE (second);
-                    REQUIRE (lines[lines.size() - 1].startsWith ("TestA  asks  ->  FAILED, file skipped: waited for the answer"));
+                    REQUIRE (found.size() == 2);
+                    REQUIRE (askedOfWorkers->load() == 1);
                 }
             }
         }
-    }
-}
 
-SCENARIO ("the child-process scanner has the system's question raised once per scan when the user declines it", "[engine][effects][hosting][scan]")
-{
-    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
-
-    GIVEN ("workers whose user declines the question, and a scanner that may raise it")
-    {
-        auto raised = std::make_shared<std::atomic<int>> (0);
-        ChildProcessScanner scanner ([raised]
+        WHEN ("the user declines the question")
         {
-            return std::make_unique<ThreadWorker> ([raised] (const ChildProcessScanner::Request& request) -> json
-            {
-                if (! request.file.startsWith ("asks"))
-                    return describedIn (request);
-                if (! request.loweredSecurity)
-                    return { { "ok", true }, { "plugins", json::array() } };   // not loaded, nobody asked
-                ++*raised;
-                return { { "ok", false }, { "code", "consent_declined" }, { "message", "declined" } };
-            }, patientIdleMs);
-        }, patientTimeoutMs);
-        scanner.setLoweredSecurityFlag (std::make_shared<const std::atomic<bool>> (true));
-        juce::StringArray lines;
-        scanner.setLog ([&lines] (const juce::String& line) { lines.add (line); });
-        juce::OwnedArray<juce::PluginDescription> found;
+            allowed->store (true);
+            format.refuseWith = "An OS error occurred during initialisation of the plug-in (-128)";
+            const auto first = scanner.findPluginTypesFor (format, found, asking);
+            const auto second = scanner.findPluginTypesFor (format, found, asking);
 
-        WHEN ("several such files are scanned")
-        {
-            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
-            const auto first = scanner.findPluginTypesFor (format, found, "asks 1");
-            const auto second = scanner.findPluginTypesFor (format, found, "asks 2");
-            const auto third = scanner.findPluginTypesFor (format, found, "asks 3");
-
-            THEN ("the question came up once, no file is to be skipped, and the worker stayed")
+            THEN ("the question came up once in this scan, and the file is neither skipped nor taken for empty")
             {
                 INFO (lines.joinIntoString ("\n"));
-                REQUIRE (raised->load() == 1);
                 REQUIRE (first);
                 REQUIRE (second);
-                REQUIRE (third);
-                REQUIRE (lines.joinIntoString ("\n").contains ("TestA  asks 1  ->  NOT SCANNED: declined"));
-                REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
-                REQUIRE (found.size() == 2);
-                REQUIRE (scanner.getNumWorkersStarted() == 1);
+                REQUIRE (*raised == 1);
+                REQUIRE (found.isEmpty());
+                REQUIRE (empty.isEmpty());
+                REQUIRE (lines.joinIntoString ("\n").contains ("NOT SCANNED: lowering the security settings was declined"));
             }
 
-            AND_WHEN ("the next scan comes to such a file")
+            AND_WHEN ("the next scan comes to it")
             {
                 scanner.scanFinished();
-                REQUIRE (scanner.findPluginTypesFor (format, found, "asks 1"));
+                REQUIRE (scanner.findPluginTypesFor (format, found, asking));
 
                 THEN ("the question is raised again")
                 {
-                    REQUIRE (raised->load() == 2);
+                    REQUIRE (*raised == 2);
                 }
+            }
+        }
+
+        WHEN ("the plugin does not load for another reason")
+        {
+            allowed->store (true);
+            format.refuseWith = "An OS error occurred during initialisation of the plug-in (-3000)";
+            const auto verdict = scanner.findPluginTypesFor (format, found, asking);
+
+            THEN ("it stays as it is listed, and the log has the reason")
+            {
+                REQUIRE (verdict);
+                REQUIRE (found.isEmpty());
+                REQUIRE (empty.isEmpty());
+                REQUIRE (lines[lines.size() - 1].contains ("NOT SCANNED: not loaded in this process"));
+                REQUIRE (lines[lines.size() - 1].contains ("-3000"));
             }
         }
     }
@@ -2074,35 +2079,6 @@ SCENARIO ("the child-process scanner asks one worker for many files", "[engine][
                 REQUIRE (verdict);
                 REQUIRE (scanner.getNumWorkersStarted() == 2);
                 REQUIRE (found.size() == 2);
-            }
-        }
-    }
-
-    GIVEN ("a scanner that is told whether plugins may ask for lowered security settings")
-    {
-        auto heard = std::make_shared<std::vector<bool>>();
-        ChildProcessScanner scanner ([heard]
-        {
-            return std::make_unique<ThreadWorker> ([heard] (const ChildProcessScanner::Request& request)
-            {
-                heard->push_back (request.loweredSecurity);
-                return describedIn (request);
-            }, patientIdleMs);
-        }, patientTimeoutMs);
-        auto allowed = std::make_shared<std::atomic<bool>> (false);
-
-        WHEN ("files are scanned before and after it is allowed")
-        {
-            juce::OwnedArray<juce::PluginDescription> found;
-            REQUIRE (scanner.findPluginTypesFor (format, found, "11"));   // nothing said: no
-            scanner.setLoweredSecurityFlag (allowed);
-            REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
-            allowed->store (true);
-            REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
-
-            THEN ("the worker hears it with every file")
-            {
-                REQUIRE (*heard == std::vector<bool> { false, false, true });
             }
         }
     }

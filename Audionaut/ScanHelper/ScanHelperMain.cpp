@@ -24,7 +24,7 @@
 //
 //   audionaut-scan-helper scan-plugin --serve <pipe>
 //   audionaut-scan-helper scan-plugin --json [--timeout-ms N]
-//                         [--allow-lowered-security] --format F <file or identifier>
+//                         --format F <file or identifier>
 //
 // Exit codes: 0 success, 1 the scan failed, 2 usage error, 3 no such format
 // in this build.
@@ -72,7 +72,6 @@ int main (int argc, char* argv[])
     const auto formatName = takeValue (arguments, "--format");
     const auto timeoutText = takeValue (arguments, "--timeout-ms");
     const auto timeoutMs = timeoutText.getIntValue() > 0 ? timeoutText.getIntValue() : 50000;
-    const auto loweredSecurity = takeFlag (arguments, "--allow-lowered-security");
     cli::ScopedCoutToStderr guard (context.json || pipeName.isNotEmpty());   // whatever a plugin prints while loading stays off the envelope
 
     if (pipeName.isNotEmpty())
@@ -84,7 +83,7 @@ int main (int argc, char* argv[])
         return context.fail (cli::exitUsage, "usage", "scan-plugin requires the plugin file or identifier");
     const auto fileOrIdentifier = arguments[0];
 
-    const auto answer = ScanWorker::scanOneFile ({ formatName, fileOrIdentifier, timeoutMs, loweredSecurity });
+    const auto answer = ScanWorker::scanOneFile ({ formatName, fileOrIdentifier, timeoutMs });
     if (! answer.value ("ok", false))
     {
         const auto code = answer.value ("code", std::string ("failed"));

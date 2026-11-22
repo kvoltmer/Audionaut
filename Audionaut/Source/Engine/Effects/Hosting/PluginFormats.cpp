@@ -9,6 +9,8 @@
 #include <memory>
 #include <thread>
 
+#include "AudioUnitRegistry.h"
+
 namespace audium
 {
 
@@ -41,7 +43,7 @@ namespace
 void PluginFormats::addPlatformFormats (juce::AudioPluginFormatManager& manager)
 {
    #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    // the sandbox's one format; see applyLoweredSecurity() for the plugins the sandbox does not open in-process
+    // the sandbox's one format; see asksUserBeforeLoading() for the plugins the sandbox does not open just so
     manager.addFormat (std::make_unique<EffectAudioUnits>());
    #endif
    #if (JUCE_WINDOWS || JUCE_LINUX || JUCE_BSD) && JUCE_PLUGINHOST_VST3
@@ -53,35 +55,21 @@ void PluginFormats::addPlatformFormats (juce::AudioPluginFormatManager& manager)
     juce::ignoreUnused (manager);
 }
 
-void PluginFormats::applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed)
+bool PluginFormats::isSandboxed()
 {
-   #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    // Inside the sandbox the OS refuses to open an AUv2 without the sandbox-safe flag in-process
-    // (-3000). Allowed, those run in the system's hosting service, as they do in Logic - which the
-    // system grants once the user agreed to lower the app's security settings. Not allowed, they are
-    // asked for in-process and fail, and nobody is asked anything.
-    using Isolation = juce::AudioUnitPluginFormat::ProcessIsolation;
-    for (auto* format : manager.getFormats())
-        if (auto* audioUnits = dynamic_cast<juce::AudioUnitPluginFormat*> (format))
-            audioUnits->setProcessIsolation (allowed ? Isolation::whenSandboxRequires : Isolation::inProcess);
+   #if JUCE_MAC
+    return juce::SystemStats::getEnvironmentVariable ("APP_SANDBOX_CONTAINER_ID", {}).isNotEmpty();
+   #else
+    return false;
    #endif
-    juce::ignoreUnused (manager, allowed);
 }
 
 bool PluginFormats::asksUserBeforeLoading (const juce::String& formatName, const juce::String& fileOrIdentifier)
 {
    #if JUCE_MAC && JUCE_PLUGINHOST_AU
-    // what a format that isolates such plugins would load out of process, less what runs there anyway (AUv3)
-    juce::AudioUnitPluginFormat isolating, plain;
-    isolating.setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
-    juce::PluginDescription description;
-    description.pluginFormatName = formatName;
-    description.fileOrIdentifier = fileOrIdentifier;
-    const juce::AudioPluginFormat& wouldIsolate = isolating;   // the question is the base class's to ask
-    const juce::AudioPluginFormat& asItIs = plain;
-    return formatName == plain.getName()
-        && wouldIsolate.requiresUnblockedMessageThreadDuringCreation (description)
-        && ! asItIs.requiresUnblockedMessageThreadDuringCreation (description);
+    return formatName == juce::AudioUnitPluginFormat::getFormatName()
+        && isSandboxed()
+        && ! AudioUnitRegistry::isSandboxSafe (fileOrIdentifier);
    #else
     juce::ignoreUnused (formatName, fileOrIdentifier);
     return false;

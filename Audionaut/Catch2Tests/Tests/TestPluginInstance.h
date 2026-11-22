@@ -254,7 +254,10 @@ private:
 
         for (const auto& plugin : plugins)
         {
-            if (TestPluginInstance::describe (plugin).uniqueId == description.uniqueId)
+            // by its id, or - asked for by the file alone, as a scan does - by the file
+            const auto listed = TestPluginInstance::describe (plugin);
+            if (listed.uniqueId == description.uniqueId
+                || (description.uniqueId == 0 && listed.fileOrIdentifier == description.fileOrIdentifier))
             {
                 callback (std::make_unique<TestPluginInstance> (plugin), {});
                 return;

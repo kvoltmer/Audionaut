@@ -481,12 +481,6 @@ the one-gesture crossfade UX on top:
 
 ## Plugin hosting — follow-ups (found 2026-11-14 in phase 7a)
 
-- [ ] **Offer the JUCE out-of-process patch upstream.** The JUCE submodule
-  points at `kvoltmer/JUCE`, branch `audionaut/au-out-of-process`:
-  `AudioUnitPluginFormat::setProcessIsolation` loads AUv2 plugins without the
-  sandbox-safe flag into Apple's hosting service when the host is sandboxed
-  (what Logic does; the OS refuses them in-process with -3000). A pull request
-  to juce-framework/JUCE lets the submodule return to upstream once merged.
 - [ ] **Say how many Audio Units macOS will ask about before plugins are
   turned on.** "Plugins enabled" in Manage Plugins also allows the Audio
   Units macOS wants lowered security settings for, and the message box only
@@ -496,12 +490,17 @@ the one-gesture crossfade UX on top:
 - [ ] **Try the Audio Unit listing without a scan with real plugins.** The
   list comes from the system's registry (`AudioUnitRegistry`), not scanned
   entries are offered as inserts and first loaded when used, and the
-  plugins macOS asks about load one at a time (a declined question answers
-  for those waiting). Not exercised by hand yet: the prompt on a first
-  insert, a project with several such inserts, and the check of a
-  not-scanned plugin that runs inside the app in the scan worker before
-  its first load (the slot waits as "loading" meanwhile, no progress bar;
-  a plugin that crashes there is skipped).
+  plugins macOS asks about load into the app itself (a declined question
+  answers for those loaded in the same go). Not exercised by hand yet: a
+  declined prompt on a first insert, a project with several such inserts,
+  a Scan in Manage Plugins with such plugins (they are loaded in the app,
+  not in the scan worker), and the check of a not-scanned sandbox-safe
+  plugin in the scan worker before its first load (the slot waits as
+  "loading" meanwhile, no progress bar; a plugin that crashes there is
+  skipped).
+- [ ] **Mac App Store: justify the audio-unit-host entitlement.** It is a
+  temporary exception; App Review asks why the app needs it (hosting Audio
+  Units that are not sandbox-safe, as GarageBand does).
 - [ ] **Time the Audio Unit listing at startup on a machine with many
   plugins.** `syncWithInstalled()` runs on the message thread before the
   window is up and looks each component up by its codes; 10 ms for 23
@@ -510,11 +509,6 @@ the one-gesture crossfade UX on top:
 - [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
   are on by default and no scan runs by itself; consider a hint in the
   insert menu, or a first scan when the Manage Plugins window opens empty.
-- [ ] **Measure the out-of-process render cost.** Every block of a plugin in
-  the hosting service is a cross-process call; small buffers with many such
-  plugins may cost noticeably more than in-process hosting. Bench a chain of
-  Mikron Delays at 64 and 512 samples against AUDelay in-process before any
-  tuning (a larger block for those slots, say).
 - [ ] **Editor window of a loading slot.** A window opened while the plugin
   is still on its way shows "Loading the plugin..." and takes the editor when
   it comes, but stays non-resizable (the panel's flag is set at creation):

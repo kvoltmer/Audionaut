@@ -29,21 +29,10 @@ PluginHost::PluginHost (juce::File dataDirectory_, bool withPlatformFormats) :
     {
         addPlatformFormats (formats);
 
-       #if JUCE_MAC && JUCE_PLUGINHOST_AU
-        // The plugins the system asks about are those that only load out of process because this
-        // process is sandboxed: what a format that isolates them would load that way, less what
-        // runs out of process anyway (AUv3).
-        auto isolatingUnits = std::make_shared<juce::AudioUnitPluginFormat>();
-        isolatingUnits->setProcessIsolation (juce::AudioUnitPluginFormat::ProcessIsolation::whenSandboxRequires);
-        const std::shared_ptr<juce::AudioPluginFormat> isolating = isolatingUnits;
-        const std::shared_ptr<juce::AudioPluginFormat> plain = std::make_shared<juce::AudioUnitPluginFormat>();
-        asksForLoweredSecurity = [isolating, plain] (const juce::PluginDescription& description)
+        asksForLoweredSecurity = [] (const juce::PluginDescription& description)
         {
-            return description.pluginFormatName == plain->getName()
-                && isolating->requiresUnblockedMessageThreadDuringCreation (description)
-                && ! plain->requiresUnblockedMessageThreadDuringCreation (description);
+            return PluginFormats::asksUserBeforeLoading (description.pluginFormatName, description.fileOrIdentifier);
         };
-       #endif
 
         // empty where the system has no list of its plugins
         installedSource = [this] { return AudioUnitRegistry::installed (formats); };
@@ -58,9 +47,6 @@ PluginHost::PluginHost (juce::File dataDirectory_, bool withPlatformFormats) :
 PluginHost::~PluginHost()
 {
     list.removeChangeListener (this);
-    questions->closed = true;   // a load still under way finds nothing more to start
-    for (const auto& one : std::exchange (questions->waiting, {}))   // and those waiting behind it are not left waiting
-        settle (one, *pendingLoads, nullptr, {});
     checks->hostAlive.reset();
     checks->pool.removeAllJobs (true, 60000);   // a check under way gives up its plugin
 }
@@ -232,18 +218,9 @@ void PluginHost::addPlatformFormats (juce::AudioPluginFormatManager& manager)
     PluginFormats::addPlatformFormats (manager);
 }
 
-void PluginHost::applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed)
-{
-    PluginFormats::applyLoweredSecurity (manager, allowed);
-}
-
 bool PluginHost::isSandboxed()
 {
-   #if JUCE_MAC
-    return juce::SystemStats::getEnvironmentVariable ("APP_SANDBOX_CONTAINER_ID", {}).isNotEmpty();
-   #else
-    return false;
-   #endif
+    return PluginFormats::isSandboxed();
 }
 
 void PluginHost::setEnabled (bool enabled_)
@@ -259,7 +236,6 @@ void PluginHost::setLoweredSecurityAllowed (bool allowed)
     if (loweredSecurityAllowed->exchange (allowed) == allowed)
         return;
 
-    applyLoweredSecurity (formats, allowed);
     registerIntoAttached();   // the plugins in question come, or go
 }
 
@@ -267,8 +243,6 @@ void PluginHost::setEnabled (bool enabled_, bool loweredSecurityAllowed_)
 {
     const auto enabledChanged = std::exchange (enabled, enabled_) != enabled_;
     const auto allowedChanged = loweredSecurityAllowed->exchange (loweredSecurityAllowed_) != loweredSecurityAllowed_;
-    if (allowedChanged)
-        applyLoweredSecurity (formats, loweredSecurityAllowed_);
     if (enabledChanged || allowedChanged)
         registerIntoAttached();
 }
@@ -281,6 +255,11 @@ juce::File PluginHost::getListFile() const
 juce::File PluginHost::getDeadMansPedalFile() const
 {
     return dataDirectory.getChildFile ("Plugins").getChildFile ("ScanInProgress.txt");
+}
+
+juce::File PluginHost::getLoadPedalFile() const
+{
+    return dataDirectory.getChildFile ("Plugins").getChildFile ("LoadInProgress.txt");
 }
 
 juce::File PluginHost::getScanLogFile() const
@@ -328,8 +307,32 @@ bool PluginHost::scansFolders() const
     return false;
 }
 
+void PluginHost::skipWhatTheLastRunDiedOf()
+{
+    // A plugin nothing could try before this process loaded it, and the process did not get past it
+    // (a crash - or it was quit while the plugin loaded): skipped from now on, so that the project
+    // which has it opens. Clear in Manage Plugins forgets the skipped files.
+    const auto pedal = getLoadPedalFile();
+    if (! pedal.existsAsFile())
+        return;
+
+    juce::StringArray died;
+    pedal.readLines (died);
+    pedal.deleteFile();
+    for (const auto& fileOrIdentifier : died)
+    {
+        if (fileOrIdentifier.trim().isEmpty())
+            continue;
+        skipNotScanned (fileOrIdentifier);
+        list.addToBlacklist (fileOrIdentifier);   // also where it was not listed yet: it is not listed as installed then
+    }
+}
+
 bool PluginHost::loadList()
 {
+    // whatever becomes of the list file, the last run's verdict counts
+    struct AtExit { PluginHost& host; ~AtExit() { host.skipWhatTheLastRunDiedOf(); } } atExit { *this };
+
     const auto file = getListFile();
     if (! file.existsAsFile())
         return false;
@@ -541,7 +544,50 @@ std::unique_ptr<juce::AudioPluginInstance> PluginHost::createInstance (const juc
         error = "plugin " + description.name + " (" + description.pluginFormatName + ") cannot be loaded here";
         return nullptr;
     }
+
+    // A plugin the system asks the user about, after the user said no: that answers for the others
+    // loaded in the same go (a project with several of them), so the question comes up once. The next
+    // thing the user does asks again - the system does not remember a no.
+    const auto asks = asksForLoweredSecurity && asksForLoweredSecurity (description);
+    if (asks && *declinedForNow)
+    {
+        error = describeLoadError ("(-128)");
+        return nullptr;
+    }
+
+    // Nothing could try such a plugin before (no worker loads it): while it loads for the first time,
+    // a note of it stands in a file. A crash leaves the note, and the next launch skips the plugin.
+    const auto untried = [&]
+    {
+        if (! asks)
+            return false;
+        const auto listed = list.getTypeForFile (description.fileOrIdentifier);
+        return listed == nullptr || ! isScanned (*listed);
+    }();
+    const auto pedal = getLoadPedalFile();
+    if (untried && pedal.getParentDirectory().createDirectory())
+        pedal.appendText (description.fileOrIdentifier + "\n", false, false, "\n");
+
     auto instance = formats.createPluginInstance (description, sampleRate, blockSize, error);
+
+    if (untried)
+    {
+        // it came back: its note goes (others' stay, should loads ever nest)
+        juce::StringArray loading;
+        pedal.readLines (loading);
+        loading.removeString (description.fileOrIdentifier);
+        loading.removeEmptyStrings();
+        if (loading.isEmpty())
+            pedal.deleteFile();
+        else
+            pedal.replaceWithText (loading.joinIntoString ("\n") + "\n", false, false, "\n");
+    }
+
+    if (asks && instance == nullptr && error.contains ("(-128)"))   // userCanceledErr
+    {
+        *declinedForNow = true;
+        juce::MessageManager::callAsync ([declined = declinedForNow] { *declined = false; });   // once this go is over
+    }
     error = describeLoadError (error);
     return instance;
 }
@@ -603,17 +649,6 @@ void PluginHost::requestInstance (HostedEffect& effect) const
         ++*arrivals;
 
     auto* format = formatOf (effect.getDescription());
-
-    // A plugin the system asks the user about waits its turn: one question at a time, and a "no"
-    // answers for those waiting behind it.
-    if (asksForLoweredSecurity && asksForLoweredSecurity (effect.getDescription()))
-    {
-        questions->waiting.push_back ({ effect.getAliveToken(), &effect, format, arrivals });
-        if (! questions->busy)
-            loadNextAsked (questions, pendingLoads);
-        return;
-    }
-
     format->createPluginInstanceAsync (effect.getDescription(), 44100.0, 512,
                                        [alive = effect.getAliveToken(), waiting = &effect, pending = pendingLoads, arrivals]
                                        (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
@@ -628,57 +663,15 @@ void PluginHost::requestInstance (HostedEffect& effect) const
                                        });
 }
 
-void PluginHost::settle (const Questions::Waiting& one, std::atomic<int>& pending,
-                         std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
-{
-    // an effect that left meanwhile (an undo, a closed project) has nothing to adopt
-    if (one.alive.lock() != nullptr)
-        one.effect->adopt (std::move (instance), describeLoadError (message));
-    --pending;
-    if (one.arrivals != nullptr)
-        --*one.arrivals;
-}
-
-void PluginHost::loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending)
-{
-    while (! questions->waiting.empty())
-    {
-        const auto next = questions->waiting.front();
-        questions->waiting.pop_front();
-        if (questions->closed || next.alive.lock() == nullptr)
-        {
-            settle (next, *pending, nullptr, {});
-            continue;
-        }
-
-        questions->busy = true;
-        next.format->createPluginInstanceAsync (next.effect->getDescription(), 44100.0, 512,
-                                                [questions, pending, next]
-                                                (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
-                                                {
-                                                    // message thread
-                                                    const auto declined = instance == nullptr && message.contains ("(-128)");   // userCanceledErr
-                                                    settle (next, *pending, std::move (instance), message);
-
-                                                    // the user said no: not asked again for each plugin that waited meanwhile
-                                                    if (declined)
-                                                    {
-                                                        for (const auto& other : std::exchange (questions->waiting, {}))
-                                                            settle (other, *pending, nullptr, message);
-                                                    }
-
-                                                    questions->busy = false;
-                                                    loadNextAsked (questions, pending);
-                                                });
-        return;
-    }
-    questions->busy = false;
-}
-
 bool PluginHost::needsCheckBeforeLoad (const juce::PluginDescription& description) const
 {
     // a plugin in a process of its own takes nothing down with it
     if (! checksBeforeFirstLoad || loadsOutOfProcess (description))
+        return false;
+
+    // a plugin the system asks the user about is one no worker can load: the system opens it in the
+    // app itself only, so nothing can try it first
+    if (asksForLoweredSecurity && asksForLoweredSecurity (description))
         return false;
 
     const auto listed = list.getTypeForFile (description.fileOrIdentifier);   // as the list has it now
@@ -801,10 +794,10 @@ void PluginHost::useChildProcessScanner (juce::File executable, int timeoutMs)
 {
     const auto workerPath = executable.getFullPathName();
     auto scanner = std::make_unique<ChildProcessScanner> (std::move (executable), timeoutMs);
-    // The worker loads what this host may load. Only a sandboxed app is ever asked about a plugin; anywhere
-    // else the flag changes nothing in the worker, and the scanner need not start new workers over it.
-    if (isSandboxed())
-        scanner->setLoweredSecurityFlag (loweredSecurityAllowed);
+    // the plugins the system asks the user about are loaded by the scanner itself, in here, where this
+    // host may load them - no worker can
+    scanner->setAsksUser (&PluginFormats::asksUserBeforeLoading);
+    scanner->setLoweredSecurityFlag (loweredSecurityAllowed);
     scanner->setFoundNothing ([empty = loadedEmpty] (const juce::String& fileOrIdentifier)
     {
         const juce::ScopedLock lock (empty->lock);

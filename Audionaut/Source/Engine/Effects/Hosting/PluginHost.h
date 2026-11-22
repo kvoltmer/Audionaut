@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <deque>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -42,9 +41,7 @@ class HostedEffect;
  * loading the plugin: the scratch engine of a hosted edit needs the types
  * to resolve, not a second instance of every plugin in the project.
  *
- * A plugin that runs in a process of its own (AUv3; on macOS, inside the
- * sandbox, an AUv2 without the sandbox-safe flag, which the OS refuses to
- * open in-process - these go to the system's hosting service, as in Logic)
+ * A plugin that runs in a process of its own (an Audio Unit of version 3)
  * is created asynchronously: its effect starts as a loading placeholder
  * that passes the signal through and adopts the plugin when it arrives.
  * waitForPendingLoads() is for a process that wants them before it goes on
@@ -57,15 +54,22 @@ class HostedEffect;
  * insert (Availability::disabled) and a project's slot with one stays an
  * unresolved element with its state.
  *
- * Before macOS loads an AUv2 without the sandbox-safe flag for a sandboxed
- * app, it asks the user to lower the app's security settings. That
+ * An Audio Unit of version 2 that does not declare itself safe for the
+ * sandbox is loaded into the sandboxed app all the same, like any other: the
+ * app carries the entitlement for it
+ * (com.apple.security.temporary-exception.audio-unit-host), and the first
+ * time macOS asks the user to lower the app's security settings. That
  * question is only raised where it was allowed (setLoweredSecurityAllowed):
  * the app does so together with turning the plugins on, a headless run
  * never does - it has nobody to answer. Not allowed, such a plugin is not
- * offered either (Availability::needsLoweredSecurity), and a scan does
- * not load it. Such plugins are loaded one at a time: when the user
- * declines the question, the plugins waiting behind that one are not
- * loaded either, so a project with many of them asks once.
+ * offered (Availability::needsLoweredSecurity) and not loaded. When the user
+ * declines the question, the further such plugins loaded in the same go
+ * are not asked for either, so a project with many of them asks once. No
+ * other process loads such a plugin - the scan worker has not the
+ * entitlement - so a scan loads it in the app itself, and nothing checks it
+ * before its first load. In place of that check, the plugin is noted in a
+ * file while it loads for the first time (getLoadPedalFile): a run that
+ * dies of it leaves the note, and the next one skips the plugin.
  *
  * Where the system knows its plugins without loading them (the Audio
  * Units on macOS), the list has them without a scan: syncWithInstalled()
@@ -75,7 +79,8 @@ class HostedEffect;
  * would run inside this process, its first load is preceded by a check in
  * the scan worker (setChecksBeforeFirstLoad): the effect waits as a
  * loading placeholder meanwhile, and a plugin that takes the worker down
- * is skipped instead of taking the app down.
+ * is skipped instead of taking the app down. (Not so a plugin the system
+ * asks the user about, which the worker cannot load.)
  *
  * What the user takes off the list (remove, clear) leaves it, unless the
  * system lists the plugin by itself: such an entry would be back with the
@@ -101,12 +106,8 @@ public:
     /// The app's data folder, the default place for the list.
     static juce::File defaultDataDirectory();
 
-    /// The formats this platform hosts, added to the manager. Plugins that need the user's consent to
-    /// lowered security settings are not loaded until applyLoweredSecurity() says so.
+    /// The formats this platform hosts, added to the manager.
     static void addPlatformFormats (juce::AudioPluginFormatManager& manager);
-    /// Whether the manager's formats load the plugins the system asks the user about (an AUv2 without
-    /// the sandbox-safe flag, in a sandboxed process: out of process, after the user's consent).
-    static void applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed);
     /// Whether this process is one in which that question comes up (a sandboxed app on macOS).
     static bool isSandboxed();
 
@@ -165,6 +166,10 @@ public:
     juce::KnownPluginList& getList() noexcept { return list; }
     juce::File getListFile() const;
     juce::File getDeadMansPedalFile() const;
+    /// Where the plugin stands that is being loaded for the first time with nothing having tried it
+    /// before (one the system asks the user about, which no worker loads). A run that dies of the plugin
+    /// leaves the note behind, and loadList() of the next run skips the plugin from then on.
+    juce::File getLoadPedalFile() const;
     /// What the child-process scanner did, file by file (useChildProcessScanner writes it); a text
     /// file a user can send along. Kept over several scans until it grows past a megabyte.
     juce::File getScanLogFile() const;
@@ -180,7 +185,8 @@ public:
     /// Whether one of this host's formats looks in folders, so that extra ones mean something here.
     bool scansFolders() const;
 
-    /// Reads the list file (and what the dead man's pedal left behind); false when there is none yet.
+    /// Reads the list file (and what the dead man's pedals of a scan and of a first load left behind);
+    /// false when there is none yet.
     bool loadList();
     /// Writes the list file; false when the folder cannot be written.
     bool saveList() const;
@@ -216,8 +222,8 @@ public:
 
     /// Whether this host creates the plugin (its format is here, plugins are on, and nothing has to be allowed first).
     bool canCreate (const juce::PluginDescription& description) const;
-    /// Whether the plugin runs in a process of its own (an AUv3; inside the sandbox an AUv2 without the sandbox-safe
-    /// flag): its effect is created asynchronously and starts as a loading placeholder.
+    /// Whether the plugin runs in a process of its own (an Audio Unit of version 3): its effect is created
+    /// asynchronously and starts as a loading placeholder.
     bool loadsOutOfProcess (const juce::PluginDescription& description) const;
     /// Whether a type id names a plugin of one of this host's formats (PluginTypeId::make of one).
     bool isPluginTypeId (const std::string& typeId) const;
@@ -283,24 +289,6 @@ private:
     juce::AudioPluginFormat* formatOf (const juce::PluginDescription& description) const;   // nullptr: not hosted here
     void requestInstance (HostedEffect& effect) const;   // asynchronously: the effect adopts what comes
 
-    /// The plugins the system asks the user about, waiting to be loaded one after the other.
-    struct Questions
-    {
-        struct Waiting
-        {
-            std::weak_ptr<const int> alive;   // the effect's
-            HostedEffect* effect = nullptr;
-            juce::AudioPluginFormat* format = nullptr;
-            std::shared_ptr<std::atomic<int>> arrivals;
-        };
-        std::deque<Waiting> waiting;
-        bool busy = false;     // one is loading
-        bool closed = false;   // the host is gone, and its formats with it
-    };
-    static void loadNextAsked (std::shared_ptr<Questions> questions, std::shared_ptr<std::atomic<int>> pending);
-    static void settle (const Questions::Waiting& one, std::atomic<int>& pending,
-                        std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message);
-
     /// Files a worker loaded and found no plugin in, since the host last asked.
     struct LoadedEmpty
     {
@@ -309,6 +297,7 @@ private:
     };
     bool takeLoadedEmpty (const juce::String& fileOrIdentifier) const;   // whether it was among them; not any more then
     void skipNotScanned (const juce::String& fileOrIdentifier);          // off the list, and skipped from now on
+    void skipWhatTheLastRunDiedOf();                                     // the plugins the load pedal names
     int numScanned() const;
 
     /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
@@ -344,7 +333,7 @@ private:
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner
     std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
     std::function<std::vector<juce::PluginDescription>()> installedSource;
-    std::shared_ptr<Questions> questions = std::make_shared<Questions>();   // shared with the callbacks in flight
+    std::shared_ptr<bool> declinedForNow = std::make_shared<bool> (false);   // message thread: the user said no to the system's question in this go
     std::unique_ptr<Checks> checks = std::make_unique<Checks> (list);
     bool checksBeforeFirstLoad = false;
     std::shared_ptr<LoadedEmpty> loadedEmpty = std::make_shared<LoadedEmpty>();   // shared with the scanner

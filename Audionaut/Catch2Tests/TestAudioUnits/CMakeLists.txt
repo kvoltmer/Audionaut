@@ -27,6 +27,7 @@ target_sources(AudionautTestScanWorker
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/TestScanWorkerMain.cpp
         ${TEST_AU_SRC}/Engine/Effects/Hosting/ChildProcessScanner.cpp
+        ${TEST_AU_SRC}/Engine/Effects/Hosting/AudioUnitRegistry.cpp
         ${TEST_AU_SRC}/Engine/Effects/Hosting/PluginFormats.cpp
         ${TEST_AU_SRC}/Engine/Effects/Hosting/ScanWorker.cpp)
 

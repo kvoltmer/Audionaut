@@ -48,21 +48,30 @@ namespace
 
     JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wnullable-to-nonnull-conversion")   // the component is checked
 
-    /// What the system says of the component an identifier ("AudioUnit:Effects/aufx,subt,manu")
-    /// names, in the words the format uses for the loaded plugin; nothing when there is none.
-    std::optional<juce::PluginDescription> describe (const juce::String& formatName, const juce::String& identifier)
+    /// The component an identifier ("AudioUnit:Effects/aufx,subt,manu") names, with its three codes as
+    /// the identifier writes them and as the system has them; nullptr when there is none.
+    AudioComponent find (const juce::String& identifier, juce::StringArray& codes, AudioComponentDescription& wanted)
     {
-        juce::StringArray codes;
+        codes.clear();
         codes.addTokens (identifier.substring (juce::jmax (identifier.lastIndexOfChar (':'), identifier.lastIndexOfChar ('/')) + 1), ",", {});
         codes.removeEmptyStrings();
         if (codes.size() != 3)
-            return std::nullopt;
+            return nullptr;
 
-        AudioComponentDescription wanted {};
+        wanted = {};
         wanted.componentType = codeOf (codes[0]);
         wanted.componentSubType = codeOf (codes[1]);
         wanted.componentManufacturer = codeOf (codes[2]);
-        const auto component = AudioComponentFindNext (nullptr, &wanted);
+        return AudioComponentFindNext (nullptr, &wanted);
+    }
+
+    /// What the system says of the component an identifier names, in the words the format uses for
+    /// the loaded plugin; nothing when there is none.
+    std::optional<juce::PluginDescription> describe (const juce::String& formatName, const juce::String& identifier)
+    {
+        juce::StringArray codes;
+        AudioComponentDescription wanted {};
+        const auto component = find (identifier, codes, wanted);
         if (component == nullptr)
             return std::nullopt;
 
@@ -123,6 +132,23 @@ std::vector<juce::PluginDescription> AudioUnitRegistry::installed (juce::AudioPl
    #endif
     juce::ignoreUnused (formats);
     return result;
+}
+
+bool AudioUnitRegistry::isSandboxSafe (const juce::String& identifier)
+{
+   #if JUCE_MAC && JUCE_PLUGINHOST_AU
+    juce::StringArray codes;
+    AudioComponentDescription wanted {}, registered {};
+    const auto component = find (identifier, codes, wanted);
+    if (component == nullptr || AudioComponentGetDescription (component, &registered) != noErr)
+        return true;   // nothing there to open
+
+    // a version 3 unit runs in a process of its own, whatever it says of itself
+    return (registered.componentFlags & (kAudioComponentFlag_SandboxSafe | kAudioComponentFlag_IsV3AudioUnit)) != 0;
+   #else
+    juce::ignoreUnused (identifier);
+    return true;
+   #endif
 }
 
 } // namespace audium

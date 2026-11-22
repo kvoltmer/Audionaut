@@ -19,17 +19,18 @@ namespace audium
  */
 struct PluginFormats
 {
-    /// The formats this platform hosts, added to the manager. Plugins that need the user's consent to
-    /// lowered security settings are not loaded until applyLoweredSecurity() says so.
+    /// The formats this platform hosts, added to the manager.
     static void addPlatformFormats (juce::AudioPluginFormatManager& manager);
 
-    /// Whether the manager's formats load the plugins the system asks the user about (an AUv2 without
-    /// the sandbox-safe flag, in a sandboxed process: out of process, after the user's consent).
-    static void applyLoweredSecurity (juce::AudioPluginFormatManager& manager, bool allowed);
+    /// Whether this process runs in the macOS app sandbox (the app, and the scan helper it starts).
+    static bool isSandboxed();
 
-    /// Whether the system asks the user before it loads this plugin here, once that is allowed: an
-    /// Audio Unit that only loads out of process because this process is sandboxed. Told from the
-    /// identifier, without loading anything.
+    /// Whether the system asks the user before it loads this plugin here: an Audio Unit (version 2)
+    /// that does not say of itself that it keeps to the sandbox's rules, in a sandboxed process. The
+    /// system opens such a plugin only in a process that carries the entitlement to host them
+    /// (com.apple.security.temporary-exception.audio-unit-host: the app, not the scan helper), and the
+    /// first time it asks the user to lower that app's security settings. Told from the identifier,
+    /// without loading anything.
     static bool asksUserBeforeLoading (const juce::String& formatName, const juce::String& fileOrIdentifier);
 
     /**

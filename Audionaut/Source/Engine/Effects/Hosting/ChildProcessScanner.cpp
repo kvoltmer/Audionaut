@@ -4,7 +4,6 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "ChildProcessScanner.h"
-#include "PluginFormats.h"
 
 namespace audium
 {
@@ -268,32 +267,46 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
         if (result.size() != before)
             return juce::String (result.size() - before) + " found";
 
-        // loaded, and nothing in it - unless it is a plugin the worker was not to load at all
-        if (foundNothing != nullptr && (mayRaiseTheQuestion() || ! PluginFormats::asksUserBeforeLoading (format.getName(), fileOrIdentifier)))
+        // loaded, and nothing in it
+        if (foundNothing != nullptr)
             foundNothing (fileOrIdentifier);
         return juce::String ("no plugin found");
     };
     const auto failure = [&] { return "FAILED, file skipped: " + (lastFailure.isNotEmpty() ? lastFailure : juce::String ("the worker gave no answer")); };
 
-    // A plugin that waited for the user's answer to the system's question until its time was up: nobody
-    // may have been looking. Not held against the file the first time; a plugin that does so again
-    // while this scanner lives is one that hangs, and is skipped as any other.
-    const auto unanswered = [&]
+    // A plugin the system asks the user about is no worker's to load: the system opens it in the app
+    // itself only, and it is the app's user who is asked. So it is loaded here, in this process, where
+    // that is allowed - and left as it is listed where it is not (a command run without the app).
+    if (asksUser && asksUser (format.getName(), fileOrIdentifier))
     {
-        if (waitedForTheUser.contains (fileOrIdentifier))
-            return logged (false, failure());
-        waitedForTheUser.add (fileOrIdentifier);
-        return logged (true, "NOT SCANNED: " + lastFailure + "; the next scan tries it again");
-    };
+        if (loweredSecurity == nullptr || ! loweredSecurity->load())
+            return logged (true, "NOT SCANNED: macOS asks the user before it loads this plugin, which only the app may have it do");
+        if (declinedInThisScan)
+            return logged (true, "NOT SCANNED: lowering the security settings was declined earlier in this scan");
 
-    // The user said no to the system's question: that holds for the rest of this scan. No further plugin
-    // that raises it is loaded (the worker is told so), and the file is not skipped from now on - the
-    // next scan asks again.
-    const auto declined = [&]
-    {
-        declinedInThisScan = true;
-        return logged (true, "NOT SCANNED: " + lastFailure + "; plugins that need those settings are left out for the rest of this scan");
-    };
+        juce::PluginDescription wanted;
+        wanted.pluginFormatName = format.getName();
+        wanted.fileOrIdentifier = fileOrIdentifier;
+        juce::String error;
+        if (auto instance = format.createInstanceFromDescription (wanted, 44100.0, 512, error))
+        {
+            result.add (new juce::PluginDescription (instance->getPluginDescription()));
+            return logged (true, found() + ", in this process");
+        }
+
+        // The system's own word that the user said no (userCanceledErr, in the reason the format gives):
+        // that holds for the rest of this scan, so the question is not raised for every further plugin.
+        // The file is not skipped from now on - the next scan asks again.
+        if (error.contains ("(-128)"))
+        {
+            declinedInThisScan = true;
+            return logged (true, "NOT SCANNED: lowering the security settings was declined; plugins that need those settings are left out for the rest of this scan");
+        }
+
+        // not loaded for another reason: said, and the plugin stays listed as it was - what keeps the
+        // app from opening it today (a build without the entitlement, say) need not do so tomorrow
+        return logged (true, "NOT SCANNED: not loaded in this process" + (error.isNotEmpty() ? ": " + error : juce::String()));
+    }
 
     if (! pipeUnusable)
     {
@@ -307,22 +320,6 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
             asked = askWorker (format.getName(), fileOrIdentifier, result);
         }
 
-        // The same for a worker that found nothing where the system may have asked the user about a
-        // plugin: once macOS has the user's consent to lower the security settings, it loads no
-        // further such plugin into the process that was asked, only into the next one. A new worker
-        // that finds nothing either says the file is empty - or that the user declined, and then every
-        // such plugin would cost a worker and might bring the question up again: after two of those no
-        // worker is started for this any more in this scan, unless one of them did find the plugin.
-        if (asked == Asked::found && result.size() == before && answeredByWorker > 1
-            && mayRaiseTheQuestion() && emptyAgainInNewWorker < 2)
-        {
-            note ("  " + fileOrIdentifier + ": no plugin found; asked again of a new worker, the first had loaded other plugins");
-            dropWorker (true);
-            asked = askWorker (format.getName(), fileOrIdentifier, result);
-            if (asked == Asked::found)   // a worker that failed or was abandoned said nothing about the file
-                emptyAgainInNewWorker = result.size() == before ? emptyAgainInNewWorker + 1 : 0;
-        }
-
         switch (asked)
         {
             case Asked::found:             return logged (true, found());
@@ -330,8 +327,6 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
             case Asked::failed:
             case Asked::failedAfterOthers: return logged (false, failure());   // the plugin took the worker down, or kept it too long
             case Asked::abandoned:         return logged (true, "scan cancelled");   // by the user: no verdict on the file
-            case Asked::unanswered:        return unanswered();
-            case Asked::declined:          return declined();
             case Asked::unavailable:       break;          // no worker this time: this file in a process of its own
             case Asked::unusable:
                 pipeUnusable = true;
@@ -342,28 +337,16 @@ bool ChildProcessScanner::findPluginTypesFor (juce::AudioPluginFormat& format,
 
     lastFailure.clear();
     noVerdict = false;
-    waitedForAnswer = false;
-    saidNo = false;
     const auto verdict = scanInProcessOfItsOwn (format, result, fileOrIdentifier);
     if (noVerdict)   // the worker is what failed, not the plugin: the file is not skipped from now on
         return logged (true, "NOT SCANNED: " + lastFailure);
-    if (waitedForAnswer)
-        return unanswered();
-    if (saidNo)
-        return declined();
     return logged (verdict, (verdict ? found() : failure()) + ", in a worker process of its own");
 }
 
 void ChildProcessScanner::scanFinished()
 {
     const juce::ScopedLock lock (workerLock);
-    emptyAgainInNewWorker = 0;
     declinedInThisScan = false;
-}
-
-bool ChildProcessScanner::mayRaiseTheQuestion() const
-{
-    return loweredSecurity != nullptr && loweredSecurity->load() && ! declinedInThisScan;
 }
 
 ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& formatName, const juce::String& fileOrIdentifier,
@@ -372,8 +355,7 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
     // the worker gives up a little before the scanner does, so that its answer still gets here
     const nlohmann::json request { { "format", formatName.toStdString() },
                                    { "file", fileOrIdentifier.toStdString() },
-                                   { "timeoutMs", workerTimeoutMs (timeoutMs) },
-                                   { "loweredSecurity", mayRaiseTheQuestion() } };
+                                   { "timeoutMs", workerTimeoutMs (timeoutMs) } };
 
     // the worker is not left to itself after a failure: a plugin may be stuck in it
     const auto failed = [this] (const juce::String& why)
@@ -416,20 +398,6 @@ ChildProcessScanner::Asked ChildProcessScanner::askWorker (const juce::String& f
             {
                 if (answer.contains ("bye"))
                     break;   // it left without taking the request
-
-                if (! answer.value ("ok", false) && answer.value ("code", std::string()) == "awaiting_consent")
-                {
-                    lastFailure = juce::String (answer.value ("message", std::string ("the system may have been waiting for the user")));
-                    dropWorker (true);   // the plugin is still in it
-                    return Asked::unanswered;
-                }
-
-                if (! answer.value ("ok", false) && answer.value ("code", std::string()) == "consent_declined")
-                {
-                    lastFailure = juce::String (answer.value ("message", std::string ("the user declined the system's question")));
-                    ++answeredByWorker;   // the worker goes on
-                    return Asked::declined;
-                }
 
                 if (! answer.value ("ok", false))
                     return answer.value ("code", std::string()) == "unknown_format"
@@ -551,8 +519,6 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
     juce::ChildProcess child;
     juce::StringArray arguments { executable.getFullPathName(), "scan-plugin", "--json",
                                   "--timeout-ms", juce::String (workerTimeoutMs (timeoutMs)) };
-    if (mayRaiseTheQuestion())
-        arguments.add ("--allow-lowered-security");
     arguments.addArray ({ "--format", format.getName(), fileOrIdentifier });
     if (! child.start (arguments, juce::ChildProcess::wantStdOut))
     {
@@ -592,20 +558,6 @@ bool ChildProcessScanner::scanInProcessOfItsOwn (juce::AudioPluginFormat& format
         return true;
     }
     workerEverAnswered = workerEverAnswered || answered;
-
-    if (child.getExitCode() != 0 && answered && errorCodeOf (envelope) == "awaiting_consent")
-    {
-        waitedForAnswer = true;   // the caller decides whether that counts against the file
-        return true;
-    }
-
-    if (child.getExitCode() != 0 && answered && errorCodeOf (envelope) == "consent_declined")
-    {
-        saidNo = true;
-        if (envelope.contains ("error") && envelope["error"].is_object())
-            lastFailure = juce::String (envelope["error"].value ("message", std::string ("the user declined the system's question")));
-        return true;
-    }
 
     if (child.getExitCode() != 0)
         return answered && declinedTheFormat (envelope);   // the plugin took the worker down - unless the worker said that it has no such format
@@ -650,8 +602,7 @@ int ChildProcessScanner::serve (const juce::String& pipeName, const ScanFunction
 
         const auto answer = scan ({ juce::String (request.value ("format", std::string())),
                                     juce::String (request.value ("file", std::string())),
-                                    request.value ("timeoutMs", 50000),
-                                    request.value ("loweredSecurity", false) });
+                                    request.value ("timeoutMs", 50000) });
         if (! writeFrame (pipe, answer))
             return 1;
         if (answer.value ("last", false))
