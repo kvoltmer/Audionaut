@@ -31,10 +31,13 @@ namespace audium
  * string. Setting a state equal to that string is skipped.
  *
  * prepare() negotiates the channel layout: the chain's channel count on the
- * main input and output, any other bus off. A mono chain with a plugin that
- * only runs in stereo gets the plugin in stereo, fed the one channel on
- * both sides and the two sides averaged back; any other layout the plugin
- * refuses leaves the slot passing the signal through (incompatibleLayout).
+ * main input and output, any other bus off. A bus the plugin will not switch
+ * off (an Audio Unit's sidechain input, as a rule) stays: it is given
+ * silence, and what the plugin puts out on such a bus is dropped. A mono
+ * chain with a plugin that only runs in stereo gets the plugin in stereo,
+ * fed the one channel on both sides and the two sides averaged back; any
+ * other layout the plugin refuses leaves the slot passing the signal through
+ * (incompatibleLayout).
  *
  * Without an instance the effect is a placeholder: it keeps the blob it is
  * given, runs nothing and reports why (the plugin failed to load, or this
