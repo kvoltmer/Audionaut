@@ -248,21 +248,26 @@ bool HostedEffect::parseParameterText (int index, const juce::String& text, floa
 bool HostedEffect::negotiateLayout (int numChannels)
 {
     foldMono = false;
+    pluginChannels = numChannels;
     if (description.isInstrument || instance->getBusCount (true) == 0 || instance->getBusCount (false) == 0)
         return false;
 
     instance->disableNonMainBuses();   // sidechains and extra outputs off: the chain has one signal
 
-    // a bus the plugin would not switch off stays in the layout, and its channels would be expected in
-    // the block: the chain has only the main bus's to give, so such a layout is refused
+    // a bus the plugin would not switch off (an Audio Unit's sidechain input, as a rule) stays in the
+    // layout, and its channels are expected in the block after the main bus's: process() gives it
+    // silence there, a sidechain nothing is connected to
     auto tryLayout = [this] (const juce::AudioChannelSet& set)
     {
         auto layout = instance->getBusesLayout();
         layout.inputBuses.set (0, set);
         layout.outputBuses.set (0, set);
-        return instance->setBusesLayout (layout)
-            && instance->getTotalNumInputChannels() == set.size()
-            && instance->getTotalNumOutputChannels() == set.size();
+        if (! instance->setBusesLayout (layout)
+            || instance->getChannelCountOfBus (true, 0) != set.size()
+            || instance->getChannelCountOfBus (false, 0) != set.size())
+            return false;
+        pluginChannels = juce::jmax (set.size(), instance->getTotalNumInputChannels(), instance->getTotalNumOutputChannels());
+        return true;
     };
 
     if (tryLayout (juce::AudioChannelSet::canonicalChannelSet (numChannels))
@@ -295,7 +300,8 @@ void HostedEffect::prepare (double sampleRate, int maxBlockSize, int numChannels
     status.store (negotiated ? Status::loaded : Status::incompatibleLayout, std::memory_order_release);
     prepareNeeded = false;
 
-    const auto pluginChannels = foldMono ? 2 : numChannels;
+    if (! negotiated)
+        pluginChannels = numChannels;   // never run: the sizes below only have to be sane
     scratch.setSize (pluginChannels, maxBlockSize);
     scratch.clear();
     pointers.assign (static_cast<size_t> (pluginChannels), nullptr);
@@ -337,12 +343,17 @@ void HostedEffect::process (juce::dsp::AudioBlock<float>& block) noexcept
 
     midi.clear();
 
+    // the channels of the buses the plugin kept beside the main one: silence in, whatever comes out dropped
+    const auto mainChannels = foldMono ? 2 : numChannels;
+    for (auto channel = mainChannels; channel < pluginChannels; ++channel)
+        scratch.clear (channel, 0, numSamples);
+
     if (foldMono)
     {
         auto* mono = block.getChannelPointer (0);
         scratch.copyFrom (0, 0, mono, numSamples);
         scratch.copyFrom (1, 0, mono, numSamples);
-        wrapper.setDataToReferTo (scratch.getArrayOfWritePointers(), 2, numSamples);
+        wrapper.setDataToReferTo (scratch.getArrayOfWritePointers(), pluginChannels, numSamples);
         instance->processBlock (wrapper, midi);
         const auto* left = scratch.getReadPointer (0);
         const auto* right = scratch.getReadPointer (1);
@@ -353,7 +364,9 @@ void HostedEffect::process (juce::dsp::AudioBlock<float>& block) noexcept
 
     for (auto channel = 0; channel < numChannels; ++channel)
         pointers[static_cast<size_t> (channel)] = block.getChannelPointer (static_cast<size_t> (channel));
-    wrapper.setDataToReferTo (pointers.data(), numChannels, numSamples);
+    for (auto channel = numChannels; channel < pluginChannels; ++channel)
+        pointers[static_cast<size_t> (channel)] = scratch.getWritePointer (channel);
+    wrapper.setDataToReferTo (pointers.data(), pluginChannels, numSamples);
     instance->processBlock (wrapper, midi);
 }
 

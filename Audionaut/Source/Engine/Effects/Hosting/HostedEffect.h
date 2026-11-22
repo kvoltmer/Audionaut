@@ -198,11 +198,12 @@ private:
 
     // the render path: the chain's block wrapped for processBlock, no allocation
     juce::AudioBuffer<float> wrapper;
-    juce::AudioBuffer<float> scratch;   // the stereo pair of a folded mono chain
+    juce::AudioBuffer<float> scratch;   // the stereo pair of a folded mono chain, and the silence of a bus the plugin kept
     std::vector<float*> pointers;
     juce::MidiBuffer midi;
     int preparedChannels = 0;
     int preparedBlockSize = 0;
+    int pluginChannels = 0;  // what processBlock is given: the main bus's channels, then those of a bus the plugin would not switch off
     bool foldMono = false;   // a mono chain run through a stereo-only plugin
 
     std::shared_ptr<std::atomic<int>> arrivalCount;
