@@ -5,6 +5,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <thread>
+#include <vector>
+
 #include <JuceHeader.h>
 
 /// What the test plugin is and does; outside the class so a constructor can default to it.
@@ -85,7 +89,7 @@ public:
     }
 
     /// How many are alive: a test that must not load a plugin checks this stays put.
-    static int& instances() { static int count = 0; return count; }
+    static std::atomic<int>& instances() { static std::atomic<int> count { 0 }; return count; }   // a test format may create on a thread of its own
 
     /// The description the format would give for these options.
     static juce::PluginDescription describe (const Options& options)
@@ -203,6 +207,12 @@ public:
             plugin.format = name;
     }
 
+    ~TestPluginFormat() override
+    {
+        for (auto& thread : answering)
+            thread.join();
+    }
+
     juce::String getName() const override { return name; }
 
     void findAllTypesForFile (juce::OwnedArray<juce::PluginDescription>& results, const juce::String& fileOrIdentifier) override
@@ -236,6 +246,7 @@ public:
 
     bool asyncOnly = false;   ///< behaves like AUv3: refuses synchronous creation
     bool withhold = false;    ///< a creation asked for never answers: the plugin stays on its way
+    bool answerOffThread = false;   ///< the creation is answered from a thread of its own, as the system answers for an Audio Unit in a process of its own
     std::function<void()> onCreate;   ///< called when a plugin is about to be created (message thread for an asynchronous one)
     juce::String refuseWith;          ///< not empty: no plugin is created, this is the reason given
 
@@ -246,6 +257,16 @@ private:
             return;
         if (onCreate)
             onCreate();
+        if (answerOffThread)
+        {
+            answering.emplace_back ([this, description, respond = std::move (callback)] { answer (description, respond); });
+            return;
+        }
+        answer (description, callback);
+    }
+
+    void answer (const juce::PluginDescription& description, const PluginCreationCallback& callback) const
+    {
         if (refuseWith.isNotEmpty())
         {
             callback (nullptr, refuseWith);
@@ -262,6 +283,8 @@ private:
         }
         callback (nullptr, "no such test plugin");
     }
+
+    std::vector<std::thread> answering;   // joined when the format goes
 
     juce::String name;
     std::vector<TestPluginInstance::Options> plugins;

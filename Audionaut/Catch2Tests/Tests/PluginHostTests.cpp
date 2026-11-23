@@ -144,13 +144,13 @@ SCENARIO ("the plugin host keeps its list between runs", "[engine][effects][host
         WHEN ("a placeholder made without loading the plugin is given its plugin after all")
         {
             const auto description = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
-            const auto instancesBefore = TestPluginInstance::instances();
+            const auto instancesBefore = TestPluginInstance::instances().load();
             auto effect = first.host.createEffect (description, PluginHost::Mode::catalogueOnly);
             auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
             REQUIRE (hosted != nullptr);
             REQUIRE_FALSE (hosted->isLoaded());
             REQUIRE (hosted->getNumParameters() == 0);
-            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+            REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
             hosted->setState (json { { "blob", juce::MemoryBlock ("1.500000|0|0", 12).toBase64Encoding().toStdString() } });
 
             THEN ("the plugin is there, with its parameters and the state the placeholder kept")
@@ -158,7 +158,7 @@ SCENARIO ("the plugin host keeps its list between runs", "[engine][effects][host
                 REQUIRE (first.host.load (*hosted));
                 REQUIRE (hosted->isLoaded());
                 REQUIRE (hosted->getStatus() == HostedEffect::Status::loaded);
-                REQUIRE (TestPluginInstance::instances() == instancesBefore + 1);
+                REQUIRE (TestPluginInstance::instances().load() == instancesBefore + 1);
                 REQUIRE (hosted->getParameterIndex ("gain") == 0);
                 REQUIRE (hosted->getParameter (0) == Catch::Approx (0.75f));   // gain 1.5 of 0..2
             }
@@ -231,7 +231,7 @@ SCENARIO ("the plugin host registers its plugins as effect types", "[engine][eff
         WHEN ("the host registers in catalogue-only mode")
         {
             host.registerInto (*registry, PluginHost::Mode::catalogueOnly);
-            const auto instancesBefore = TestPluginInstance::instances();
+            const auto instancesBefore = TestPluginInstance::instances().load();
 
             THEN ("the types are there, but creating one gives a placeholder without loading the plugin")
             {
@@ -240,7 +240,7 @@ SCENARIO ("the plugin host registers its plugins as effect types", "[engine][eff
                 auto* hosted = dynamic_cast<HostedEffect*> (effect.get());
                 REQUIRE (hosted != nullptr);
                 REQUIRE_FALSE (hosted->isLoaded());
-                REQUIRE (TestPluginInstance::instances() == instancesBefore);
+                REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
                 REQUIRE (hosted->getPluginInfo()["name"] == "Test Gain");
             }
         }
@@ -724,11 +724,11 @@ SCENARIO ("a host that is turned off offers no plugins", "[engine][effects][host
 
             THEN ("nothing is loaded, and the list keeps its plugins")
             {
-                const auto instancesBefore = TestPluginInstance::instances();
+                const auto instancesBefore = TestPluginInstance::instances().load();
                 juce::String error;
                 REQUIRE (host.createInstance (plugin, 44100.0, 512, error) == nullptr);
                 REQUIRE (error.isNotEmpty());
-                REQUIRE (TestPluginInstance::instances() == instancesBefore);
+                REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
                 REQUIRE (host.getList().getNumTypes() > 0);
                 REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
             }
@@ -778,11 +778,11 @@ SCENARIO ("a plugin the system asks the user about is only there where that is a
 
         THEN ("it is not loaded, and not taken as another format's stand-in")
         {
-            const auto instancesBefore = TestPluginInstance::instances();
+            const auto instancesBefore = TestPluginInstance::instances().load();
             juce::String error;
             REQUIRE (host.createInstance (asking, 44100.0, 512, error) == nullptr);
             REQUIRE (error.isNotEmpty());
-            REQUIRE (TestPluginInstance::instances() == instancesBefore);
+            REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
 
             host.getList().removeType (plain);
             REQUIRE_FALSE (host.findSubstitute ("Test Gain", "Audionaut Tests").has_value());
@@ -1546,6 +1546,65 @@ SCENARIO ("plugins the system asks the user about are loaded one at a time, and 
                 REQUIRE (host.waitForPendingLoads (5000));
                 REQUIRE (host.getNumPendingLoads() == 0);
             }
+        }
+    }
+}
+
+SCENARIO ("a plugin whose creation is answered on another thread arrives on the message thread", "[engine][effects][hosting][threads]")
+{
+    TempFolder temp;
+    MessageThread messages;
+
+    // the system answers for an Audio Unit in a process of its own on a thread of its own; what
+    // follows the arrival (the chain asks for a plan) belongs to the message thread alone
+    const auto arrivesOnTheMessageThread = [&] (bool asked)
+    {
+        PluginHost host (temp.folder.getChildFile (asked ? "asked" : "plain"), false);
+        auto owned = std::make_unique<TestPluginFormat> ("TestT", std::vector { gainIn ("TestT", 0x0101), gainIn ("TestT", 0x0202) });
+        owned->asyncOnly = true;
+        owned->answerOffThread = true;
+        host.getFormats().addFormat (std::move (owned));
+        for (const auto uid : { 0x0101, 0x0202 })
+            host.getList().addType (TestPluginInstance::describe (gainIn ("TestT", uid)));
+        if (asked)
+        {
+            host.setLoweredSecurityQuestion ([] (const juce::PluginDescription&) { return true; });
+            host.setLoweredSecurityAllowed (true);
+        }
+        auto registry = std::make_shared<EffectRegistry>();
+        host.registerInto (*registry, PluginHost::Mode::full);
+
+        auto first = registry->create ("testt:00000101");
+        auto second = registry->create ("testt:00000202");
+        auto arrivals = 0, onMessageThread = 0;
+        for (auto* effect : { first.get(), second.get() })
+            effect->onLatencyChanged = [&]
+            {
+                ++arrivals;
+                if (juce::MessageManager::existsAndIsCurrentThread())
+                    ++onMessageThread;
+            };
+
+        REQUIRE (host.waitForPendingLoads (5000));
+        REQUIRE (dynamic_cast<HostedEffect*> (first.get())->isLoaded());
+        REQUIRE (dynamic_cast<HostedEffect*> (second.get())->isLoaded());
+        REQUIRE (arrivals == 2);
+        REQUIRE (onMessageThread == 2);
+    };
+
+    WHEN ("two such plugins are created")
+    {
+        THEN ("each is adopted on the message thread")
+        {
+            arrivesOnTheMessageThread (false);
+        }
+    }
+
+    WHEN ("two such plugins the system asks the user about are created")
+    {
+        THEN ("each is adopted on the message thread")
+        {
+            arrivesOnTheMessageThread (true);
         }
     }
 }

@@ -339,6 +339,29 @@ if(AUDIONAUT_ENABLE_COVERAGE)
     endif()
 endif()
 
+# ---------------------------------------------------------------------------
+# Thread Sanitizer
+#
+#   cmake -B build-tsan -S Audionaut/Catch2Tests \
+#         -DCMAKE_BUILD_TYPE=Debug -DAUDIONAUT_ENABLE_TSAN=ON
+#   cmake --build build-tsan -j8 --target AudionautTests
+#   ./build-tsan/AudionautTests_artefacts/Debug/AudionautTests "[threads]"
+#
+# Scoped to the test target like the coverage flags: our own sources are
+# instrumented, JUCE and the vendored libraries are not. A race between two
+# of our threads is reported; several times slower, so CI runs a tag subset
+# (see .github/workflows/thread-sanitizer.yml).
+# ---------------------------------------------------------------------------
+option(AUDIONAUT_ENABLE_TSAN "Instrument the test target with Thread Sanitizer" OFF)
+if(AUDIONAUT_ENABLE_TSAN)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+            "AUDIONAUT_ENABLE_TSAN requires GCC or Clang (got ${CMAKE_CXX_COMPILER_ID}).")
+    endif()
+    target_compile_options(${APP_NAME} PRIVATE -fsanitize=thread -g -fno-omit-frame-pointer)
+    target_link_options(${APP_NAME} PRIVATE -fsanitize=thread)
+endif()
+
 # Catch2 provides main() for the test binary (the CLI has its own).
 target_link_libraries(${APP_NAME}
     PRIVATE
