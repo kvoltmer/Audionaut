@@ -67,6 +67,29 @@ PluginHost::~PluginHost()
 
 namespace
 {
+/**
+ * The creation callback, run on the message thread whichever thread the
+ * format answers on: a plugin created in a process of its own arrives on a
+ * worker thread of the system's, and what follows (the effect adopts it,
+ * the planner builds a plan) belongs to the message thread alone.
+ */
+template <typename Callback>
+juce::AudioPluginFormat::PluginCreationCallback onMessageThread (Callback callback)
+{
+    return [work = std::move (callback)] (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message) mutable
+    {
+        if (juce::MessageManager::existsAndIsCurrentThread())
+        {
+            work (std::move (instance), message);
+            return;
+        }
+
+        // a std::function wants a copyable lambda: the plugin travels in a shared_ptr
+        auto arrived = std::make_shared<std::unique_ptr<juce::AudioPluginInstance>> (std::move (instance));
+        juce::MessageManager::callAsync ([work, arrived, message] () mutable { work (std::move (*arrived), message); });
+    };
+}
+
 bool isAmong (const std::vector<juce::PluginDescription>& installed, const juce::PluginDescription& description)
 {
     return std::any_of (installed.begin(), installed.end(), [&description] (const juce::PluginDescription& other)
@@ -629,17 +652,17 @@ void PluginHost::requestInstance (HostedEffect& effect) const
     }
 
     format->createPluginInstanceAsync (effect.getDescription(), 44100.0, 512,
-                                       [alive = effect.getAliveToken(), waiting = &effect, pending = pendingLoads, arrivals]
+                                       onMessageThread ([alive = effect.getAliveToken(), waiting = &effect, pending = pendingLoads, arrivals]
                                        (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
                                        {
-                                           // message thread; the effect may be gone by now (an undo, a closed
-                                           // project): the plugin goes away with the callback then
+                                           // the effect may be gone by now (an undo, a closed project):
+                                           // the plugin goes away with the callback then
                                            if (alive.lock() != nullptr)
                                                waiting->adopt (std::move (instance), describeLoadError (message));
                                            --*pending;
                                            if (arrivals != nullptr)
                                                --*arrivals;
-                                       });
+                                       }));
 }
 
 void PluginHost::settle (const Questions::Waiting& one, std::atomic<int>& pending,
@@ -667,10 +690,9 @@ void PluginHost::loadNextAsked (std::shared_ptr<Questions> questions, std::share
 
         questions->busy = true;
         next.format->createPluginInstanceAsync (next.effect->getDescription(), 44100.0, 512,
-                                                [questions, pending, next]
+                                                onMessageThread ([questions, pending, next]
                                                 (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
                                                 {
-                                                    // message thread
                                                     const auto declined = instance == nullptr && message.contains ("(-128)");   // userCanceledErr
                                                     settle (next, *pending, std::move (instance), message);
 
@@ -683,7 +705,7 @@ void PluginHost::loadNextAsked (std::shared_ptr<Questions> questions, std::share
 
                                                     questions->busy = false;
                                                     loadNextAsked (questions, pending);
-                                                });
+                                                }));
         return;
     }
     questions->busy = false;
