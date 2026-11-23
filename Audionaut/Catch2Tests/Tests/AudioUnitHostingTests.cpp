@@ -20,6 +20,7 @@
 #include "Cli/Commands/Commands.h"
 #include "Cli/HeadlessEngineSession.h"
 #include "Engine/Effects/Hosting/HostedEffect.h"
+#include "Engine/Effects/Hosting/PluginFormats.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 
@@ -303,13 +304,14 @@ SCENARIO ("an Audio Unit is loaded out of process on request", "[engine][effects
                 std::unique_ptr<juce::AudioPluginInstance> instance;
                 juce::String error;
                 auto arrived = false;
-                format.createPluginInstanceAsync (auDelay, kSampleRate, kBlockSize,
-                                                  [&] (std::unique_ptr<juce::AudioPluginInstance> created, const juce::String& message)
-                                                  {
-                                                      instance = std::move (created);
-                                                      error = message;
-                                                      arrived = true;
-                                                  });
+                // the system answers on a thread of its own: brought here, so the test reads what it wrote
+                PluginFormats::createOnMessageThread (format, auDelay, kSampleRate, kBlockSize,
+                                                      [&] (std::unique_ptr<juce::AudioPluginInstance> created, const juce::String& message)
+                                                      {
+                                                          instance = std::move (created);
+                                                          error = message;
+                                                          arrived = true;
+                                                      });
                 const auto deadline = juce::Time::getMillisecondCounter() + 20000;
                 while (! arrived && juce::Time::getMillisecondCounter() < deadline)
                     juce::MessageManager::getInstance()->runDispatchLoopUntil (20);

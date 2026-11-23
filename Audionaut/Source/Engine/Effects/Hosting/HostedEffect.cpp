@@ -16,6 +16,7 @@
 #include <cmath>
 
 #include "PluginTypeId.h"
+#include "Engine/Core/MessageThreadAssert.h"
 
 namespace audium
 {
@@ -114,6 +115,7 @@ juce::Optional<juce::AudioPlayHead::PositionInfo> HostedEffect::PlayHead::getPos
 
 void HostedEffect::adopt (std::unique_ptr<juce::AudioPluginInstance> created, juce::String error_)
 {
+    AUDIUM_ASSERT_MESSAGE_THREAD   // a format may answer a creation on any thread: PluginFormats::createOnMessageThread brings it here
     jassert (getStatus() == Status::loading && instance == nullptr);
 
     if (created == nullptr)
