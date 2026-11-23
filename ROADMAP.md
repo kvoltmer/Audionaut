@@ -25,6 +25,15 @@ The picture is less clear from here. What I would love to spend more time on
 is music information retrieval: better analysis, and a better Auto Edit built
 on it.
 
+## Alongside: timeline drop rules
+
+Dropping a region where clips already sit is ambiguous: should the neighbours
+move, and what happens to the gaps? A small formal model (Lean 4) works out
+which rules are possible at all, and where today's drop, reorder and paste
+behaviour is inconsistent. It proposes one rule per gesture; the decision and
+the changes in the app are still open. See
+[#278](https://github.com/kvoltmer/Audionaut/pull/278).
+
 ---
 
 For what Audionaut does today, see [Features](docs/features.md).
