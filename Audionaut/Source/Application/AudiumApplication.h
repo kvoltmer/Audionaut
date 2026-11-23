@@ -70,6 +70,7 @@ public:
     PopupMenu createCreateMenu();
     PopupMenu createOptionsMenu();
     PopupMenu createViewMenu();
+    PopupMenu createHelpMenu();
     void handleMainMenuCommand (int menuItemID);
     PopupMenu createExtraAppleMenuItems();
     

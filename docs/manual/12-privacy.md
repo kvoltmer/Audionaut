@@ -18,8 +18,8 @@ version exists — a single plain HTTPS request to its distribution channel
 (the App Store for the Mac App Store build, GitHub for the builds
 downloaded from GitHub Releases) that carries nothing about you
 or your projects. If an update exists you're told once, with a button to
-the store or download page; *Check for Updates…* in the app menu asks on
-demand. The *Check for updates automatically* toggle in
+the store or download page; *Check for Updates…* (in the application menu on
+macOS, in *Help* on Windows and Linux) asks on demand. The *Check for updates automatically* toggle in
 **Settings → Privacy** turns the daily check off.
 
 ## What is collected — and what is not

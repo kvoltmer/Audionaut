@@ -51,4 +51,4 @@ Two things happen the first time you start Audionaut:
 ![Settings → Audio: device, channels, sample rate and buffer size](img/settings-audio.png)
 
 On macOS, *Settings…* is in the application menu (**Cmd+,**); on Windows and
-Linux it is in the *File* menu.
+Linux it is in the *Options* menu.
