@@ -93,7 +93,8 @@ void LinkAudioDevice::audioDeviceAboutToStart (juce::AudioIODevice* device)
     
     auto deviceLatency = device->getOutputLatencyInSamples();
     
-    std::cout << "OUTPUT DEVICE LATENCY: " << deviceLatency << " samples" << std::endl;
+    std::cout << "OUTPUT DEVICE: " << sampleRate << " Hz, " << bufferSize << " samples buffer, "
+              << deviceLatency << " samples latency" << std::endl;
     using namespace std::chrono;
     const double latency = static_cast<double>(deviceLatency) / linkEngine->mSampleRate;
     linkEngine->mOutputLatency.store(duration_cast<microseconds>(duration<double>{latency}));
