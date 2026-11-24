@@ -21,18 +21,20 @@ void AudiumEngine::initialise(const juce::XmlElement* savedAudioDeviceState)
 
     auto numInputChannelsNeeded = MAX_AUDIO_CHANNELS;
     auto numOutputChannelsNeeded = MAX_AUDIO_CHANNELS;
-    String result;
 
-    if (savedAudioDeviceState != nullptr) {
-        result = audioDeviceManager->initialise(numInputChannelsNeeded,
-                                                numOutputChannelsNeeded,
-                                                savedAudioDeviceState,
-                                                true);
-    }
-    else {
-        result = audioDeviceManager->initialiseWithDefaultDevices (numInputChannelsNeeded,
-                                                                   numOutputChannelsNeeded);
-    }
+    // Without a requested rate JUCE opens the device at the available rate
+    // nearest to zero, 8 kHz on ALSA's default device. Ask for the default
+    // rate instead; a saved set-up that names its own rate still wins, and a
+    // device without this rate gets the nearest one it has.
+    juce::AudioDeviceManager::AudioDeviceSetup preferredSetup;
+    preferredSetup.sampleRate = defaultSampleRate;
+
+    const auto result = audioDeviceManager->initialise(numInputChannelsNeeded,
+                                                       numOutputChannelsNeeded,
+                                                       savedAudioDeviceState,
+                                                       true,
+                                                       {},
+                                                       &preferredSetup);
     std::cout << result.toStdString() << std::endl;
     audioDeviceManager->addAudioCallback(linkAudioDevice.get());
 }

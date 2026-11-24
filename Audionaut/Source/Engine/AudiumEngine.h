@@ -90,6 +90,9 @@ public:
      */
     void initialise(const juce::XmlElement* savedAudioDeviceState = nullptr);
 
+    /** The sample rate the device opens at when no saved set-up names one. */
+    static constexpr double defaultSampleRate = 48000.0;
+
     /**
      * @brief Uninitializes the engine and releases resources.
      *
