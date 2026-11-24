@@ -12,6 +12,7 @@ namespace audium
 
 const MixPlan* MixPlanContainer::commit (std::unique_ptr<MixPlan> plan)
 {
+    JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED   // the plans are not guarded: a second thread here corrupts the retired list
     releaseRetired();
 
     if (current != nullptr)
@@ -33,6 +34,7 @@ void MixPlanContainer::adopt (const MixPlan* plan) noexcept
 
 bool MixPlanContainer::releaseRetired()
 {
+    JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED   // see commit()
     if (retired.empty())
         return false;
 
