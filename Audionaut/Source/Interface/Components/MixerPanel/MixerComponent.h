@@ -94,6 +94,7 @@ private:
     void animateSections();
     void stepSectionAnimation();
     void applyShown();
+    int insertRowsNeeded() const;   ///< the rows of every insert list: a row more than the longest chain has, within minInsertRows and maxInsertRows
 
     MixerContext context;
     PanelHeaderBar header { "Mixer", TRANS ("Show or hide the mixer") };

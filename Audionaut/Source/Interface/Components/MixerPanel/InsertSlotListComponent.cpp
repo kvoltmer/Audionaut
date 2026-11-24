@@ -424,7 +424,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.setColour (findColour (audium::backgroundColourId).darker (0.5f).withAlpha (isMouseOver() ? 0.9f : 1.0f));
+        g.setColour (findColour (audium::backgroundColourId).darker (0.75f).withAlpha (isMouseOver() ? 0.9f : 1.0f));
         g.fillRoundedRectangle (getLocalBounds().toFloat().reduced (0.5f), 2.0f);
     }
 

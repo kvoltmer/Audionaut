@@ -240,9 +240,9 @@ void MixerBusStripComponent::resized()
     auto bounds = getLocalBounds();
     bounds.removeFromTop (ioHeight (shown));
     auto insertsArea = bounds.removeFromTop (insertsHeight (shown));
-    insertsArea.removeFromTop (juce::jmin (1, insertsArea.getHeight()));
-    insertsArea.removeFromBottom (juce::jmin (1, insertsArea.getHeight()));
-    insertsRoom.setRoom (insertsArea, InsertSlotListComponent::heightForRows (insertRows));
+    insertsArea.removeFromTop (juce::jmin (insertsGapAbove, insertsArea.getHeight()));
+    insertsArea.removeFromBottom (juce::jmin (insertsGapBelow, insertsArea.getHeight()));
+    insertsRoom.setRoom (insertsArea, InsertSlotListComponent::heightForRows (shown.insertRows));
     stripTop = bounds.getY();
 
     // then the strip where MixerLayout::placeStrip puts a channel strip's elements, so the faders line up: the

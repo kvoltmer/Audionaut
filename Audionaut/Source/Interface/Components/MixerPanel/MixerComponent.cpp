@@ -130,11 +130,30 @@ void MixerComponent::readPreferences()
     int sections = allSections;
    #ifndef AUDIONAUT_HEADLESS   // the headless builds (tests, CLI) have no app preferences
     auto& preferences = AudiumApplication::getPreferences();
-    sections = juce::String (preferences.getValue (PreferenceKeys::mixerSections, std::to_string (allSections))).getIntValue();
+    sections = juce::String (preferences.getValue (PreferenceKeys::mixerSections, std::to_string (defaultSections))).getIntValue();
     auxBusesVisible = preferences.getValue (PreferenceKeys::mixerAuxBuses, "true") == "true";
    #endif
     sectionBar.setSections (sections & allSections);
-    shown = Shown::of (sectionBar.getSections());   // from the preferences: no animation
+    shown = Shown::of (sectionBar.getSections(), insertRowsNeeded());   // from the preferences: no animation
+}
+
+int MixerComponent::insertRowsNeeded() const
+{
+    // a row more than the longest chain shown has, so every list offers an empty slot until the rows run out
+    int longest = 0;
+    const auto count = [&longest] (const InsertChain& chain)
+    {
+        longest = juce::jmax (longest, static_cast<int> (chain.getSlots().size()) + static_cast<int> (chain.getNumUnresolved()));
+    };
+
+    auto& container = context.container();
+    for (const auto& track : container.getAudioTracks())
+        count (track->getTrackInserts());
+    if (auxBusesVisible)
+        for (const auto& bus : container.getAuxBuses().getBuses())
+            count (bus->getInserts());
+    count (container.getMasterInserts());
+    return juce::jlimit (minInsertRows, maxInsertRows, longest + 1);
 }
 
 //==============================================================================
@@ -153,7 +172,7 @@ void MixerComponent::stepSectionAnimation()
     constexpr double animationMilliseconds = 200.0;
     const auto t = juce::jlimit (0.0, 1.0, (juce::Time::getMillisecondCounterHiRes() - animationStart) / animationMilliseconds);
     const auto eased = static_cast<float> (1.0 - std::pow (1.0 - t, 3.0));   // fast out, settling in
-    const auto target = Shown::of (sectionBar.getSections());
+    const auto target = Shown::of (sectionBar.getSections(), shown.insertRows);
     for (size_t i = 0; i < shown.amounts.size(); ++i)
         shown.amounts[i] = animationFrom.amounts[i] + (target.amounts[i] - animationFrom.amounts[i]) * eased;
 
@@ -180,7 +199,10 @@ void MixerComponent::setAuxBusesVisible (bool visible)
    #ifndef AUDIONAUT_HEADLESS
     AudiumApplication::getPreferences().setValue (PreferenceKeys::mixerAuxBuses, visible ? "true" : "false");
    #endif
+    shown.insertRows = insertRowsNeeded();   // the returns' chains count while they show
     rebuildBusGroup();
+    content->setShown (shown);
+    preferredHeightMayHaveChanged();
     resized();
     repaint();
 }
@@ -255,7 +277,8 @@ void MixerComponent::updateUI()
         openEditorsLeftOpen();
     }
 
-    preferredHeightMayHaveChanged();   // the body's height follows the aux buses, open or closed: the owner sizes it either way
+    shown.insertRows = insertRowsNeeded();
+    preferredHeightMayHaveChanged();   // the body's height follows the aux buses and the insert rows, open or closed: the owner sizes it either way
 
     // closed, the mixer shows nothing to refresh: the strips go (nothing holds a track that may be removed
     // meanwhile) and the owner calls again when the body comes back, which rebuilds them from the engine

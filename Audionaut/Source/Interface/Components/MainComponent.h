@@ -58,8 +58,8 @@ public:
     // Panel layout: the right panel's width and whether the mixer is open are
     // the user's, set at the seams and kept as app preferences.
 
-    static constexpr int minRightPanelWidth = 260;
-    static constexpr int defaultRightPanelWidth = 400;
+    static constexpr int minRightPanelWidth = 200;
+    static constexpr int defaultRightPanelWidth = 254;
     static constexpr int minMiddlePanelWidth = 400;
 
     /// The window's limits: the middle panel at its minimum beside an open right panel at its minimum and

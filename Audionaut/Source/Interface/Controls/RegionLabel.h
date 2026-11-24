@@ -61,17 +61,17 @@ public:
             else if (columnId == regionStart)
             {
                 const auto seconds = r->getRegionData(audium::seconds).getStart();
-                text = juce::String(seconds, 4);
+                text = juce::String(seconds, 2);
             }
             else if (columnId == regionEnd)
             {
                 const auto seconds = r->getRegionData(audium::seconds).getEnd();
-                text = juce::String(seconds, 4);
+                text = juce::String(seconds, 2);
             }
             else if (columnId == regionLength)
             {
                 const auto seconds = r->getRegionData(audium::seconds).getLength();
-                text = juce::String(seconds, 4);
+                text = juce::String(seconds, 2);
             }
             
             // selected rows look like the playlist's: the list box background

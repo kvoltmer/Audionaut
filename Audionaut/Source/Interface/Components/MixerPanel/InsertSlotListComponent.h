@@ -10,7 +10,7 @@
 #include "Interface/Components/MixerPanel/MixerContext.h"
 
 /**
- * The insert slots of one chain as a fixed column of rows in a strip, in
+ * The insert slots of one chain as a column of rows in a strip, in
  * the manner of a Pro Tools insert section: a used slot shows its effect's
  * name - on a tint of the colour of its track or bus while the effect
  * runs, plain and dim while it is bypassed - and an unused slot is dark.
@@ -18,7 +18,8 @@
  * bypass, the editor (a click opens its window, the next closes it), and
  * a menu that replaces the slot with another effect type or removes it.
  * A click on an empty slot lists the effect types; a drag within the list
- * reorders. A chain longer than the rows scrolls with the mouse wheel.
+ * reorders. The mixer gives the list a row more than the longest chain has,
+ * up to a limit; a chain longer than its rows scrolls with the mouse wheel.
  *
  * A slot whose plugin is not loaded has nothing to bypass and no editor:
  * under the mouse it shows the menu alone, beside its name.

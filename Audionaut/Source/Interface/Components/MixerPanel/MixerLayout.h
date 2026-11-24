@@ -18,6 +18,9 @@
  * the mixer's height follows from what is shown (the sections the user has
  * switched on in the section bar, and the number of send rows) rather than
  * from a drag: dragging the header bar only closes and opens the mixer.
+ * The insert lists are the one part that grows with the project: all of them
+ * have as many rows as the longest chain needs to keep an empty slot, up to
+ * maxInsertRows.
  * A section's room is its full height scaled by how far the section is open
  * (Shown): the mixer animates a toggle by moving that amount, and the strips,
  * the groups and the mixer's height all follow it frame by frame.
@@ -31,7 +34,8 @@ namespace MixerLayout
     constexpr int groupGap = 6;
     constexpr int bandHeight = 18;
 
-    constexpr int insertRows = 5;              ///< slot rows of a track's insert list (it scrolls when the chain is longer)
+    constexpr int minInsertRows = 1;           ///< slot rows of an insert list at least; the mixer adds rows so the longest chain keeps an empty one
+    constexpr int maxInsertRows = 5;           ///< ... and at most: a longer chain scrolls
     constexpr int ioRowHeight = 12;
     constexpr int knobNameHeight = 10;         ///< the label over a knob: the aux name, "Pan"
     constexpr int knobHeight = 30;             ///< a knob's dial, pan and sends alike
@@ -65,18 +69,22 @@ namespace MixerLayout
         buttons = 1 << 4,
     };
     constexpr int allSections = inserts | sends | io | pan | buttons;
+    constexpr int defaultSections = inserts | pan | buttons;   ///< what a strip shows until the user has chosen
     constexpr int numSections = 5;
 
     /// How far each section is open: 1 shown, 0 hidden, in between while the mixer animates a toggle. The
     /// layout gives a section that much of its full height, so every measurement below moves with the animation.
+    /// With it the rows of the insert lists, the same for every list of the mixer so the strips line up.
     struct Shown
     {
         std::array<float, numSections> amounts {};   ///< by the section's bit index
+        int insertRows = minInsertRows;
 
         /// Open or closed, no animation: the sections in the mask open, the rest closed.
-        static Shown of (int sections) noexcept
+        static Shown of (int sections, int insertRows = minInsertRows) noexcept
         {
             Shown shown;
+            shown.insertRows = insertRows;
             for (int i = 0; i < numSections; ++i)
                 shown.amounts[static_cast<size_t> (i)] = (sections & (1 << i)) != 0 ? 1.0f : 0.0f;
             return shown;
@@ -162,15 +170,18 @@ namespace MixerLayout
         return heightShown (ioRoomHeight, shown.of (io));
     }
 
-    /// The insert list's room when open: the list with a line's gap above and below.
-    inline int insertsRoomHeight() noexcept
+    constexpr int insertsGapAbove = sectionGap;   ///< as the I/O rows keep from the band
+    constexpr int insertsGapBelow = 1;
+
+    /// The insert list's room when open: the list with a section gap above and a line's gap below.
+    inline int insertsRoomHeight (int rows) noexcept
     {
-        return 2 + InsertSlotListComponent::heightForRows (insertRows);
+        return insertsGapAbove + InsertSlotListComponent::heightForRows (rows) + insertsGapBelow;
     }
 
     inline int insertsHeight (const Shown& shown) noexcept
     {
-        return heightShown (insertsRoomHeight(), shown.of (inserts));
+        return heightShown (insertsRoomHeight (shown.insertRows), shown.of (inserts));
     }
 
     /// A track group's height: the band, the I/O rows, the insert list and the strips.
