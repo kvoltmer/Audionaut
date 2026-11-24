@@ -11,6 +11,7 @@ Audionaut is a free, open-source desktop application for effortless audio editin
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.md)
 [![macOS tests](https://github.com/kvoltmer/Audionaut/actions/workflows/cmake-single-platform.yml/badge.svg)](https://github.com/kvoltmer/Audionaut/actions/workflows/cmake-single-platform.yml)
 [![Linux build](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml/badge.svg)](https://github.com/kvoltmer/Audionaut/actions/workflows/makefile.yml)
+[![kvoltmer/Audionaut MCP server](https://glama.ai/mcp/servers/kvoltmer/Audionaut/badges/score.svg)](https://glama.ai/mcp/servers/kvoltmer/Audionaut)
 [![Sponsor](https://img.shields.io/badge/%E2%9D%A4-Sponsor-ff69b4)](https://github.com/sponsors/kvoltmer)
 
 ### Install
