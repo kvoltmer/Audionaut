@@ -73,7 +73,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.setColour (findColour (audium::backgroundColourId).darker (0.3f).withAlpha (isMouseOver() ? 0.8f : 1.0f));
+        g.setColour (findColour (audium::backgroundColourId).darker (0.7f).withAlpha (isMouseOver() ? 0.8f : 1.0f));
         g.fillRoundedRectangle (getLocalBounds().toFloat().reduced (0.5f), 2.0f);
         g.setColour (state == State::unavailable ? juce::Colours::red
                                                  : findColour (audium::defaultTextColourId).withAlpha (state == State::missing ? 0.4f : 0.85f));

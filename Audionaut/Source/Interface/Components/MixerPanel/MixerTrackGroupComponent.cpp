@@ -132,11 +132,11 @@ void MixerTrackGroupComponent::resized()
     ioArea.removeFromTop (juce::jmin (sectionGap, ioArea.getHeight()));
     ioRoom.setRoom (ioArea, StripIo::height);
 
-    // the track's inserts across the group, a line's gap above and below
+    // the track's inserts across the group, a section gap above and a line's gap below
     auto insertsArea = bounds.removeFromTop (insertsHeight (shown));
-    insertsArea.removeFromTop (juce::jmin (1, insertsArea.getHeight()));
-    insertsArea.removeFromBottom (juce::jmin (1, insertsArea.getHeight()));
-    insertsRoom.setRoom (insertsArea.reduced (2, 0), InsertSlotListComponent::heightForRows (insertRows));
+    insertsArea.removeFromTop (juce::jmin (insertsGapAbove, insertsArea.getHeight()));
+    insertsArea.removeFromBottom (juce::jmin (insertsGapBelow, insertsArea.getHeight()));
+    insertsRoom.setRoom (insertsArea.reduced (2, 0), InsertSlotListComponent::heightForRows (shown.insertRows));
 
     for (auto& strip : strips) {
         strip->setBounds (bounds.removeFromLeft (stripWidth));

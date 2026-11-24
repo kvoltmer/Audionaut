@@ -143,7 +143,7 @@ void MainComponent::readLayoutPreferences()
 
     rightPanel.restore (preferences.getValue (PreferenceKeys::rightPanelVisible, "true") == "true",
                         intValue (PreferenceKeys::rightPanelWidth, defaultRightPanelWidth));
-    middlePanelComponent->restoreMixerLayout (preferences.getValue (PreferenceKeys::mixerVisible, "false") == "true");
+    middlePanelComponent->restoreMixerLayout (preferences.getValue (PreferenceKeys::mixerVisible, "true") == "true");
    #endif
     updatePanelToggles();
 }

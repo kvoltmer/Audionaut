@@ -34,7 +34,7 @@ public:
 private:
     static constexpr int minPlayListsHeight = 100;    ///< what the region list leaves the playlists above it
     static constexpr int minRegionListHeight = 100;
-    static constexpr int defaultRegionListHeight = 300;
+    static constexpr int defaultRegionListHeight = 315;
 
     void readLayoutPreferences();
     void writeLayoutPreferences();
