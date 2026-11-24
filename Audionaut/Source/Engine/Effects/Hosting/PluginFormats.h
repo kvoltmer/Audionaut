@@ -33,6 +33,18 @@ struct PluginFormats
     static bool asksUserBeforeLoading (const juce::String& formatName, const juce::String& fileOrIdentifier);
 
     /**
+     * Message thread: asks the format for a plugin, asynchronously, and has
+     * the answer on the message thread whichever thread the format answers
+     * on. A plugin in a process of its own (an AUv3, an AUv2 the sandbox
+     * isolates) is answered for on a worker thread of the system's, and
+     * what follows an arrival belongs to the message thread alone. The one
+     * place that calls juce::AudioPluginFormat::createPluginInstanceAsync.
+     */
+    static void createOnMessageThread (juce::AudioPluginFormat& format, const juce::PluginDescription& description,
+                                       double sampleRate, int blockSize,
+                                       juce::AudioPluginFormat::PluginCreationCallback callback);
+
+    /**
      * Message thread: runs `fn` on a thread of its own while this thread
      * pumps messages, for the plugin calls that refuse to run on the message
      * thread and want it free (an AUv3 scan). False when `fn` is not done

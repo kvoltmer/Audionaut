@@ -88,6 +88,25 @@ bool PluginFormats::asksUserBeforeLoading (const juce::String& formatName, const
    #endif
 }
 
+void PluginFormats::createOnMessageThread (juce::AudioPluginFormat& format, const juce::PluginDescription& description,
+                                           double sampleRate, int blockSize,
+                                           juce::AudioPluginFormat::PluginCreationCallback callback)
+{
+    format.createPluginInstanceAsync (description, sampleRate, blockSize,
+                                      [work = std::move (callback)] (std::unique_ptr<juce::AudioPluginInstance> instance, const juce::String& message)
+    {
+        if (juce::MessageManager::existsAndIsCurrentThread())
+        {
+            work (std::move (instance), message);
+            return;
+        }
+
+        // a std::function wants a copyable lambda: the plugin travels in a shared_ptr
+        auto arrived = std::make_shared<std::unique_ptr<juce::AudioPluginInstance>> (std::move (instance));
+        juce::MessageManager::callAsync ([work, arrived, message] { work (std::move (*arrived), message); });
+    });
+}
+
 bool PluginFormats::runWhilePumping (std::function<void()> fn, int timeoutMs)
 {
     auto done = std::make_shared<std::atomic<bool>> (false);
