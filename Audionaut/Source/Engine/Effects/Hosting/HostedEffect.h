@@ -50,7 +50,10 @@ namespace audium
  * thread, process on a render thread, one at a time. The plugin's own
  * reports (AudioProcessorListener) can come from any thread: they set
  * flags and counters, and a latency change reaches onLatencyChanged on the
- * message thread without allocating where it was reported.
+ * message thread without allocating where it was reported. A creation
+ * can be answered on any thread as well (the system's, for a plugin in a
+ * process of its own): PluginFormats::createOnMessageThread brings it to
+ * the message thread before adopt(), which asserts it.
  *
  * The plugin's playhead answers from the engine's RenderTransport, when the
  * effect was given one: playing or not, the position of the block being

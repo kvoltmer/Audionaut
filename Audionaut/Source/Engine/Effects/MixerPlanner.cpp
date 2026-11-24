@@ -9,6 +9,7 @@
 
 #include "InsertChain.h"
 #include "Engine/Channel/AudioChannel.h"
+#include "Engine/Core/MessageThreadAssert.h"
 #include "Engine/Group/AudioTrack.h"
 #include "Engine/Group/AudioTrackContainer.h"
 #include "Engine/Playback/AudioBusInterface.h"
@@ -52,6 +53,7 @@ std::shared_ptr<EffectSlot> MixerPlanner::createSlot (const std::string& typeId,
 
 void MixerPlanner::requestRebuild()
 {
+    AUDIUM_ASSERT_MESSAGE_THREAD   // the model and the plans are the message thread's: a rebuild from another thread races with one here
     if (audioTrackContainer == nullptr)
         return;
 
@@ -78,6 +80,7 @@ void MixerPlanner::endBatch()
 
 void MixerPlanner::prepare (double sampleRate_, int maxBlockSize_)
 {
+    AUDIUM_ASSERT_MESSAGE_THREAD   // an export thread prepares under the message manager's lock
     if (sampleRate_ <= 0.0 || maxBlockSize_ <= 0)
         return;
 
@@ -103,6 +106,7 @@ void MixerPlanner::rebuildNow()
 
 void MixerPlanner::rebuild (bool nothingRenders)
 {
+    AUDIUM_ASSERT_MESSAGE_THREAD
     rebuildPending = false;
     if (audioTrackContainer == nullptr)
         return;
