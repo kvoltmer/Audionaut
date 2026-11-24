@@ -783,7 +783,7 @@ MenuBarModel* AudiumApplication::getMenuModel()
 
 StringArray AudiumApplication::getMenuNames()
 {
-    StringArray currentMenuNames { "File", "Edit", "Create", "Options", "View"};
+    StringArray currentMenuNames { "File", "Edit", "Create", "Options", "View", "Help" };
     return currentMenuNames;
 }
 
@@ -803,6 +803,9 @@ PopupMenu AudiumApplication::createMenu (const String& menuName)
 
     if (menuName == "View")
         return createViewMenu();
+
+    if (menuName == "Help")
+        return createHelpMenu();
 
     jassertfalse; // names have changed?
     return {};
@@ -842,10 +845,6 @@ PopupMenu AudiumApplication::createFileMenu()
     menu.addSeparator();
 
    #if ! JUCE_MAC
-    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
-    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
-    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
-    menu.addSeparator();
     menu.addCommandItem (commandManager.get(), StandardApplicationCommandIDs::quit);
    #endif
 
@@ -902,6 +901,9 @@ PopupMenu AudiumApplication::createOptionsMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::enableSnapToGrid);
     menu.addSeparator();
     menu.addCommandItem (commandManager.get(), CommandIDs::showPluginManager);
+   #if ! JUCE_MAC
+    menu.addCommandItem (commandManager.get(), CommandIDs::showSettingsWindow);
+   #endif
     return menu;
 }
 
@@ -924,6 +926,21 @@ PopupMenu AudiumApplication::createViewMenu()
     menu.addCommandItem (commandManager.get(), CommandIDs::zoomOut);
     menu.addCommandItem (commandManager.get(), CommandIDs::pageLeft);
     menu.addCommandItem (commandManager.get(), CommandIDs::pageRight);
+
+    return menu;
+}
+
+PopupMenu AudiumApplication::createHelpMenu()
+{
+    PopupMenu menu;
+    menu.addCommandItem (commandManager.get(), CommandIDs::openManual);
+
+    // macOS has these in the application menu, see createExtraAppleMenuItems()
+   #if ! JUCE_MAC
+    menu.addSeparator();
+    menu.addCommandItem (commandManager.get(), CommandIDs::checkForNewVersion);
+    menu.addCommandItem (commandManager.get(), CommandIDs::showAboutWindow);
+   #endif
 
     return menu;
 }
@@ -966,6 +983,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::showAboutWindow,
                                 CommandIDs::showSettingsWindow,
                                 CommandIDs::checkForNewVersion,
+                                CommandIDs::openManual,
                                 CommandIDs::clearRecentFiles,
                                 CommandIDs::showFileBrowser,
                                 CommandIDs::showProcessingLoad,
@@ -1033,6 +1051,9 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         result.setInfo ("Check for Updates...",
                         "Asks the distribution channel whether a newer version exists",
                         CommandCategories::general, 0);
+        break;
+    case CommandIDs::openManual:
+        result.setInfo ("Audionaut Manual", "Opens the user manual in the web browser.", CommandCategories::general, 0);
         break;
     case CommandIDs::clearRecentFiles:
         result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
@@ -1111,6 +1132,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::showSettingsWindow:
             showSettingsDialog();
+            break;
+        case CommandIDs::openManual:
+            URL ("https://audionaut.app/manual").launchInDefaultBrowser();
             break;
         case CommandIDs::clearRecentFiles:
             clearRecentFiles();
