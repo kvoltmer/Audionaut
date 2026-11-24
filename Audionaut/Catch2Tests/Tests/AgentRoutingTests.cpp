@@ -459,7 +459,7 @@ SCENARIO("a hosted verb reaches the plugins of the open document",
     REQUIRE (live != nullptr);
     REQUIRE (live->isLoaded());
     const auto trackOption = "--track " + juce::String (track->getId());
-    const auto instancesWhileOpen = TestPluginInstance::instances();
+    const auto instancesWhileOpen = TestPluginInstance::instances().load();
 
     CliContext context;
     context.quiet = true;
@@ -497,7 +497,7 @@ SCENARIO("a hosted verb reaches the plugins of the open document",
                 REQUIRE (set);
                 REQUIRE (live->getParameter (live->getParameterIndex ("gain")) == Catch::Approx (0.25f));
                 REQUIRE (engine->getUndoManager()->canUndo());
-                REQUIRE (TestPluginInstance::instances() == instancesWhileOpen);
+                REQUIRE (TestPluginInstance::instances().load() == instancesWhileOpen);
             }
         }
 
@@ -518,7 +518,7 @@ SCENARIO("a hosted verb reaches the plugins of the open document",
                 reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, true);
                 REQUIRE (buffer.getNumSamples() > 0);
                 REQUIRE (buffer.getMagnitude (0, buffer.getNumSamples()) == Catch::Approx (0.0).margin (1.0e-4));
-                REQUIRE (TestPluginInstance::instances() == instancesWhileOpen);
+                REQUIRE (TestPluginInstance::instances().load() == instancesWhileOpen);
             }
         }
 
@@ -806,7 +806,7 @@ SCENARIO("a hosted verb that waits for a plugin does not run over what the user 
     REQUIRE (pluginHost->waitForPendingLoads (5000));
     REQUIRE (live->isLoaded());
     const auto trackOption = "--track " + juce::String (track->getId());
-    const auto instancesWhileOpen = TestPluginInstance::instances();
+    const auto instancesWhileOpen = TestPluginInstance::instances().load();
 
     CliContext context;
     context.quiet = true;

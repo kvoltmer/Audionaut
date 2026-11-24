@@ -1926,7 +1926,7 @@ SCENARIO ("cli plugin effects", "[cli][effects][hosting]")
     context.pluginHost = std::make_shared<PluginHost> (workDir.getChildFile ("data"), false);
     context.pluginHost->getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { plugin }));
     context.pluginHost->getList().addType (TestPluginInstance::describe (plugin));
-    const auto instancesBefore = TestPluginInstance::instances();
+    const auto instancesBefore = TestPluginInstance::instances().load();
 
     THEN ("list-effects names the plugin with its format, without loading it")
     {
@@ -1941,7 +1941,7 @@ SCENARIO ("cli plugin effects", "[cli][effects][hosting]")
         REQUIRE (effects[4]["format"] == "TestA");
         REQUIRE (effects[4]["manufacturer"] == "Audionaut Tests");
         REQUIRE_FALSE (effects[4].contains ("parameters"));
-        REQUIRE (TestPluginInstance::instances() == instancesBefore);
+        REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
     }
 
     THEN ("list-effects --type loads the one plugin and lists its parameters, normalised")
@@ -1955,7 +1955,7 @@ SCENARIO ("cli plugin effects", "[cli][effects][hosting]")
         REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (0.0));
         REQUIRE (effects[0]["parameters"][0]["max"].get<double>() == Catch::Approx (1.0));
         REQUIRE (effects[0]["parameters"][1]["boolean"] == true);
-        REQUIRE (TestPluginInstance::instances() == instancesBefore);   // let go with the engine
+        REQUIRE (TestPluginInstance::instances().load() == instancesBefore);   // let go with the engine
 
         REQUIRE (cli::runListEffects (makeArgs ("list-effects --type builtin:trim"), context) == cli::exitOk);
         REQUIRE (envelope["result"]["effects"].size() == 1);
