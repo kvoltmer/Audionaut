@@ -261,12 +261,13 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     
     
-    // try to load project from command line
+    // a project from the command line: opened in finishStartup(), after the
+    // first launch's plugin scan
     if (! commandLine.trim().startsWithChar ('-')) {
         ArgumentList list ({}, commandLine);
 
         for (auto& arg : list.arguments) {
-            openFile (arg.resolveAsFile());
+            filesToOpenAtStartup.add (arg.resolveAsFile());
         }
     }
     
@@ -295,6 +296,28 @@ void AudiumApplication::handleAsyncUpdate()
         logUsageEvent (name, params);
     });
 
+    if (splashScreen != nullptr) {
+        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
+        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
+    }
+
+    // The first launch's plugin scan before any project is read, and before
+    // agents are served: a project's plugin inserts resolve against what the
+    // scan found, and nothing is opened, asked or said while its dialog is up.
+    runInitialPluginScan ([this] {
+        if (mainWindow != nullptr)
+            finishStartup();
+    });
+}
+
+void AudiumApplication::finishStartup()
+{
+    startupFinished = true;
+
+    // from the command line, and what other launches forwarded meanwhile
+    for (const auto& file : std::exchange (filesToOpenAtStartup, {}))
+        openFile (file);
+
     loadStartupProject();
 
     updateUI();
@@ -302,12 +325,8 @@ void AudiumApplication::handleAsyncUpdate()
     startProjectMonitor();
     startAgentHost();
 
-    if (splashScreen != nullptr) {
-        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
-        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
-    }
-
     updateChecker = std::make_unique<audium::UpdateChecker> (getPreferences());
+    updateChecker->checkOnStartupIfDue();
 
     // last: the prompts belong over the open main window, so wait until the
     // window is mapped and painted and the splash (0.5 s) has gone
@@ -319,17 +338,12 @@ void AudiumApplication::handleAsyncUpdate()
 
 void AudiumApplication::showStartupPrompts()
 {
-    // one thing at a time, and the first launch's plugin scan before all of
-    // them: nothing is asked or said over it, the update check's word
-    // included. Then restore (it is about the user's work), then consent (the
-    // crash event is only logged with it decided), then the crash report
-    runInitialPluginScan ([this] {
-        updateChecker->checkOnStartupIfDue();
-
-        offerOrphanedTempProjectRestore ([this] {
-            askForUsageStatisticsConsent ([this] {
-                crashReporter->offerPendingReport();
-            });
+    // one prompt at a time: restore first (it is about the user's work),
+    // then consent (the crash event is only logged with it decided), then
+    // the crash report
+    offerOrphanedTempProjectRestore ([this] {
+        askForUsageStatisticsConsent ([this] {
+            crashReporter->offerPendingReport();
         });
     });
 }
@@ -748,6 +762,14 @@ void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 
         for (auto& arg : list.arguments) {
             auto file = arg.resolveAsFile();
+
+            // nothing is opened under the first launch's plugin scan: it
+            // waits with the startup's own files
+            if (! startupFinished) {
+                filesToOpenAtStartup.add (file);
+                continue;
+            }
+
             askToSaveIfDirtyAndInvoke([this, file](void) {
                 openFile (file);
             
