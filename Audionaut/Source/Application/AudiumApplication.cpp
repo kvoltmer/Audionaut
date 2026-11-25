@@ -934,6 +934,7 @@ PopupMenu AudiumApplication::createHelpMenu()
 {
     PopupMenu menu;
     menu.addCommandItem (commandManager.get(), CommandIDs::openManual);
+    menu.addCommandItem (commandManager.get(), CommandIDs::openSponsorPage);
 
     // macOS has these in the application menu, see createExtraAppleMenuItems()
    #if ! JUCE_MAC
@@ -984,6 +985,7 @@ void AudiumApplication::getAllCommands (Array <CommandID>& commands)
                                 CommandIDs::showSettingsWindow,
                                 CommandIDs::checkForNewVersion,
                                 CommandIDs::openManual,
+                                CommandIDs::openSponsorPage,
                                 CommandIDs::clearRecentFiles,
                                 CommandIDs::showFileBrowser,
                                 CommandIDs::showProcessingLoad,
@@ -1054,6 +1056,9 @@ void AudiumApplication::getCommandInfo (CommandID commandID, ApplicationCommandI
         break;
     case CommandIDs::openManual:
         result.setInfo ("Audionaut Manual", "Opens the user manual in the web browser.", CommandCategories::general, 0);
+        break;
+    case CommandIDs::openSponsorPage:
+        result.setInfo ("Sponsor Audionaut", "Opens the GitHub Sponsors page in the web browser.", CommandCategories::general, 0);
         break;
     case CommandIDs::clearRecentFiles:
         result.setInfo ("Clear Recent Files", "Clears all recent files from the menu", CommandCategories::general, 0);
@@ -1135,6 +1140,9 @@ bool AudiumApplication::perform (const InvocationInfo& info)
             break;
         case CommandIDs::openManual:
             URL ("https://audionaut.app/manual").launchInDefaultBrowser();
+            break;
+        case CommandIDs::openSponsorPage:
+            URL ("https://github.com/sponsors/kvoltmer").launchInDefaultBrowser();
             break;
         case CommandIDs::clearRecentFiles:
             clearRecentFiles();

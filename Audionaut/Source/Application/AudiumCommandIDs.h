@@ -24,6 +24,7 @@ namespace CommandIDs
         showAboutWindow         = 0x300024,
         checkForNewVersion      = 0x300025,
         openManual              = 0x300026,
+        openSponsorPage         = 0x300027,
         
     
         showSettingsWindow      = 0x300030,
