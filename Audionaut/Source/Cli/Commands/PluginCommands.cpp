@@ -94,12 +94,14 @@ int runScanPlugins (const juce::ArgumentList& args, CliContext& context)
             known = known || format->getName() == formatName;
         if (! known)
             return context.fail (exitUnavailable, "unknown_format", "this build hosts no " + formatName.toStdString() + " plugins");
+        if (! context.pluginHost->isFormatEnabled (formatName))
+            return context.fail (exitUnavailable, "format_disabled", formatName.toStdString() + " plugins are turned off: turn them on in Audionaut's Manage Plugins window");
     }
 
     ScopedMessageLoop messageLoop;   // the list reports its changes through it
     juce::StringArray formatNames;
     for (auto* format : formats.getFormats())
-        if (formatName.isEmpty() || format->getName() == formatName)
+        if ((formatName.isEmpty() || format->getName() == formatName) && context.pluginHost->isFormatEnabled (format->getName()))
             formatNames.add (format->getName());
 
     const auto result = context.pluginHost->scanAll (

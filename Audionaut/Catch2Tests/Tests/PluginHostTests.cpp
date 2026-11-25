@@ -854,6 +854,131 @@ SCENARIO ("only the app takes the file a scan is on for one the scan died of", "
     }
 }
 
+SCENARIO ("a format that is turned off is neither offered nor scanned", "[engine][effects][hosting][formats]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    const auto inA = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+    const auto inB = TestPluginInstance::describe (gainIn ("TestB", 0x2222));
+
+    GIVEN ("a host with the same plugin in two formats, attached to a registry")
+    {
+        TestHost test (temp.folder);
+        auto& host = test.host;
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("both formats are on")
+        {
+            REQUIRE (host.isFormatEnabled ("TestA"));
+            REQUIRE (host.isFormatEnabled ("TestB"));
+            REQUIRE (registry->hasType ("testa:00001111"));
+            REQUIRE (registry->hasType ("testb:00002222"));
+        }
+
+        WHEN ("one format is turned off")
+        {
+            host.setFormatEnabled ("TestA", false);
+
+            THEN ("its plugin leaves the registry and stays on the list, and the host says why")
+            {
+                REQUIRE_FALSE (host.isFormatEnabled ("TestA"));
+                REQUIRE_FALSE (registry->hasType ("testa:00001111"));
+                REQUIRE (registry->hasType ("testb:00002222"));
+                REQUIRE (host.getList().getNumTypes() == 2);
+                REQUIRE (host.availabilityOf (inA) == PluginHost::Availability::formatDisabled);
+                REQUIRE (PluginHost::describe (PluginHost::Availability::formatDisabled).isNotEmpty());
+                REQUIRE_FALSE (host.canCreate (inA));
+                REQUIRE (host.availabilityOf (inB) == PluginHost::Availability::available);
+            }
+
+            THEN ("a project's plugin in that format is found in the other")
+            {
+                const auto substitute = host.findSubstitute (inA.name, inA.manufacturerName);
+                REQUIRE (substitute.has_value());
+                REQUIRE (substitute->pluginFormatName == "TestB");
+            }
+
+            THEN ("a scan of the list leaves the format out")
+            {
+                const auto scanned = PluginListScan::scannableFormats (host);
+                REQUIRE (scanned.size() == 1);
+                REQUIRE (scanned.front()->getName() == "TestB");
+            }
+
+            AND_WHEN ("it is turned on again")
+            {
+                host.setFormatEnabled ("TestA", true);
+
+                THEN ("its plugin is back")
+                {
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                    REQUIRE (host.canCreate (inA));
+                    REQUIRE (PluginListScan::scannableFormats (host).size() == 2);
+                }
+            }
+        }
+    }
+
+    GIVEN ("a host with an empty list and one of its two formats turned off")
+    {
+        TestHost test (temp.folder, false);
+        auto& host = test.host;
+        host.setFormatEnabled ("TestA", false);
+
+        WHEN ("it scans")
+        {
+            const auto result = host.scanAll();
+
+            THEN ("only the other format's plugin is found")
+            {
+                REQUIRE (result.found == 1);
+                REQUIRE (host.findByTypeId ("testb:00002222").has_value());
+                REQUIRE_FALSE (host.findByTypeId ("testa:00001111").has_value());
+            }
+        }
+
+        WHEN ("it is asked to scan the format that is off")
+        {
+            const auto result = host.scanAll ({}, {}, "TestA");
+
+            THEN ("nothing is looked for")
+            {
+                REQUIRE (result.found == 0);
+                REQUIRE (host.getList().getNumTypes() == 0);
+            }
+        }
+    }
+}
+
+SCENARIO ("the formats are the user's to choose on Linux only, where LV2 comes first", "[engine][effects][hosting][formats]")
+{
+   #if JUCE_LINUX || JUCE_BSD
+    THEN ("LV2 is on and VST3 is off until the user says otherwise")
+    {
+        REQUIRE (PluginHost::formatsAreSwitchable());
+        REQUIRE (PluginHost::isFormatOnByDefault ("LV2"));
+        REQUIRE_FALSE (PluginHost::isFormatOnByDefault ("VST3"));
+    }
+   #else
+    THEN ("the platform's formats are simply on")
+    {
+        REQUIRE_FALSE (PluginHost::formatsAreSwitchable());
+        REQUIRE (PluginHost::isFormatOnByDefault ("VST3"));
+        REQUIRE (PluginHost::isFormatOnByDefault ("AudioUnit"));
+    }
+   #endif
+
+    THEN ("a host starts with every format on: the app applies the user's choice")
+    {
+        MessageThread messageThread;
+        TempFolder temp;
+        PluginHost host (temp.folder, false);
+        REQUIRE (host.isFormatEnabled ("VST3"));
+        REQUIRE (host.isFormatEnabled ("LV2"));
+    }
+}
+
 SCENARIO ("a host that is turned off offers no plugins", "[engine][effects][hosting][security]")
 {
     MessageThread messageThread;

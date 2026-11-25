@@ -56,7 +56,7 @@ public:
     /// The outcome follows as for any scan.
     void cancel();
 
-    /// The host's formats that have something to scan.
+    /// The host's formats that have something to scan: those that look for plugins and are not turned off.
     static std::vector<juce::AudioPluginFormat*> scannableFormats (PluginHost& host);
 
 private:
