@@ -929,8 +929,10 @@ bool PluginHost::runWhilePumping (std::function<void()> fn, int timeoutMs)
 //==============================================================================
 void PluginHost::changeListenerCallback (juce::ChangeBroadcaster*)
 {
-    // message thread: the list changed (a scan, a removal, the blacklist)
-    saveList();
+    // message thread: the list changed (a scan, a removal, the blacklist). Reading the file says so
+    // too, and is nothing to write: a scan worker, which loads the list as the app does, would put
+    // what it read back over what the scanning app has written since.
+    saveListIfChanged();
     registerIntoAttached();
 }
 

@@ -744,6 +744,54 @@ SCENARIO ("a host that started without a list file leaves another process's list
     }
 }
 
+SCENARIO ("a host that only read the list does not write it back", "[engine][effects][hosting][scan]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a scan worker's host that loaded the list, and the scanning app's, which wrote a newer one since")
+    {
+        {
+            TestHost before (temp.folder);
+            REQUIRE (before.host.saveList());
+        }
+        TestHost worker (temp.folder, false);
+        REQUIRE (worker.host.loadList());
+        {
+            TestHost app (temp.folder, false);
+            REQUIRE (app.host.loadList());
+            app.host.getList().addToBlacklist ("/test/crashes.testa");
+            REQUIRE (app.host.saveList());
+        }
+        const auto newer = worker.host.getListFile().loadFileAsString();
+
+        WHEN ("the worker's host hears that its list changed, which reading it said")
+        {
+            messageThread.pump();
+
+            THEN ("the newer list is still in the file")
+            {
+                REQUIRE (worker.host.getListFile().loadFileAsString() == newer);
+                REQUIRE (worker.host.getListFile().getParentDirectory().findChildFiles (juce::File::findFiles, false).size() == 1);
+            }
+        }
+
+        WHEN ("that host's own list changes")
+        {
+            messageThread.pump();
+            worker.host.getList().addToBlacklist ("/test/hangs.testb");
+            messageThread.pump();
+
+            THEN ("that is written without being asked for")
+            {
+                TestHost next (temp.folder, false);
+                REQUIRE (next.host.loadList());
+                REQUIRE (next.host.getList().getBlacklistedFiles().contains ("/test/hangs.testb"));
+            }
+        }
+    }
+}
+
 SCENARIO ("only the app takes the file a scan is on for one the scan died of", "[engine][effects][hosting][scan]")
 {
     MessageThread messageThread;
