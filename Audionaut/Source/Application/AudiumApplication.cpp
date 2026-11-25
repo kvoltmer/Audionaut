@@ -138,6 +138,17 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     const auto pluginsEnabled = getPreferences().getValue (audium::PreferenceKeys::pluginsEnabled, "true") == "true";
     pluginHost->setEnabled (pluginsEnabled);
 
+    // Where the platform has several formats to choose from (Linux: LV2 is on and VST3 is off until
+    // the user says otherwise in Manage Plugins), for the app and the headless verbs alike.
+    if (audium::PluginHost::formatsAreSwitchable())
+        for (auto* format : pluginHost->getFormats().getFormats())
+        {
+            const auto name = format->getName();
+            const auto key = audium::PreferenceKeys::pluginFormatEnabledPrefix + name.toStdString();
+            const auto byDefault = audium::PluginHost::isFormatOnByDefault (name) ? "true" : "false";
+            pluginHost->setFormatEnabled (name, getPreferences().getValue (key, byDefault) == "true");
+        }
+
     // Projucer-style in-app CLI: a recognised verb runs headlessly and the
     // process quits with its exit code; anything else (a project file, no
     // arguments) falls through to normal GUI startup.
@@ -1656,6 +1667,13 @@ void AudiumApplication::showPluginManagerWindow()
                                     pluginHost->setEnabled (enabled, enabled);   // and macOS may ask about plugins: somebody is here to answer
                                     if (enabled)
                                         pluginHost->syncWithInstalled();
+                                },
+                                [this] (const juce::String& formatName, bool enabled)
+                                {
+                                    getPreferences().setValue (audium::PreferenceKeys::pluginFormatEnabledPrefix + formatName.toStdString(),
+                                                               enabled ? "true" : "false");
+                                    getPreferences().synchronize();
+                                    pluginHost->setFormatEnabled (formatName, enabled);
                                 }),
                                 pluginManagerView, true,
                                 760, 480, 480, 320, 2400, 1600);

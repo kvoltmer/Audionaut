@@ -135,7 +135,7 @@ std::vector<juce::AudioPluginFormat*> PluginListScan::scannableFormats (PluginHo
 {
     std::vector<juce::AudioPluginFormat*> formats;
     for (auto* format : host.getFormats().getFormats())
-        if (format->canScanForPlugins())
+        if (format->canScanForPlugins() && host.isFormatEnabled (format->getName()))
             formats.push_back (format);
     return formats;
 }

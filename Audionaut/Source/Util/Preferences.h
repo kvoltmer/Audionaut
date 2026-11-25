@@ -73,6 +73,7 @@ namespace PreferenceKeys
     static const char* const loadSimulatorWindowState = "LoadSimulatorWindowState";
     static const char* const pluginManagerWindowState = "PluginManagerWindowState";
     static const char* const pluginsEnabled = "PluginsEnabled";   // "false": no plugins are hosted (on unless the user turned them off)
+    static const char* const pluginFormatEnabledPrefix = "PluginFormatEnabled.";   // + the format's name ("VST3"): "true"/"false", where the formats are switchable (Linux)
     static const char* const initialPluginScanDone = "InitialPluginScanDone";   // "true": the first launch's plugin scan was run, or was not needed
     static const char* const autoEditWindowState    = "AutoEditWindowState";
     static const char* const browserWindowOpen      = "BrowserWindowOpen";

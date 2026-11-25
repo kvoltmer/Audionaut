@@ -126,7 +126,7 @@ Audionaut hosts the plugin formats native to each platform:
 |---|---|
 | macOS | Audio Units (AUv2 and AUv3) |
 | Windows | VST3 |
-| Linux | VST3 and LV2 |
+| Linux | LV2 and VST3 (VST3 is off until you turn it on) |
 
 Only effect plugins are used as inserts; instruments are listed but not
 hosted. On macOS the application runs in the system's sandbox, on the Mac
@@ -151,6 +151,17 @@ keeps the slot and its settings as a marked row. The box takes effect for a
 project when it is opened: one that is open at the moment keeps the plugins
 it has loaded, or its marked rows, until you open it again.
 The built-in effects are always there.
+
+On Linux you choose the formats as well: **LV2 plugins** and **VST3
+plugins** stand beside that box. LV2 is on and VST3 is off to begin with,
+because most Linux plugins come in both formats and would otherwise be
+listed twice. A format that is off is not scanned and its plugins are not
+offered as inserts; plugins of it that are already in the list stay there,
+greyed out. A project that uses a plugin in a format that is off opens
+with the same plugin in the other format when that is installed, and
+otherwise keeps the slot and its settings as a marked row. Tick **VST3
+plugins** for the plugins you only have as VST3: Audionaut then scans for
+them at once.
 
 On macOS the Audio Units are in the insert menus without a scan: Audionaut
 takes them from the system's own list and loads a plugin only when you use

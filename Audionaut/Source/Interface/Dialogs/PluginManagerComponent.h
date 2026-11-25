@@ -38,6 +38,13 @@
  * on (the default), all of them are there. The choice goes to
  * `onEnabledChanged`, which stores it and tells the host.
  *
+ * Where the platform has several formats to choose from (Linux: LV2 and
+ * VST3, see PluginHost::formatsAreSwitchable), a tick box per format
+ * stands beside it. A format that is off is not scanned and its plugins
+ * are not offered; they stay in the list, greyed out. Turning one on whose
+ * plugins the list does not have yet starts a scan. The choice goes to
+ * `onFormatEnabledChanged`, which stores it and tells the host.
+ *
  * Nothing is scanned here unless Scan is clicked (the app's first launch
  * runs one scan of its own where plugins are found in folders, see
  * InitialPluginScanComponent). Where the system knows its
@@ -65,9 +72,11 @@ class PluginManagerComponent : public juce::Component,
 {
 public:
     explicit PluginManagerComponent (std::shared_ptr<audium::PluginHost> host_,
-                                     std::function<void (bool)> onEnabledChanged_ = {}) :
+                                     std::function<void (bool)> onEnabledChanged_ = {},
+                                     std::function<void (const juce::String&, bool)> onFormatEnabledChanged_ = {}) :
         host (std::move (host_)),
-        onEnabledChanged (std::move (onEnabledChanged_))
+        onEnabledChanged (std::move (onEnabledChanged_)),
+        onFormatEnabledChanged (std::move (onFormatEnabledChanged_))
     {
         using Header = juce::TableHeaderComponent;
         auto& header = table.getHeader();
@@ -135,6 +144,21 @@ public:
         enablePlugins.onClick = [this] { applyEnabled (enablePlugins.getToggleState()); };
         addAndMakeVisible (enablePlugins);
 
+        // a switch per format, where there are several to choose from (Linux)
+        if (audium::PluginHost::formatsAreSwitchable() && host->getFormats().getNumFormats() > 1)
+        {
+            for (auto* format : host->getFormats().getFormats())
+            {
+                const auto name = format->getName();
+                auto* formatSwitch = formatSwitches.add (new juce::ToggleButton (name + TRANS (" plugins")));
+                formatSwitch->setTooltip (TRANS ("Off, Audionaut neither looks for plugins of this format nor offers them; a project that uses one gets the same plugin "
+                                                 "in a format that is on, where it is installed. Turning a format on scans for its plugins."));
+                formatSwitch->setToggleState (host->isFormatEnabled (name), juce::dontSendNotification);
+                formatSwitch->onClick = [this, name, formatSwitch] { applyFormatEnabled (name, formatSwitch->getToggleState()); };
+                addAndMakeVisible (formatSwitch);
+            }
+        }
+
         showLog.setButtonText (TRANS ("Show Scan Log"));
         showLog.setTooltip (TRANS ("Shows the file that says what the last scans did with each plugin: the one to send along when a scan goes wrong."));
         showLog.onClick = [this] { host->getScanLogFile().revealToUser(); };
@@ -163,6 +187,8 @@ public:
         auto bounds = getLocalBounds().reduced (8);
         auto top = bounds.removeFromTop (24);
         enablePlugins.setBounds (top.removeFromLeft (160));
+        for (auto* formatSwitch : formatSwitches)
+            formatSwitch->setBounds (top.removeFromLeft (120));
         bounds.removeFromTop (4);
         auto bottom = bounds.removeFromBottom (22);
         showLog.setBounds (bottom.removeFromRight (110).withSizeKeepingCentre (110, buttonHeight));
@@ -687,7 +713,28 @@ private:
         pluginsSwitched();
     }
 
-    /// Scans every format's plugin folders, one format after the other; not while a scan runs.
+    void applyFormatEnabled (const juce::String& formatName, bool enabled)
+    {
+        if (onFormatEnabledChanged)
+            onFormatEnabledChanged (formatName, enabled);
+        else
+            host->setFormatEnabled (formatName, enabled);
+        pluginsSwitched();
+
+        // a format turned on for the first time has nothing in the list yet: looked for at once
+        if (enabled && host->isEnabled() && ! isScanning() && ! listsFormat (formatName))
+            scanAllFormats();
+    }
+
+    bool listsFormat (const juce::String& formatName) const
+    {
+        for (const auto& description : host->getList().getTypes())
+            if (description.pluginFormatName == formatName)
+                return true;
+        return false;
+    }
+
+    /// Scans the plugin folders of every format that is on, one format after the other; not while a scan runs.
     void scanAllFormats()
     {
         if (scan != nullptr)
@@ -743,6 +790,8 @@ private:
         scanFolders.setEnabled (host->isEnabled() && ! scanning);
         clear.setEnabled (host->isEnabled() && ! scanning);
         remove.setEnabled (host->isEnabled() && ! scanning);
+        for (auto* formatSwitch : formatSwitches)
+            formatSwitch->setEnabled (host->isEnabled() && ! scanning);
     }
 
     void pluginsSwitched()
@@ -770,7 +819,7 @@ private:
         }
 
         using Availability = audium::PluginHost::Availability;
-        int effects = 0, instruments = 0, formatMissing = 0, needLoweredSecurity = 0, notScanned = 0, removed = 0;
+        int effects = 0, instruments = 0, formatMissing = 0, formatOff = 0, needLoweredSecurity = 0, notScanned = 0, removed = 0;
         for (const auto& description : host->getList().getTypes())
         {
             if (host->isRemoved (description)) { ++removed; continue; }
@@ -781,6 +830,7 @@ private:
                 case Availability::available:      ++effects; break;
                 case Availability::formatMissing:  ++formatMissing; break;
                 case Availability::disabled:       break;
+                case Availability::formatDisabled: ++formatOff; break;
                 case Availability::removed:        break;
                 case Availability::needsLoweredSecurity: ++needLoweredSecurity; break;
             }
@@ -801,6 +851,8 @@ private:
             text << ", " << instruments << (instruments == 1 ? TRANS (" instrument") : TRANS (" instruments")) << TRANS (" (not hosted)");
         if (formatMissing > 0)
             text << ", " << formatMissing << TRANS (" in a format not hosted here");
+        if (formatOff > 0)
+            text << ", " << formatOff << TRANS (" in a format that is turned off");
         if (needLoweredSecurity > 0)
             text << ", " << needLoweredSecurity << (needLoweredSecurity == 1 ? TRANS (" needs") : TRANS (" need")) << TRANS (" lowered security settings");
         if (removed > 0)
@@ -812,6 +864,7 @@ private:
 
     std::shared_ptr<audium::PluginHost> host;
     std::function<void (bool)> onEnabledChanged;
+    std::function<void (const juce::String&, bool)> onFormatEnabledChanged;
     int scannedShown = 0;   // how many scanned entries the rows had when the scan last reported
     juce::String scanOutcome;   // what the last scan did, shown under the list until the selection changes
     Rows rows { *this };
@@ -833,6 +886,7 @@ private:
     juce::TextButton cancelScan;
     juce::Label status;
     juce::ToggleButton enablePlugins;
+    juce::OwnedArray<juce::ToggleButton> formatSwitches;   // one per format, where the formats are switchable
     juce::ScopedMessageBox scanResult;
     juce::TextButton showLog;
     std::unique_ptr<audium::PluginListScan> scan;   // the one that runs, if one does
