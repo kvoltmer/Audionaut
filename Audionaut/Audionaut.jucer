@@ -355,6 +355,10 @@
                   file="Source/Engine/Effects/Hosting/PluginFormats.h"/>
             <FILE id="EfHoPH" name="PluginHost.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/PluginHost.h"/>
+            <FILE id="EfHoLC" name="PluginListScan.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginListScan.cpp"/>
+            <FILE id="EfHoLH" name="PluginListScan.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginListScan.h"/>
             <FILE id="EfHoWC" name="ScanWorker.cpp" compile="1" resource="0"
                   file="Source/Engine/Effects/Hosting/ScanWorker.cpp"/>
             <FILE id="EfHoWH" name="ScanWorker.h" compile="0" resource="0"
@@ -637,6 +641,8 @@
                 file="Source/Interface/Dialogs/ProcessingLoadComponent.h"/>
           <FILE id="DlgPMg" name="PluginManagerComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/PluginManagerComponent.h"/>
+          <FILE id="DlgIPS" name="InitialPluginScanComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/InitialPluginScanComponent.h"/>
           <FILE id="DlgSsc" name="SeparationSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SeparationSettingsComponent.h"/>
           <FILE id="DlgSsd" name="StemSeparationDialog.h" compile="0" resource="0"

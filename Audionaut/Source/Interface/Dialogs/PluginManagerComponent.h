@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <map>
 #include <memory>
 #include <optional>
@@ -20,6 +19,7 @@
 #include <JuceHeader.h>
 
 #include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/Hosting/PluginListScan.h"
 #include "Interface/ColourIds.h"
 
 /**
@@ -38,7 +38,9 @@
  * on (the default), all of them are there. The choice goes to
  * `onEnabledChanged`, which stores it and tells the host.
  *
- * Nothing is scanned unless Scan is clicked. Where the system knows its
+ * Nothing is scanned here unless Scan is clicked (the app's first launch
+ * runs one scan of its own where plugins are found in folders, see
+ * InitialPluginScanComponent). Where the system knows its
  * plugins without loading them (the Audio Units on macOS) the host lists
  * them all the same, and the Status column says "Not scanned" for those:
  * they are offered as inserts and first loaded when they are used.
@@ -50,11 +52,10 @@
  * greyed out, and what the selected entry is, with the reason where it is
  * not offered, stands in two lines under the list.
  *
- * A scan (Scan: one format's default folders, file after file on a thread
- * of its own) shows in the same place while it runs: a progress bar, the
- * plugin at hand and a Cancel button; the tick box and the buttons
- * wait until it is done. Several formats are scanned one after the other,
- * and what the scan left out is said once, at the end.
+ * A scan (audium::PluginListScan: the formats' folders, file after file on
+ * a thread of its own) shows in the same place while it runs: a progress
+ * bar, the plugin at hand and a Cancel button; the tick box and the buttons
+ * wait until it is done. What the scan left out is said once, at the end.
  *
  * The list is the PluginHost's: a scan here reaches the engine's effect
  * registry through the host, and the insert menus list the plugins at once.
@@ -112,10 +113,8 @@ public:
         cancelScan.setButtonText (TRANS ("Cancel"));
         cancelScan.onClick = [this]
         {
-            formatsToScan.clear();   // the formats still waiting, too
-            scanCancelled = true;
             if (scan != nullptr)
-                scan->cancel();      // it gives up the file at hand, and says so as any scan does
+                scan->cancel();   // it gives up the file at hand and the formats still waiting, and says so as any scan does
         };
         addChildComponent (cancelScan);
 
@@ -148,11 +147,7 @@ public:
 
     ~PluginManagerComponent() override
     {
-        if (scan != nullptr)
-        {
-            scan.reset();   // ends a scan that still runs, before anything it reports to goes
-            host->finishScan();
-        }
+        scan.reset();   // ends a scan that still runs, before anything it reports to goes
         host->getList().removeChangeListener (this);
         table.setModel (nullptr);
     }
@@ -297,106 +292,6 @@ private:
         juce::KnownPluginList& plugins() const   { return owner.host->getList(); }
 
         PluginManagerComponent& owner;
-    };
-
-    /**
-     * One format's scan: the files of its default folders, one after the
-     * other on a thread of its own, each through the list's scanner (the
-     * worker process). The window hears on the message thread how far it is
-     * and, when the last file is done or the scan was cancelled, what it
-     * left out. Deleting it ends the scan after the file at hand.
-     */
-    class Scan final : private juce::Timer
-    {
-    public:
-        Scan (PluginManagerComponent& owner_, juce::AudioPluginFormat& format) :
-            owner (owner_),
-            skippedBefore (owner.host->getList().getBlacklistedFiles()),
-            scanner (owner.host->getList(), format, owner.host->getScanFolders (format), true, owner.host->getDeadMansPedalFile(), true)
-        {
-            pool.addJob (new Job (*this), true);
-            startTimer (50);
-        }
-
-        ~Scan() override
-        {
-            stopTimer();
-            cancel();
-            pool.removeAllJobs (true, 60000);   // the list's scanner hears of it and gives up the file at hand
-        }
-
-        /// Ends the scan now: the job is told to stop, which the list's scanner hears and gives up the
-        /// file at hand without a verdict on it - a plugin that hangs, or a question of macOS that
-        /// nobody answers, does not keep the window until the file's time is up.
-        void cancel()
-        {
-            cancelled = true;
-            pool.removeAllJobs (true, 0);
-            if (pool.getNumJobs() == 0)   // the job had not begun: nobody else says that it is over
-                done = true;
-        }
-
-    private:
-        /// A thread pool's job, which is what the list's scanner asks whether to go on.
-        struct Job final : public juce::ThreadPoolJob
-        {
-            explicit Job (Scan& scan_) : juce::ThreadPoolJob ("plugin scan"), scan (scan_) {}
-
-            JobStatus runJob() override
-            {
-                juce::String ignored;
-                while (! scan.cancelled && ! shouldExit())
-                {
-                    {
-                        const juce::ScopedLock lock (scan.nameLock);
-                        scan.name = scan.scanner.getNextPluginFileThatWillBeScanned();   // the plugin's name, as its format knows it
-                    }
-                    scan.failedBeforeThisFile = scan.scanner.getFailedFiles().size();
-                    const auto more = scan.scanner.scanNextFile (true, ignored);   // false after the last file, and where there is none
-                    if (! shouldExit())
-                        scan.failedBeforeThisFile = scan.scanner.getFailedFiles().size();   // this one had its verdict
-                    if (! more)
-                        break;
-                }
-                scan.done = true;
-                return jobHasFinished;
-            }
-
-            Scan& scan;
-        };
-
-        void timerCallback() override
-        {
-            if (! done)
-            {
-                juce::String at;
-                {
-                    const juce::ScopedLock lock (nameLock);
-                    at = name;
-                }
-                owner.scanProgressed (scanner.getProgress(), at);
-                return;
-            }
-
-            stopTimer();
-            juce::StringArray skippedNow;
-            for (const auto& skipped : owner.host->getList().getBlacklistedFiles())
-                if (! skippedBefore.contains (skipped))
-                    skippedNow.add (skipped);
-            auto failed = scanner.getFailedFiles();
-            if (cancelled)   // the file a cancelled scan gave up did not fail
-                failed.removeRange (failedBeforeThisFile, failed.size());
-            owner.scanFinished (failed, skippedNow);   // deletes this scan: nothing of it is touched after
-        }
-
-        PluginManagerComponent& owner;
-        const juce::StringArray skippedBefore;
-        juce::PluginDirectoryScanner scanner;
-        juce::CriticalSection nameLock;
-        juce::String name;   // of the plugin at hand, under the lock
-        std::atomic<int> failedBeforeThisFile { 0 };
-        std::atomic<bool> cancelled { false }, done { false };
-        juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };   // one worker process at a time
     };
 
     /// The extra folders in a list to add to and take from; what it holds when its window closes is
@@ -727,29 +622,22 @@ private:
     }
 
     /// Says what a scan left out, where it left something out: the names only, the rest is in the list.
-    void scanFinished (const juce::StringArray& failedNow, const juce::StringArray& skippedNow)
+    void scanFinished (const audium::PluginListScan::Outcome& outcome)
     {
-        // one of several formats' scans: the next one first, the word about all of them at the end
-        failedSoFar.addArray (failedNow);
-        skippedSoFar.addArray (skippedNow);
         scan.reset();
-        if (scanNextFormat())
-            return;
-
         showScanProgress (false);
-        host->finishScan();   // the list as the scan left it, in line with what is installed
 
         // a scan with nothing to do is over at once: say that it ran
-        const auto added = juce::jmax (0, numScanned() - scannedBeforeScan);
-        scanOutcome = (scanCancelled ? TRANS ("Scan cancelled: ") : TRANS ("Scan complete: "))
+        const auto added = outcome.added;
+        scanOutcome = (outcome.cancelled ? TRANS ("Scan cancelled: ") : TRANS ("Scan complete: "))
                       + (added == 0 ? TRANS ("no new plugins found.")
                                     : added == 1 ? TRANS ("1 plugin scanned.")
                                                  : juce::String (added) + TRANS (" plugins scanned."));
         updateDetails();
         updateStatus();   // the log is there now, whether or not the list changed
 
-        const auto failed = std::exchange (failedSoFar, {});
-        const auto skipped = std::exchange (skippedSoFar, {});
+        const auto& failed = outcome.failed;
+        const auto& skipped = outcome.skipped;
 
         juce::StringArray parts;
         if (! skipped.isEmpty())
@@ -807,45 +695,19 @@ private:
         return count;
     }
 
-    /// Scans every format's plugin folders.
+    /// Scans every format's plugin folders, one format after the other; not while a scan runs.
     void scanAllFormats()
-    {
-        std::vector<juce::AudioPluginFormat*> formats;
-        for (auto* format : host->getFormats().getFormats())
-            if (format->canScanForPlugins())
-                formats.push_back (format);
-        scanFormats (std::move (formats));
-    }
-
-    /// Scans the formats' plugin folders, one format after the other; not while a scan runs.
-    void scanFormats (std::vector<juce::AudioPluginFormat*> formats)
     {
         if (scan != nullptr)
             return;
 
-        formatsToScan = std::move (formats);
-        scannedBeforeScan = numScanned();
-        scannedShown = scannedBeforeScan;
-        for (auto* format : formatsToScan)
-            host->restoreRemoved (format->getName());   // a scan brings back what was taken off the list
-        host->syncWithInstalled();                      // what was installed since is scanned too
-        scanCancelled = false;
+        scannedShown = numScanned();
         scanOutcome.clear();
-        scanNextFormat();
-    }
-
-    /// Starts the scan of the next format waiting; false when none is.
-    bool scanNextFormat()
-    {
-        if (formatsToScan.empty())
-            return false;
-
-        auto* format = formatsToScan.front();
-        formatsToScan.erase (formatsToScan.begin());
-        host->getDeadMansPedalFile().getParentDirectory().createDirectory();
         scanProgressed (0.0, {});
-        scan = std::make_unique<Scan> (*this, *format);
-        return true;
+        scan = std::make_unique<audium::PluginListScan> (
+            *host, audium::PluginListScan::scannableFormats (*host),
+            [this] (double fraction, const juce::String& pluginName) { scanProgressed (fraction, pluginName); },
+            [this] (const audium::PluginListScan::Outcome& outcome) { scanFinished (outcome); });
     }
 
     /// The scan's word while it runs: how far it is and the plugin at hand.
@@ -958,11 +820,7 @@ private:
 
     std::shared_ptr<audium::PluginHost> host;
     std::function<void (bool)> onEnabledChanged;
-    std::vector<juce::AudioPluginFormat*> formatsToScan;   // the host's, waiting for their turn in scanFormats()
-    juce::StringArray failedSoFar, skippedSoFar;
-    int scannedBeforeScan = 0;
     int scannedShown = 0;   // how many scanned entries the rows had when the scan last reported
-    bool scanCancelled = false;
     juce::String scanOutcome;   // what the last scan did, shown under the list until the selection changes
     Rows rows { *this };
     juce::TableListBox table;
@@ -985,7 +843,7 @@ private:
     juce::ToggleButton enablePlugins;
     juce::ScopedMessageBox scanResult;
     juce::TextButton showLog;
-    std::unique_ptr<Scan> scan;   // the one that runs, if one does
+    std::unique_ptr<audium::PluginListScan> scan;   // the one that runs, if one does
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginManagerComponent)
 };

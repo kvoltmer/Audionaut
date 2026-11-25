@@ -32,6 +32,7 @@
 #include "Interface/Dialogs/FileBrowserView.h"
 #include "Interface/Dialogs/ProcessingLoadComponent.h"
 #include "Interface/Dialogs/PluginManagerComponent.h"
+#include "Interface/Dialogs/InitialPluginScanComponent.h"
 #if JUCE_DEBUG
  #include "Interface/Dialogs/LoadSimulatorComponent.h"
 #endif
@@ -307,7 +308,6 @@ void AudiumApplication::handleAsyncUpdate()
     }
 
     updateChecker = std::make_unique<audium::UpdateChecker> (getPreferences());
-    updateChecker->checkOnStartupIfDue();
 
     // last: the prompts belong over the open main window, so wait until the
     // window is mapped and painted and the splash (0.5 s) has gone
@@ -319,14 +319,56 @@ void AudiumApplication::handleAsyncUpdate()
 
 void AudiumApplication::showStartupPrompts()
 {
-    // one prompt at a time: restore first (it is about the user's work),
-    // then consent (the crash event is only logged with it decided), then
-    // the crash report
-    offerOrphanedTempProjectRestore ([this] {
-        askForUsageStatisticsConsent ([this] {
-            crashReporter->offerPendingReport();
+    // one thing at a time, and the first launch's plugin scan before all of
+    // them: nothing is asked or said over it, the update check's word
+    // included. Then restore (it is about the user's work), then consent (the
+    // crash event is only logged with it decided), then the crash report
+    runInitialPluginScan ([this] {
+        updateChecker->checkOnStartupIfDue();
+
+        offerOrphanedTempProjectRestore ([this] {
+            askForUsageStatisticsConsent ([this] {
+                crashReporter->offerPendingReport();
+            });
         });
     });
+}
+
+void AudiumApplication::runInitialPluginScan(std::function<void ()> then)
+{
+    auto& prefs = getPreferences();
+
+    // Not where the system lists the plugins by itself (the Audio Units on
+    // macOS: no format looks in folders there), and not with plugins off: the
+    // scan is then due at the launch after they were turned on.
+    if (prefs.getValue (PreferenceKeys::initialPluginScanDone, "false") == "true"
+        || ! pluginHost->isEnabled()
+        || ! pluginHost->scansFolders()) {
+        NullCheckedInvocation::invoke (then);
+        return;
+    }
+
+    // Once, however it ends: a scan the user cancels, or one the app does not
+    // survive, is not started again by the next launch - Manage Plugins scans
+    // from then on.
+    prefs.setValue (PreferenceKeys::initialPluginScanDone, "true");
+    prefs.synchronize();
+
+    // A list from an earlier version: its user has scanned already.
+    if (pluginHost->getListFile().existsAsFile()) {
+        NullCheckedInvocation::invoke (then);
+        return;
+    }
+
+    auto dialog = InitialPluginScanComponent::createDialog (pluginHost, mainWindow.get());
+
+    // modal: the main window, its menus and its shortcuts wait for the scan
+    dialog->enterModalState (true, ModalCallbackFunction::create ([this, then] (int) {
+        initialPluginScanDialog.reset(); // ends a scan the dialog was closed on
+        NullCheckedInvocation::invoke (then);
+    }), false);
+
+    initialPluginScanDialog = std::move (dialog);
 }
 
 void AudiumApplication::loadStartupProject()
@@ -600,6 +642,7 @@ void AudiumApplication::shutdown()
     projectMonitor.reset(); // stop polling before the engine goes away
     processingLoadView.reset(); // its timer reads the engine; stores its position while preferences live
     pluginManagerView.reset();  // ends a scan that still runs: the list is saved below, after its last word
+    initialPluginScanDialog.reset(); // likewise
    #if JUCE_DEBUG
     loadSimulatorView.reset();  // resets the simulated loads it set
    #endif

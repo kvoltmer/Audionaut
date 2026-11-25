@@ -11,6 +11,7 @@
 #include "Engine/Effects/Hosting/ChildProcessScanner.h"
 #include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/Hosting/PluginListScan.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/InsertChain.h"
 #include "Engine/Effects/MixPlanContainer.h"
@@ -528,6 +529,122 @@ SCENARIO ("the plugin host scans with its formats", "[engine][effects][hosting]"
             {
                 REQUIRE (result.found == 1);
                 REQUIRE (host.findByTypeId ("testb:00002222").has_value());
+            }
+        }
+    }
+}
+
+SCENARIO ("a list scan leaves the message thread free and says there what it did", "[engine][effects][hosting][scan]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a host with two test formats and an empty list")
+    {
+        TestHost test (temp.folder, false);
+        auto& host = test.host;
+        REQUIRE (host.getList().getNumTypes() == 0);
+
+        std::optional<PluginListScan::Outcome> outcome;
+        std::vector<double> fractions;
+        const auto progress = [&] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+        const auto pumpUntilOver = [&]
+        {
+            for (auto i = 0; i < 400 && ! outcome; ++i)
+                messageThread.pump();
+        };
+
+        WHEN ("the host's formats are scanned")
+        {
+            PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+
+            THEN ("nothing is said before the message thread runs")
+            {
+                REQUIRE_FALSE (outcome.has_value());
+            }
+
+            THEN ("both formats' plugins are found, and the outcome says so once")
+            {
+                pumpUntilOver();
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 2);
+                REQUIRE_FALSE (outcome->cancelled);
+                REQUIRE (outcome->failed.isEmpty());
+                REQUIRE (outcome->skipped.isEmpty());
+                REQUIRE (host.getList().getNumTypes() == 2);
+                for (const auto fraction : fractions)
+                {
+                    REQUIRE (fraction >= 0.0);
+                    REQUIRE (fraction <= 1.0);
+                }
+
+                outcome.reset();
+                messageThread.pump();
+                REQUIRE_FALSE (outcome.has_value());
+            }
+        }
+
+        WHEN ("a scan is cancelled")
+        {
+            PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            scan.cancel();
+            pumpUntilOver();
+
+            THEN ("it is over, and says that it was cancelled")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->cancelled);
+                REQUIRE (outcome->failed.isEmpty());
+            }
+        }
+
+        WHEN ("the scan is deleted by the one who hears that it is over")
+        {
+            std::unique_ptr<PluginListScan> scan;
+            scan = std::make_unique<PluginListScan> (host, PluginListScan::scannableFormats (host), progress,
+                                                     [&] (const PluginListScan::Outcome& result)
+                                                     {
+                                                         scan.reset();
+                                                         outcome = result;
+                                                     });
+            pumpUntilOver();
+
+            THEN ("the outcome still arrives")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 2);
+                REQUIRE (scan == nullptr);
+            }
+        }
+
+        WHEN ("a scan is deleted while it runs")
+        {
+            {
+                PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                     [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            }
+            messageThread.pump();
+
+            THEN ("nothing is said any more")
+            {
+                REQUIRE_FALSE (outcome.has_value());
+            }
+        }
+
+        WHEN ("there is no format to scan")
+        {
+            PluginListScan scan (host, {}, progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            pumpUntilOver();
+
+            THEN ("the scan is over at once, with nothing found")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 0);
+                REQUIRE_FALSE (outcome->cancelled);
+                REQUIRE (fractions.empty());
             }
         }
     }
