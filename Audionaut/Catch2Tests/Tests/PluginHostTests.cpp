@@ -2217,6 +2217,80 @@ SCENARIO ("the child-process scanner says what it did with each file", "[engine]
     }
 }
 
+namespace
+{
+    /// What became of the workers a scanner had.
+    struct WorkerFates
+    {
+        std::atomic<int> held { 0 };              // workers the scanner still owns
+        std::atomic<int> leftWhenTold { 0 };      // had ended by themselves when they were collected
+        std::atomic<int> killedWhileRunning { 0 };
+    };
+
+    /// A ThreadWorker that tells of its end.
+    class WatchedWorker final : public ChildProcessScanner::Worker
+    {
+    public:
+        WatchedWorker (std::shared_ptr<WorkerFates> fates_, int idleMs) : fates (std::move (fates_)), worker (describedIn, idleMs) { ++fates->held; }
+        ~WatchedWorker() override { --fates->held; }
+
+        bool start (const juce::String& pipeName) override { return worker.start (pipeName); }
+        bool isRunning() override { return worker.isRunning(); }
+
+        void kill() override
+        {
+            ++(worker.isRunning() ? fates->killedWhileRunning : fates->leftWhenTold);
+            worker.kill();
+        }
+
+    private:
+        std::shared_ptr<WorkerFates> fates;
+        ThreadWorker worker;
+    };
+}
+
+SCENARIO ("the child-process scanner lets its worker go when the scan is over", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner whose worker would stay idle for a long time")
+    {
+        auto fates = std::make_shared<WorkerFates>();
+        ChildProcessScanner scanner ([fates] { return std::make_unique<WatchedWorker> (fates, patientIdleMs); }, patientTimeoutMs);
+
+        juce::OwnedArray<juce::PluginDescription> found;
+        REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+        REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+        REQUIRE (fates->held == 1);
+
+        WHEN ("the scan is over")
+        {
+            scanner.scanFinished();
+
+            THEN ("the worker was told to leave and collected, not left to end unattended")
+            {
+                REQUIRE (fates->held == 0);
+                REQUIRE (fates->leftWhenTold == 1);
+                REQUIRE (fates->killedWhileRunning == 0);
+            }
+
+            THEN ("the next scan gets a worker of its own")
+            {
+                REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (found.size() == 3);
+            }
+
+            THEN ("a second word that the scan is over finds nothing to do")
+            {
+                scanner.scanFinished();
+                REQUIRE (fates->held == 0);
+                REQUIRE (fates->leftWhenTold == 1);
+            }
+        }
+    }
+}
+
 SCENARIO ("the child-process scanner asks one worker for many files", "[engine][effects][hosting][scan]")
 {
     TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
