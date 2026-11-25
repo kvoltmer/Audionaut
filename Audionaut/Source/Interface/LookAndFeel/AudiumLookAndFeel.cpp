@@ -259,7 +259,37 @@ PopupMenu::Options AudiumLookAndFeel::getOptionsForComboBoxPopupMenu (ComboBox& 
 
 Font AudiumLookAndFeel::getPopupMenuFont()
 {
-    return withDefaultMetrics (FontOptions (defaultFontSize));
+    return withDefaultMetrics (FontOptions (inMainMenu ? mainMenuFontSize : defaultFontSize));
+}
+
+namespace
+{
+    /// Whether the menu is one of the menu bar's (its submenus too: they are shown with its options).
+    /// On Linux only: there the bar's menus stand in for a desktop's own, whose entries are larger
+    /// than the rest of this interface.
+    bool belongsToMenuBar (const PopupMenu::Options& options)
+    {
+       #if JUCE_LINUX || JUCE_BSD
+        return dynamic_cast<MenuBarComponent*> (options.getTopLevelTargetComponent()) != nullptr;
+       #else
+        ignoreUnused (options);
+        return false;
+       #endif
+    }
+}
+
+void AudiumLookAndFeel::getIdealPopupMenuItemSizeWithOptions (const String& text, bool isSeparator, int standardMenuItemHeight,
+                                                              int& idealWidth, int& idealHeight, const PopupMenu::Options& options)
+{
+    const ScopedValueSetter<bool> scope (inMainMenu, belongsToMenuBar (options));
+    LookAndFeel_V4::getIdealPopupMenuItemSizeWithOptions (text, isSeparator, standardMenuItemHeight, idealWidth, idealHeight, options);
+}
+
+void AudiumLookAndFeel::drawPopupMenuItemWithOptions (Graphics& g, const Rectangle<int>& area, bool isHighlighted,
+                                                      const PopupMenu::Item& item, const PopupMenu::Options& options)
+{
+    const ScopedValueSetter<bool> scope (inMainMenu, belongsToMenuBar (options));
+    LookAndFeel_V4::drawPopupMenuItemWithOptions (g, area, isHighlighted, item, options);
 }
 
 
@@ -466,5 +496,6 @@ Font AudiumLookAndFeel::getAlertWindowMessageFont()    { return withDefaultMetri
 Font AudiumLookAndFeel::getAlertWindowFont()           { return withDefaultMetrics (FontOptions { 10.0f }); }
 
 const float AudiumLookAndFeel::defaultFontSize = 13.f;
+const float AudiumLookAndFeel::mainMenuFontSize = 16.f;
 
 juce::Colour AudiumLookAndFeel::trackColours[maxTrackColours] = {};
