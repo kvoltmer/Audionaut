@@ -48,6 +48,11 @@ namespace MixerLayout
     constexpr int faderY = 0;                  ///< the fader's top in the fader element
     constexpr int faderWidth = 42;
     constexpr int faderHeight = 160;           ///< the fader's travel area
+    constexpr int readoutWidth = 50;           ///< the level readout's box under the fader
+    constexpr int readoutHeight = 14;
+    constexpr int readoutMargin = 3;           ///< around the box, to the fader above and the name bar below
+    constexpr int readoutTextInset = 4;        ///< the text from the box's left and right edge
+    constexpr int readoutRoomHeight = readoutHeight + 2 * readoutMargin;
     constexpr int nameHeight = 16;
     constexpr int colourBarHeight = 3;
     constexpr int meterX = 25;                 ///< the meter's left edge in the strip, its dB scale first and the bar right of it
@@ -59,7 +64,7 @@ namespace MixerLayout
     constexpr int sectionGap = 3;
     constexpr int scrollBarHeight = 8;         ///< the mixer's horizontal scroll bar, always given its room
 
-    /// The strip sections a user can hide, as flags; the fader, meter and name always show.
+    /// The strip sections a user can hide, as flags; the fader, meter, level readout and name always show.
     enum Section : int
     {
         inserts = 1 << 0,
@@ -134,17 +139,23 @@ namespace MixerLayout
              + heightShown (sendsRoomHeight (numAuxBuses), shown.of (sends))
              + heightShown (panHeight, shown.of (pan))
              + heightShown (buttonsHeight, shown.of (buttons))
-             + faderY + faderHeight + nameHeight + colourBarHeight;
+             + faderY + faderHeight + readoutRoomHeight + nameHeight + colourBarHeight;
+    }
+
+    /// The level readout in its row under the fader: centred, the box with its margin.
+    inline juce::Rectangle<int> readoutIn (juce::Rectangle<int> row) noexcept
+    {
+        return row.withSizeKeepingCentre (readoutWidth + 2 * readoutMargin, readoutRoomHeight);
     }
 
     /// Where a strip's elements stand in the strip's bounds, each as tall as stripHeight() counts it: the name
-    /// bar at the bottom, then from the top the sends, the pan, the buttons and the fader. A hidden section's
+    /// bar at the bottom, then from the top the sends, the pan, the buttons, the fader and the level readout. A hidden section's
     /// rectangle is empty; one on its way open or closed has as much height as the animation has reached, for
     /// the strip to clip its element to (SectionRoom). The channel strips and the return strips both lay out
     /// from this, so their faders line up across the mixer.
     struct StripPlacement
     {
-        juce::Rectangle<int> sendsArea, panArea, buttonsArea, faderArea, nameArea;
+        juce::Rectangle<int> sendsArea, panArea, buttonsArea, faderArea, readoutArea, nameArea;
     };
 
     inline StripPlacement placeStrip (juce::Rectangle<int> bounds, const Shown& shown, int numAuxBuses) noexcept
@@ -158,6 +169,7 @@ namespace MixerLayout
         placement.panArea = bounds.removeFromTop (heightShown (panHeight, shown.of (pan)));
         placement.buttonsArea = bounds.removeFromTop (heightShown (buttonsHeight, shown.of (buttons)));
         placement.faderArea = bounds.removeFromTop (faderY + faderHeight);
+        placement.readoutArea = readoutIn (bounds.removeFromTop (readoutRoomHeight));
         return placement;
     }
 
@@ -196,11 +208,11 @@ namespace MixerLayout
         return headerHeight + groupHeight (shown, numAuxBuses) + scrollBarHeight;
     }
 
-    /// The fader's travel area in a group's y, faderHeight tall: above the name bar at the group's bottom,
-    /// under the fader element's faderY of headroom. The section bar lines its toggles up with it.
+    /// The fader's travel area in a group's y, faderHeight tall: above the level readout and the name bar at
+    /// the group's bottom, under the fader element's faderY of headroom. The section bar lines its toggles up with it.
     inline juce::Range<int> faderRange (const Shown& shown, int numAuxBuses) noexcept
     {
-        const auto bottom = groupHeight (shown, numAuxBuses) - nameHeight - colourBarHeight;
+        const auto bottom = groupHeight (shown, numAuxBuses) - nameHeight - colourBarHeight - readoutRoomHeight;
         return { bottom - faderHeight, bottom };
     }
 

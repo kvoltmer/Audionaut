@@ -141,9 +141,19 @@ MixerBusStripComponent::MixerBusStripComponent (MixerContext context_, int auxId
             context.container().setMasterGain (gain);
         else if (auto b = bus())
             b->setGain (gain);
+        readout.refresh();
     };
     fader.onDragEnd = [this] { endValueEdit (isMaster() ? "Set Master Gain" : "Set Aux Gain"); };
     addAndMakeVisible (fader);
+
+    // a level typed into the readout is one undo step, as a fader drag
+    readout.onEdit = [this] (double decibels)
+    {
+        beginValueEdit();
+        fader.setValue (decibels, juce::sendNotificationSync);
+        endValueEdit (isMaster() ? "Set Master Gain" : "Set Aux Gain");
+    };
+    addAndMakeVisible (readout);
 
     for (auto* meter : { &meterLeft, &meterRight }) {
         meter->setInterceptsMouseClicks (false, false);   // they may overlap the fader's cap
@@ -218,6 +228,7 @@ void MixerBusStripComponent::refresh()
         if (! fader.isMouseButtonDown())
             fader.setValue (juce::Decibels::gainToDecibels (b->getGain(), minimum), juce::dontSendNotification);
     }
+    readout.refresh();
     repaint();
 }
 
@@ -257,6 +268,7 @@ void MixerBusStripComponent::resized()
     faderArea.removeFromTop (faderY);
     faderArea.translate ((getWidth() - stripWidth) / 2, 0);   // the fader and the meter stand as in a channel strip, in the middle of the wider one
     fader.setBounds (faderArea.withX (faderArea.getX() + faderX).withWidth (faderWidth));
+    readout.setBounds (placement.readoutArea);
 
     // the stereo meter: the scale, the left bar and the right bar, both bars lined up with the fader's travel
     const auto indent = getLookAndFeel().getSliderThumbRadius (fader);

@@ -64,7 +64,7 @@ void MixerStripComponent::resized()
     sendsRoom.setRoom (placement.sendsArea, StripSends::heightFor (numAuxBuses));
     panRoom.setRoom (placement.panArea, StripPan::height);
     buttonsRoom.setRoom (placement.buttonsArea, StripButtons::height);
-    fader->setBounds (placement.faderArea);
+    fader->setBounds (placement.faderArea.withBottom (placement.readoutArea.getBottom()));   // the fader element has its readout under it
     name->setBounds (placement.nameArea);
 }
 

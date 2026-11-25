@@ -16,7 +16,7 @@
 /**
  * The elements a mixer strip is stacked from, one component each: sends,
  * pan, the record / monitor / solo / mute buttons, the fader with its
- * meter, and the name bar; and the channel's I/O rows, which the track
+ * meter and level readout, and the name bar; and the channel's I/O rows, which the track
  * group lays out above the strips. Each works on one bus channel
  * (StripChannel), re-reads it on refresh(), and sends its edits to the
  * engine the way the arrangement's channel strip does (the track's
@@ -118,13 +118,47 @@ private:
 };
 
 //==============================================================================
-/// The fader on the console taper and the level meter with its scale beside it.
+/**
+ * A fader's level as text, "vol" at the left and the level at the right, "-6.0" or
+ * "-inf" at the bottom of the fader's range: white on a dark box with rounded corners, recessed
+ * as the level meter's slot. A click edits the number; onEdit gets the level typed, within the
+ * fader's range. The owner calls refresh() when the fader's value changed.
+ * The box stands MixerLayout::readoutMargin inside the bounds.
+ */
+class StripLevelReadout : public juce::Label
+{
+public:
+    explicit StripLevelReadout (juce::Slider& fader);
+
+    /// Re-reads the fader's value; not while the number is being edited.
+    void refresh();
+
+    /// A level typed into the readout, in decibels.
+    std::function<void (double decibels)> onEdit;
+
+    void paint (juce::Graphics& g) override;
+
+protected:
+    void editorShown (juce::TextEditor* editor) override;
+    void textWasEdited() override;
+
+private:
+    bool isAtMinimum() const;
+    juce::String number() const;   ///< the level alone, as the editor shows it: "-6.0", "-6.5", "-inf"
+
+    juce::Slider& fader;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StripLevelReadout)
+};
+
+//==============================================================================
+/// The fader on the console taper, the level meter with its scale beside it, and the level readout under them.
 class StripFader : public juce::Component
 {
 public:
     explicit StripFader (StripChannel channel);
 
-    static constexpr int height = MixerLayout::faderY + MixerLayout::faderHeight;
+    static constexpr int height = MixerLayout::faderY + MixerLayout::faderHeight + MixerLayout::readoutRoomHeight;
 
     void refresh();
     void refreshLive();   ///< the meter, on the mixer's timer
@@ -135,6 +169,7 @@ private:
     int busChannel = 0;
     juce::Slider fader;
     LevelMeter meter { true, false };
+    StripLevelReadout readout { fader };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StripFader)
 };

@@ -10,6 +10,7 @@
 #include "Interface/Components/MixerPanel/MixerContext.h"
 #include "Interface/Components/MixerPanel/MixerLayout.h"
 #include "Interface/Components/MixerPanel/InsertSlotListComponent.h"
+#include "Interface/Components/MixerPanel/MixerStripElements.h"
 #include "Interface/Controls/LevelMeter.h"
 #include "Engine/Effects/AuxBus.h"
 #include "Engine/Undo/UndoableSendAction.h"
@@ -20,7 +21,7 @@
  * faders line up across the mixer: nothing where a channel has its I/O, the
  * bus's inserts where the track group has its insert list, nothing where a
  * channel has its sends (a return has none), pan (the master's is its balance),
- * solo (an aux only) and mute, the fader on the console taper with a stereo meter beside it, and
+ * solo (an aux only) and mute, the fader on the console taper with a stereo meter beside it, the level readout, and
  * the name bar: the aux's name, double-click to rename, right-click for
  * Rename / Remove; the master's reads "Main".
  *
@@ -80,6 +81,7 @@ private:
     juce::TextButton solo { "S" }, mute { "M" };
     MixerLayout::SectionRoom buttonsRoom;   ///< solo over mute, with their shadows
     juce::Slider fader;
+    StripLevelReadout readout { fader };
     LevelMeter meterLeft { true, false }, meterRight { true, false };
     std::unique_ptr<NameBar> name;
 

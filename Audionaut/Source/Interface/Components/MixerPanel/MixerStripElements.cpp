@@ -284,14 +284,123 @@ void StripButtons::resized()
 }
 
 //==============================================================================
+StripLevelReadout::StripLevelReadout (juce::Slider& fader_) : fader (fader_)
+{
+    setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (10.0f)));
+    setJustificationType (juce::Justification::centred);
+    setEditable (true, false, false);
+    setColour (juce::Label::textWhenEditingColourId, juce::Colours::white);
+    setColour (juce::Label::backgroundWhenEditingColourId, juce::Colours::transparentBlack);
+    setColour (juce::Label::outlineWhenEditingColourId, juce::Colours::transparentBlack);
+    refresh();
+}
+
+bool StripLevelReadout::isAtMinimum() const
+{
+    return fader.getValue() <= fader.getMinimum();
+}
+
+juce::String StripLevelReadout::number() const
+{
+    if (isAtMinimum())
+        return "-inf";
+
+    // always one decimal, so the figures keep their places while the fader moves; no "-0.0"
+    const auto tenths = juce::roundToInt (fader.getValue() * 10.0);
+    return juce::String (tenths / 10.0, 1);
+}
+
+void StripLevelReadout::refresh()
+{
+    if (! isBeingEdited())
+        setText (number(), juce::dontSendNotification);   // the text is the level; paint() puts "vol" before it
+}
+
+void StripLevelReadout::paint (juce::Graphics& g)
+{
+    const auto box = getLocalBounds().reduced (readoutMargin).toFloat();
+    const auto corner = 3.0f;
+
+    // recessed, as the level meter's slot, with the faint light edge around it: a dark grey rather than black,
+    // and the inner shadow along the top and down the left edge stronger than the slot's, so it shows on that
+    g.setColour (juce::Colour (0xff2a2a2a));
+    g.fillRoundedRectangle (box, corner);
+    {
+        juce::Graphics::ScopedSaveState state (g);
+        juce::Path outline;
+        outline.addRoundedRectangle (box, corner);
+        g.reduceClipRegion (outline);
+
+        const auto shadow = juce::Colours::black.withAlpha (0.9f);
+        const auto clear = juce::Colours::transparentBlack;
+        const auto depth = juce::jmin (7.0f, box.getHeight() * 0.5f);
+        g.setGradientFill (juce::ColourGradient (shadow, box.getX(), box.getY(), clear, box.getX(), box.getY() + depth, false));
+        g.fillRect (box.withHeight (depth));
+        g.setGradientFill (juce::ColourGradient (shadow.withMultipliedAlpha (0.7f), box.getX(), box.getY(), clear, box.getX() + 4.0f, box.getY(), false));
+        g.fillRect (box.withWidth (4.0f));
+    }
+    g.setColour (juce::Colours::white.withAlpha (0.08f));
+    g.drawRoundedRectangle (box.expanded (0.5f), corner + 0.5f, 1.0f);
+
+    // "vol" at the left, the level at the right; the editor stands in the level's place
+    const auto text = box.toNearestInt().reduced (readoutTextInset, 0);
+    g.setColour (juce::Colours::white);
+    g.setFont (getFont());
+    g.drawText ("vol", text, juce::Justification::centredLeft, false);
+    if (! isBeingEdited())
+        g.drawText (number(), text, juce::Justification::centredRight, false);
+}
+
+void StripLevelReadout::editorShown (juce::TextEditor* editor)
+{
+    // the number alone to type over, at the right of the box as it stood
+    editor->setBounds (getLocalBounds().reduced (readoutMargin).reduced (readoutTextInset, 0));
+    editor->setBorder ({});
+    editor->setIndents (0, 0);
+    editor->setJustification (juce::Justification::centredRight);
+    editor->setText (number(), false);
+    editor->selectAll();
+}
+
+void StripLevelReadout::textWasEdited()
+{
+    // "-6", "-6.5 dB", "-inf"; anything without a number leaves the level as it is
+    const auto typed = getText().toLowerCase().replaceCharacter (',', '.').trim();
+    std::optional<double> decibels;
+    if (typed == number())
+        {}   // return on the number as it stood: the level keeps the fraction the readout rounds away
+    else if (typed.contains ("inf"))
+        decibels = fader.getMinimum();
+    else if (typed.containsAnyOf ("0123456789"))
+        decibels = fader.getRange().clipValue (typed.getDoubleValue());
+
+    if (decibels.has_value() && onEdit != nullptr)
+        onEdit (*decibels);
+    refresh();
+}
+
+//==============================================================================
 StripFader::StripFader (StripChannel channel_) : channel (std::move (channel_))
 {
     AudiumLookAndFeel::configureFaderSlider (&fader);
     fader.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
     fader.onDragStart = [this] { channel.track->onDragStart (channel.channelNumber); };
-    fader.onValueChange = [this] { channel.track->setGain (juce::Decibels::decibelsToGain (static_cast<float> (fader.getValue())), channel.channelNumber); };
+    fader.onValueChange = [this]
+    {
+        channel.track->setGain (juce::Decibels::decibelsToGain (static_cast<float> (fader.getValue())), channel.channelNumber);
+        readout.refresh();
+    };
     fader.onDragEnd = [this] { channel.track->onDragEnd ("Set Gain"); };
     addAndMakeVisible (fader);
+
+    // a level typed into the readout is one undo step, as a fader drag
+    readout.onEdit = [this] (double decibels)
+    {
+        channel.track->onDragStart (channel.channelNumber);
+        fader.setValue (decibels, juce::sendNotificationSync);
+        channel.track->onDragEnd ("Set Gain");
+    };
+    addAndMakeVisible (readout);
 
     meter.setScaleShown (true);
     meter.setInterceptsMouseClicks (false, false);   // it may overlap the fader's cap
@@ -307,6 +416,7 @@ void StripFader::refresh()
 
     if (! fader.isMouseButtonDown())
         fader.setValue (LevelMeter::gainToDecebel (channel.data().gain), juce::dontSendNotification);
+    readout.refresh();
 }
 
 void StripFader::refreshLive()
@@ -325,6 +435,7 @@ void StripFader::resized()
     // slot and scale, and takes no mouse.
     fader.setBounds (faderX, faderY, faderWidth, faderHeight);
     meter.setBounds (meterX, meterY, LevelMeter::scaleWidth + meterWidth, meterHeight);
+    readout.setBounds (readoutIn (getLocalBounds().removeFromBottom (readoutRoomHeight)));
 }
 
 //==============================================================================
