@@ -611,3 +611,33 @@ the one-gesture crossfade UX on top:
   the quirks `EventMerger::Parameters` already names; changing them changes
   every user's cuts, so it wants a listening session on the demo material,
   not only the harness.
+
+## Funding (explored 2026-11-25)
+
+- [ ] **Think the funding approach through before shipping any of it.**
+  GitHub Sponsors has had no sponsor since August. What exists so far:
+  - Sponsors tiers changed 2026-11-25: one-time $5/$10/$25 added, the $500
+    and $1,000 monthly tiers retired, the $25 and $100 perks rewritten
+    (README / website name or logo, no software access).
+  - A pay-what-you-want dialog for the website download page, built but
+    uncommitted on `feature/pay-what-you-want` in `../Audionaut-Web`
+    (`docs/javascripts/pay-what-you-want.js`). It is switched off until
+    payment links are filled in, and `site/` is not rebuilt.
+
+  Open questions:
+  - Is it worth it at all? At about 135 website download clicks a month the
+    estimate is around $10 a month ($0-40), and that rests on assumed
+    conversion rates, not measured ones.
+  - Payment provider: Stripe payment links (no platform fee, we are the
+    merchant) or a merchant of record (handles sales tax, 5-10%).
+  - Tax: a payment tied to a download may count as a sale, not a gift -
+    ask the tax adviser before going live.
+  - The $10 preselection, and whether an extra click on every download
+    costs more in growth than it earns.
+  - Whether "Check for Updates" should lead through the website step.
+  - An in-app "Support Audionaut" item (Help menu / About) was started and
+    cancelled: the Mac App Store may reject links to outside payment, so it
+    would have to be hidden there via `Util/DistributionChannel.h`.
+  - Mac App Store: a price or a tip-jar in-app purchase instead.
+  - Many recent download clicks come from China, India and Iran, where
+    card payment is unlikely.
