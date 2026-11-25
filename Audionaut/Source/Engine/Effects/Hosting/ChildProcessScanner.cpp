@@ -223,6 +223,11 @@ ChildProcessScanner::ChildProcessScanner (WorkerFactory workerFactory_, int time
 
 ChildProcessScanner::~ChildProcessScanner()
 {
+    dismissWorker();
+}
+
+void ChildProcessScanner::dismissWorker()
+{
     const juce::ScopedLock lock (workerLock);
     if (worker == nullptr)
         return;
@@ -359,6 +364,11 @@ void ChildProcessScanner::scanFinished()
     const juce::ScopedLock lock (workerLock);
     emptyAgainInNewWorker = 0;
     declinedInThisScan = false;
+
+    // Not kept for a next scan: left idle it ends by itself after a few seconds, and a child process
+    // nobody asks about any more stays in the process table (a zombie) until the next scan, or the
+    // scanner's end, collects it.
+    dismissWorker();
 }
 
 bool ChildProcessScanner::mayRaiseTheQuestion() const

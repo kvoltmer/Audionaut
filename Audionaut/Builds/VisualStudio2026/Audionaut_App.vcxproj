@@ -311,6 +311,7 @@
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\HostedEffect.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginHost.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.cpp"/>
+    <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginListScan.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\EffectRegistry.cpp"/>
     <ClCompile Include="..\..\Source\Engine\Effects\InsertChain.cpp"/>
@@ -3568,6 +3569,7 @@
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\HostedEffect.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginHost.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginListScan.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginTypeId.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\EffectRegistry.h"/>
@@ -3663,6 +3665,7 @@
     <ClInclude Include="..\..\Source\Interface\Dialogs\LoadSimulatorComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\ProcessingLoadComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\PluginManagerComponent.h"/>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\InitialPluginScanComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\StemSeparationDialog.h"/>
     <ClInclude Include="..\..\Source\Interface\Dialogs\AutoEditSettingsComponent.h"/>

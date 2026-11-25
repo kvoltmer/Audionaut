@@ -170,6 +170,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/HostedEffect_9021fa48.o \
   $(JUCE_OBJDIR)/PluginHost_c863964b.o \
   $(JUCE_OBJDIR)/PluginFormats_8ec6ab63.o \
+  $(JUCE_OBJDIR)/PluginListScan_b020e45e.o \
   $(JUCE_OBJDIR)/ScanWorker_a34932b.o \
   $(JUCE_OBJDIR)/EffectRegistry_5ec2ba9.o \
   $(JUCE_OBJDIR)/InsertChain_a4a5e8f7.o \
@@ -780,6 +781,11 @@ $(JUCE_OBJDIR)/PluginHost_c863964b.o: ../../Source/Engine/Effects/Hosting/Plugin
 $(JUCE_OBJDIR)/PluginFormats_8ec6ab63.o: ../../Source/Engine/Effects/Hosting/PluginFormats.cpp
 	-$(V_AT)mkdir -p $(@D)
 	@echo "Compiling PluginFormats.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/PluginListScan_b020e45e.o: ../../Source/Engine/Effects/Hosting/PluginListScan.cpp
+	-$(V_AT)mkdir -p $(@D)
+	@echo "Compiling PluginListScan.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/ScanWorker_a34932b.o: ../../Source/Engine/Effects/Hosting/ScanWorker.cpp

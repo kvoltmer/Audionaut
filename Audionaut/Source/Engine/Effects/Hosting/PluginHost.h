@@ -28,7 +28,8 @@ class HostedEffect;
  *
  * One per process (the app, the CLI binary), handed to the factory: it
  * owns the formats this platform hosts - Audio Units on macOS, where the
- * app lives in its sandbox; VST3 on Windows; VST3 and LV2 on Linux - and the
+ * app lives in its sandbox; VST3 on Windows; VST3 and LV2 on Linux, where
+ * the user chooses among them (setFormatEnabled) - and the
  * list of known plugins, kept as XML in the app's data folder together with
  * the blacklist, so a launch has the plugins without a scan. A scan goes
  * through a worker process (ChildProcessScanner) when the host is
@@ -124,6 +125,19 @@ public:
     bool isLoweredSecurityAllowed() const noexcept { return loweredSecurityAllowed->load(); }
     /// Both at once, as the app's switch sets them: the types are registered again once, not twice.
     void setEnabled (bool enabled, bool loweredSecurityAllowed);
+    /// Message thread. Whether one of this host's formats is used. Turned off, its plugins stay on
+    /// the list but are not offered (Availability::formatDisabled) and a scan does not look for
+    /// them; a project's plugin in that format resolves to the same plugin in a format that is on,
+    /// where there is one. Every format is on unless told otherwise (the app tells, on Linux).
+    /// Registers the attached registries' types again when it changes.
+    void setFormatEnabled (const juce::String& formatName, bool enabled);
+    bool isFormatEnabled (const juce::String& formatName) const { return formatsOff.count (formatName) == 0; }
+    /// Whether the user chooses among the formats on this platform: on Linux, whose two (LV2 and
+    /// VST3) often hold the same plugins twice. Elsewhere the platform's format is simply on.
+    static bool formatsAreSwitchable() noexcept;
+    /// What a format is until the user says otherwise. Where they are switchable, LV2 is on and VST3
+    /// is off; everything else, and everything elsewhere, is on.
+    static bool isFormatOnByDefault (const juce::String& formatName) noexcept;
     /// Which plugins those are; the platform's answer by default (tests bring their own).
     void setLoweredSecurityQuestion (std::function<bool (const juce::PluginDescription&)> asksForIt) { asksForLoweredSecurity = std::move (asksForIt); }
 
@@ -136,6 +150,8 @@ public:
     bool syncWithInstalled();
     /// Whether the entry comes from a scan (the loaded plugin's word) or only from the system's list.
     static bool isScanned (const juce::PluginDescription& description) noexcept { return description.lastInfoUpdateTime != juce::Time(); }
+    /// How many of the listed plugins are scanned.
+    int numScanned() const;
     /// Message thread, after a scan of the list's (which loads the not-scanned entries too and
     /// replaces them where they are): a not-scanned plugin the scan loaded and found nothing in is
     /// skipped from now on, the list is in line with what is installed, and its listeners hear of it.
@@ -216,6 +232,7 @@ public:
         available,
         formatMissing,          ///< a format this process does not host
         disabled,               ///< plugins are turned off here
+        formatDisabled,         ///< its format is turned off here
         removed,                ///< the user took it off the list
         needsLoweredSecurity    ///< the system would ask the user to lower the security settings, and that is not allowed here
     };
@@ -321,7 +338,6 @@ private:
     };
     bool takeLoadedEmpty (const juce::String& fileOrIdentifier) const;   // whether it was among them; not any more then
     void skipNotScanned (const juce::String& fileOrIdentifier);          // off the list, and skipped from now on
-    int numScanned() const;
 
     /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
     struct Checks
@@ -353,6 +369,7 @@ private:
     std::set<juce::String> removed;   // fileOrIdentifier of the listed entries the user removed
     mutable juce::String persisted;   // the list as this host started with it, or last read from or wrote to the file
     bool enabled = true;
+    std::set<juce::String> formatsOff;   // names of the formats the user turned off
     std::shared_ptr<std::atomic<bool>> loweredSecurityAllowed = std::make_shared<std::atomic<bool>> (false);   // shared with the scanner
     std::function<bool (const juce::PluginDescription&)> asksForLoweredSecurity;
     std::function<std::vector<juce::PluginDescription>()> installedSource;

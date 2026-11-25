@@ -66,8 +66,9 @@ public:
     bool findPluginTypesFor (juce::AudioPluginFormat& format,
                              juce::OwnedArray<juce::PluginDescription>& result,
                              const juce::String& fileOrIdentifier) override;
-    /// The list's word that a scan is over: the next one asks new workers about empty files again, and
-    /// may raise the system's question again where the user declined it.
+    /// The list's word that a scan is over: its worker is told to leave and collected, the next scan
+    /// asks new workers about empty files again, and may raise the system's question again where the
+    /// user declined it.
     void scanFinished() override;
 
     /// Whether the worker may load plugins that make the system ask the user to lower the app's security
@@ -122,6 +123,7 @@ private:
                      juce::OwnedArray<juce::PluginDescription>& result);
     Started startWorker();
     void dropWorker (bool kill);
+    void dismissWorker();                      // told to leave, given a moment to do so, and collected
     void note (const juce::String& line) const;
     bool mayRaiseTheQuestion() const;          // lowered security settings allowed, and not declined by the user in this scan
     bool scanInProcessOfItsOwn (juce::AudioPluginFormat& format, juce::OwnedArray<juce::PluginDescription>& result,

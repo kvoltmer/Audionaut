@@ -279,6 +279,30 @@ void PluginHost::setEnabled (bool enabled_, bool loweredSecurityAllowed_)
         registerIntoAttached();
 }
 
+void PluginHost::setFormatEnabled (const juce::String& formatName, bool enabled_)
+{
+    const auto changed = enabled_ ? formatsOff.erase (formatName) > 0
+                                  : formatsOff.insert (formatName).second;
+    if (changed)
+        registerIntoAttached();   // its plugins come, or go
+}
+
+bool PluginHost::formatsAreSwitchable() noexcept
+{
+   #if JUCE_LINUX || JUCE_BSD
+    return true;
+   #else
+    return false;
+   #endif
+}
+
+bool PluginHost::isFormatOnByDefault (const juce::String& formatName) noexcept
+{
+    // LV2 is Linux's own format, and what its plugins come in first; most of them come as VST3 too,
+    // and both formats on would list every such plugin twice
+    return ! (formatsAreSwitchable() && formatName == "VST3");
+}
+
 juce::File PluginHost::getListFile() const
 {
     return dataDirectory.getChildFile ("Plugins").getChildFile ("KnownPlugins.xml");
@@ -410,6 +434,8 @@ PluginHost::Availability PluginHost::availabilityOf (const juce::PluginDescripti
         return Availability::formatMissing;
     if (! enabled)
         return Availability::disabled;
+    if (! isFormatEnabled (description.pluginFormatName))
+        return Availability::formatDisabled;
     if (isRemoved (description))
         return Availability::removed;
     if (! isLoweredSecurityAllowed() && asksForLoweredSecurity && asksForLoweredSecurity (description))
@@ -424,6 +450,7 @@ juce::String PluginHost::describe (Availability availability)
         case Availability::available:      return {};
         case Availability::formatMissing:  return TRANS ("its format is not hosted on this platform");
         case Availability::disabled:       return TRANS ("plugins are turned off; Manage Plugins turns them on");
+        case Availability::formatDisabled: return TRANS ("its plugin format is turned off; Manage Plugins turns it on");
         case Availability::removed:        return TRANS ("it was removed from the plugin list; Manage Plugins puts it back");
         case Availability::needsLoweredSecurity:
             return TRANS ("macOS only loads it with lowered security settings, which a command run without the app cannot ask for");
@@ -896,6 +923,8 @@ PluginHost::ScanResult PluginHost::scanAll (const std::function<void (float, con
         auto* format = formats.getFormat (f);
         if (! format->canScanForPlugins() || (onlyFormat.isNotEmpty() && format->getName() != onlyFormat))
             continue;
+        if (! isFormatEnabled (format->getName()))   // a format that is off is not looked for
+            continue;
 
         juce::PluginDirectoryScanner::applyBlacklistingsFromDeadMansPedal (list, pedal);
         juce::PluginDirectoryScanner scanner (list, *format, getScanFolders (*format), true, pedal, true);
@@ -929,8 +958,10 @@ bool PluginHost::runWhilePumping (std::function<void()> fn, int timeoutMs)
 //==============================================================================
 void PluginHost::changeListenerCallback (juce::ChangeBroadcaster*)
 {
-    // message thread: the list changed (a scan, a removal, the blacklist)
-    saveList();
+    // message thread: the list changed (a scan, a removal, the blacklist). Reading the file says so
+    // too, and is nothing to write: a scan worker, which loads the list as the app does, would put
+    // what it read back over what the scanning app has written since.
+    saveListIfChanged();
     registerIntoAttached();
 }
 

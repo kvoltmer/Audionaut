@@ -144,6 +144,9 @@ private:
     std::unique_ptr<juce::Component> fileBrowserView;
     std::unique_ptr<juce::Component> processingLoadView;   // the Processing Load tool window, while open
     std::unique_ptr<juce::Component> pluginManagerView;    // the Manage Plugins tool window, while open
+    std::unique_ptr<juce::Component> initialPluginScanDialog;   // the first launch's plugin scan, while it runs
+    juce::Array<juce::File> filesToOpenAtStartup;   // from the command line and from other launches, until finishStartup() opens them
+    bool startupFinished = false;
    #if JUCE_DEBUG
     std::unique_ptr<juce::Component> loadSimulatorView;    // debug builds: the Load Simulator tool window, while open
    #endif
@@ -165,6 +168,18 @@ private:
     /** The startup prompts (restore, consent, crash report), chained; run last,
         once the main window is up and the splash screen has gone. */
     void showStartupPrompts();
+
+    /** What handleAsyncUpdate leaves until the first launch's plugin scan is
+        over: the startup's projects, the project monitor, the agent host, the
+        update check and the startup prompts. */
+    void finishStartup();
+
+    /** Scans the plugin folders in a modal dialog, once per installation and
+        only where plugins are found that way (VST3, LV2 - not the Audio Units,
+        which macOS lists by itself). `then` runs when the scan is over or was
+        cancelled, or at once if there is none to run; not when the app quits
+        over the scan. */
+    void runInitialPluginScan(std::function<void ()> then);
 
     /** Serves agent commands against the open document, so they never reach
         the project file behind the user's back. */

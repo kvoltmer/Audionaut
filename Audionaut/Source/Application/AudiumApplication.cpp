@@ -32,6 +32,7 @@
 #include "Interface/Dialogs/FileBrowserView.h"
 #include "Interface/Dialogs/ProcessingLoadComponent.h"
 #include "Interface/Dialogs/PluginManagerComponent.h"
+#include "Interface/Dialogs/InitialPluginScanComponent.h"
 #if JUCE_DEBUG
  #include "Interface/Dialogs/LoadSimulatorComponent.h"
 #endif
@@ -136,6 +137,17 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     // verbs this binary runs headlessly alike.
     const auto pluginsEnabled = getPreferences().getValue (audium::PreferenceKeys::pluginsEnabled, "true") == "true";
     pluginHost->setEnabled (pluginsEnabled);
+
+    // Where the platform has several formats to choose from (Linux: LV2 is on and VST3 is off until
+    // the user says otherwise in Manage Plugins), for the app and the headless verbs alike.
+    if (audium::PluginHost::formatsAreSwitchable())
+        for (auto* format : pluginHost->getFormats().getFormats())
+        {
+            const auto name = format->getName();
+            const auto key = audium::PreferenceKeys::pluginFormatEnabledPrefix + name.toStdString();
+            const auto byDefault = audium::PluginHost::isFormatOnByDefault (name) ? "true" : "false";
+            pluginHost->setFormatEnabled (name, getPreferences().getValue (key, byDefault) == "true");
+        }
 
     // Projucer-style in-app CLI: a recognised verb runs headlessly and the
     // process quits with its exit code; anything else (a project file, no
@@ -260,12 +272,13 @@ void AudiumApplication::initialise (const juce::String& commandLine)
     
     
     
-    // try to load project from command line
+    // a project from the command line: opened in finishStartup(), after the
+    // first launch's plugin scan
     if (! commandLine.trim().startsWithChar ('-')) {
         ArgumentList list ({}, commandLine);
 
         for (auto& arg : list.arguments) {
-            openFile (arg.resolveAsFile());
+            filesToOpenAtStartup.add (arg.resolveAsFile());
         }
     }
     
@@ -294,17 +307,34 @@ void AudiumApplication::handleAsyncUpdate()
         logUsageEvent (name, params);
     });
 
+    if (splashScreen != nullptr) {
+        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
+        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
+    }
+
+    // The first launch's plugin scan before any project is read, and before
+    // agents are served: a project's plugin inserts resolve against what the
+    // scan found, and nothing is opened, asked or said while its dialog is up.
+    runInitialPluginScan ([this] {
+        if (mainWindow != nullptr)
+            finishStartup();
+    });
+}
+
+void AudiumApplication::finishStartup()
+{
+    startupFinished = true;
+
+    // from the command line, and what other launches forwarded meanwhile
+    for (const auto& file : std::exchange (filesToOpenAtStartup, {}))
+        openFile (file);
+
     loadStartupProject();
 
     updateUI();
     refreshWindowTitle();
     startProjectMonitor();
     startAgentHost();
-
-    if (splashScreen != nullptr) {
-        splashScreen->deleteAfterDelay (RelativeTime::seconds (0.5), true);
-        splashScreen.release(); // SplashScreen deletes itself (DeletedAtShutdown) once the delay/click fires
-    }
 
     updateChecker = std::make_unique<audium::UpdateChecker> (getPreferences());
     updateChecker->checkOnStartupIfDue();
@@ -327,6 +357,43 @@ void AudiumApplication::showStartupPrompts()
             crashReporter->offerPendingReport();
         });
     });
+}
+
+void AudiumApplication::runInitialPluginScan(std::function<void ()> then)
+{
+    auto& prefs = getPreferences();
+
+    // Not where the system lists the plugins by itself (the Audio Units on
+    // macOS: no format looks in folders there), and not with plugins off: the
+    // scan is then due at the launch after they were turned on.
+    if (prefs.getValue (PreferenceKeys::initialPluginScanDone, "false") == "true"
+        || ! pluginHost->isEnabled()
+        || ! pluginHost->scansFolders()) {
+        NullCheckedInvocation::invoke (then);
+        return;
+    }
+
+    // Once, however it ends: a scan the user cancels, or one the app does not
+    // survive, is not started again by the next launch - Manage Plugins scans
+    // from then on.
+    prefs.setValue (PreferenceKeys::initialPluginScanDone, "true");
+    prefs.synchronize();
+
+    // A list from an earlier version: its user has scanned already.
+    if (pluginHost->getListFile().existsAsFile()) {
+        NullCheckedInvocation::invoke (then);
+        return;
+    }
+
+    auto dialog = InitialPluginScanComponent::createDialog (pluginHost, mainWindow.get());
+
+    // modal: the main window, its menus and its shortcuts wait for the scan
+    dialog->enterModalState (true, ModalCallbackFunction::create ([this, then] (int) {
+        initialPluginScanDialog.reset(); // ends a scan the dialog was closed on
+        NullCheckedInvocation::invoke (then);
+    }), false);
+
+    initialPluginScanDialog = std::move (dialog);
 }
 
 void AudiumApplication::loadStartupProject()
@@ -600,6 +667,7 @@ void AudiumApplication::shutdown()
     projectMonitor.reset(); // stop polling before the engine goes away
     processingLoadView.reset(); // its timer reads the engine; stores its position while preferences live
     pluginManagerView.reset();  // ends a scan that still runs: the list is saved below, after its last word
+    initialPluginScanDialog.reset(); // likewise
    #if JUCE_DEBUG
     loadSimulatorView.reset();  // resets the simulated loads it set
    #endif
@@ -705,6 +773,14 @@ void AudiumApplication::anotherInstanceStarted (const juce::String& commandLine)
 
         for (auto& arg : list.arguments) {
             auto file = arg.resolveAsFile();
+
+            // nothing is opened under the first launch's plugin scan: it
+            // waits with the startup's own files
+            if (! startupFinished) {
+                filesToOpenAtStartup.add (file);
+                continue;
+            }
+
             askToSaveIfDirtyAndInvoke([this, file](void) {
                 openFile (file);
             
@@ -1599,6 +1675,13 @@ void AudiumApplication::showPluginManagerWindow()
                                     pluginHost->setEnabled (enabled, enabled);   // and macOS may ask about plugins: somebody is here to answer
                                     if (enabled)
                                         pluginHost->syncWithInstalled();
+                                },
+                                [this] (const juce::String& formatName, bool enabled)
+                                {
+                                    getPreferences().setValue (audium::PreferenceKeys::pluginFormatEnabledPrefix + formatName.toStdString(),
+                                                               enabled ? "true" : "false");
+                                    getPreferences().synchronize();
+                                    pluginHost->setFormatEnabled (formatName, enabled);
                                 }),
                                 pluginManagerView, true,
                                 760, 480, 480, 320, 2400, 1600);

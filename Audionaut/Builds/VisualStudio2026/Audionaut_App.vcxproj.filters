@@ -1321,6 +1321,9 @@
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginFormats.cpp">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Source\Engine\Effects\Hosting\PluginListScan.cpp">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.cpp">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClCompile>
@@ -5133,6 +5136,9 @@
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginHost.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginListScan.h">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>
@@ -5416,6 +5422,9 @@
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\PluginManagerComponent.h">
+      <Filter>Audionaut\Source\Interface\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Interface\Dialogs\InitialPluginScanComponent.h">
       <Filter>Audionaut\Source\Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\Interface\Dialogs\SeparationSettingsComponent.h">

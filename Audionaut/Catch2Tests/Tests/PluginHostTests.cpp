@@ -11,6 +11,7 @@
 #include "Engine/Effects/Hosting/ChildProcessScanner.h"
 #include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginHost.h"
+#include "Engine/Effects/Hosting/PluginListScan.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/InsertChain.h"
 #include "Engine/Effects/MixPlanContainer.h"
@@ -533,6 +534,122 @@ SCENARIO ("the plugin host scans with its formats", "[engine][effects][hosting]"
     }
 }
 
+SCENARIO ("a list scan leaves the message thread free and says there what it did", "[engine][effects][hosting][scan]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a host with two test formats and an empty list")
+    {
+        TestHost test (temp.folder, false);
+        auto& host = test.host;
+        REQUIRE (host.getList().getNumTypes() == 0);
+
+        std::optional<PluginListScan::Outcome> outcome;
+        std::vector<double> fractions;
+        const auto progress = [&] (double fraction, const juce::String&) { fractions.push_back (fraction); };
+        const auto pumpUntilOver = [&]
+        {
+            for (auto i = 0; i < 400 && ! outcome; ++i)
+                messageThread.pump();
+        };
+
+        WHEN ("the host's formats are scanned")
+        {
+            PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+
+            THEN ("nothing is said before the message thread runs")
+            {
+                REQUIRE_FALSE (outcome.has_value());
+            }
+
+            THEN ("both formats' plugins are found, and the outcome says so once")
+            {
+                pumpUntilOver();
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 2);
+                REQUIRE_FALSE (outcome->cancelled);
+                REQUIRE (outcome->failed.isEmpty());
+                REQUIRE (outcome->skipped.isEmpty());
+                REQUIRE (host.getList().getNumTypes() == 2);
+                for (const auto fraction : fractions)
+                {
+                    REQUIRE (fraction >= 0.0);
+                    REQUIRE (fraction <= 1.0);
+                }
+
+                outcome.reset();
+                messageThread.pump();
+                REQUIRE_FALSE (outcome.has_value());
+            }
+        }
+
+        WHEN ("a scan is cancelled")
+        {
+            PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            scan.cancel();
+            pumpUntilOver();
+
+            THEN ("it is over, and says that it was cancelled")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->cancelled);
+                REQUIRE (outcome->failed.isEmpty());
+            }
+        }
+
+        WHEN ("the scan is deleted by the one who hears that it is over")
+        {
+            std::unique_ptr<PluginListScan> scan;
+            scan = std::make_unique<PluginListScan> (host, PluginListScan::scannableFormats (host), progress,
+                                                     [&] (const PluginListScan::Outcome& result)
+                                                     {
+                                                         scan.reset();
+                                                         outcome = result;
+                                                     });
+            pumpUntilOver();
+
+            THEN ("the outcome still arrives")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 2);
+                REQUIRE (scan == nullptr);
+            }
+        }
+
+        WHEN ("a scan is deleted while it runs")
+        {
+            {
+                PluginListScan scan (host, PluginListScan::scannableFormats (host), progress,
+                                     [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            }
+            messageThread.pump();
+
+            THEN ("nothing is said any more")
+            {
+                REQUIRE_FALSE (outcome.has_value());
+            }
+        }
+
+        WHEN ("there is no format to scan")
+        {
+            PluginListScan scan (host, {}, progress,
+                                 [&] (const PluginListScan::Outcome& result) { outcome = result; });
+            pumpUntilOver();
+
+            THEN ("the scan is over at once, with nothing found")
+            {
+                REQUIRE (outcome.has_value());
+                REQUIRE (outcome->added == 0);
+                REQUIRE_FALSE (outcome->cancelled);
+                REQUIRE (fractions.empty());
+            }
+        }
+    }
+}
+
 SCENARIO ("the child-process scanner reads the worker's envelope", "[engine][effects][hosting]")
 {
     GIVEN ("the envelope the scan-plugin worker writes")
@@ -627,6 +744,54 @@ SCENARIO ("a host that started without a list file leaves another process's list
     }
 }
 
+SCENARIO ("a host that only read the list does not write it back", "[engine][effects][hosting][scan]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+
+    GIVEN ("a scan worker's host that loaded the list, and the scanning app's, which wrote a newer one since")
+    {
+        {
+            TestHost before (temp.folder);
+            REQUIRE (before.host.saveList());
+        }
+        TestHost worker (temp.folder, false);
+        REQUIRE (worker.host.loadList());
+        {
+            TestHost app (temp.folder, false);
+            REQUIRE (app.host.loadList());
+            app.host.getList().addToBlacklist ("/test/crashes.testa");
+            REQUIRE (app.host.saveList());
+        }
+        const auto newer = worker.host.getListFile().loadFileAsString();
+
+        WHEN ("the worker's host hears that its list changed, which reading it said")
+        {
+            messageThread.pump();
+
+            THEN ("the newer list is still in the file")
+            {
+                REQUIRE (worker.host.getListFile().loadFileAsString() == newer);
+                REQUIRE (worker.host.getListFile().getParentDirectory().findChildFiles (juce::File::findFiles, false).size() == 1);
+            }
+        }
+
+        WHEN ("that host's own list changes")
+        {
+            messageThread.pump();
+            worker.host.getList().addToBlacklist ("/test/hangs.testb");
+            messageThread.pump();
+
+            THEN ("that is written without being asked for")
+            {
+                TestHost next (temp.folder, false);
+                REQUIRE (next.host.loadList());
+                REQUIRE (next.host.getList().getBlacklistedFiles().contains ("/test/hangs.testb"));
+            }
+        }
+    }
+}
+
 SCENARIO ("only the app takes the file a scan is on for one the scan died of", "[engine][effects][hosting][scan]")
 {
     MessageThread messageThread;
@@ -686,6 +851,131 @@ SCENARIO ("only the app takes the file a scan is on for one the scan died of", "
                 }
             }
         }
+    }
+}
+
+SCENARIO ("a format that is turned off is neither offered nor scanned", "[engine][effects][hosting][formats]")
+{
+    MessageThread messageThread;
+    TempFolder temp;
+    const auto inA = TestPluginInstance::describe (gainIn ("TestA", 0x1111));
+    const auto inB = TestPluginInstance::describe (gainIn ("TestB", 0x2222));
+
+    GIVEN ("a host with the same plugin in two formats, attached to a registry")
+    {
+        TestHost test (temp.folder);
+        auto& host = test.host;
+        auto registry = std::make_shared<EffectRegistry>();
+        host.attach (registry, PluginHost::Mode::full);
+
+        THEN ("both formats are on")
+        {
+            REQUIRE (host.isFormatEnabled ("TestA"));
+            REQUIRE (host.isFormatEnabled ("TestB"));
+            REQUIRE (registry->hasType ("testa:00001111"));
+            REQUIRE (registry->hasType ("testb:00002222"));
+        }
+
+        WHEN ("one format is turned off")
+        {
+            host.setFormatEnabled ("TestA", false);
+
+            THEN ("its plugin leaves the registry and stays on the list, and the host says why")
+            {
+                REQUIRE_FALSE (host.isFormatEnabled ("TestA"));
+                REQUIRE_FALSE (registry->hasType ("testa:00001111"));
+                REQUIRE (registry->hasType ("testb:00002222"));
+                REQUIRE (host.getList().getNumTypes() == 2);
+                REQUIRE (host.availabilityOf (inA) == PluginHost::Availability::formatDisabled);
+                REQUIRE (PluginHost::describe (PluginHost::Availability::formatDisabled).isNotEmpty());
+                REQUIRE_FALSE (host.canCreate (inA));
+                REQUIRE (host.availabilityOf (inB) == PluginHost::Availability::available);
+            }
+
+            THEN ("a project's plugin in that format is found in the other")
+            {
+                const auto substitute = host.findSubstitute (inA.name, inA.manufacturerName);
+                REQUIRE (substitute.has_value());
+                REQUIRE (substitute->pluginFormatName == "TestB");
+            }
+
+            THEN ("a scan of the list leaves the format out")
+            {
+                const auto scanned = PluginListScan::scannableFormats (host);
+                REQUIRE (scanned.size() == 1);
+                REQUIRE (scanned.front()->getName() == "TestB");
+            }
+
+            AND_WHEN ("it is turned on again")
+            {
+                host.setFormatEnabled ("TestA", true);
+
+                THEN ("its plugin is back")
+                {
+                    REQUIRE (registry->hasType ("testa:00001111"));
+                    REQUIRE (host.canCreate (inA));
+                    REQUIRE (PluginListScan::scannableFormats (host).size() == 2);
+                }
+            }
+        }
+    }
+
+    GIVEN ("a host with an empty list and one of its two formats turned off")
+    {
+        TestHost test (temp.folder, false);
+        auto& host = test.host;
+        host.setFormatEnabled ("TestA", false);
+
+        WHEN ("it scans")
+        {
+            const auto result = host.scanAll();
+
+            THEN ("only the other format's plugin is found")
+            {
+                REQUIRE (result.found == 1);
+                REQUIRE (host.findByTypeId ("testb:00002222").has_value());
+                REQUIRE_FALSE (host.findByTypeId ("testa:00001111").has_value());
+            }
+        }
+
+        WHEN ("it is asked to scan the format that is off")
+        {
+            const auto result = host.scanAll ({}, {}, "TestA");
+
+            THEN ("nothing is looked for")
+            {
+                REQUIRE (result.found == 0);
+                REQUIRE (host.getList().getNumTypes() == 0);
+            }
+        }
+    }
+}
+
+SCENARIO ("the formats are the user's to choose on Linux only, where LV2 comes first", "[engine][effects][hosting][formats]")
+{
+   #if JUCE_LINUX || JUCE_BSD
+    THEN ("LV2 is on and VST3 is off until the user says otherwise")
+    {
+        REQUIRE (PluginHost::formatsAreSwitchable());
+        REQUIRE (PluginHost::isFormatOnByDefault ("LV2"));
+        REQUIRE_FALSE (PluginHost::isFormatOnByDefault ("VST3"));
+    }
+   #else
+    THEN ("the platform's formats are simply on")
+    {
+        REQUIRE_FALSE (PluginHost::formatsAreSwitchable());
+        REQUIRE (PluginHost::isFormatOnByDefault ("VST3"));
+        REQUIRE (PluginHost::isFormatOnByDefault ("AudioUnit"));
+    }
+   #endif
+
+    THEN ("a host starts with every format on: the app applies the user's choice")
+    {
+        MessageThread messageThread;
+        TempFolder temp;
+        PluginHost host (temp.folder, false);
+        REQUIRE (host.isFormatEnabled ("VST3"));
+        REQUIRE (host.isFormatEnabled ("LV2"));
     }
 }
 
@@ -2095,6 +2385,80 @@ SCENARIO ("the child-process scanner says what it did with each file", "[engine]
                 REQUIRE (log.contains ("asked again of a new worker"));
                 REQUIRE (log.contains ("worker 2 started"));
                 REQUIRE (lines[lines.size() - 1].startsWith ("TestA  dies  ->  FAILED, file skipped: the worker process ended"));
+            }
+        }
+    }
+}
+
+namespace
+{
+    /// What became of the workers a scanner had.
+    struct WorkerFates
+    {
+        std::atomic<int> held { 0 };              // workers the scanner still owns
+        std::atomic<int> leftWhenTold { 0 };      // had ended by themselves when they were collected
+        std::atomic<int> killedWhileRunning { 0 };
+    };
+
+    /// A ThreadWorker that tells of its end.
+    class WatchedWorker final : public ChildProcessScanner::Worker
+    {
+    public:
+        WatchedWorker (std::shared_ptr<WorkerFates> fates_, int idleMs) : fates (std::move (fates_)), worker (describedIn, idleMs) { ++fates->held; }
+        ~WatchedWorker() override { --fates->held; }
+
+        bool start (const juce::String& pipeName) override { return worker.start (pipeName); }
+        bool isRunning() override { return worker.isRunning(); }
+
+        void kill() override
+        {
+            ++(worker.isRunning() ? fates->killedWhileRunning : fates->leftWhenTold);
+            worker.kill();
+        }
+
+    private:
+        std::shared_ptr<WorkerFates> fates;
+        ThreadWorker worker;
+    };
+}
+
+SCENARIO ("the child-process scanner lets its worker go when the scan is over", "[engine][effects][hosting][scan]")
+{
+    TestPluginFormat format ("TestA", std::vector { gainIn ("TestA", 0x1111) });
+
+    GIVEN ("a scanner whose worker would stay idle for a long time")
+    {
+        auto fates = std::make_shared<WorkerFates>();
+        ChildProcessScanner scanner ([fates] { return std::make_unique<WatchedWorker> (fates, patientIdleMs); }, patientTimeoutMs);
+
+        juce::OwnedArray<juce::PluginDescription> found;
+        REQUIRE (scanner.findPluginTypesFor (format, found, "11"));
+        REQUIRE (scanner.findPluginTypesFor (format, found, "22"));
+        REQUIRE (fates->held == 1);
+
+        WHEN ("the scan is over")
+        {
+            scanner.scanFinished();
+
+            THEN ("the worker was told to leave and collected, not left to end unattended")
+            {
+                REQUIRE (fates->held == 0);
+                REQUIRE (fates->leftWhenTold == 1);
+                REQUIRE (fates->killedWhileRunning == 0);
+            }
+
+            THEN ("the next scan gets a worker of its own")
+            {
+                REQUIRE (scanner.findPluginTypesFor (format, found, "33"));
+                REQUIRE (scanner.getNumWorkersStarted() == 2);
+                REQUIRE (found.size() == 3);
+            }
+
+            THEN ("a second word that the scan is over finds nothing to do")
+            {
+                scanner.scanFinished();
+                REQUIRE (fates->held == 0);
+                REQUIRE (fates->leftWhenTold == 1);
             }
         }
     }
