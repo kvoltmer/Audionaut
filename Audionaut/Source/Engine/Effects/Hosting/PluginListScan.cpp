@@ -85,6 +85,8 @@ struct PluginListScan::FormatScan
     std::atomic<int> failedBeforeThisFile { 0 };
     std::atomic<bool> cancelled { false }, done { false };
     juce::ThreadPool pool { juce::ThreadPoolOptions{}.withNumberOfThreads (1) };   // one worker process at a time
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FormatScan)
 };
 
 //==============================================================================
@@ -99,7 +101,7 @@ PluginListScan::PluginListScan (PluginHost& host_, std::vector<juce::AudioPlugin
     for (auto* format : formats)
         host.restoreRemoved (format->getName());   // a scan brings back what was taken off the list
     host.syncWithInstalled();                      // what was installed since is scanned too
-    scannedBefore = numScanned();
+    scannedBefore = host.numScanned();
     host.getDeadMansPedalFile().getParentDirectory().createDirectory();
 
     if (! formats.empty())
@@ -119,6 +121,11 @@ PluginListScan::~PluginListScan()
 
 void PluginListScan::cancel()
 {
+    // not a scan whose last file is done and that only has not said so yet: it left nothing out
+    const auto filesLeft = current != nullptr && ! current->done;
+    if (finished || (! filesLeft && numStarted >= formats.size()))
+        return;
+
     outcome.cancelled = true;
     if (current != nullptr)
         current->cancel();
@@ -131,14 +138,6 @@ std::vector<juce::AudioPluginFormat*> PluginListScan::scannableFormats (PluginHo
         if (format->canScanForPlugins())
             formats.push_back (format);
     return formats;
-}
-
-int PluginListScan::numScanned() const
-{
-    auto count = 0;
-    for (const auto& description : host.getList().getTypes())
-        count += PluginHost::isScanned (description) ? 1 : 0;
-    return count;
 }
 
 void PluginListScan::timerCallback()
@@ -170,7 +169,7 @@ void PluginListScan::timerCallback()
     for (const auto& skipped : host.getList().getBlacklistedFiles())
         if (! skippedBefore.contains (skipped))
             outcome.skipped.add (skipped);
-    outcome.added = juce::jmax (0, numScanned() - scannedBefore);
+    outcome.added = juce::jmax (0, host.numScanned() - scannedBefore);
 
     // the listener may delete this scan: nothing of it is touched after the call
     if (const auto listener = std::move (onFinished))

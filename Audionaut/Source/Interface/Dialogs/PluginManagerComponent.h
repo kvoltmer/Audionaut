@@ -687,21 +687,13 @@ private:
         pluginsSwitched();
     }
 
-    int numScanned() const
-    {
-        auto count = 0;
-        for (const auto& description : host->getList().getTypes())
-            count += audium::PluginHost::isScanned (description) ? 1 : 0;
-        return count;
-    }
-
     /// Scans every format's plugin folders, one format after the other; not while a scan runs.
     void scanAllFormats()
     {
         if (scan != nullptr)
             return;
 
-        scannedShown = numScanned();
+        scannedShown = host->numScanned();
         scanOutcome.clear();
         scanProgressed (0.0, {});
         scan = std::make_unique<audium::PluginListScan> (
@@ -717,7 +709,7 @@ private:
         scanFraction = juce::jlimit (0.0, 1.0, fraction);   // the bar reads it
 
         // a not-scanned entry the scan replaced where it was: the list does not tell of that by itself
-        if (const auto scannedNow = numScanned(); scannedNow != std::exchange (scannedShown, scannedNow))
+        if (const auto scannedNow = host->numScanned(); scannedNow != std::exchange (scannedShown, scannedNow))
             host->getList().sendChangeMessage();
         scanFile.setText (pluginName.isEmpty() ? TRANS ("Looking for plugins...") : TRANS ("Scanning ") + pluginName,
                           juce::dontSendNotification);

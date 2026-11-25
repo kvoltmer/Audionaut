@@ -63,7 +63,6 @@ private:
     struct FormatScan;
 
     void timerCallback() override;
-    int numScanned() const;
 
     PluginHost& host;
     const std::vector<juce::AudioPluginFormat*> formats;

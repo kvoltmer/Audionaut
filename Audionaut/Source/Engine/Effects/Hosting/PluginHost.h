@@ -136,6 +136,8 @@ public:
     bool syncWithInstalled();
     /// Whether the entry comes from a scan (the loaded plugin's word) or only from the system's list.
     static bool isScanned (const juce::PluginDescription& description) noexcept { return description.lastInfoUpdateTime != juce::Time(); }
+    /// How many of the listed plugins are scanned.
+    int numScanned() const;
     /// Message thread, after a scan of the list's (which loads the not-scanned entries too and
     /// replaces them where they are): a not-scanned plugin the scan loaded and found nothing in is
     /// skipped from now on, the list is in line with what is installed, and its listeners hear of it.
@@ -321,7 +323,6 @@ private:
     };
     bool takeLoadedEmpty (const juce::String& fileOrIdentifier) const;   // whether it was among them; not any more then
     void skipNotScanned (const juce::String& fileOrIdentifier);          // off the list, and skipped from now on
-    int numScanned() const;
 
     /// The checks of not-scanned plugins before their first load, one at a time on a thread of their own.
     struct Checks
