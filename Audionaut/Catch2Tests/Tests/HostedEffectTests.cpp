@@ -949,3 +949,120 @@ SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out 
         }
     }
 }
+
+SCENARIO ("an Audio Unit standing in for a VST3 is given the plugin's chunk in a state of the unit's shape", "[engine][effects][hosting][substitute]")
+{
+    // the same session opened on Windows, where the plugin is a VST3, and saved there: the state is juce's VST3 xml
+    const auto session = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/Sessions/total-recall-test-windows.audium/Project.json");
+    const auto project = json::parse (session.loadFileAsString().toStdString());
+    const auto saved = project["audium"]["master_inserts"][0]["state"];
+    const juce::String unit ("AudioUnit:Effects/aufx,Ni$7,-NI-");
+
+    juce::MemoryBlock vst3State;
+    REQUIRE (vst3State.fromBase64Encoding (saved["blob"].get<std::string>()));
+
+    GIVEN ("the VST3's state")
+    {
+        THEN ("it is told from other states")
+        {
+            REQUIRE (ForeignPluginState::isVst3State (vst3State));
+            REQUIRE_FALSE (ForeignPluginState::isAudioUnitState (vst3State));
+            REQUIRE_FALSE (ForeignPluginState::isVst3State (juce::MemoryBlock ("1.5|0|0", 7)));
+
+            juce::MemoryBlock otherXml;
+            juce::AudioProcessor::copyXmlToBinary (juce::XmlElement ("SomePluginsOwnState"), otherXml);
+            REQUIRE_FALSE (ForeignPluginState::isVst3State (otherXml));
+        }
+
+        THEN ("the component's state comes back out of the list written for the unit")
+        {
+            const auto chunk = ForeignPluginState::chunkOfVst3State (vst3State);
+            REQUIRE (chunk.has_value());
+            REQUIRE (std::memcmp (chunk->getData(), "7$iN", 4) == 0);   // the same container the unit saved on the Mac
+
+            const auto forUnit = ForeignPluginState::vst3StateForAudioUnit (vst3State, unit);
+            REQUIRE (forUnit.has_value());
+            REQUIRE (ForeignPluginState::isAudioUnitState (*forUnit));
+            REQUIRE (ForeignPluginState::chunkOfAudioUnitState (*forUnit) == chunk);
+
+            // and round again: what a VST3 would be given from that list is the chunk once more
+            const auto back = ForeignPluginState::audioUnitStateForVst3 (*forUnit);
+            REQUIRE (back.has_value());
+            REQUIRE (ForeignPluginState::chunkOfVst3State (*back) == chunk);
+        }
+
+        THEN ("the list names the unit: a unit refuses a state that is not its own")
+        {
+            const auto forUnit = ForeignPluginState::vst3StateForAudioUnit (vst3State, unit);
+            REQUIRE (forUnit.has_value());
+
+            // each code is written as an integer of four bytes, the characters in order
+            const auto holds = [&forUnit] (const char* code)
+            {
+                const auto* bytes = static_cast<const char*> (forUnit->getData());
+                for (size_t i = 0; i + 5 <= forUnit->getSize(); ++i)
+                    if (bytes[i] == 0x12 && std::memcmp (bytes + i + 1, code, 4) == 0)
+                        return true;
+                return false;
+            };
+            REQUIRE (holds ("aufx"));
+            REQUIRE (holds ("Ni$7"));
+            REQUIRE (holds ("-NI-"));
+        }
+
+        THEN ("without the unit's codes, or without a component's state, there is nothing to hand over")
+        {
+            REQUIRE_FALSE (ForeignPluginState::vst3StateForAudioUnit (vst3State, "/Library/Audio/Plug-Ins/Some.component").has_value());
+            REQUIRE_FALSE (ForeignPluginState::vst3StateForAudioUnit (vst3State, "").has_value());
+
+            juce::MemoryBlock empty;
+            juce::AudioProcessor::copyXmlToBinary (juce::XmlElement ("VST3PluginState"), empty);
+            REQUIRE (ForeignPluginState::isVst3State (empty));
+            REQUIRE_FALSE (ForeignPluginState::vst3StateForAudioUnit (empty, unit).has_value());
+        }
+    }
+
+    GIVEN ("the plugin as an Audio Unit")
+    {
+        TestPluginInstance::Options options;
+        options.format = "AudioUnit";
+        auto description = TestPluginInstance::describe (options);
+        description.fileOrIdentifier = unit;
+        auto instance = std::make_unique<TestPluginInstance> (options);
+        auto* plugin = instance.get();
+        HostedEffect effect (PluginTypeId::typeInfo (description), description, std::move (instance));
+
+        WHEN ("it is given the VST3's state")
+        {
+            effect.setState (saved);
+
+            THEN ("the plugin is handed a state, and what the effect saves from here on is the plugin's own")
+            {
+                REQUIRE (plugin->setStateCount == 1);
+                REQUIRE (effect.getState() != saved);
+
+                juce::MemoryBlock own;
+                plugin->getStateInformation (own);
+                REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
+            }
+        }
+    }
+
+    GIVEN ("the plugin as the VST3 it was saved with")
+    {
+        TestPluginInstance::Options options;
+        options.format = "VST3";
+        Hosted hosted (options);
+
+        WHEN ("it is given its own state")
+        {
+            hosted.effect->setState (saved);
+
+            THEN ("the state goes to the plugin untouched")
+            {
+                REQUIRE (hosted.plugin->setStateCount == 1);
+                REQUIRE (hosted.effect->getState() == saved);
+            }
+        }
+    }
+}

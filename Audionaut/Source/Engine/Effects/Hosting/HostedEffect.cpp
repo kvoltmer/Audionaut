@@ -436,10 +436,14 @@ void HostedEffect::setState (const json& state)
         return;
 
     // a substitute for the plugin of another format (PluginHost::findSubstitute) is handed that format's
-    // state: a VST3 ignores an Audio Unit's property list, so it gets the plugin's chunk out of it
-    if (description.pluginFormatName == "VST3" && ForeignPluginState::isAudioUnitState (chunk))
+    // state: a VST3 ignores an Audio Unit's property list and a unit a VST3's xml, so each gets the
+    // plugin's chunk out of the other's state, in the wrapping it reads
+    const auto forVst3 = description.pluginFormatName == "VST3" && ForeignPluginState::isAudioUnitState (chunk);
+    const auto forAudioUnit = description.pluginFormatName == "AudioUnit" && ForeignPluginState::isVst3State (chunk);
+    if (forVst3 || forAudioUnit)
     {
-        if (const auto translated = ForeignPluginState::audioUnitStateForVst3 (chunk))
+        if (const auto translated = forVst3 ? ForeignPluginState::audioUnitStateForVst3 (chunk)
+                                            : ForeignPluginState::vst3StateForAudioUnit (chunk, description.fileOrIdentifier))
         {
             instance->setStateInformation (translated->getData(), static_cast<int> (translated->getSize()));
             cachedBlob.clear();
