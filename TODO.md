@@ -308,6 +308,258 @@ the one-gesture crossfade UX on top:
     cheaper per-track configuration of the stretcher.
   Then re-run the bench, refresh the page's numbers and "Last run" line,
   and publish.
+  Re-run 2026-10-25 on the 1.7.0 release build (M5, idle): plain stereo
+  tracks at 128 samples 8 → 0.4, 16 → 0.7, 32 → 1.5, 64 → 3.0 % (linear,
+  no overruns at any buffer size); time-stretched 7–8 % per track, same
+  bursty shape (4 tracks: 264 overruns at 128 samples; 8 tracks: 7 at
+  512). The page is refreshed with these numbers (still uncommitted).
+  Decision 2026-10-25: not published - eight time-stretched stereo tracks
+  hitting 100 % of the callback is not a result to publish. Gated on the
+  next item.
+- [ ] **Profiling and optimisation round on time-stretched playback.**
+  Goal: eight stretched stereo tracks (Rubber Band R3, ×0.9) stay under
+  budget at 128 samples, including the 99th percentile, so the Performance
+  page can go live. Today (1.7.0, M5, 128 samples) 8 tracks = 56 % mean,
+  225 % p99, 3446 overruns in 20 s; 4 tracks = 27 % mean, 111 % p99, 264
+  overruns. The mean is what R3 costs per track (7–8 % each, flat across
+  buffer sizes), the p99 is the hop structure: the stretcher produces
+  output in hops of its window size, so one callback pays for a whole hop
+  while its neighbours pay nothing, and at ≤ 128 samples a hop is several
+  callbacks' worth of budget. Steps:
+  - Profile one stretched voice in the bench harness (Instruments, Time
+    Profiler on the callback thread): how much is R3 itself, how much is
+    `StretchAudioSource` / `ClipResamplingSource` / dynamics around it, and
+    whether anything allocates or locks on the way (the standby lane and
+    the prime path were the last offenders).
+  - Flatten the bursts: render each stretched voice ahead on a worker
+    thread into a FIFO the callback only drains (clip positions are known,
+    so the lookahead can be a few hundred ms; seek, loop wrap and the
+    clip-end re-prime - the item above - need a flush-and-refill path), or
+    at least drive R3 in constant small chunks instead of letting it hop.
+  - Halve the mean structurally: a voice is one channel, but its
+    `ClipTransportSource` builds the `StretchAudioSource` with the file's
+    channel count (`VoiceSource.cpp` passes `reader->numChannels`), so a
+    stereo clip on a stereo track runs two R3 instances of two channels
+    each - four channel-stretches for two output channels, and the same
+    again for the resampler. One stretcher per clip shared by its voices
+    (or a voice that stretches only its own channel) removes half the
+    work, and more for multichannel files.
+  - Lower the mean further with R3's cheaper options, measured against
+    the stretch quality tests: `OptionWindowShort`, `OptionPitchHighSpeed`,
+    `OptionChannelsTogether` once a stretcher sees both channels, and
+    `OptionEngineFaster` (R2) as the fallback for many tracks. Today the
+    backend sets `OptionEngineFiner | OptionProcessRealTime |
+    OptionThreadingNever`.
+  - Re-run `[playback][bench]` after each step, keep the before/after table
+    in the PR, then refresh and publish the Performance page.
+
+- [ ] **Double-precision mixing as an engine preference.** The renderer is
+  a template and `AudioBusRenderer<double>` is instantiated (kept in the
+  parallel-rendering branch as a compile check: the voice add and the
+  recorder call convert under `if constexpr`), but nothing constructs it;
+  the factory, `AudioBusInterface` and the tests all use the float
+  variant. To offer it: a `Preferences` key ("Processing precision",
+  Settings → Audio, next to the thread count) read by `AudiumFactory`,
+  which builds the float or the double renderer; `AudioBusInterface`
+  holds the renderer behind a sample-type-agnostic interface (or becomes
+  a template itself) so `PlayListScheduler`, the exporter and the strips
+  do not care; the device callback stays float, so the bus converts the
+  input block on entry and the output block on exit (bus channels, partials,
+  gain, pan and the master sum are then double); voices and the recorder
+  stay float, the conversions are already in `renderTrack`. Effects
+  (`docs/plans/effects/plan.md`) would need `process` for both sample
+  types, which juce_dsp provides. Test: the same session rendered float
+  and double matches within float precision, bit-identical for any worker
+  count within one precision; bench the cost (memory doubles for the bus
+  buffers, SIMD width halves).
+
+- [ ] **Record another track's output (track-to-track recording).** Phase 8
+  of `docs/plans/effects/plan.md` (section 1.10); the parallel renderer did
+  the groundwork: every track is a job, and after its job the post-gain
+  signal is in its bus channels and the panned stereo partial in
+  `trackOutput`, both readable by another job behind a barrier. Missing:
+  - an input source on `AudioChannelData` next to `inputChannel`: device
+    channel, or a track's channel, or the L/R of a track's stereo output
+    (scalars, two optional JSON keys; `commitChannelData`, the channel undo
+    action and the strip's input selector extend as they are; removing a
+    track resets the channels that point at it in the same snapshot);
+  - job levels in `buildJobTable`: no track input = level 0, fed only by
+    level 0 = level 1, ...; stage A runs one fork-join per level (an extra
+    barrier only when used), the cost sort stays within a level; a cycle
+    leaves a track unassigned, it reads silence and sets a flag for the UI;
+  - the source switch in `renderInput`: the source track's bus channel
+    (post-gain, pre-pan) for a mono patch, its partial for a stereo tap,
+    instead of the device block; recorder, disk thread and take placement
+    unchanged;
+  - placement: a track-sourced take is generated in the same block for the
+    block's position, so it lands exactly; a device take is late by the
+    round trip (uncompensated today). Give the recorder a per-source offset
+    now, so phase 4 (PDC) can subtract the source's pre-fader delay instead;
+  - "internal only" as a third output next to main and direct out, so a
+    source track feeds only the tracks that record it (mute would silence
+    the recording too);
+  - strip input menu Tracks >, routing indicator, cycle warning; CLI
+    `track-input --track B --channel 0 --from-track A [--from-channel 0 |
+    --left | --right]`, MCP tool, `info`;
+  - tests: A's clip recorded onto B equals A's samples at the same position
+    (0 and 3 workers); A -> B -> C chain; cycle silent and flagged;
+    internal-only keeps A out of the mix; undo restores the routing. The
+    serial bounce runs the levels in order, nothing new there.
+  Engine side ~1 day, surfaces and tests 1-2 more; own branch after
+  feature/parallel-rendering, independent of the effect phases.
+
+## Mixer — follow-ups (found 2026-10-31 in PR #249)
+
+- [ ] **Render a mono main mix like the stereo one and fold to mono at the
+  very end.** Today a one-channel output (mono device, mono bounce) takes
+  its own path through `AudioBusRenderer`: the bus channels sum unpanned
+  into the main mix in `renderMaster`, the sends tap them unpanned on both
+  sides (`tapSends`), the aux return ignores its balance and contributes
+  its first side, and the mono mix runs through the master chain as two
+  identical channels. That is a second set of rules to keep in step with
+  the stereo path (pan law, send taps, aux balance, soon PDC and the
+  per-track block). Instead render every main mix as the stereo one -
+  `panIntoPartial`, the post-fader taps from the panned block, stage B
+  with balance, dry gain, aux returns, master inserts and gain - and fold
+  the finished stereo mix to one channel as the last step before the
+  output block (and decide the fold: (L + R) / 2 keeps a centred source at
+  its level, L + R keeps a hard-panned one). `monoMain` then disappears
+  from `BlockContext`, `tapSends` loses its pan branch, `auxGainOf` goes,
+  and the mono scenarios in `InsertRenderTests` and `SendRenderTests`
+  state the fold instead of the unpanned sum. A stem export stays as it
+  is: its outputs are the dry bus channels.
+
+- [ ] **Refactor `AudioBusRenderer`: simplify by encapsulating.** The class
+  has grown into the one place that does everything per block (355 + 853
+  lines, 2026-11-02): mixer state and its lock-free commands, the job table
+  and voice buckets, the per-worker scratch buffers, the stage A track
+  render (input, voices, pan, send taps), stage B (aux returns, master), the
+  job-share tables for the Processing Load window and the simulated load
+  for the bench. Carve the self-contained parts into their own types with
+  one job each and a small interface, so the renderer is left to order the
+  stages: candidates are the job table + voice bucketing (`buildJobTable`,
+  `bucketVoices`, `jobOrder`/`channelToJob`/`voiceOrder`), the job-share
+  publishing (`JobShareTable`, `readTrackJobShares`, the two-table sequence
+  dance), the per-slot scratch (`panOutput`, `voiceOutput`, `sendScratch`
+  sized in `prepareToPlay`), and the stage A and stage B passes as stateless
+  functions over a `BlockContext`. Behaviour-preserving: the
+  `[parallel]`, `[inserts]`, `[sends]` and `[playback][bench]` scenarios
+  stay as they are and must pass bit-identically for every worker count.
+  Sequence it with the mono-fold item above and phase 4 (PDC, built on
+  feature/effects-pdc), which both touch the same passes: one of the three
+  first, the others on top, not interleaved.
+
+- [ ] **Save the effect editor windows with the project: which are open,
+  where they sit on the screen, and their z-order.** Today the editors are
+  session-only: `MixerComponent::editorWindows` keys them by `EffectSlot*`,
+  a `FloatingPanel` opens centred and nothing is written down, so reopening
+  a project starts with every editor closed. Store per project (not in the
+  preferences - the layout belongs to the arrangement) a list of the open
+  editors, each as the slot's address (`InsertChainAddress` + slot index,
+  since the pointer does not survive a reload), the window frame in screen
+  coordinates, and its position in the stacking order; on open, restore
+  the frames (clamped to the screens present, like the main window) and
+  bring the panels to front in saved order so the topmost one ends up on
+  top. `FloatingPanel` needs to expose and accept the native frame and
+  report moves/closes so the model stays current without polling; the
+  closed state is simply absence from the list. Not part of the undo
+  history, and the layout does not dirty the document on its own - it is
+  written along with the next save.
+
+## Export
+
+- [ ] **Track export: one file per track.** Today an export is the main
+  mix, the multi-mono variant (`ExportAudioConfig::multiMono`: one mono
+  file per bus channel, dry) or one region (`export --region`, dry). What
+  is missing is the per-track bounce: every track, or the selected ones,
+  as its own file in the track's width, named after the track, over the
+  export range. To decide: what a track file contains - the track as it
+  sounds in the mix (inserts, gain, pan, with or without its share of the
+  aux returns and the master chain) or the dry track - and whether mute
+  and solo apply. Surfaces: the export dialog, CLI `export --tracks`, the
+  MCP `export_audio` tool, the manual.
+
+## Plugin hosting — follow-ups (found 2026-11-14 in phase 7a)
+
+- [ ] **Offer the JUCE out-of-process patch upstream.** The JUCE submodule
+  points at `kvoltmer/JUCE`, branch `audionaut/au-out-of-process`:
+  `AudioUnitPluginFormat::setProcessIsolation` loads AUv2 plugins without the
+  sandbox-safe flag into Apple's hosting service when the host is sandboxed
+  (what Logic does; the OS refuses them in-process with -3000). A pull request
+  to juce-framework/JUCE lets the submodule return to upstream once merged.
+- [ ] **Say how many Audio Units macOS will ask about before plugins are
+  turned on.** "Plugins enabled" in Manage Plugins also allows the Audio
+  Units macOS wants lowered security settings for, and the message box only
+  says that this may happen. The sandbox-safe flag and the component's name
+  are readable without loading (`AudioComponentGetDescription`), so the
+  message could name the number, or be left out where there are none.
+- [ ] **Try the Audio Unit listing without a scan with real plugins.** The
+  list comes from the system's registry (`AudioUnitRegistry`), not scanned
+  entries are offered as inserts and first loaded when used, and the
+  plugins macOS asks about load one at a time (a declined question answers
+  for those waiting). Not exercised by hand yet: the prompt on a first
+  insert, a project with several such inserts, and the check of a
+  not-scanned plugin that runs inside the app in the scan worker before
+  its first load (the slot waits as "loading" meanwhile, no progress bar;
+  a plugin that crashes there is skipped).
+- [ ] **Time the Audio Unit listing at startup on a machine with many
+  plugins.** `syncWithInstalled()` runs on the message thread before the
+  window is up and looks each component up by its codes; 10 ms for 23
+  Audio Units in a test run. If it shows, describe the components while
+  walking the registry once, or sync after the window is there.
+- [ ] **Windows/Linux: nothing is listed until Scan is clicked.** Plugins
+  are on by default and no scan runs by itself; consider a hint in the
+  insert menu, or a first scan when the Manage Plugins window opens empty.
+- [ ] **Measure the out-of-process render cost.** Every block of a plugin in
+  the hosting service is a cross-process call; small buffers with many such
+  plugins may cost noticeably more than in-process hosting. Bench a chain of
+  Mikron Delays at 64 and 512 samples against AUDelay in-process before any
+  tuning (a larger block for those slots, say).
+- [ ] **Editor window of a loading slot.** A window opened while the plugin
+  is still on its way shows "Loading the plugin..." and takes the editor when
+  it comes, but stays non-resizable (the panel's flag is set at creation):
+  let `FloatingPanel` switch resizability on, or reopen the window on arrival.
+- [x] **Tell hosted plugins when a render is offline.** Done: for a project
+  bounce the exporter tells the mixer planner before it prepares for the
+  bounce and again after it (`MixerPlanner::setOfflineRendering`), the
+  planner tells the effects in that prepare, and a `HostedEffect` passes it
+  on as the plugin's non-realtime flag - plus, for an Audio Unit, the
+  unit's offline render property, which JUCE's wrapper does not set (few
+  units have it: of Apple's effects only AURoundTripAAC; the others refuse
+  it and render as ever). Only a VST3 is prepared again for it. A clip
+  bounce (one clip's export, a stem separation's render) runs no insert
+  and leaves the plugins alone. Not tried by ear with a plugin that
+  computes differently offline.
+- [x] **Give hosted plugins a playhead.** Done: the scheduler publishes
+  where the transport is for each block (`RenderTransport`, one per engine:
+  playing, position in samples, seconds and quarter notes, tempo, loop)
+  before the renderer runs it, in the device callback and in a bounce
+  alike, and a `HostedEffect` answers the plugin's playhead from it. Left
+  out: a time signature and bars (the project has none), the recording
+  flag, and the latency in front of a plugin - the position is the
+  transport's, a plugin behind latent inserts hears the signal that much
+  later.
+- [ ] **Export Audio while a plugin is still loading.** The CLI and MCP
+  verbs wait for pending loads before they render
+  (`ProjectSession::settlePlugins`); the Export Audio dialog
+  (`ExportUtil::exportAudio`) and the stem separation dialog do not, so a
+  bounce started right after opening a project can render without a plugin
+  that is on its way (a loading slot passes its audio through). To decide:
+  wait with a progress note, or refuse with a message until the slots are
+  loaded.
+- [x] **Scan cost: one process per plugin file.** Done: one worker serves
+  file after file over a named pipe (`scan-plugin --serve`), one file on its
+  way at a time, so the worker that dies died of that file and the next file
+  gets a new worker; a process per file remains as the fallback where the
+  pipe does not work. 40 Audio Units: 6.7 s before, about 2 s after.
+  On macOS the worker is `audionaut-scan-helper` in the bundle
+  (`Audionaut/ScanHelper`): the sandboxed app's own binary dies as its child
+  (`forbidden-sandbox-reinit`).
+- [ ] **Plugin state blobs in every undo snapshot.** A structural edit's
+  container snapshot carries every hosted insert's base64 state; effect
+  plugins are a few KB, samplers can be megabytes. Measure with a heavy
+  plugin; if it hurts, intern blobs by hash in a per-engine store and keep a
+  reference in the snapshots.
 
 ## Memory — follow-ups (found 2026-10-19 in PR #207)
 
@@ -359,3 +611,33 @@ the one-gesture crossfade UX on top:
   the quirks `EventMerger::Parameters` already names; changing them changes
   every user's cuts, so it wants a listening session on the demo material,
   not only the harness.
+
+## Funding (explored 2026-11-25)
+
+- [ ] **Think the funding approach through before shipping any of it.**
+  GitHub Sponsors has had no sponsor since August. What exists so far:
+  - Sponsors tiers changed 2026-11-25: one-time $5/$10/$25 added, the $500
+    and $1,000 monthly tiers retired, the $25 and $100 perks rewritten
+    (README / website name or logo, no software access).
+  - A pay-what-you-want dialog for the website download page, built but
+    uncommitted on `feature/pay-what-you-want` in `../Audionaut-Web`
+    (`docs/javascripts/pay-what-you-want.js`). It is switched off until
+    payment links are filled in, and `site/` is not rebuilt.
+
+  Open questions:
+  - Is it worth it at all? At about 135 website download clicks a month the
+    estimate is around $10 a month ($0-40), and that rests on assumed
+    conversion rates, not measured ones.
+  - Payment provider: Stripe payment links (no platform fee, we are the
+    merchant) or a merchant of record (handles sales tax, 5-10%).
+  - Tax: a payment tied to a download may count as a sale, not a gift -
+    ask the tax adviser before going live.
+  - The $10 preselection, and whether an extra click on every download
+    costs more in growth than it earns.
+  - Whether "Check for Updates" should lead through the website step.
+  - An in-app "Support Audionaut" item (Help menu / About) was started and
+    cancelled: the Mac App Store may reject links to outside payment, so it
+    would have to be hidden there via `Util/DistributionChannel.h`.
+  - Mac App Store: a price or a tip-jar in-app purchase instead.
+  - Many recent download clicks come from China, India and Iran, where
+    card payment is unlikely.

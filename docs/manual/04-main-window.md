@@ -4,8 +4,9 @@
 
 The window has three areas: the **header bar** across the top, the **middle
 area** with channel strips and the arrangement timeline, and the **right
-panel** with regions and playlists. A separate floating **File Browser**
-window is available from the *View* menu.
+panel** with regions and playlists. The **mixer** opens along the bottom of
+the middle area ([The mixer, effects and plugins](14-mixer-and-effects.md)).
+A separate floating **File Browser** window is available from the *View* menu.
 
 ## Header bar
 
@@ -95,3 +96,34 @@ Two stacked lists, divided by a draggable resizer:
 *View → Open File Browser* opens a floating file tree (starting in your
 Music folder). Select one or more audio files and drag them into the
 arrangement to import them.
+
+## Processing load
+
+Audionaut renders the tracks on several processor cores at once, so a
+project with many tracks, time-stretched clips or effects does not hang on
+a single core. *Settings → Processing* has one choice, **Processing
+threads**: **Default** uses the machine's cores but leaves one for the
+interface and for reading from disk; **1** renders everything on the audio
+thread, as earlier versions did. A change applies at once. An export
+renders on one thread whatever is set here, and sounds the same either way.
+
+*View → Processing Load* opens a small floating window that shows where the
+time goes:
+
+- one bar per thread, the audio thread first, each coloured by the tracks
+  it rendered a moment ago;
+- **Audio Callback** and **Peak**: how much of the time for one block the
+  audio thread needed before it handed the block on. This is the figure
+  that must stay under 100 % for playback without dropouts;
+- **Work of one core**: the work of all threads added up, so 250 % means
+  two and a half cores are busy;
+- **Voices**, the clips sounding right now, and **Threads**;
+- **Overruns**, the blocks that were not ready in time, and **Stalls**, the
+  times the audio thread had to wait long for another thread. Both count
+  from when the audio device started.
+
+## Help
+
+*Help → Audionaut Manual* opens this manual in your browser. On Windows and
+Linux the Help menu also holds *Check for Updates…* and *About*; on macOS
+those are in the application menu.

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>English</string>
+    <key>CFBundleExecutable</key>
+    <string>@TEST_AU_EXECUTABLE@</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.voltmer-systems.audionaut.tests.@TEST_AU_EXECUTABLE@</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>@TEST_AU_NAME@</string>
+    <key>CFBundlePackageType</key>
+    <string>BNDL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>AudioComponents</key>
+    <array>
+        <dict>
+            <key>type</key>
+            <string>aufx</string>
+            <key>subtype</key>
+            <string>@TEST_AU_SUBTYPE@</string>
+            <key>manufacturer</key>
+            <string>Audn</string>
+            <key>name</key>
+            <string>Audionaut Tests: @TEST_AU_NAME@</string>
+            <key>description</key>
+            <string>@TEST_AU_NAME@, for Audionaut's plugin scan tests</string>
+            <key>factoryFunction</key>
+            <string>@TEST_AU_FACTORY@</string>
+            <key>version</key>
+            <integer>65536</integer>
+            <key>sandboxSafe</key>
+            <true/>
+            <key>tags</key>
+            <array>
+                <string>Effects</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

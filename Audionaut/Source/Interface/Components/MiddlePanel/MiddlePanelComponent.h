@@ -11,6 +11,8 @@
 
 #include "Interface/Components/MiddlePanel/ChannelView/ChannelsComponent.h"
 #include "Interface/Components/MiddlePanel/ArrangementView/ArrangementComponent.h"
+#include "Interface/Components/MixerPanel/MixerComponent.h"
+#include "Interface/Controls/CollapsiblePanel.h"
 #include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 #include "Interface/Handlers/ZoomHandler.h"
 #include "Interface/Handlers/SnapToGridHandler.h"
@@ -25,29 +27,57 @@ public:
         snapToGridHandler.reset(new SnapToGridHandler(playListScheduler));
         zoomHandler.reset(new ZoomHandler(playListScheduler, snapToGridHandler));
 
+        // the mixer's body height is its content's (set by setFixedSize below); its
+        // open state is the user's and goes to the owner for persisting
+        mixer.maximumSize = [this] { return mixerComponent != nullptr ? mixerComponent->getBodyHeight() : 0; };
+        mixer.onRelayout = [this] { resized(); };
+        mixer.onUserChange = [this] { NullCheckedInvocation::invoke (onMixerLayoutChanged); };
+
+        createMixer();
         createComponents();
     }
-    
+
     ~MiddlePanelComponent() override
     {
     }
-    
+
     void createComponents()
     {
         removeAllChildren();
-        
+
         channelsComponent.reset(new ChannelsComponent(audiumEngine));
         addAndMakeVisible(channelsComponent.get());
-        
+
         arrangementComponent.reset(new ArrangementComponent(audiumEngine, zoomHandler));
         addAndMakeVisible(arrangementComponent.get());
 
+        // the mixer stays through a rebuild: rebuildUI renews its strips from the engine, and its effect
+        // editor windows stay open as long as their slots live
+        addAndMakeVisible (mixerComponent.get());
+
         const auto visibleRange = zoomHandler->getVisibleRange();
-    
+
         arrangementComponent->setVisible(true);
-        
+
         zoomHandler->setVisibleRange(visibleRange, sendNotificationSync);
     }
+
+    //==============================================================================
+    // The mixer at the bottom. Whether it is open is an app preference, kept by
+    // the owner through onMixerLayoutChanged; its height is its content's.
+
+    /// Fires after the user opened or closed the mixer (by its seam, a button or a command).
+    std::function<void()> onMixerLayoutChanged;
+
+    bool isMixerVisible() const noexcept { return mixer.isOpen(); }
+    void setMixerVisible (bool visible) { mixer.setOpen (visible); }
+
+    /// From the preferences at start-up: no animation.
+    void restoreMixerLayout (bool visible) { mixer.restore (visible, mixerComponent->getBodyHeight()); }
+
+    /// The mixer's aux bus strips (an app preference the mixer keeps; View > Aux Buses).
+    bool areAuxBusesVisible() const noexcept { return mixerComponent->areAuxBusesVisible(); }
+    void setAuxBusesVisible (bool visible) { mixerComponent->setAuxBusesVisible (visible); }
     
     enum UIContext {
         EntireContext,
@@ -66,6 +96,15 @@ public:
     void resized() override
     {
         auto localBounds = getLocalBounds();
+
+        // the mixer's header bar always; under it as much of the body as is open
+        const auto bodyHeight = mixer.getShownSize();
+        const auto bodyWasShown = mixerComponent->isBodyShown();
+        mixerComponent->setBounds (localBounds.removeFromBottom (MixerLayout::headerHeight + bodyHeight));
+        if (mixerComponent->isBodyShown() && ! bodyWasShown)
+            mixerComponent->updateUI();   // coming back: it let its strips go while closed
+        mixerComponent->getHeader().setOpen (mixer.isOpen());
+
         auto channelBounds = localBounds.removeFromLeft(AudiumLookAndFeel::channelsWidth);
         channelBounds.removeFromTop(AudiumLookAndFeel::dragZoomControlHeight);
         channelsComponent->setBounds(channelBounds);
@@ -77,6 +116,7 @@ public:
         if (context == EntireContext) {
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
+            mixerComponent->updateUI();
         }
         else if(context == VerticalScrollContext) {
             if (arrangementComponent->isVisible()) {
@@ -91,6 +131,7 @@ public:
             
             arrangementComponent->updateUI();
             channelsComponent->updateUI();
+            mixerComponent->rebuildUI();
             
             arrangementComponent->setVerticalScrollOffset(verticalScrollOffset);
             arrangementComponent->setHorizontalScrollOffset(horizontalScrollOffset);
@@ -106,6 +147,7 @@ public:
         }
         else if (context == ChannelsContext) {
             channelsComponent->updateUI();
+            mixerComponent->updateUI();
         }
     }
     
@@ -199,6 +241,24 @@ public:
     }
     
 private:
+    /// Once, in the constructor: the mixer lives as long as the panel, a rebuild of the views renews its strips in place.
+    void createMixer()
+    {
+        mixerComponent.reset (new MixerComponent (audiumEngine));
+        mixerComponent->onPreferredHeightChanged = [this] { mixer.setFixedSize (mixerComponent->getBodyHeight()); };
+        mixer.setFixedSize (mixerComponent->getBodyHeight());
+
+        // the mixer's header bar stays at the bottom and is its handle: pushed well down it
+        // collapses the mixer until pulled back or released, pulled up it opens it; the mixer
+        // cannot be made taller or shorter
+        auto& header = mixerComponent->getHeader();
+        header.onDragStart = [this] { mixer.dragStarted(); };
+        header.onDrag = [this] (int distance) { mixer.dragged (distance); };
+        header.onDragEnd = [this] { mixer.dragEnded(); };
+        header.onDoubleClick = [this] { mixer.resetToDefault(); };
+        header.onToggleClick = [this] { mixer.setOpen (! mixer.isOpen()); };
+    }
+
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
     
     std::shared_ptr<ZoomHandler> zoomHandler;
@@ -206,6 +266,8 @@ private:
     
     std::unique_ptr<ChannelsComponent> channelsComponent;
     std::unique_ptr<ArrangementComponent> arrangementComponent;
+    std::unique_ptr<MixerComponent> mixerComponent;
+    CollapsiblePanel mixer { 1, 1 };   // sized by setFixedSize from the mixer's content
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MiddlePanelComponent)
 };

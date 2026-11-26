@@ -79,8 +79,6 @@ SCENARIO("region split/create scenario", "[engine][region]")
                 REQUIRE (items[1]->getAbsolutePosition(audium::clocks) == 96.0);
             }
         }
-        
-//        store->save(juce::File("../../../TestFiles/Sessions/120-funk-export-5-seconds-out.audium"));
     }
 }
 

@@ -7,6 +7,9 @@
 
 #include <JuceHeader.h>
 #include "Interface/Controls/DefaultLabel.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
+#include "Engine/Provider/TempoProvider.h"
+#include "Engine/PlayList/PlayListScheduler.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Export/ExportFormat.h"
 
@@ -17,7 +20,7 @@ public:
     ExportAudioComponent(std::shared_ptr<audium::AudiumEngine> engine) :
         audiumEngine(engine)
     {
-        setSize(400, 130);
+        setSize(400, 158);
     }
 
     ~ExportAudioComponent() override
@@ -59,6 +62,10 @@ public:
             bitDepthDropDown->setBounds (lastRow);
         if (qualityDropDown != nullptr)
             qualityDropDown->setBounds (lastRow);
+        r.removeFromTop (space);
+
+        if (lengthValue != nullptr)
+            lengthValue->setBounds (r.removeFromTop (h));
     }
     
     void update()
@@ -69,8 +76,26 @@ public:
         }
         updateOutputChanComboBox();
         updateFormatDependentRows();
+        updateLength();
         
         resized();
+    }
+
+    /** The project's length, what the export runs over (the effects' ring-out comes on top). */
+    void updateLength()
+    {
+        if (lengthValue == nullptr) {
+            lengthValue = std::make_unique<juce::Label>();
+            lengthValue->setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (AudiumLookAndFeel::defaultFontSize)));
+            addAndMakeVisible (lengthValue.get());
+
+            lengthLabel = std::make_unique<juce::Label> (String{}, TRANS ("Length:"));
+            lengthLabel->setFont (juce::FontOptions (AudiumLookAndFeel::defaultFontSize));
+            lengthLabel->attachToComponent (lengthValue.get(), true);
+        }
+
+        const auto seconds = audiumEngine->getPlayListScheduler()->getTotalLength (audium::seconds);
+        lengthValue->setText (audium::TempoProvider::secondsToFormattedString (seconds), dontSendNotification);
     }
     
     void updateFormatComboBox()
@@ -285,7 +310,7 @@ private:
     };
 
     
-    std::unique_ptr<juce::Label> formatLabel, sampleRateLabel, outputChanLabel, bitDepthLabel, qualityLabel;
+    std::unique_ptr<juce::Label> formatLabel, sampleRateLabel, outputChanLabel, bitDepthLabel, qualityLabel, lengthLabel, lengthValue;
     std::unique_ptr<ComboBox> formatDropDown, sampleRateDropDown, outputChanDropDown, bitDepthDropDown, qualityDropDown;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ExportAudioComponent)

@@ -54,11 +54,14 @@ public:
         const auto previous = smoothed.load (std::memory_order_relaxed);
         smoothed.store (previous + smoothingCoefficient * (ratio - previous), std::memory_order_relaxed);
 
-        // running maximum, cleared by takePeak()
-        auto currentPeak = peak.load (std::memory_order_relaxed);
-        while (ratio > currentPeak
-               && ! peak.compare_exchange_weak (currentPeak, ratio, std::memory_order_relaxed))
-        {}
+        // running maximum per reader, each cleared by its own takePeak()
+        for (auto& peak : peaks)
+        {
+            auto currentPeak = peak.load (std::memory_order_relaxed);
+            while (ratio > currentPeak
+                   && ! peak.compare_exchange_weak (currentPeak, ratio, std::memory_order_relaxed))
+            {}
+        }
 
         if (ratio >= 1.0f)
             overruns.fetch_add (1, std::memory_order_relaxed);
@@ -70,10 +73,13 @@ public:
         return smoothed.load (std::memory_order_relaxed);
     }
 
-    /// Message thread: highest load since the previous call, then resets it to zero.
-    float takePeak() noexcept
+    /// The displays that take the peak; each has a running maximum of its own, so neither clears the other's.
+    enum PeakReader { headerMeter = 0, loadWindow = 1, numPeakReaders };
+
+    /// Message thread: highest load since the reader's previous call, then resets it to zero.
+    float takePeak (PeakReader reader = headerMeter) noexcept
     {
-        return peak.exchange (0.0f, std::memory_order_relaxed);
+        return peaks[reader].exchange (0.0f, std::memory_order_relaxed);
     }
 
     /// Number of callbacks that exceeded their budget since the last reset().
@@ -85,7 +91,8 @@ public:
     void reset() noexcept
     {
         smoothed.store (0.0f, std::memory_order_relaxed);
-        peak.store (0.0f, std::memory_order_relaxed);
+        for (auto& peak : peaks)
+            peak.store (0.0f, std::memory_order_relaxed);
         overruns.store (0, std::memory_order_relaxed);
     }
 
@@ -94,7 +101,7 @@ private:
 
     juce::int64 startTicks = 0;
     std::atomic<float> smoothed { 0.0f };
-    std::atomic<float> peak { 0.0f };
+    std::atomic<float> peaks[numPeakReaders] = {};
     std::atomic<std::uint32_t> overruns { 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DspLoadMeter)

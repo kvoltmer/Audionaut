@@ -23,7 +23,8 @@ std::vector<float> impulseEnvelope(double period, int numFrames, float impulse =
     for (int i = 0; i < numFrames; ++i)
         envelope[(size_t) i] = 0.05f * random.nextFloat();
     for (double t = 0.0; t < numFrames; t += period)
-        envelope[(size_t) std::lround(t)] += impulse;
+        if (const auto frame = (size_t) std::lround(t); frame < envelope.size())
+            envelope[frame] += impulse;
     return envelope;
 }
 

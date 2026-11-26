@@ -9,6 +9,12 @@
 
 namespace audium {
 
+class EffectSlot;
+class InsertChain;
+class AuxBus;
+class AuxBusContainer;
+struct SendState;
+
 class AudiumEngine;
 
 namespace cli {
@@ -22,6 +28,25 @@ namespace cli {
  * by `info` and intended for reuse by a future MCP wrapper.
  */
 nlohmann::json makeProjectSummary (AudiumEngine& engine);
+
+/**
+ * One insert as the summary and the insert verbs report it: index, type,
+ * name, enabled flag and state. One shape for both, so an agent reads the
+ * same object from `info` and from `add-insert`.
+ */
+nlohmann::json describeInsert (const EffectSlot& slot, int index);
+
+/** A chain as an array of describeInsert(). */
+nlohmann::json describeInserts (const InsertChain& chain);
+
+/** One send as the summary and set-send report it: aux id, level, preFader, mute. */
+nlohmann::json describeSend (int auxId, const SendState& state);
+
+/** An aux bus as the summary and the aux verbs report it: id, name, gain, pan, mute, solo, inserts. */
+nlohmann::json describeAux (const AuxBus& bus);
+
+/** The aux buses in strip order, each describeAux(). */
+nlohmann::json describeAuxBuses (const AuxBusContainer& buses);
 
 } // namespace cli
 } // namespace audium

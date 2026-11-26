@@ -1,0 +1,48 @@
+name: Thread Sanitizer
+
+# The scenarios that put more than one thread through the engine, built with
+# Thread Sanitizer (AUDIONAUT_ENABLE_TSAN, see Catch2Tests/CMakeLists.txt): a
+# data race between two of our threads fails the run where the plain suite
+# would pass, or crash once in a while. A tag subset, not the suite: the
+# instrumented binary is several times slower. A scenario that brings a
+# second thread to the engine takes the [threads] tag to run here; the
+# render pool's scenarios ([parallel]) run as they are.
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  tsan:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Checkout submodules
+      uses: ./.github/actions/checkout-submodules
+
+    # Some test wavs (see .gitattributes) live in Git LFS.
+    - name: Fetch Git LFS test files
+      run: git lfs pull
+
+    - name: Configure
+      run: >
+        cmake -B build-tsan -S Audionaut/Catch2Tests
+        -DCMAKE_BUILD_TYPE=Debug -DAUDIONAUT_ENABLE_TSAN=ON -DAUDIONAUT_BUILD_CLI=OFF
+
+    - name: Build
+      run: cmake --build build-tsan --target AudionautTests --parallel "$(sysctl -n hw.ncpu)"
+
+    - name: Run the threaded scenarios
+      # halt_on_error: the first report ends the run with a failure, where
+      # the default prints it and goes on to exit as the tests did.
+      env:
+        TSAN_OPTIONS: halt_on_error=1 second_deadlock_stack=1
+      run: ./build-tsan/AudionautTests_artefacts/Debug/AudionautTests "[threads],[parallel]" --durations yes

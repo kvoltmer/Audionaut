@@ -248,7 +248,8 @@ public:
     /**
      * @brief The state minus what moves without the user editing anything:
      *        the playhead while playing, scroll and zoom, the clip
-     *        selection. Two states that agree on this are the same document.
+     *        selection, the insert editors' windows. Two states that agree
+     *        on this are the same document.
      */
     static json documentOf(json state);
 
@@ -309,6 +310,27 @@ public:
      *        so undo/redo of a reload moves the marker with the state.
      */
     void setChangedExternally(bool changed) { changedExternally = changed; }
+
+    /**
+     * @brief Whether something that is saved with the project but is no
+     *        edit changed since the project was opened or last saved: an
+     *        insert editor's window was moved, opened or closed. No undo
+     *        step stands for it, so the undo history does not show it.
+     */
+    bool hasViewChanges() const { return viewChanged; }
+
+    /**
+     * @brief Says that such a thing changed. The undo manager's listeners
+     *        hear of the first one, as they hear of an edit (the window
+     *        title follows).
+     */
+    void markViewChanged();
+
+    /**
+     * @brief Whether there is anything to save: an edit in the undo
+     *        history, or a view change (`hasViewChanges()`).
+     */
+    bool hasUnsavedChanges() const;
 
 
     /**
@@ -397,6 +419,11 @@ private:
      * @brief See `wasChangedExternally()`.
      */
     bool changedExternally = false;
+
+    /**
+     * @brief See `hasViewChanges()`.
+     */
+    bool viewChanged = false;
 
     /// Whether `group`'s verb may extend `batch` rather than start a step.
     /// `liveDocument` is `documentOf` the document as it is now.

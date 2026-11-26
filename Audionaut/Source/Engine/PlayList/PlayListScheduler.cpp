@@ -28,6 +28,7 @@
 #include "Engine/Resource/ChannelMapping.h"
 #include "Engine/Channel/AudioChannel.h"
 #include "Engine/Region/AudioRegionContainer.h"
+#include "Engine/Effects/MixerPlanner.h"
 
 
 using namespace::std::chrono;
@@ -75,6 +76,9 @@ void PlayListScheduler::prepareToPlay (int samplesPerBlockExpected, double sampl
     bufferSize = samplesPerBlockExpected;
     voiceSourceContainer->prepareToPlay(samplesPerBlockExpected, sampleRate);
     playback->prepareToPlay(samplesPerBlockExpected, sampleRate);
+    // the inserts' format, published as a plan before the bus renders with it
+    if (auto* planner = audioTrackContainer->getMixerPlanner())
+        planner->prepare(sampleRate, samplesPerBlockExpected);
     audioBusInterface->prepareToPlay(samplesPerBlockExpected, sampleRate);
     transportLoop->prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
@@ -542,6 +546,38 @@ bool PlayListScheduler::isPlaying() const
     return false;
 }
 
+void PlayListScheduler::publishRenderTransport(bool playing, const TransportLoop::LoopResult* loopResult) noexcept
+{
+    if (renderTransport == nullptr)
+        return;
+
+    const auto loopRange = transportLoop->getProcessedLoopPositionRange(audium::clocks);
+
+    // The block in which the loop wraps starts before the loop's end, and
+    // that is its position. The transport's is the loop's start by then:
+    // processLoop() moves it there, where the clips after the wrap are
+    // scheduled from.
+    auto positionClocks = data.transportPositionClocks;
+    if (loopResult != nullptr && loopResult->loopEvent) {
+        const auto untilLoopClocks = loopResult->context == audium::seconds
+                                   ? tempoProvider->secondsToClocks(loopResult->timeUntilLoop)
+                                   : loopResult->timeUntilLoop;
+        positionClocks = loopRange.getEnd() - untilLoopClocks;
+    }
+    const auto positionSeconds = tempoProvider->clocksToSeconds(positionClocks);
+
+    RenderTransport::Block block;
+    block.playing = playing;
+    block.positionSeconds = positionSeconds;
+    block.positionSamples = static_cast<std::int64_t>(std::llround(positionSeconds * externalSampleRate));
+    block.positionBeats = TempoProvider::clocksToBeats(positionClocks);
+    block.tempo = tempoProvider->getTempo();
+    block.looping = transportLoop->isProcessedLoopActive() && ! loopRange.isEmpty();
+    block.loopStartBeats = TempoProvider::clocksToBeats(loopRange.getStart());
+    block.loopEndBeats = TempoProvider::clocksToBeats(loopRange.getEnd());
+    renderTransport->publish(block);
+}
+
 double PlayListScheduler::getAbsolutePosition(audium::TimeContextType context) const
 {
     if (context == audium::clocks) {
@@ -744,6 +780,12 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     // so this thread is the only one draining the queue.
     audioBusInterface->invokeCommands();
 
+    // the inserts start the bounce from rest, as the voices do: no
+    // envelope, delay line or bypass crossfade carried over from live
+    // playback or the previous bounce, so two bounces of one project are
+    // the same file
+    audioBusInterface->resetInserts();
+
     // remember last position. The bounce bypasses the device, so whether
     // Link reports playing says nothing about it - and right after a Stop
     // Link still does for a moment, which would keep setAbsoluteStartPosition
@@ -758,10 +800,27 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     startPlaying();
     
     jassert((int)config->sampleRate == (int)externalSampleRate);
+    const auto toProjectEnd = config->lengthSeconds <= 0.0;
     auto length         = getTotalLength(audium::seconds) - config->positionSeconds;
-    if (config->lengthSeconds > 0.0)
+    if (! toProjectEnd)
         length = config->lengthSeconds;
     auto totalSamples   = static_cast<int64>(length * externalSampleRate);
+
+    // the tempo as it is now, before the first block publishes it: an effect
+    // that keeps time by it (a delay in note values) is asked for its tail next
+    publishRenderTransport(false, nullptr);
+
+    // the chains ring out after the last clip (a delay's echoes): a bounce
+    // to the project's end runs on for that, an explicit length is kept
+    if (toProjectEnd && config->includeEffectTails)
+        totalSamples += static_cast<int64>(std::ceil(audioBusInterface->getEffectTailSeconds() * externalSampleRate));
+
+    // the renderer's output is as late as its latency compensation says
+    // (the main mix's figure, or the stems' for a stem export): the first
+    // samples it hands out belong before the start and are dropped, and the
+    // render runs on by as many so the file still ends where it should
+    const auto latencySamples = static_cast<int64>(audioBusInterface->getOutputLatencySamples());
+    auto samplesToDrop = latencySamples;
     
     auto positionBeats = TempoProvider::clocksToBeats(getAbsolutePosition(audium::clocks));
     
@@ -772,6 +831,7 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
     juce::dsp::AudioBlock<float> inBlock (inBuffer);
     
     bool written = true; // stays true only while every write succeeds
+    int64 samplesWritten = 0;
     auto renderBlock = [&] (int numSamples)
     {
         const auto clocksThisBuffer = tempoProvider->secondsToClocks(static_cast<double>(numSamples) / externalSampleRate);
@@ -782,25 +842,41 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         outBlock.clear();
         process(context, true, positionBeats, numSamples);
         positionBeats += beatsThisBuffer;
-        
-        written &= writer->writeFromAudioSampleBuffer(outBuffer, 0, numSamples);
+
+        const auto dropped = static_cast<int>(std::min<int64>(samplesToDrop, numSamples));
+        samplesToDrop -= dropped;
+        if (dropped < numSamples) {
+            written &= writer->writeFromAudioSampleBuffer(outBuffer, dropped, numSamples - dropped);
+            samplesWritten += numSamples - dropped;
+        }
     };
 
-    const auto samplesWritten = renderInBlocks(totalSamples, config->blockSize, renderBlock,
-                                               [&] (int64 i, int64 numBlocks)
-                                               {
-                                                   config->progress = i / (double)numBlocks;
-                                                   if (callback)
-                                                       callback();
-                                               },
-                                               [&] { return config->userCanceled; });
+    const auto samplesRendered = renderInBlocks(totalSamples + latencySamples, config->blockSize, renderBlock,
+                                                [&] (int64 i, int64 numBlocks)
+                                                {
+                                                    config->progress = i / (double)numBlocks;
+                                                    if (callback)
+                                                        callback();
+                                                },
+                                                [&] { return config->userCanceled; });
 
+    jassert(config->userCanceled || samplesRendered == totalSamples + latencySamples);
     jassert(config->userCanceled || samplesWritten == totalSamples);
+    juce::ignoreUnused(samplesRendered, samplesWritten);
     
     audioBusInterface->setStemExport(false);
 
+    // and nothing of the bounce stays behind in the chains: live playback
+    // picks up with silent delay lines, not with the bounce's last samples
+    audioBusInterface->resetInserts();
+
     moveTransportTo(lastPosition);
     stopPlaying();
+
+    // the last block published was the bounce's: playing, at its end. The
+    // transport stands where it stood before, and that is what a plugin
+    // asking between two renders is told
+    publishRenderTransport(false, nullptr);
 
     return written;
 }
@@ -868,6 +944,15 @@ void PlayListScheduler::startRecording(const int channelNumber)
         else {
             // record on the fly so use the current transport position
             data.recordingStartPositionClocks = data.transportPositionClocks;
+        }
+
+        // a block's position is the moment it is heard; what it records was
+        // performed to the output of an earlier moment: the device's round
+        // trip and the renderer's latency compensation before. The take goes
+        // where it was played, as far as the timeline's start allows.
+        if (externalSampleRate > 0.0) {
+            const auto latencySeconds = audioBusInterface->getRecordingLatencySamples() / externalSampleRate;
+            data.recordingStartPositionClocks = std::max(0.0, data.recordingStartPositionClocks - tempoProvider->secondsToClocks(latencySeconds));
         }
         
         NullCheckedInvocation::invoke (onRecordingStartedFunction);

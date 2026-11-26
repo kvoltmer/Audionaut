@@ -46,6 +46,7 @@ public:
     ~LevelMeter();
     
     void paint(Graphics& g) override;
+    void paintOverChildren (Graphics& g) override;
     void resized() override;
     
     float getDisplayLevel();
@@ -70,9 +71,20 @@ public:
     
     void setGrayscale(bool bGrayscale);
     
+    /// A dB scale beside the bar: ticks and unsigned figures on the meter's own law, in a column
+    /// of scaleWidth taken from the left of the bounds (vertical meters only).
+    static constexpr int scaleWidth = 18;
+    static constexpr int scaleEndInset = 5;   ///< the bar's inset at the top and bottom, room for the end figures
+    void setScaleShown (bool shown);
+    bool isScaleShown() const { return m_bScale; }
+    
+    /// Where the bar begins below the meter's top (and ends above its bottom): to line the bar up with something beside it.
+    int getBarInset() const { return (m_bScale && m_bVertical ? scaleEndInset : 0) + m_iSpace; }
+    
 private:
     bool m_bVertical;
     bool m_bInverted;
+    bool m_bScale = false;
     
     float m_fMindB;
     float m_fMaxdB;
@@ -87,6 +99,9 @@ private:
     
     std::unique_ptr<LevelComponent> m_pLevelComponent;
     juce::Rectangle<int> mRect;
+    juce::Rectangle<int> m_barArea;   // the bounds less the scale column
+    
+    void drawScale (Graphics& g);
     
 
     

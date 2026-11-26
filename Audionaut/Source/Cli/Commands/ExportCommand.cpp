@@ -31,6 +31,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
     auto lengthValue = takeOptionValue (working, "--length");
     auto channelsValue = takeOptionValue (working, "--channels");
     auto multiMono = working.removeOptionIfFound ("--multi-mono");
+    auto noTails = working.removeOptionIfFound ("--no-tails");
     auto regionName = takeOptionValue (working, "--region");
     auto trackId = takeOptionValue (working, "--track", "-1").getIntValue();
 
@@ -137,6 +138,7 @@ int runExport (const juce::ArgumentList& args, CliContext& context)
         config->lengthSeconds = lengthSeconds;
 
     config->multiMono = multiMono;
+    config->includeEffectTails = ! noTails;
     if (channelsValue.isNotEmpty())
         config->numChannels = channelsValue.getIntValue();
     else if (config->multiMono && regionName.isEmpty())

@@ -7,7 +7,9 @@
 #include <nlohmann/json.hpp>
 
 #include "Cli/Commands/Commands.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 #include "Engine/Project/ProjectFileStore.h"
+#include "TestPluginInstance.h"
 #include "Engine/AudiumEngine.h"
 #include "Engine/Playback/PlaybackDefines.h"
 
@@ -1740,6 +1742,490 @@ SCENARIO ("cli track-pan", "[cli][track][pan]")
                 REQUIRE (json["audium"]["audio_tracks"][1]["channels"][0]["pan"].get<double>()
                          == Catch::Approx (0.0));
             }
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli insert effects", "[cli][effects][inserts]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("inserts.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+    context.json = true;
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    THEN ("list-effects names the built-ins with their parameters, without a project")
+    {
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects"), context) == cli::exitOk);
+        auto effects = envelope["result"]["effects"];
+        REQUIRE (effects.size() == 4);
+        REQUIRE (effects[0]["type"] == "builtin:trim");
+        REQUIRE (effects[0]["category"] == "Utility");
+        REQUIRE (effects[0]["parameters"][0]["id"] == "gain_db");
+        REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (-24.0));
+        REQUIRE (effects[0]["parameters"][0]["stepped"] == false);
+
+        // a stepped parameter says what its values are called
+        REQUIRE (effects[3]["type"] == "builtin:delay");
+        const auto mode = effects[3]["parameters"][2];
+        REQUIRE (mode["id"] == "mode");
+        REQUIRE (mode["stepped"] == true);
+        REQUIRE (mode["steps"] == nlohmann::json::array ({ "Dotted", "Straight", "Triplets", "ms" }));
+        REQUIRE (mode["default_text"] == "Dotted");
+        REQUIRE (effects[3]["parameters"][1]["default_text"] == "1/8.");
+    }
+
+    GIVEN ("a project whose track 1 is a mono stem holding a 0 dB sine")
+    {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 2"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        const auto projectArg = project.getFullPathName();
+
+        const auto exportPeak = [&] (const juce::String& name)
+        {
+            auto output = workDir.getChildFile (name);
+            REQUIRE (cli::runExport (makeArgs ("export " + projectArg + " -o " + output.getFullPathName() + " --channels 1"), context)
+                     == cli::exitOk);
+            juce::AudioFormatManager formatManager;
+            formatManager.registerBasicFormats();
+            std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (output));
+            REQUIRE (reader != nullptr);
+            juce::AudioBuffer<float> buffer (1, static_cast<int> (reader->lengthInSamples));
+            REQUIRE (reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, false));
+            // past the first tenth: the trim's ramp and the clip's own fade-in
+            const auto from = buffer.getNumSamples() / 10;
+            return buffer.getMagnitude (0, from, buffer.getNumSamples() - from);
+        };
+        const auto plainPeak = exportPeak ("plain.wav");
+        REQUIRE (plainPeak > 0.5f);
+
+        WHEN ("a trim is added to the stem's track and set to -6 dB")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --type builtin:trim"), context)
+                     == cli::exitOk);
+            REQUIRE (envelope["result"]["type"] == "builtin:trim");
+            REQUIRE (envelope["result"]["track"] == 1);
+            REQUIRE (envelope["result"]["index"] == 0);
+            REQUIRE (envelope["result"]["inserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
+
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --index 0 --param gain_db --value -6"), context)
+                     == cli::exitOk);
+            REQUIRE (envelope["result"]["insert"]["state"]["gain_db"].get<double>() == Catch::Approx (-6.0));
+
+            THEN ("the summary, the saved project and the export carry it")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto track = envelope["result"]["tracks"][1];
+                REQUIRE (track["inserts"].size() == 1);
+                REQUIRE (track["inserts"][0]["type"] == "builtin:trim");
+                REQUIRE (track["inserts"][0]["enabled"] == true);
+                REQUIRE_FALSE (track["channels"][0].contains ("inserts"));
+                REQUIRE (envelope["result"]["masterInserts"].size() == 0);
+
+                auto json = readProjectJson (project);
+                auto stored = json["audium"]["audio_tracks"][1]["inserts"];
+                REQUIRE (stored.size() == 1);
+                REQUIRE (stored[0]["state"]["gain_db"].get<double>() == Catch::Approx (-6.0));
+
+                REQUIRE (exportPeak ("trimmed.wav") == Catch::Approx (plainPeak * juce::Decibels::decibelsToGain (-6.0f)).margin (0.01f));
+            }
+
+            THEN ("disabled, the export is as before; removed, the chain is empty")
+            {
+                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --index 0 --enabled off"), context)
+                         == cli::exitOk);
+                REQUIRE (envelope["result"]["insert"]["enabled"] == false);
+                REQUIRE (exportPeak ("bypassed.wav") == Catch::Approx (plainPeak).margin (0.01f));
+
+                REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --track 1 --index 0"), context)
+                         == cli::exitOk);
+                REQUIRE (envelope["result"]["removed"]["type"] == "builtin:trim");
+                REQUIRE (envelope["result"]["inserts"].size() == 0);
+                REQUIRE_FALSE (readProjectJson (project)["audium"]["audio_tracks"][1].contains ("inserts"));
+            }
+        }
+
+        WHEN ("a master insert and a track insert are added")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:eq3"), context)
+                     == cli::exitOk);
+            REQUIRE (envelope["result"]["master"] == true);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --type builtin:compressor"), context)
+                     == cli::exitOk);
+
+            THEN ("the summary lists them where they sit")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["masterInserts"][0]["type"] == "builtin:eq3");
+                REQUIRE (envelope["result"]["tracks"][1]["inserts"][0]["type"] == "builtin:compressor");
+            }
+        }
+
+        THEN ("the usage errors name what is missing")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --type builtin:nothing"), context) == cli::exitFailure);
+            REQUIRE (envelope["error"]["code"] == "unknown_effect");
+            REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --master --index 0"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param x"), context) == cli::exitUsage);
+        }
+
+        THEN ("an index or position that is not a number is a usage error, not slot 0")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim"), context) == cli::exitOk);
+            REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --master --index foo"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--index") != std::string::npos);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index x --param gain_db --value -6"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim --at first"), context) == cli::exitUsage);
+            REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["masterInserts"].size() == 1);
+            REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (0.0));
+        }
+
+        THEN ("a track or value that is not a number is a usage error, not 0; a channel is no chain")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --type builtin:trim"), context) == cli::exitOk);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track one --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--track") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --channel 0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--channel") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 1 --all-channels --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 1 --channel 0 --index 0 --enabled off"), context) == cli::exitUsage);
+            REQUIRE (cli::runRemoveInsert (makeArgs ("remove-insert " + projectArg + " --track 1 --channel 0 --index 0"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value x4"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--value") != std::string::npos);
+            REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --master --index 0 --param gain_db --value -6.5"), context) == cli::exitOk);
+            REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["tracks"][1]["inserts"].size() == 0);
+            REQUIRE (envelope["result"]["tracks"][0]["inserts"].size() == 0);
+            REQUIRE (envelope["result"]["masterInserts"].size() == 1);
+            REQUIRE (envelope["result"]["masterInserts"][0]["state"]["gain_db"].get<double>() == Catch::Approx (-6.5));
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
+SCENARIO ("cli plugin effects", "[cli][effects][hosting]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("plugins.audium");
+
+    cli::CliContext context;
+    context.quiet = true;
+    context.json = true;
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    // the machine's plugins: one test format with one gain plugin, listed
+    auto plugin = TestPluginInstance::Options {};
+    plugin.format = "TestA";
+    plugin.uid = 0x1111;
+    context.pluginHost = std::make_shared<PluginHost> (workDir.getChildFile ("data"), false);
+    context.pluginHost->getFormats().addFormat (std::make_unique<TestPluginFormat> ("TestA", std::vector { plugin }));
+    context.pluginHost->getList().addType (TestPluginInstance::describe (plugin));
+    const auto instancesBefore = TestPluginInstance::instances().load();
+
+    THEN ("list-effects names the plugin with its format, without loading it")
+    {
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects"), context) == cli::exitOk);
+        auto effects = envelope["result"]["effects"];
+        REQUIRE (effects.size() == 5);
+        REQUIRE (effects[0]["type"] == "builtin:trim");
+        REQUIRE (effects[0].contains ("parameters"));
+        REQUIRE (effects[4]["type"] == "testa:00001111");
+        REQUIRE (effects[4]["name"] == "Test Gain");
+        REQUIRE (effects[4]["category"] == "Audionaut Tests");
+        REQUIRE (effects[4]["format"] == "TestA");
+        REQUIRE (effects[4]["manufacturer"] == "Audionaut Tests");
+        REQUIRE_FALSE (effects[4].contains ("parameters"));
+        REQUIRE (TestPluginInstance::instances().load() == instancesBefore);
+    }
+
+    THEN ("list-effects --type loads the one plugin and lists its parameters, normalised")
+    {
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type testa:00001111"), context) == cli::exitOk);
+        auto effects = envelope["result"]["effects"];
+        REQUIRE (effects.size() == 1);
+        REQUIRE (effects[0]["type"] == "testa:00001111");
+        REQUIRE (effects[0]["parameters"].size() == 2);
+        REQUIRE (effects[0]["parameters"][0]["id"] == "gain");
+        REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (0.0));
+        REQUIRE (effects[0]["parameters"][0]["max"].get<double>() == Catch::Approx (1.0));
+        REQUIRE (effects[0]["parameters"][1]["boolean"] == true);
+        REQUIRE (TestPluginInstance::instances().load() == instancesBefore);   // let go with the engine
+
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type builtin:trim"), context) == cli::exitOk);
+        REQUIRE (envelope["result"]["effects"].size() == 1);
+        REQUIRE (envelope["result"]["effects"][0]["parameters"][0]["id"] == "gain_db");
+
+        REQUIRE (cli::runListEffects (makeArgs ("list-effects --type nope:0"), context) == cli::exitFailure);
+        REQUIRE (envelope["error"]["code"] == "unknown_effect");
+    }
+
+    GIVEN ("a project")
+    {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 2"), context) == cli::exitOk);
+        const auto projectArg = project.getFullPathName();
+
+        WHEN ("the plugin is inserted on the track")
+        {
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 0 --type testa:00001111"), context)
+                     == cli::exitOk);
+
+            THEN ("the summary and the file carry the plugin block, the state as a blob")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto inserts = envelope["result"]["tracks"][0]["inserts"];
+                REQUIRE (inserts.size() == 1);
+                REQUIRE (inserts[0]["type"] == "testa:00001111");
+                REQUIRE (inserts[0]["plugin"]["manufacturer"] == "Audionaut Tests");
+                REQUIRE (inserts[0]["loaded"] == true);
+                REQUIRE (inserts[0]["status"] == "loaded");
+                REQUIRE_FALSE (inserts[0].contains ("state"));
+
+                auto json = readProjectJson (project);
+                auto stored = json["audium"]["audio_tracks"][0]["inserts"][0];
+                REQUIRE (stored["type"] == "testa:00001111");
+                REQUIRE (stored["plugin"]["format"] == "TestA");
+                REQUIRE (stored["state"]["blob"].is_string());
+            }
+
+            THEN ("set-insert takes the plugin's parameter id and a normalised value")
+            {
+                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --track 0 --index 0 --param gain --value 0.25"), context)
+                         == cli::exitOk);
+                REQUIRE (envelope["result"]["insert"]["plugin"]["name"] == "Test Gain");
+                REQUIRE (cli::runListEffects (makeArgs ("list-effects --type testa:00001111"), context) == cli::exitOk);
+
+                auto json = readProjectJson (project);
+                juce::MemoryBlock chunk;
+                REQUIRE (chunk.fromBase64Encoding (json["audium"]["audio_tracks"][0]["inserts"][0]["state"]["blob"].get<std::string>()));
+                REQUIRE (chunk.toString().startsWith ("0.5"));   // gain 0.25 of 0..2
+            }
+        }
+
+        WHEN ("the file names a plugin nobody here has")
+        {
+            auto json = readProjectJson (project);
+            auto missing = TestPluginInstance::Options {};
+            missing.name = "Nope";
+            missing.uid = 0x9999;
+            json["audium"]["audio_tracks"][0]["inserts"] = nlohmann::json::array ({
+                { { "type", "testa:00009999" }, { "enabled", true },
+                  { "plugin", { { "name", "Nope" }, { "manufacturer", "Nobody" }, { "format", "TestA" }, { "file", "/test/nope.testa" }, { "version", "1.0" } } },
+                  { "state", { { "blob", "QUJD" } } } } });
+            REQUIRE (project.getChildFile ("Project.json").replaceWithText (juce::String (json.dump (2))));
+
+            THEN ("info lists it as missing, without a slot index, and an edit keeps it in the file")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto inserts = envelope["result"]["tracks"][0]["inserts"];
+                REQUIRE (inserts.size() == 1);
+                REQUIRE (inserts[0]["missing"] == true);
+                REQUIRE (inserts[0]["position"] == 0);
+                REQUIRE (inserts[0]["plugin"]["name"] == "Nope");
+                REQUIRE_FALSE (inserts[0].contains ("index"));
+
+                REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --track 0 --type builtin:trim"), context)
+                         == cli::exitOk);
+                auto stored = readProjectJson (project)["audium"]["audio_tracks"][0]["inserts"];
+                REQUIRE (stored.size() == 2);
+                REQUIRE (stored[0]["type"] == "testa:00009999");
+                REQUIRE (stored[0]["state"]["blob"] == "QUJD");
+                REQUIRE (stored[1]["type"] == "builtin:trim");
+            }
+        }
+    }
+}
+
+SCENARIO ("cli aux buses and sends", "[cli][effects][sends]")
+{
+    auto workDir = makeWorkDirectory();
+    auto project = workDir.getChildFile ("sends.audium");
+    auto audioFile = juce::File (testFilesDir + "sine-0dB.wav");
+    REQUIRE (audioFile.existsAsFile());
+
+    cli::CliContext context;
+    context.quiet = true;
+    context.json = true;
+    nlohmann::json envelope;
+    context.envelopeSink = [&envelope] (const nlohmann::json& produced) { envelope = produced; };
+
+    GIVEN ("a project whose track 1 is a mono stem holding a 0 dB sine")
+    {
+        REQUIRE (cli::runCreate (makeArgs ("create " + project.getFullPathName() + " --channels 2"), context)
+                 == cli::exitOk);
+        REQUIRE (cli::runImport (makeArgs ("import " + project.getFullPathName() + " "
+                                           + audioFile.getFullPathName()),
+                                 context)
+                 == cli::exitOk);
+        const auto projectArg = project.getFullPathName();
+
+        // the main mix's left channel of a stereo float export (the return
+        // takes a 0 dB stem over full scale), past the ramps and the clip's fade-in
+        const auto exportPeak = [&] (const juce::String& name)
+        {
+            auto output = workDir.getChildFile (name);
+            REQUIRE (cli::runExport (makeArgs ("export " + projectArg + " -o " + output.getFullPathName() + " --channels 2 --bit-depth 32"), context)
+                     == cli::exitOk);
+            juce::AudioFormatManager formatManager;
+            formatManager.registerBasicFormats();
+            std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (output));
+            REQUIRE (reader != nullptr);
+            juce::AudioBuffer<float> buffer (2, static_cast<int> (reader->lengthInSamples));
+            REQUIRE (reader->read (&buffer, 0, buffer.getNumSamples(), 0, true, true));
+            const auto from = buffer.getNumSamples() / 10;
+            return buffer.getMagnitude (0, from, buffer.getNumSamples() - from);
+        };
+        const auto plainPeak = exportPeak ("plain.wav");
+        REQUIRE (plainPeak > 0.5f);
+
+        THEN ("the project has Aux 1 and Aux 2 and no sends")
+        {
+            REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+            auto auxes = envelope["result"]["auxBuses"];
+            REQUIRE (auxes.size() == 2);
+            REQUIRE (auxes[0]["id"] == 1);
+            REQUIRE (auxes[0]["name"] == "Aux 1");
+            REQUIRE (auxes[0]["gain"].get<double>() == Catch::Approx (1.0));
+            REQUIRE (auxes[0]["inserts"].size() == 0);
+            REQUIRE (auxes[1]["id"] == 2);
+            REQUIRE (envelope["result"]["tracks"][1]["channels"][0]["sends"].size() == 0);
+            REQUIRE (readProjectJson (project)["audium"]["aux_buses"].size() == 2);
+        }
+
+        WHEN ("the stem's strip sends into Aux 1 at half level")
+        {
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 0 --aux 1 --level 0.5"), context)
+                     == cli::exitOk);
+            REQUIRE (envelope["result"]["aux"] == 1);
+            REQUIRE (envelope["result"]["sends"].size() == 1);
+            REQUIRE (envelope["result"]["sends"][0]["level"].get<double>() == Catch::Approx (0.5));
+            REQUIRE (envelope["result"]["sends"][0]["preFader"] == false);
+
+            THEN ("the summary, the saved project and the export carry it: the return adds half the stem")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                auto sends = envelope["result"]["tracks"][1]["channels"][0]["sends"];
+                REQUIRE (sends.size() == 1);
+                REQUIRE (sends[0]["aux"] == 1);
+                REQUIRE (sends[0]["level"].get<double>() == Catch::Approx (0.5));
+
+                auto stored = readProjectJson (project)["audium"]["audio_tracks"][1]["channels"][0]["sends"];
+                REQUIRE (stored.size() == 1);
+                REQUIRE (stored[0]["aux"] == 1);
+                REQUIRE (stored[0]["pre_fader"] == false);
+
+                REQUIRE (exportPeak ("sent.wav") == Catch::Approx (plainPeak * 1.5f).margin (0.01f));
+            }
+
+            THEN ("the aux return, the send's mute and a trim on the aux shape what comes back")
+            {
+                REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --gain 0.5 --name Room"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["aux"]["name"] == "Room");
+                REQUIRE (envelope["result"]["aux"]["gain"].get<double>() == Catch::Approx (0.5));
+                REQUIRE (exportPeak ("half-return.wav") == Catch::Approx (plainPeak * 1.25f).margin (0.01f));
+
+                REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --gain 1 --mute on"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["aux"]["mute"] == true);
+                REQUIRE (exportPeak ("muted-return.wav") == Catch::Approx (plainPeak).margin (0.01f));
+                REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --mute off"), context) == cli::exitOk);
+
+                REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 0 --aux 1 --mute on"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["sends"][0]["mute"] == true);
+                REQUIRE (envelope["result"]["sends"][0]["level"].get<double>() == Catch::Approx (0.5));
+                REQUIRE (exportPeak ("muted-send.wav") == Catch::Approx (plainPeak).margin (0.01f));
+                REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 0 --aux 1 --mute off"), context) == cli::exitOk);
+
+                REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --type builtin:trim"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["aux"] == 1);
+                REQUIRE (cli::runSetInsert (makeArgs ("set-insert " + projectArg + " --aux 1 --index 0 --param gain_db --value -6"), context) == cli::exitOk);
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["auxBuses"][0]["inserts"][0]["type"] == "builtin:trim");
+                REQUIRE (exportPeak ("trimmed-return.wav")
+                         == Catch::Approx (plainPeak * (1.0f + 0.5f * juce::Decibels::decibelsToGain (-6.0f))).margin (0.01f));
+            }
+
+            THEN ("removing the send, or the bus, takes the return away")
+            {
+                REQUIRE (cli::runRemoveSend (makeArgs ("remove-send " + projectArg + " --track 1 --channel 0 --aux 1"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["removed"].size() == 1);
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["tracks"][1]["channels"][0]["sends"].size() == 0);
+                REQUIRE_FALSE (readProjectJson (project)["audium"]["audio_tracks"][1]["channels"][0].contains ("sends"));
+                REQUIRE (exportPeak ("unsent.wav") == Catch::Approx (plainPeak).margin (0.01f));
+
+                REQUIRE (cli::runRemoveSend (makeArgs ("remove-send " + projectArg + " --track 1 --channel 0 --aux 1"), context) == cli::exitFailure);
+                REQUIRE (envelope["error"]["code"] == "send_not_found");
+
+                REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 1 --level 0.5"), context) == cli::exitOk);
+                REQUIRE (cli::runRemoveAux (makeArgs ("remove-aux " + projectArg + " --aux 1"), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["removed"]["id"] == 1);
+                REQUIRE (envelope["result"]["auxBuses"].size() == 1);
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["auxBuses"][0]["id"] == 2);
+                REQUIRE (envelope["result"]["tracks"][1]["channels"][0]["sends"].size() == 0);
+                REQUIRE (exportPeak ("no-bus.wav") == Catch::Approx (plainPeak).margin (0.01f));
+            }
+        }
+
+        WHEN ("a bus is added and both strips of track 0 send into it")
+        {
+            REQUIRE (cli::runAddAux (makeArgs ("add-aux " + projectArg + " --name Verb"), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["aux"]["id"] == 3);
+            REQUIRE (envelope["result"]["aux"]["name"] == "Verb");
+            REQUIRE (envelope["result"]["auxBuses"].size() == 3);
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 0 --aux 3 --level 0.25 --pre-fader on"), context) == cli::exitOk);
+            REQUIRE (envelope["result"]["sends"].size() == 2);
+            REQUIRE (envelope["result"]["sends"][1]["channel"] == 1);
+            REQUIRE (envelope["result"]["sends"][1]["preFader"] == true);
+
+            THEN ("the summary lists them, and an unnamed bus takes the next id")
+            {
+                REQUIRE (cli::runInfo (makeArgs ("info " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["auxBuses"][2]["name"] == "Verb");
+                REQUIRE (envelope["result"]["tracks"][0]["channels"][0]["sends"][0]["aux"] == 3);
+                REQUIRE (envelope["result"]["tracks"][0]["channels"][1]["sends"][0]["preFader"] == true);
+                REQUIRE (cli::runAddAux (makeArgs ("add-aux " + projectArg), context) == cli::exitOk);
+                REQUIRE (envelope["result"]["aux"]["id"] == 4);
+                REQUIRE (envelope["result"]["aux"]["name"] == "Aux 4");
+            }
+        }
+
+        THEN ("the usage and lookup errors name what is wrong")
+        {
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 1"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 1 --level loud"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--level") != std::string::npos);
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 9 --level 0.5"), context) == cli::exitFailure);
+            REQUIRE (envelope["error"]["code"] == "aux_not_found");
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --channel 5 --aux 1 --level 0.5"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --pan 2"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux one --gain 1"), context) == cli::exitUsage);
+            REQUIRE (cli::runRemoveAux (makeArgs ("remove-aux " + projectArg), context) == cli::exitUsage);
+            REQUIRE (cli::runRemoveAux (makeArgs ("remove-aux " + projectArg + " --aux 7"), context) == cli::exitFailure);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 7 --type builtin:trim"), context) == cli::exitFailure);
+            REQUIRE (envelope["error"]["code"] == "aux_not_found");
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --master --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --aux 1 --channel 0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (envelope["error"]["message"].get<std::string>().find ("--channel") != std::string::npos);
+            REQUIRE (cli::runAddInsert (makeArgs ("add-insert " + projectArg + " --master --channel 0 --type builtin:trim"), context) == cli::exitUsage);
+            REQUIRE (cli::runSetAux (makeArgs ("set-aux " + projectArg + " --aux 1 --gain 0x10"), context) == cli::exitUsage);   // hex is not a number here: strtod read 16, getDoubleValue 0
+            REQUIRE (cli::runSetSend (makeArgs ("set-send " + projectArg + " --track 1 --aux 1 --level 0x10"), context) == cli::exitUsage);
         }
     }
 

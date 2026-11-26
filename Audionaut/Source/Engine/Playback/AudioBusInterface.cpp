@@ -33,16 +33,40 @@ void AudioBusInterface::setChannelData(const int channelNumber, const AudioChann
     }
     
     auto ptr = audioBusRenderer.get();
-    lockFreeCommander->fifo.push([ptr, channelNumber, data] {
+    postCommand([ptr, channelNumber, data] {
         ptr->setChannelData(channelNumber, data);
     });
-    
+}
+
+void AudioBusInterface::postCommand (std::function<void()> command)
+{
+    // a full fifo drops the command and the render thread misses a layout
+    // change or a plan: the factory sizes it for the longest burst an edit
+    // posts, so this is a bug, not a load condition
+    const auto queued = lockFreeCommander->fifo.push (std::move (command));
+    jassert (queued);
+    juce::ignoreUnused (queued);
+
     // With no audio device running there is no render callback to drain the
-    // fifo (capacity 256, drops on full) - pump it synchronously. Runtime
-    // check so the GUI binary's in-app CLI mode gets the same treatment.
-    if (pumpsCommandsSynchronously.value_or (HeadlessMode::isHeadless()))
+    // fifo (drops on full) - pump it synchronously. Runtime check so the GUI
+    // binary's in-app CLI mode gets the same treatment.
+    if (pumpsCommandsSynchronously.value_or (HeadlessMode::isHeadless() || ! deviceRunning.load (std::memory_order_relaxed)))
         lockFreeCommander->invoke();
-    
+}
+
+void AudioBusInterface::resetInserts() noexcept
+{
+    audioBusRenderer->resetInserts();
+}
+
+int AudioBusInterface::getOutputLatencySamples() const noexcept
+{
+    return audioBusRenderer->getOutputLatencySamples();
+}
+
+double AudioBusInterface::getEffectTailSeconds() const noexcept
+{
+    return audioBusRenderer->getEffectTailSeconds();
 }
 
 const AudioChannelData AudioBusInterface::getChannelData(const int channelNumber) const
@@ -133,6 +157,18 @@ void AudioBusInterface::setMasterGain(const float newGain)
     lockFreeCommander->fifo.push([ptr, newGain] {
         ptr->setMasterGain(newGain);
     });
+}
+
+void AudioBusInterface::setMasterPan (const float newPan)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push ([ptr, newPan] { ptr->setMasterPan (newPan); });
+}
+
+void AudioBusInterface::setMasterMute (const bool mute)
+{
+    auto ptr = audioBusRenderer.get();
+    lockFreeCommander->fifo.push ([ptr, mute] { ptr->setMasterMute (mute); });
 }
 
 void AudioBusInterface::resetGains()

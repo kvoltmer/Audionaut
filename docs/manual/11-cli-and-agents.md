@@ -61,6 +61,19 @@ import and your export targets inside `~/Music` (for example in
 command and says so with `sandbox_denied`. The developer build of
 `audionaut-cli` has no such limit. Windows and Linux have none either.
 
+Plugins are on unless you untick **Plugins enabled** in the app's Manage
+Plugins window, and the commands the app runs follow that: with plugins off,
+`list-effects` names the built-ins only, `scan-plugins` fails with
+`plugins_disabled`, and a plugin insert shows up in `info` as a missing
+element that keeps its settings.
+
+With plugins on, a command that the app runs on its own, with no window,
+still does not load Audio Units that are not marked sandbox-safe: macOS
+would ask to lower the app's security settings, and nobody is there to
+answer. Such an insert is a missing element in `info` as well. Open the
+project in the app to work with these plugins (see
+[The mixer and effects](14-mixer-and-effects.md)).
+
 ## Verbs
 
 ```
@@ -85,8 +98,32 @@ clip-speed      set a clip's speed (ratio, semitones or target length)
 remove-track    remove a whole track (channels, clips and regions)
 remove-channel  remove one channel from a track
 track-pan       pan a track's channel strips (-1 left .. 1 right)
+add-insert      put an effect on a track, an aux bus or the master
+remove-insert   take an insert off a chain
+set-insert      set an insert's parameter, or bypass it
+list-effects    the effect types: built-ins and this machine's plugins
+scan-plugins    find the plugins installed on this machine
+add-aux         add an aux bus
+remove-aux      remove an aux bus and the sends into it
+set-aux         name, gain, pan, mute, solo of an aux bus
+set-send        a channel's send into an aux bus
+remove-send     take a send away
 separate        split a clip into Drums/Bass/Other/Vocals tracks (Demucs)
 ```
+
+Effects come as the built-ins (`builtin:trim`, `builtin:eq3`, `builtin:compressor`,
+`builtin:delay`) and as plugins: Audio Units on macOS, VST3 on Windows, VST3 and
+LV2 on Linux (where the verbs use the formats that are ticked in Manage
+Plugins: LV2 unless you changed it). `scan-plugins` looks through the platform's plugin folders and
+writes what it finds to the list the app and the verbs share; the plugins are
+loaded in a worker process, so one that crashes is blacklisted and the scan
+goes on. `list-effects` then names the plugins by type id (`au:…`, `vst3:…`,
+`lv2:…`) with format and manufacturer; `list-effects --type ID` loads one and
+lists its parameters, normalised 0 to 1. A project saved with a plugin in one
+format opens with the same plugin in another installed format when the name and
+manufacturer match; a plugin nobody has stays in the file as a missing insert.
+The mixer side of all this is in
+[The mixer, effects and plugins](14-mixer-and-effects.md).
 
 Run `audionaut-cli --help` for each verb's options. Positions and durations
 are musical by default — `--unit bars|beats|seconds|clocks`, bars and beats

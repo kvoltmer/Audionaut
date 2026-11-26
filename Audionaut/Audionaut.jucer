@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="gxtGxr" name="Audionaut" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/asio/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/&#10;../../../ThirdParty/lame/include"
-              bundleIdentifier="com.voltmer-systems.audionaut" version="1.7.0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="../../../Submodules/json/include/&#10;../../../Submodules/link/include/&#10;../../../Submodules/link/modules/asio-standalone/include&#10;../../../Submodules/farbot/include/&#10;../../../Submodules/rubberband/&#10;../../../ThirdParty/lame/include"
+              bundleIdentifier="com.voltmer-systems.audionaut" version="1.8.0"
               companyName="voltmer-systems" companyWebsite="audionaut.app"
               cppLanguageStandard="20" compilerFlagSchemes="demucs,rubberband,lame" defines="JUCE_MODAL_LOOPS_PERMITTED=1&#10;DEMUCS_ENABLED=1&#10;GA4_MEASUREMENT_ID=&quot;G-Q6904SZWWY&quot;">
   <MAINGROUP id="HQG80L" name="Audionaut">
@@ -101,6 +101,12 @@
                 file="Source/Cli/Commands/SeparateCommand.cpp"/>
           <FILE id="CliTr1" name="TrackCommands.cpp" compile="1" resource="0"
                 file="Source/Cli/Commands/TrackCommands.cpp"/>
+          <FILE id="CliEfC" name="EffectCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/EffectCommands.cpp"/>
+          <FILE id="CliAxC" name="AuxCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/AuxCommands.cpp"/>
+          <FILE id="CliPlC" name="PluginCommands.cpp" compile="1" resource="0"
+                file="Source/Cli/Commands/PluginCommands.cpp"/>
         </GROUP>
         <FILE id="CliCtx" name="CliContext.h" compile="0" resource="0" file="Source/Cli/CliContext.h"/>
         <FILE id="CliDsH" name="CliDispatch.h" compile="0" resource="0" file="Source/Cli/CliDispatch.h"/>
@@ -310,6 +316,84 @@
                 file="Source/Engine/Selection/SelectionManager.h"/>
           <FILE id="ClOvTg1" name="ClipOverlayTarget.h" compile="0" resource="0" file="Source/Engine/Selection/ClipOverlayTarget.h"/>
         </GROUP>
+        <GROUP id="{3E7F1A52-9C04-4B8D-A6E1-2F5D7C9B0E41}" name="Effects">
+          <GROUP id="{5B9D2C73-1E86-4F0A-B7C2-8A3E6D1F4C92}" name="BuiltIn">
+            <FILE id="EfBBiq" name="Biquad.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/Biquad.h"/>
+            <FILE id="EfBCmp" name="CompressorEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/CompressorEffect.h"/>
+            <FILE id="EfBDly" name="DelayEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/DelayEffect.h"/>
+            <FILE id="EfBEq3" name="Eq3Effect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/Eq3Effect.h"/>
+            <FILE id="EfBTrm" name="TrimEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/TrimEffect.h"/>
+          </GROUP>
+          <FILE id="EfAuxC" name="AuxBus.cpp" compile="1" resource="0" file="Source/Engine/Effects/AuxBus.cpp"/>
+          <FILE id="EfAuxH" name="AuxBus.h" compile="0" resource="0" file="Source/Engine/Effects/AuxBus.h"/>
+          <FILE id="EfAxCC" name="AuxBusContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/AuxBusContainer.cpp"/>
+          <FILE id="EfAxCH" name="AuxBusContainer.h" compile="0" resource="0"
+                file="Source/Engine/Effects/AuxBusContainer.h"/>
+          <FILE id="EfEffH" name="Effect.h" compile="0" resource="0" file="Source/Engine/Effects/Effect.h"/>
+          <GROUP id="{9A4C7E21-3B5D-4F86-A0C9-7D2E8B1F6A53}" name="Hosting">
+            <FILE id="EfHoCS" name="ChildProcessScanner.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/ChildProcessScanner.cpp"/>
+            <FILE id="EfHoRC" name="AudioUnitRegistry.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/AudioUnitRegistry.cpp"/>
+            <FILE id="EfHoRH" name="AudioUnitRegistry.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/AudioUnitRegistry.h"/>
+            <FILE id="EfHoSH" name="ChildProcessScanner.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ChildProcessScanner.h"/>
+            <FILE id="EfHoEC" name="HostedEffect.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/HostedEffect.cpp"/>
+            <FILE id="EfHoEH" name="HostedEffect.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/HostedEffect.h"/>
+            <FILE id="EfHoPC" name="PluginHost.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginHost.cpp"/>
+            <FILE id="EfHoFC" name="PluginFormats.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginFormats.cpp"/>
+            <FILE id="EfHoFH" name="PluginFormats.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginFormats.h"/>
+            <FILE id="EfHoPH" name="PluginHost.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginHost.h"/>
+            <FILE id="EfHoLC" name="PluginListScan.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginListScan.cpp"/>
+            <FILE id="EfHoLH" name="PluginListScan.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginListScan.h"/>
+            <FILE id="EfHoWC" name="ScanWorker.cpp" compile="1" resource="0"
+                  file="Source/Engine/Effects/Hosting/ScanWorker.cpp"/>
+            <FILE id="EfHoWH" name="ScanWorker.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ScanWorker.h"/>
+            <FILE id="EfHoFS" name="ForeignPluginState.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ForeignPluginState.h"/>
+            <FILE id="EfHoTI" name="PluginTypeId.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/PluginTypeId.h"/>
+          </GROUP>
+          <FILE id="EfRegC" name="EffectRegistry.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/EffectRegistry.cpp"/>
+          <FILE id="EfRegH" name="EffectRegistry.h" compile="0" resource="0"
+                file="Source/Engine/Effects/EffectRegistry.h"/>
+          <FILE id="EfSltH" name="EffectSlot.h" compile="0" resource="0"
+                file="Source/Engine/Effects/EffectSlot.h"/>
+          <FILE id="EfInsC" name="InsertChain.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/InsertChain.cpp"/>
+          <FILE id="EfInsH" name="InsertChain.h" compile="0" resource="0"
+                file="Source/Engine/Effects/InsertChain.h"/>
+          <FILE id="EfPlnH" name="MixPlan.h" compile="0" resource="0" file="Source/Engine/Effects/MixPlan.h"/>
+          <FILE id="EfPdcH" name="PdcDelay.h" compile="0" resource="0" file="Source/Engine/Effects/PdcDelay.h"/>
+          <FILE id="EfSndC" name="SendList.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/SendList.cpp"/>
+          <FILE id="EfSndH" name="SendList.h" compile="0" resource="0" file="Source/Engine/Effects/SendList.h"/>
+          <FILE id="EfPlCC" name="MixPlanContainer.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/MixPlanContainer.cpp"/>
+          <FILE id="EfPlCH" name="MixPlanContainer.h" compile="0" resource="0"
+                file="Source/Engine/Effects/MixPlanContainer.h"/>
+          <FILE id="EfMxPC" name="MixerPlanner.cpp" compile="1" resource="0"
+                file="Source/Engine/Effects/MixerPlanner.cpp"/>
+          <FILE id="EfMxPH" name="MixerPlanner.h" compile="0" resource="0"
+                file="Source/Engine/Effects/MixerPlanner.h"/>
+        </GROUP>
         <GROUP id="{792A3048-7148-F0F6-7A5C-D8F9BD613B09}" name="Core">
           <FILE id="jX0IBu" name="LockFreeCommander.h" compile="0" resource="0"
                 file="Source/Engine/Core/LockFreeCommander.h"/>
@@ -389,6 +473,14 @@
                 file="Source/Engine/Playback/AudioBusRenderer.cpp"/>
           <FILE id="JTNbDj" name="AudioBusRenderer.h" compile="0" resource="0"
                 file="Source/Engine/Playback/AudioBusRenderer.h"/>
+          <FILE id="RndTrn" name="RenderTransport.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderTransport.h"/>
+          <FILE id="RLdMtH" name="RenderLoadMeter.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderLoadMeter.h"/>
+          <FILE id="RThPlC" name="RenderThreadPool.cpp" compile="1" resource="0"
+                file="Source/Engine/Playback/RenderThreadPool.cpp"/>
+          <FILE id="RThPlH" name="RenderThreadPool.h" compile="0" resource="0"
+                file="Source/Engine/Playback/RenderThreadPool.h"/>
           <FILE id="kBDQRJ" name="Playback.cpp" compile="1" resource="0" file="Source/Engine/Playback/Playback.cpp"/>
           <FILE id="TuWOT6" name="Playback.h" compile="0" resource="0" file="Source/Engine/Playback/Playback.h"/>
           <FILE id="jQYb2Z" name="PlaybackDefines.h" compile="0" resource="0"
@@ -503,6 +595,10 @@
                 file="Source/Engine/Undo/UndoableReloadAction.h"/>
           <FILE id="UndChn" name="UndoableChannelAction.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableChannelAction.h"/>
+          <FILE id="UndEfP" name="UndoableEffectParameterAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableEffectParameterAction.h"/>
+          <FILE id="UndSnd" name="UndoableSendAction.h" compile="0" resource="0"
+                file="Source/Engine/Undo/UndoableSendAction.h"/>
           <FILE id="UndEdt" name="UndoableEdit.h" compile="0" resource="0"
                 file="Source/Engine/Undo/UndoableEdit.h"/>
           <FILE id="UndPLI" name="UndoablePlayListItemAction.h" compile="0" resource="0"
@@ -541,6 +637,16 @@
                 file="Source/Interface/Dialogs/AnalysisSettingsComponent.h"/>
           <FILE id="DlgMdt" name="ModelDownloadThread.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/ModelDownloadThread.h"/>
+          <FILE id="DlgPrS" name="ProcessingSettingsComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ProcessingSettingsComponent.h"/>
+          <FILE id="DlgLSm" name="LoadSimulatorComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/LoadSimulatorComponent.h"/>
+          <FILE id="DlgPLd" name="ProcessingLoadComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/ProcessingLoadComponent.h"/>
+          <FILE id="DlgPMg" name="PluginManagerComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/PluginManagerComponent.h"/>
+          <FILE id="DlgIPS" name="InitialPluginScanComponent.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/InitialPluginScanComponent.h"/>
           <FILE id="DlgSsc" name="SeparationSettingsComponent.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/SeparationSettingsComponent.h"/>
           <FILE id="DlgSsd" name="StemSeparationDialog.h" compile="0" resource="0"
@@ -557,6 +663,12 @@
                 file="Source/Interface/Dialogs/AssembleDialog.h"/>
           <FILE id="Y3mnJv" name="FileBrowserView.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FileBrowserView.h"/>
+          <FILE id="FltPn1" name="FloatingPanel.cpp" compile="1" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel.cpp"/>
+          <FILE id="FltPn2" name="FloatingPanel.h" compile="0" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel.h"/>
+          <FILE id="FltPn3" name="FloatingPanel_mac.mm" compile="1" resource="0"
+                file="Source/Interface/Dialogs/FloatingPanel_mac.mm"/>
           <FILE id="fltTlW" name="FloatingToolWindow.h" compile="0" resource="0"
                 file="Source/Interface/Dialogs/FloatingToolWindow.h"/>
           <FILE id="vHwlEq" name="NewAudioTrackDialog.h" compile="0" resource="0"
@@ -588,6 +700,54 @@
           <FILE id="rvvAQJ" name="ZoomHandler.h" compile="0" resource="0" file="Source/Interface/Handlers/ZoomHandler.h"/>
         </GROUP>
         <GROUP id="{9E78BD66-1FB3-A407-D5D2-87F549752983}" name="Components">
+          <GROUP id="{B7C1D2E3-4F50-6A7B-8C9D-0E1F2A3B4C5D}" name="MixerPanel">
+            <FILE id="EfEdtH" name="EffectEditorComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.h"/>
+            <FILE id="EfEdtC" name="EffectEditorComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/EffectEditorComponent.cpp"/>
+            <FILE id="HsEdtH" name="HostedEffectEditorComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/HostedEffectEditorComponent.h"/>
+            <FILE id="HsEdtC" name="HostedEffectEditorComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/HostedEffectEditorComponent.cpp"/>
+            <FILE id="SltEdH" name="SlotEditor.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/SlotEditor.h"/>
+            <FILE id="InSLsH" name="InsertSlotListComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.h"/>
+            <FILE id="InSLsC" name="InsertSlotListComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/InsertSlotListComponent.cpp"/>
+            <FILE id="MxBGrH" name="MixerBusGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.h"/>
+            <FILE id="MxBGrC" name="MixerBusGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusGroupComponent.cpp"/>
+            <FILE id="MxBStH" name="MixerBusStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.h"/>
+            <FILE id="MxBStC" name="MixerBusStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerBusStripComponent.cpp"/>
+            <FILE id="MxrCmH" name="MixerComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.h"/>
+            <FILE id="MxrCmC" name="MixerComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerComponent.cpp"/>
+            <FILE id="MxCtxH" name="MixerContext.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerContext.h"/>
+            <FILE id="MxLayH" name="MixerLayout.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerLayout.h"/>
+            <FILE id="MxSBrH" name="MixerSectionBar.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerSectionBar.h"/>
+            <FILE id="MxSElC" name="MixerStripElements.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.cpp"/>
+            <FILE id="MxSElH" name="MixerStripElements.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripElements.h"/>
+            <FILE id="MxStrH" name="MixerStripComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.h"/>
+            <FILE id="MxStrC" name="MixerStripComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerStripComponent.cpp"/>
+            <FILE id="MxGrpH" name="MixerTrackGroupComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.h"/>
+            <FILE id="MxGrpC" name="MixerTrackGroupComponent.cpp" compile="1" resource="0"
+                  file="Source/Interface/Components/MixerPanel/MixerTrackGroupComponent.cpp"/>
+            <FILE id="SndRwH" name="SendKnobComponent.h" compile="0" resource="0"
+                  file="Source/Interface/Components/MixerPanel/SendKnobComponent.h"/>
+          </GROUP>
           <GROUP id="{5A665988-1F03-3FA8-AABD-5C83F87A7144}" name="MiddlePanel">
             <FILE id="xcliDK" name="MiddlePanelComponent.h" compile="0" resource="0"
                   file="Source/Interface/Components/MiddlePanel/MiddlePanelComponent.h"/>
@@ -635,8 +795,6 @@
                   file="Source/Interface/Components/HeaderPanel/HeaderComponent.h"/>
           </GROUP>
           <GROUP id="{E8467865-28A1-58CA-07EA-EDC9735D10AA}" name="RightPanel">
-            <FILE id="RBPpet" name="FooterComponent.h" compile="0" resource="0"
-                  file="Source/Interface/Components/RightPanel/FooterComponent.h"/>
             <FILE id="xJwhnG" name="PlayListComponent.cpp" compile="1" resource="0"
                   file="Source/Interface/Components/RightPanel/PlayListComponent.cpp"/>
             <FILE id="VwCjGU" name="PlayListComponent.h" compile="0" resource="0"
@@ -720,6 +878,14 @@
           <FILE id="Fmpma7" name="LevelMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LevelMeter.cpp"/>
           <FILE id="LdMtrH" name="LoadMeter.h" compile="0" resource="0" file="Source/Interface/Controls/LoadMeter.h"/>
           <FILE id="LdMtrC" name="LoadMeter.cpp" compile="1" resource="0" file="Source/Interface/Controls/LoadMeter.cpp"/>
+          <FILE id="ClpPnl" name="CollapsiblePanel.h" compile="0" resource="0"
+                file="Source/Interface/Controls/CollapsiblePanel.h"/>
+          <FILE id="PnlHdB" name="PanelHeaderBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelHeaderBar.h"/>
+          <FILE id="PnlRzB" name="PanelResizerBar.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelResizerBar.h"/>
+          <FILE id="PnlTgB" name="PanelToggleButton.h" compile="0" resource="0"
+                file="Source/Interface/Controls/PanelToggleButton.h"/>
           <FILE id="hfCRxz" name="PlayListTableListBox.h" compile="0" resource="0"
                 file="Source/Interface/Controls/PlayListTableListBox.h"/>
           <FILE id="keLPLt" name="PositionMarker.h" compile="0" resource="0"
@@ -794,7 +960,8 @@
     <FILE id="VlxEsb" name="LICENSE.md" compile="0" resource="0" file="../LICENSE.md"/>
     <FILE id="dvvj4K" name="README.md" compile="0" resource="0" file="../README.md"/>
   </MAINGROUP>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_PLUGINHOST_AU="1" JUCE_PLUGINHOST_VST3="1"
+               JUCE_PLUGINHOST_LV2="1"/>
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" rubberband="-O3 -w" lame="-O3 -w -include $(SRCROOT)/../../../ThirdParty/lame/audionaut/lame_config.h -I$(SRCROOT)/../../../ThirdParty/lame/libmp3lame" demucs="-O3 -w -I$(SRCROOT)/../../../Submodules/demucs.cpp/vendor/eigen -I$(SRCROOT)/../../../Submodules/demucs.cpp/src" applicationCategory="public.app-category.music"
                extraDefs="LINK_PLATFORM_MACOSX=1" appSandbox="1" useLegacyBuildSystem="0"
@@ -802,8 +969,8 @@
                appSandboxOptions="com.apple.security.assets.music.read-write,com.apple.security.device.microphone,com.apple.security.files.user-selected.read-write,com.apple.security.network.client,com.apple.security.network.server"
                customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;plist&gt;&#10;  &lt;dict&gt;&#10;&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;&#10;&#9;&lt;false/&gt;&#10;&lt;key&gt;LSMinimumSystemVersion&lt;/key&gt;&#10;&#9;&lt;string&gt;13.0&lt;/string&gt;&#10;  &lt;/dict&gt;&#10;&lt;/plist&gt;"
                xcodeValidArchs="arm64,arm64e" documentExtensions="audium" documentTypeIsPackage="1"
-               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="30" microphonePermissionNeeded="1"
-               localNetworkPermissionNeeded="1">
+               iosDevelopmentTeamID="Q89CZBX79G" buildNumber="31" microphonePermissionNeeded="1"
+               localNetworkPermissionNeeded="1" postbuildCommand="&quot;$SRCROOT/../../ScanHelper/embed-scan-helper.sh&quot;">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
                        customXcodeFlags="INSTALL_PATH=/Applications"

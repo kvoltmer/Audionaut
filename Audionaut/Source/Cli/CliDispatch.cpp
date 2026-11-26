@@ -137,13 +137,16 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "export <project.audium> -o <out.wav|.flac|.aiff|.ogg|.mp3> [--sample-rate N]\n"
           "                          [--bit-depth N | --bitrate KBPS]\n"
           "                          [--channels N] [--multi-mono] [--start S] [--length S]\n"
-          "                          [--region NAME [--track N]] [--json]",
+          "                          [--no-tails] [--region NAME [--track N]] [--json]",
           "Renders the project (or one region) offline to a WAV, FLAC, AIFF, Ogg Vorbis or MP3 file.",
           "Renders the project offline (no audio device needed). The output's extension picks the format: "
           ".wav (8/16/24/32 bit), .flac (lossless, 16/24 bit, up to 8 channels), .aiff (8/16/24 bit), "
           ".ogg (Ogg Vorbis, lossy: --bitrate 64-500 kbps, up to 8 channels) or .mp3 (lossy: --bitrate "
           "96/128/160/192/256/320 kbps, mono or stereo, up to 48 kHz); lossy formats default to 192 kbps. "
-          "--multi-mono writes one mono file per channel. --region bounces a single region instead - always dry, without any clip's gains or fades.",
+          "--multi-mono writes one mono file per channel. A render to the project's end runs on for the effects' "
+          "ring-out (a delay's echoes) unless --no-tails is given; a --length is kept as given. The inserts' latency "
+          "is compensated, so the file lines up with the timeline. --region bounces a single region instead - always dry, "
+          "without any clip's gains, fades or effects.",
           runExport },
 
         { "analyze",
@@ -282,6 +285,104 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "with --channel C (0-based). A mono stem has one strip; a stereo import's two strips start "
           "at -1 and 1. Playback and export both follow it.",
           runTrackPan },
+
+        { "add-insert",
+          "add-insert <project.audium> (--track N | --aux A | --master) --type T [--at I] [--json]",
+          "Adds an insert effect to a track, an aux bus or the master.",
+          "Inserts an effect of type T (an id from list-effects, e.g. builtin:eq3) at the end of a "
+          "chain, or at position I with --at. --track N is the track's chain (it processes all the "
+          "track's channels together, before their faders), --aux A an aux bus's chain, --master "
+          "the main mix's chain before master gain. Parameters start at their defaults - on an aux "
+          "bus a dry/wet mix (the delay's) at fully wet instead, the return carrying no dry signal: "
+          "set them with set-insert. Playback and export both run the inserts.",
+          runAddInsert },
+
+        { "remove-insert",
+          "remove-insert <project.audium> (--track N | --aux A | --master) --index I [--json]",
+          "Removes an insert effect from a chain.",
+          "Removes the insert at index I (0-based, as info and add-insert list them) from the "
+          "chain named like add-insert names it. The inserts after it move up.",
+          runRemoveInsert },
+
+        { "set-insert",
+          "set-insert <project.audium> (--track N | --aux A | --master) --index I\n"
+          "                            [--param ID --value V] [--enabled on|off] [--json]",
+          "Sets an insert's parameter, or enables / disables it.",
+          "Sets parameter ID (an id from list-effects, e.g. gain_db) of the insert at index I to V, "
+          "clamped to the parameter's range, and/or switches the insert on or off. A disabled insert "
+          "passes the signal through unchanged.",
+          runSetInsert },
+
+        { "list-effects",
+          "list-effects [--type ID] [--json]",
+          "Lists the effect types: the built-ins and the plugins this machine has.",
+          "The effect types add-insert can create. A built-in comes with its parameters (id, name, "
+          "unit, range, default); a plugin (type ids au:, vst3:, lv2:) comes with its format, "
+          "manufacturer and file, and is not loaded. --type ID lists one type with its parameters, "
+          "loading a plugin to read them: a plugin's parameters are normalised, 0 to 1. Needs no project.",
+          runListEffects },
+
+        { "scan-plugins",
+          "scan-plugins [--format F] [--json]",
+          "Scans this machine's plugins into the list the app and the verbs use.",
+          "Looks through the platform's plugin folders (Audio Units on macOS, VST3 on Windows, VST3 and "
+          "LV2 on Linux; one format with --format) and writes what it finds to the plugin list in the "
+          "app's data folder, from where list-effects and add-insert take the types. The files are "
+          "loaded in a worker process, so a plugin that crashes is blacklisted and the scan goes on; "
+          "a plugin that refuses to load here (on macOS one that is not sandbox-safe) counts as a file "
+          "without a plugin. Needs no project.",
+          runScanPlugins },
+
+        { "scan-plugin",
+          "scan-plugin --format F [--timeout-ms N] [--allow-lowered-security] <file or identifier> [--json] | scan-plugin --serve <pipe>",
+          "The scan worker: describes the plugins in plugin files (internal).",
+          "Loads plugin files in this process and reports their descriptions; scan-plugins and the app "
+          "run this verb in a child process so a crash takes only the worker down. With --serve it "
+          "answers one file after the other over the named pipe until nobody asks any more; without, "
+          "it describes one file on stdout. Not meant for the command line.",
+          runScanPlugin },
+
+        { "add-aux",
+          "add-aux <project.audium> [--name N] [--json]",
+          "Adds an aux bus.",
+          "Adds a stereo aux bus - a send destination with its own insert chain and return into "
+          "the main mix - after the existing ones, named N or \"Aux <id>\". Every project has "
+          "Aux 1 and Aux 2 from the start; info lists them with their ids. Feed it with set-send, "
+          "put effects on it with add-insert --aux.",
+          runAddAux },
+
+        { "remove-aux",
+          "remove-aux <project.audium> --aux ID [--json]",
+          "Removes an aux bus and the sends into it.",
+          "Removes the aux bus with the id (as info lists it) together with every channel's send "
+          "into it. The other buses keep their ids.",
+          runRemoveAux },
+
+        { "set-aux",
+          "set-aux <project.audium> --aux ID [--name N] [--gain G] [--pan P]\n"
+          "                         [--mute on|off] [--solo on|off] [--json]",
+          "Sets an aux bus's name or return.",
+          "Sets the aux bus's name and/or its return into the main mix: gain G (linear, 1 = unity), "
+          "pan P (-1 left .. 1 right), mute, solo. With an aux soloed, only the soloed aux "
+          "returns are heard.",
+          runSetAux },
+
+        { "set-send",
+          "set-send <project.audium> --track N [--channel C] --aux ID [--level L]\n"
+          "                          [--pre-fader on|off] [--mute on|off] [--json]",
+          "Sets a channel strip's send into an aux bus.",
+          "Sets the send from track N's channel C (every channel of the track without --channel) "
+          "into the aux bus: level L (linear, 0 = off, 1 = unity), pre-fader (then the channel's "
+          "gain, mute and solo do not apply to it) and mute. A send is made the first time it is "
+          "set; a channel without one sends nothing. The send follows the channel's pan.",
+          runSetSend },
+
+        { "remove-send",
+          "remove-send <project.audium> --track N [--channel C] --aux ID [--json]",
+          "Removes a channel strip's send into an aux bus.",
+          "Removes the send from track N's channel C (every channel of the track without --channel) "
+          "into the aux bus with the id.",
+          runRemoveSend },
 
         { "separate",
           "separate <project.audium> [--track N] [--clip N] [--threads N] [--model PATH]\n"

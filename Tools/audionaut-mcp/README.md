@@ -94,7 +94,7 @@ read or edit them.
 | `get_project_info` | `info` | Tempo, tracks, clips, files (or the raw persistence JSON) |
 | `create_project` | `create` | New empty `.audium` package |
 | `import_audio` | `import` | Add audio files (creates a new track) |
-| `export_audio` | `export` | Offline render to WAV, FLAC, AIFF, Ogg Vorbis or MP3 |
+| `export_audio` | `export` | Offline render to WAV, FLAC, AIFF, Ogg Vorbis or MP3, latency-compensated, with the effects' ring-out unless `include_tails` is false |
 | `analyze` | `analyze` | Segment, beat and onset analysis, cached next to the project |
 | `auto_edit` | `auto-edit` | Segment a clip using cached analysis |
 | `assemble` | `assemble` | Build an arrangement from regions |
@@ -111,6 +111,15 @@ read or edit them.
 | `remove_track` | `remove-track` | Remove a whole track (channels, clips and regions) |
 | `remove_channel` | `remove-channel` | Remove one channel from a track |
 | `track_pan` | `track-pan` | Pan a track's channel strips, -1 left to 1 right (all strips or one) |
+| `list_effects` | `list-effects` | The effect types (Trim, EQ, Compressor, Delay) and their parameters |
+| `add_insert` | `add-insert` | Insert an effect into a track's, an aux bus's or the master's chain |
+| `remove_insert` | `remove-insert` | Remove an insert from a chain |
+| `set_insert` | `set-insert` | Set an insert's parameter, or enable / disable it |
+| `add_aux` | `add-aux` | Add a stereo aux bus (every project starts with Aux 1 and Aux 2) |
+| `remove_aux` | `remove-aux` | Remove an aux bus and the sends into it |
+| `set_aux` | `set-aux` | Set an aux bus's name, or its return: gain, pan, mute, solo |
+| `set_send` | `set-send` | Set a channel strip's send into an aux bus: level, pre-fader, mute |
+| `remove_send` | `remove-send` | Remove a channel strip's send |
 | `request_feature` | — | Send a feature request to the maintainer (see below) |
 | `report_bug` | — | Send a bug report to the maintainer (see below) |
 | `separate_stems` | `separate` | Split a clip into Drums/Bass/Other/Vocals tracks (Demucs; needs the downloaded model) |

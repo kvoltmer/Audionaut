@@ -46,9 +46,17 @@ Two things happen the first time you start Audionaut:
    change your answer anytime in *Settings → Privacy*. See
    [Privacy](12-privacy.md) for exactly what this covers.
 2. **Audio device.** Check *Settings → Audio* to pick your output (and, for
-   recording, input) device, sample rate and buffer size.
+   recording, input) device, sample rate and buffer size. Until you choose,
+   Audionaut opens the default device at 48 kHz, or at the nearest rate the
+   device offers.
+
+On Windows and Linux a third thing happens: Audionaut scans your plugin
+folders once, in a dialog you can cancel (see
+[Manage Plugins](14-mixer-and-effects.md#manage-plugins)).
 
 ![Settings → Audio: device, channels, sample rate and buffer size](img/settings-audio.png)
 
 On macOS, *Settings…* is in the application menu (**Cmd+,**); on Windows and
-Linux it is in the *File* menu.
+Linux it is in the *Options* menu. *Settings → Processing* sets how many
+processor cores render the tracks (see
+[Processing load](04-main-window.md#processing-load)).

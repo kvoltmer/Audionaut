@@ -2,6 +2,22 @@
 
 #include <JuceHeader.h>
 
+#include "Engine/Playback/RenderThreadPool.h"
+
+/**
+ * Whether a render pool's timing can be held to tight bounds here. The
+ * pool's jobs and its wait burn wall time, so a thread pre-empted inside
+ * a job reads a longer busy time than the job's own, and a wait longer
+ * than two block periods counts a stall. Bounds that say the pool adds
+ * little on top of the jobs hold only where every thread slot has a
+ * physical core to itself; CI runners have two to four, and the logical
+ * count overstates them. Lower bounds hold on any machine.
+ */
+inline bool everyThreadSlotHasACore (const audium::RenderThreadPool& pool)
+{
+    return juce::SystemStats::getNumPhysicalCpus() >= pool.getNumThreadSlots();
+}
+
 /// Where the tests write what nobody reads back from the repository:
 /// generated input audio, bounces, scratch projects. One directory per run
 /// of the test binary under the temp location, removed when the run exits

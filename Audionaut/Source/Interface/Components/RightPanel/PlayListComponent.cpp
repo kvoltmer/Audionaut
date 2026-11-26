@@ -49,7 +49,7 @@ void PlayListComponent::itemDropped (const SourceDetails &dragSourceDetails)
 
 void PlayListComponent::updateInsertLines(const juce::DragAndDropTarget::SourceDetails &dragSourceDetails)
 {
-    auto height = playListTableListBox->getHeaderHeight();
+    auto height = playListTableListBox->getY();   // below the header
     height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
     
     auto after = dragSourceDetails.localPosition.y > height;
@@ -66,7 +66,7 @@ void PlayListComponent::paint(juce::Graphics &g)
 {
     if (itemDrag) {
         g.setColour(audioTrack->getViewState().getColour());
-        auto height = playListTableListBox->getHeaderHeight();
+        auto height = playListTableListBox->getY();   // below the header
         height += playListTableListBox->getRowHeight() * playListTableListBoxModel->getNumRows();
         g.fillRect(0, height, getWidth(), 3);
     }

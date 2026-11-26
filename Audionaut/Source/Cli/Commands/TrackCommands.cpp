@@ -15,17 +15,13 @@
 namespace audium {
 namespace cli {
 
-namespace {
-
-std::shared_ptr<AudioTrack> trackById (const AudioTrackContainer& tracks, int trackId)
+std::shared_ptr<AudioTrack> findTrackById (const AudioTrackContainer& tracks, int trackId)
 {
     for (auto& track : tracks.getAudioTracks())
         if (track->getId() == trackId)
             return track;
     return nullptr;
 }
-
-} // namespace
 
 int runRemoveTrack (const juce::ArgumentList& args, CliContext& context)
 {
@@ -39,7 +35,7 @@ int runRemoveTrack (const juce::ArgumentList& args, CliContext& context)
     {
         auto& trackContainer = *session->getAudioTrackContainer();
 
-        auto track = trackById (trackContainer, trackValue.getIntValue());
+        auto track = findTrackById (trackContainer, trackValue.getIntValue());
         if (track == nullptr)
             return context.fail (exitFailure, "track_not_found",
                                  "no track with id " + trackValue.toStdString());
@@ -74,7 +70,7 @@ int runRemoveChannel (const juce::ArgumentList& args, CliContext& context)
     {
         auto& trackContainer = *session->getAudioTrackContainer();
 
-        auto track = trackById (trackContainer, trackValue.getIntValue());
+        auto track = findTrackById (trackContainer, trackValue.getIntValue());
         if (track == nullptr)
             return context.fail (exitFailure, "track_not_found",
                                  "no track with id " + trackValue.toStdString());
@@ -117,7 +113,7 @@ int runTrackPan (const juce::ArgumentList& args, CliContext& context)
     {
         auto& trackContainer = *session->getAudioTrackContainer();
 
-        auto track = trackById (trackContainer, trackValue.getIntValue());
+        auto track = findTrackById (trackContainer, trackValue.getIntValue());
         if (track == nullptr)
             return context.fail (exitFailure, "track_not_found",
                                  "no track with id " + trackValue.toStdString());

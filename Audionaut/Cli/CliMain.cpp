@@ -7,6 +7,7 @@
 
 #include "Cli/CliContext.h"
 #include "Cli/CliDispatch.h"
+#include "Engine/Effects/Hosting/PluginHost.h"
 
 //==============================================================================
 // audionaut-cli - headless access to .audium projects for scripts and agents.
@@ -34,6 +35,12 @@ int main (int argc, char* argv[])
     context.json = argumentList.removeOptionIfFound ("--json");
     context.quiet = argumentList.removeOptionIfFound ("--quiet");
     context.progressJson = argumentList.removeOptionIfFound ("--progress-json");
+
+    // the plugins this machine has, from the list a scan-plugins left (none
+    // until then); a scan from here runs this binary as its worker
+    context.pluginHost = std::make_shared<audium::PluginHost> (audium::PluginHost::defaultDataDirectory());
+    context.pluginHost->loadList();
+    context.pluginHost->useChildProcessScanner (juce::File::getSpecialLocation (juce::File::currentExecutableFile));
 
     // The verbs dispatch directly (same path as the GUI's in-app CLI mode) -
     // NOT through ConsoleApplication::findAndRunCommand: its short-option

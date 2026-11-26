@@ -191,7 +191,8 @@ async function runCli(args, pathIndexes = [], extra = undefined) {
   if (!cli.path) return errorResult(notFoundMessage(cli));
 
   args = [...args];
-  const paths = [1, ...pathIndexes];
+  // the project path, where the verb takes one (list-effects takes none)
+  const paths = [1, ...pathIndexes].filter((index) => index < args.length);
   for (const index of paths) args[index] = userPath(args[index]);
 
   if (cli.sandboxed && !process.env.AUDIONAUT_SKIP_PATH_CHECK) {
@@ -335,7 +336,9 @@ server.registerTool(
       "picks the format: .wav (8/16/24/32 bit), .flac (lossless and compressed, 16/24 bit, at most 8 " +
       "channels per file), .aiff (8/16/24 bit), .ogg (Ogg Vorbis, lossy, at most 8 channels) or .mp3 " +
       "(lossy, mono or stereo, at most 48 kHz). Lossy formats take bitrate_kbps instead of bit_depth. " +
-      "Pass region to bounce a single region instead - always dry, without any clip's gains or fades. " +
+      "A render to the project's end runs on for the effects' ring-out (a delay's echoes) unless " +
+      "include_tails is false; a length_seconds is kept as given. The inserts' latency is compensated. " +
+      "Pass region to bounce a single region instead - always dry, without any clip's gains, fades or effects. " +
       "Reports progress in 5% steps when the call carries a progressToken.",
     inputSchema: {
       project: projectParam,
@@ -349,12 +352,13 @@ server.registerTool(
       multi_mono: z.boolean().optional().describe("Write one mono file per channel instead"),
       start_seconds: z.number().min(0).optional().describe("Export start position"),
       length_seconds: z.number().positive().optional().describe("Export length (default: whole project)"),
+      include_tails: z.boolean().optional().describe("Run on past the project's end for the effects' ring-out (default true; only without length_seconds)"),
       region: z.string().min(1).optional().describe("Bounce this region instead of the whole project"),
       track: z.number().int().min(0).optional().describe("Track id, to disambiguate same-named regions"),
     },
   },
   async ({ project, output, sample_rate, bit_depth, bitrate_kbps, channels, multi_mono, start_seconds,
-           length_seconds, region, track }, extra) =>
+           length_seconds, include_tails, region, track }, extra) =>
     runCli([
       "export",
       project,
@@ -367,6 +371,7 @@ server.registerTool(
       ...(multi_mono ? ["--multi-mono"] : []),
       ...(start_seconds !== undefined ? ["--start", String(start_seconds)] : []),
       ...(length_seconds !== undefined ? ["--length", String(length_seconds)] : []),
+      ...(include_tails === false ? ["--no-tails"] : []),
       ...(region !== undefined ? ["--region", region] : []),
       ...(track !== undefined ? ["--track", String(track)] : []),
     ], [3], extra)
@@ -867,6 +872,253 @@ server.registerTool(
       "--pan",
       String(pan),
       ...(channel !== undefined ? ["--channel", String(channel)] : []),
+    ]))
+);
+
+// Insert effects. A chain is a track's (it processes all the track's channels
+// together), an aux bus's or the master's (master: true); the CLI verbs take
+// the same three forms.
+const chainParams = {
+  track: z.number().int().min(0).optional().describe("Track id: the track's chain, over all its channels"),
+  aux: z.number().int().min(1).optional().describe("An aux bus's chain (its id, as get_project_info lists it)"),
+  master: z.boolean().optional().describe("The master chain, before master gain"),
+};
+const chainArgs = ({ track, aux, master }) => [
+  ...(track !== undefined ? ["--track", String(track)] : []),
+  ...(aux !== undefined ? ["--aux", String(aux)] : []),
+  ...(master ? ["--master"] : []),
+];
+const onOff = (value) => (value ? "on" : "off");
+
+server.registerTool(
+  "list_effects",
+  {
+    title: "List effect types",
+    description:
+      "The effect types add_insert can create: the built-ins (builtin:trim, builtin:eq3, " +
+      "builtin:compressor, builtin:delay; category Utility, EQ, Dynamics, Delay) with their parameters " +
+      "(id, name, unit, range, default, default_text, values in their units; a stepped parameter takes " +
+      "whole numbers and lists what each is called in steps, lowest first - builtin:delay's mode is " +
+      "0 Dotted, 1 Straight, 2 Triplets, 3 ms, and its time is time_division (0 = 1/32 to 5 = 1/1, at the " +
+      "project's tempo) in the first three and time_ms in the last), and the plugins installed " +
+      "on this machine (type ids au:, vst3:, lv2:; category = manufacturer) with format, manufacturer " +
+      "and file but no parameters, since listing them would load every plugin. Pass type to get one " +
+      "type with its parameters; a plugin's are normalised 0 to 1 and come with the plugin's own " +
+      "default_text. Needs no project.",
+    inputSchema: {
+      type: z.string().optional().describe("One type id to list with its parameters (loads a plugin)"),
+    },
+  },
+  async ({ type }) => runCli(["list-effects", ...(type !== undefined ? ["--type", type] : [])])
+);
+
+server.registerTool(
+  "add_insert",
+  {
+    title: "Add an insert effect",
+    description:
+      "Inserts an effect (a type id from list_effects: a built-in like builtin:eq3, or a plugin like " +
+      "au:1a2b3c4d) into a chain: a track's (track; it processes all the track's channels together), an aux " +
+      "bus's (aux) or the master's (master). Appends by default, or at position at. Parameters start at " +
+      "their defaults - on an aux bus a dry/wet mix (builtin:delay's mix) at fully wet instead, as the return " +
+      "carries no dry signal: set them with set_insert. Playback and export_audio both run the inserts; " +
+      "get_project_info lists them (a plugin with its plugin block and loaded state, no parameter values).",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      type: z.string().describe("Effect type id from list_effects, e.g. builtin:eq3 or a plugin's au:/vst3:/lv2: id"),
+      at: z.number().int().min(0).optional().describe("Position in the chain (0-based; default: the end)"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, type, at, ...chain }) =>
+    runCli([
+      "add-insert",
+      project,
+      ...chainArgs(chain),
+      "--type",
+      type,
+      ...(at !== undefined ? ["--at", String(at)] : []),
+    ]))
+);
+
+server.registerTool(
+  "remove_insert",
+  {
+    title: "Remove an insert effect",
+    description:
+      "Removes the insert at index (0-based, as get_project_info lists them) from a chain named like " +
+      "add_insert names it. The inserts after it move up.",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      index: z.number().int().min(0).describe("Slot index in the chain"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, index, ...chain }) =>
+    runCli(["remove-insert", project, ...chainArgs(chain), "--index", String(index)]))
+);
+
+server.registerTool(
+  "set_insert",
+  {
+    title: "Set an insert's parameter or enabled state",
+    description:
+      "Sets parameter param (an id from list_effects, e.g. gain_db; for a plugin the ids list_effects " +
+      "gives with type, values normalised 0 to 1) of the insert at index to value, clamped to the " +
+      "parameter's range, and/or enables or disables the insert. A disabled insert passes the signal " +
+      "through unchanged.",
+    inputSchema: {
+      project: projectParam,
+      ...chainParams,
+      index: z.number().int().min(0).describe("Slot index in the chain"),
+      param: z.string().optional().describe("Parameter id, e.g. gain_db"),
+      value: z.number().optional().describe("The new value (goes with param)"),
+      enabled: z.boolean().optional().describe("Switch the insert on or off"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, index, param, value, enabled, ...chain }) =>
+    runCli([
+      "set-insert",
+      project,
+      ...chainArgs(chain),
+      "--index",
+      String(index),
+      ...(param !== undefined ? ["--param", param] : []),
+      ...(value !== undefined ? ["--value", String(value)] : []),
+      ...(enabled !== undefined ? ["--enabled", enabled ? "on" : "off"] : []),
+    ]))
+);
+
+server.registerTool(
+  "add_aux",
+  {
+    title: "Add an aux bus",
+    description:
+      "Adds a stereo aux bus - a send destination with its own insert chain and a return into the main " +
+      "mix - after the existing ones, named name or \"Aux <id>\". Every project has Aux 1 and Aux 2 from " +
+      "the start; get_project_info lists them with their ids. Feed it with set_send, put effects on it " +
+      "with add_insert (aux).",
+    inputSchema: {
+      project: projectParam,
+      name: z.string().optional().describe("The bus's name (default: Aux <id>)"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, name }) =>
+    runCli(["add-aux", project, ...(name !== undefined ? ["--name", name] : [])]))
+);
+
+server.registerTool(
+  "remove_aux",
+  {
+    title: "Remove an aux bus",
+    description:
+      "Removes the aux bus with the id together with every channel's send into it. The other buses keep " +
+      "their ids.",
+    inputSchema: {
+      project: projectParam,
+      aux: z.number().int().min(1).describe("Aux bus id"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, aux }) => runCli(["remove-aux", project, "--aux", String(aux)]))
+);
+
+server.registerTool(
+  "set_aux",
+  {
+    title: "Set an aux bus's name or return",
+    description:
+      "Sets an aux bus's name and/or its return into the main mix: gain (linear, 1 = unity), pan " +
+      "(-1 left .. 1 right, a balance: the side you turn away from is attenuated), mute, solo. " +
+      "With an aux soloed only the soloed aux returns are heard.",
+    inputSchema: {
+      project: projectParam,
+      aux: z.number().int().min(1).describe("Aux bus id"),
+      name: z.string().optional().describe("A new name"),
+      gain: z.number().min(0).optional().describe("Return gain, linear (1 = unity)"),
+      pan: z.number().min(-1).max(1).optional().describe("Return pan, -1 left .. 1 right (a balance: the side you turn away from is attenuated)"),
+      mute: z.boolean().optional(),
+      solo: z.boolean().optional(),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, aux, name, gain, pan, mute, solo }) =>
+    runCli([
+      "set-aux",
+      project,
+      "--aux",
+      String(aux),
+      ...(name !== undefined ? ["--name", name] : []),
+      ...(gain !== undefined ? ["--gain", String(gain)] : []),
+      ...(pan !== undefined ? ["--pan", String(pan)] : []),
+      ...(mute !== undefined ? ["--mute", onOff(mute)] : []),
+      ...(solo !== undefined ? ["--solo", onOff(solo)] : []),
+    ]))
+);
+
+server.registerTool(
+  "set_send",
+  {
+    title: "Set a channel strip's send into an aux bus",
+    description:
+      "Sets the send from a track's channel strip (every strip of the track without channel) into an aux " +
+      "bus: level (linear, 0 = off, 1 = unity), pre_fader (then the strip's gain, mute and solo do not " +
+      "apply to it) and mute. A send is made the first time it is set; a strip without one sends nothing. " +
+      "The send follows the strip's pan.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+      channel: z.number().int().min(0).optional().describe("Channel strip (0-based); default: every strip of the track"),
+      aux: z.number().int().min(1).describe("Aux bus id"),
+      level: z.number().min(0).optional().describe("Send level, linear (0 = off, 1 = unity)"),
+      pre_fader: z.boolean().optional().describe("Tap before the strip's fader"),
+      mute: z.boolean().optional(),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, track, channel, aux, level, pre_fader, mute }) =>
+    runCli([
+      "set-send",
+      project,
+      "--track",
+      String(track),
+      ...(channel !== undefined ? ["--channel", String(channel)] : []),
+      "--aux",
+      String(aux),
+      ...(level !== undefined ? ["--level", String(level)] : []),
+      ...(pre_fader !== undefined ? ["--pre-fader", onOff(pre_fader)] : []),
+      ...(mute !== undefined ? ["--mute", onOff(mute)] : []),
+    ]))
+);
+
+server.registerTool(
+  "remove_send",
+  {
+    title: "Remove a channel strip's send",
+    description:
+      "Removes the send from a track's channel strip (every strip of the track without channel) into the " +
+      "aux bus with the id.",
+    inputSchema: {
+      project: projectParam,
+      track: z.number().int().min(0).describe("Track id"),
+      channel: z.number().int().min(0).optional().describe("Channel strip (0-based); default: every strip of the track"),
+      aux: z.number().int().min(1).describe("Aux bus id"),
+      task: taskParam,
+    },
+  },
+  withTask(async ({ project, track, channel, aux }) =>
+    runCli([
+      "remove-send",
+      project,
+      "--track",
+      String(track),
+      ...(channel !== undefined ? ["--channel", String(channel)] : []),
+      "--aux",
+      String(aux),
     ]))
 );
 

@@ -33,10 +33,11 @@ public:
         regionTableListBox->setMultipleSelectionEnabled(true);
         addAndMakeVisible(regionTableListBox.get());
         
-        regionTableListBox->getHeader().addColumn ("Name", regionName, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Start", regionStart, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("End", regionEnd, 250, 80, 800, juce::TableHeaderComponent::notSortable);
-        regionTableListBox->getHeader().addColumn ("Length", regionLength, 150, 80, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Name", regionName, 250, 60, 800, juce::TableHeaderComponent::notSortable);
+        // the three numbers need little room and the same: the name takes what the list has beyond that
+        regionTableListBox->getHeader().addColumn ("Start", regionStart, 100, 45, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("End", regionEnd, 100, 45, 800, juce::TableHeaderComponent::notSortable);
+        regionTableListBox->getHeader().addColumn ("Length", regionLength, 100, 45, 800, juce::TableHeaderComponent::notSortable);
         regionTableListBox->getHeader().setStretchToFitActive (true);
         regionTableListBox->setHeaderHeight(AudiumLookAndFeel::tableHeaderHeight);
         regionTableListBox->setOutlineThickness (0);

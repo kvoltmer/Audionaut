@@ -22,6 +22,7 @@ on Windows and Linux, read **Cmd** as **Ctrl**.
 11. [The command line and AI agents](11-cli-and-agents.md)
 12. [Privacy](12-privacy.md)
 13. [Stem separation](13-stem-separation.md)
+14. [The mixer, effects and plugins](14-mixer-and-effects.md)
 
 Building Audionaut from source is covered in the repository
 [README](../../README.md).

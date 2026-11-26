@@ -1,0 +1,283 @@
+//    Audionaut - Audio editing application for multitrack recordings.
+//    Copyright (C) 2025 Klaus Voltmer
+//
+//    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
+
+#include "InsertChain.h"
+
+#include <algorithm>
+
+#include "MixerPlanner.h"
+
+namespace audium
+{
+
+InsertChain::~InsertChain()
+{
+    for (const auto& slot : slots)
+        release (*slot);
+}
+
+std::shared_ptr<EffectSlot> InsertChain::getSlot (int index) const noexcept
+{
+    return index >= 0 && index < size() ? slots[static_cast<size_t> (index)] : nullptr;
+}
+
+std::shared_ptr<EffectSlot> InsertChain::add (const std::string& typeId, int at)
+{
+    if (planner == nullptr)
+        return nullptr;
+
+    auto slot = planner->createSlot (typeId);
+    if (slot == nullptr)
+        return nullptr;
+
+    if (place == Place::auxBus)
+    {
+        // a return carries no dry signal: the channels the sends come from are in the mix already
+        auto& effect = slot->getEffect();
+        const auto parameters = effect.getParameters();
+        for (size_t i = 0; i < parameters.size(); ++i)
+            if (parameters[i].wetShare)
+                effect.setParameter (static_cast<int> (i), parameters[i].max);
+    }
+
+    const auto index = at < 0 || at > size() ? size() : at;
+    slots.insert (slots.begin() + index, slot);
+    adopt (*slot);
+    changed();
+    return slot;
+}
+
+bool InsertChain::remove (int index)
+{
+    if (index < 0 || index >= size())
+        return false;
+
+    // the slot lives on in the plans that reference it until they retire
+    release (*slots[static_cast<size_t> (index)]);
+    slots.erase (slots.begin() + index);
+    changed();
+    return true;
+}
+
+bool InsertChain::move (int from, int to)
+{
+    if (from < 0 || from >= size() || to < 0 || to >= size())
+        return false;
+    if (from == to)
+        return true;
+
+    auto slot = slots[static_cast<size_t> (from)];
+    slots.erase (slots.begin() + from);
+    slots.insert (slots.begin() + to, slot);
+    changed();
+    return true;
+}
+
+bool InsertChain::setEnabled (int index, bool enabled)
+{
+    if (auto slot = getSlot (index))
+    {
+        slot->setEnabled (enabled);   // an atomic the running plan reads: no rebuild
+        return true;
+    }
+    return false;
+}
+
+void InsertChain::clear()
+{
+    unresolved.clear();
+    if (slots.empty())
+        return;
+    for (const auto& slot : slots)
+        release (*slot);
+    slots.clear();
+    changed();
+}
+
+bool InsertChain::removeUnresolved (int position)
+{
+    if (position < 0 || position >= getNumUnresolved())
+        return false;
+    unresolved.erase (unresolved.begin() + position);
+
+    // the saved array is one shorter from here on: what came behind the element moves up with it,
+    // or the next save would put a later element behind a slot it stood in front of
+    for (auto later = unresolved.begin() + position; later != unresolved.end(); ++later)
+        --later->index;
+    return true;
+}
+
+std::vector<InsertChain::EditorWindow> InsertChain::getEditorWindows() const
+{
+    std::vector<EditorWindow> windows;
+    for (const auto& slot : slots)
+        windows.push_back ({ slot->getEffect().getType().id, slot->getEditorPosition(), slot->isEditorOpen() });
+    return windows;
+}
+
+void InsertChain::setEditorWindows (const std::vector<EditorWindow>& windows)
+{
+    std::vector<bool> given (slots.size(), false);
+    for (const auto& window : windows)
+    {
+        for (size_t i = 0; i < slots.size(); ++i)
+        {
+            if (! given[i] && slots[i]->getEffect().getType().id == window.typeId)
+            {
+                given[i] = true;
+                slots[i]->setEditorPosition (window.position);
+                slots[i]->setEditorOpen (window.open);
+                break;
+            }
+        }
+    }
+}
+
+void InsertChain::writeToJson (json& output, const char* key) const
+{
+    if (slots.empty() && unresolved.empty())
+        return;
+
+    auto inserts = json::array();
+    for (const auto& slot : slots)
+    {
+        json element = { { "type", slot->getEffect().getType().id },
+                         { "enabled", slot->isEnabled() },
+                         { "state", slot->getEffect().getState() } };
+        if (auto plugin = slot->getEffect().getPluginInfo(); ! plugin.is_null())
+            element["plugin"] = std::move (plugin);   // how another machine finds the plugin
+        if (const auto position = slot->getEditorPosition())
+            element["editor"] = { { "x", position->x }, { "y", position->y } };
+        if (slot->isEditorOpen())
+            element["editor"]["open"] = true;
+        inserts.push_back (std::move (element));
+    }
+
+    // what could not be read goes back where it was, as it was (the list
+    // is in index order, so each lands behind the one before)
+    for (const auto& entry : unresolved)
+    {
+        const auto at = std::min (static_cast<size_t> (std::max (entry.index, 0)), inserts.size());
+        inserts.insert (inserts.begin() + static_cast<json::difference_type> (at), entry.element);
+    }
+
+    output[key] = std::move (inserts);
+}
+
+void InsertChain::readFromJson (const json& input, const char* key)
+{
+    json inserts = json::array();
+    if (input.is_object() && input.contains (key) && input[key].is_array())
+        inserts = input[key];
+
+    // the same instance goes on where the type is the same, in order, so
+    // values change without a rebuild and an insert or removal in the
+    // middle keeps the others; what is left over goes with the old plan
+    std::vector<std::shared_ptr<EffectSlot>> previous = std::move (slots);
+    std::vector<bool> used (previous.size(), false);
+    slots.clear();
+    unresolved.clear();
+
+    auto index = -1;
+    auto latencyMoved = false;
+    for (const auto& element : inserts)
+    {
+        ++index;
+        if (! element.is_object() || ! element.contains ("type") || ! element["type"].is_string())
+            continue;
+
+        const auto typeId = element["type"].get<std::string>();
+        std::shared_ptr<EffectSlot> slot;
+
+        for (size_t i = 0; i < previous.size(); ++i)
+        {
+            if (! used[i] && previous[i]->getEffect().getType().id == typeId)
+            {
+                used[i] = true;
+                slot = previous[i];
+                break;
+            }
+        }
+
+        if (slot == nullptr)
+        {
+            if (planner != nullptr)
+                slot = planner->createSlot (typeId, &element);   // or the same plugin in another format
+            if (slot == nullptr)
+            {
+                // a type this engine cannot create: kept for the file, not run
+                unresolved.push_back ({ index, element });
+                continue;
+            }
+            adopt (*slot);
+
+            // a new slot only: a kept one's window is where the user has it now, whatever an undo step recorded
+            // (a read that replaces the whole track hands the windows over, AudioTrackContainer::readFromJson)
+            if (element.contains ("editor") && element["editor"].is_object()) {
+                const auto& editor = element["editor"];
+                if (editor.contains ("x") && editor["x"].is_number_integer() && editor.contains ("y") && editor["y"].is_number_integer())
+                    slot->setEditorPosition (juce::Point<int> (editor["x"].get<int>(), editor["y"].get<int>()));
+                slot->setEditorOpen (editor.contains ("open") && editor["open"].is_boolean() && editor["open"].get<bool>());
+            }
+        }
+
+        if (element.contains ("enabled") && element["enabled"].is_boolean())
+            slot->setEnabled (element["enabled"].get<bool>());
+        if (element.contains ("state"))
+            slot->getEffect().setState (element["state"]);
+        latencyMoved = latencyMoved || slot->hasStaleLatency();   // a kept instance whose state moved its latency
+
+        slots.push_back (std::move (slot));
+    }
+
+    for (size_t i = 0; i < previous.size(); ++i)
+        if (! used[i])
+            release (*previous[i]);   // leaves with the old plan
+
+    if (slots != previous || latencyMoved)
+        changed();
+}
+
+bool InsertChain::setParameter (int index, int parameter, float value)
+{
+    auto slot = getSlot (index);
+    if (slot == nullptr)
+        return false;
+
+    slot->getEffect().setParameter (parameter, value);
+    if (slot->hasStaleLatency())
+        changed();   // the plan around the slot is built for its old latency
+    return true;
+}
+
+bool InsertChain::setState (int index, const json& state)
+{
+    auto slot = getSlot (index);
+    if (slot == nullptr)
+        return false;
+
+    slot->getEffect().setState (state);
+    if (slot->hasStaleLatency())
+        changed();
+    return true;
+}
+
+void InsertChain::changed()
+{
+    if (planner != nullptr)
+        planner->requestRebuild();
+}
+
+void InsertChain::adopt (EffectSlot& slot)
+{
+    slot.getEffect().onLatencyChanged = [this] { changed(); };
+}
+
+void InsertChain::release (EffectSlot& slot)
+{
+    slot.getEffect().onLatencyChanged = nullptr;
+}
+
+} // namespace audium

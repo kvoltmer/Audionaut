@@ -8,8 +8,11 @@
 #include <JuceHeader.h>
 
 #include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Playback/RenderThreadPool.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Channel/AudioChannelData.h"
+#include <atomic>
+#include <functional>
 #include <optional>
 
 namespace audium
@@ -17,9 +20,8 @@ namespace audium
     class AudioThumbnail;
 
 /**
- * @brief Constructs an `AudioBusInterface` instance.
- * @param lockFreeCommander_ Shared pointer to the lock-free commander for thread-safe operations.
- * @param audioBusRenderer_ Shared pointer to the audio bus renderer for audio processing.
+ * @brief The message-thread face of the audio bus: channel data and levels,
+ *        commands to the renderer, and the render thread pool's lifecycle.
  */
 class AudioBusInterface
 {
@@ -29,11 +31,15 @@ public:
     * @brief Constructs an `AudioBusInterface` instance.
     * @param lockFreeCommander_ Shared pointer to the lock-free commander for thread-safe operations.
     * @param audioBusRenderer_ Shared pointer to the audio bus renderer for audio processing.
+    * @param renderThreadPool_ The pool the renderer runs its track jobs on; this
+    *        interface starts and stops it with the audio device.
     */
     AudioBusInterface(std::shared_ptr<audium::LockFreeCommander> lockFreeCommander_,
-                  std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_) :
+                  std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer_,
+                  std::shared_ptr<RenderThreadPool> renderThreadPool_) :
         lockFreeCommander(lockFreeCommander_),
-        audioBusRenderer(audioBusRenderer_)
+        audioBusRenderer(audioBusRenderer_),
+        renderThreadPool(std::move(renderThreadPool_))
     {
     }
 
@@ -61,6 +67,64 @@ public:
     {
         lockFreeCommander->invoke();
     }
+
+    /**
+     * @brief Message thread: a command for the render thread, run at the top
+     *        of its next block in the order posted - or right here, when no
+     *        device callback will drain it (see setPumpsCommandsSynchronously).
+     */
+    void postCommand (std::function<void()> command);
+
+    /**
+     * @brief Whether a device callback is draining the commands. Set by the
+     *        device callback's about-to-start and stopped; outside that span
+     *        the commands are pumped where they are posted, so an edit made
+     *        with the device stopped (or none) reaches the renderer at once
+     *        and nothing piles up in the fifo.
+     */
+    void setDeviceRunning (bool isRunning) noexcept { deviceRunning.store (isRunning, std::memory_order_relaxed); }
+
+    /** @brief Whoever renders next, while nothing else does: every insert and delay of the adopted plan starts from rest. */
+    void resetInserts() noexcept;
+
+    /**
+     * @brief How many samples later than its input the renderer's output is,
+     *        through the latency compensation of the plan it runs (the main
+     *        mix's figure, or the stems' during a stem export). What a bounce
+     *        drops from its start, and the share of the output latency that
+     *        is the engine's own, see LinkAudioDevice::latencyToOutput.
+     */
+    int getOutputLatencySamples() const noexcept;
+
+    /** @brief The longest ring-out the running plan's chains add after the last input, in seconds. */
+    double getEffectTailSeconds() const noexcept;
+
+    /**
+     * @brief The device's own latency in samples, as audioDeviceAboutToStart
+     *        read it: how long before the callback its input was sampled,
+     *        how long after it its output is heard.
+     */
+    void setDeviceLatency (int inputSamples, int outputSamples) noexcept
+    {
+        deviceInputLatency.store (std::max (0, inputSamples), std::memory_order_relaxed);
+        deviceOutputLatency.store (std::max (0, outputSamples), std::memory_order_relaxed);
+    }
+
+    int getDeviceInputLatencySamples() const noexcept { return deviceInputLatency.load (std::memory_order_relaxed); }
+    int getDeviceOutputLatencySamples() const noexcept { return deviceOutputLatency.load (std::memory_order_relaxed); }
+
+    /**
+     * @brief How much earlier than the transport position of the block it
+     *        arrives in a recorded sample was performed: the device's round
+     *        trip (input and output latency) plus the renderer's output
+     *        latency, which the position - the moment the block is heard -
+     *        includes. A take placed this much before its block's position
+     *        lines up with what was heard while playing it.
+     */
+    int getRecordingLatencySamples() const noexcept
+    {
+        return getDeviceInputLatencySamples() + getDeviceOutputLatencySamples() + getOutputLatencySamples();
+    }
     
     /**
     * @brief Sets the number of audio bus channels.
@@ -79,15 +143,52 @@ public:
     void setChannelData(const int channelNumber, const AudioChannelData data);
 
     /**
-     * @brief Whether channel commands are drained inline instead of by a
-     *        render callback.
+     * @brief Whether commands are drained inline instead of by a render
+     *        callback.
      *
-     * Defaults to `HeadlessMode`, which is process-wide and therefore wrong
-     * for a scratch engine running inside the GUI: the scratch engine has no
-     * device and must pump its own fifo, while the live engine's device is
-     * draining as usual and must not. Set it explicitly on such an engine.
+     * Defaults to pumping whenever no device callback is running (headless
+     * engines, the GUI before its device starts or when it has none). Set
+     * it explicitly where that rule is wrong: a scratch engine inside the
+     * GUI has no device of its own and must pump, and a test that fills the
+     * fifo on purpose must not.
      */
     void setPumpsCommandsSynchronously(bool shouldPump) noexcept { pumpsCommandsSynchronously = shouldPump; }
+
+    /**
+     * @brief The worker threads that share the live callback's track jobs.
+     *
+     * Started by the device callback's about-to-start (LinkAudioDevice) for
+     * the device it runs with, and stopped when the device stops. Offline
+     * renders never use it.
+     */
+    RenderThreadPool& getRenderThreadPool() noexcept { return *renderThreadPool; }
+
+    /**
+     * @brief How many worker threads the pool starts with the next device
+     *        start: -1 = the default for this machine (RenderThreadPool::defaultNumWorkers),
+     *        0 = none (the serial path).
+     */
+    void setNumRenderThreads(int numWorkers) noexcept { numRenderThreads.store(numWorkers); }
+    int getNumRenderThreads() const noexcept { return numRenderThreads.load(); }
+
+    /** The track jobs the last block was split into (tests). */
+    int getNumTrackJobs() const noexcept { return audioBusRenderer->getNumTrackJobs(); }
+
+    /** Per-job, per-thread shares of the last block for the Processing Load window; see AudioBusRenderer. */
+    void setTrackJobSharesEnabled(bool enabled) noexcept { audioBusRenderer->setTrackJobSharesEnabled(enabled); }
+    int readTrackJobShares(TrackJobShare* out, int capacity) const noexcept { return audioBusRenderer->readTrackJobShares(out, capacity); }
+
+   #if JUCE_DEBUG
+    /** Debug builds: extra busy time for a track's job, see AudioBusRenderer::setSimulatedTrackLoad. */
+    void setSimulatedTrackLoad(int trackId, float share, bool bursty) noexcept { audioBusRenderer->setSimulatedTrackLoad(trackId, share, bursty); }
+   #endif
+
+    /** The worker count the setting resolves to. */
+    int resolveNumRenderThreads() const noexcept
+    {
+        const auto configured = numRenderThreads.load();
+        return configured < 0 ? RenderThreadPool::defaultNumWorkers() : configured;
+    }
     
     const AudioChannelData getChannelData(const int channelNumber) const;
 
@@ -117,6 +218,10 @@ public:
     * @param newGain The new master gain value.
     */
     void setMasterGain(const float newGain);
+
+    /// The master balance and mute, to the renderer like the gain.
+    void setMasterPan (float newPan);
+    void setMasterMute (bool mute);
     
     void resetGains();
 
@@ -153,9 +258,14 @@ public:
  private:
      /// Unset = follow HeadlessMode (the process-wide default).
      std::optional<bool> pumpsCommandsSynchronously;
+     std::atomic<bool> deviceRunning { false };
 
      std::shared_ptr<audium::LockFreeCommander> lockFreeCommander; ///< Thread-safe command manager.
      std::shared_ptr<audium::AudioBusRenderer<float>> audioBusRenderer; ///< Renderer for audio bus processing.
+     std::shared_ptr<RenderThreadPool> renderThreadPool;
+     std::atomic<int> numRenderThreads { -1 };
+     std::atomic<int> deviceInputLatency { 0 };
+     std::atomic<int> deviceOutputLatency { 0 };
 
      JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioBusInterface)
  };

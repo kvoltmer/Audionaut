@@ -29,7 +29,7 @@ public:
     {
         channelsListBox.reset(new audium::ListBox());
         
-        auto header = std::unique_ptr<ChannelGroupHeaderComponent>(new ChannelGroupHeaderComponent(audioTrack));
+        auto header = std::unique_ptr<ChannelGroupHeaderComponent>(new ChannelGroupHeaderComponent(audioTrack, audiumEngine));
         channelsListBox->setHeaderComponent(std::move(header));
         channelsListBox->getHeaderComponent()->setSize(getWidth(), DraggerControl::draggerHeight);
         channelsListBox->setOutlineThickness(0);

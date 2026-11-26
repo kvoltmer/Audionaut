@@ -69,13 +69,15 @@ public:
     int getCurrentBitDepth() override          { return 32; }
     juce::BigInteger getActiveOutputChannels() const override { return range (numOutputs); }
     juce::BigInteger getActiveInputChannels() const override  { return range (numInputs); }
-    int getOutputLatencyInSamples() override { return 0; }
-    int getInputLatencyInSamples() override  { return 0; }
+    int getOutputLatencyInSamples() override { return outputLatency; }
+    int getInputLatencyInSamples() override  { return inputLatency; }
 
     const double sampleRate;
     const int blockSize;
     const int numInputs;
     const int numOutputs;
+    int inputLatency = 0;    ///< what the device reports; a test sets it before the driver starts
+    int outputLatency = 0;
 
 private:
     static juce::StringArray channelNames (const juce::String& prefix, int count)
@@ -332,7 +334,7 @@ private:
         // the host time a jitter-free device reports for this block's first sample
         const auto hostTime = hostTimeOrigin
             + microseconds (std::llround (static_cast<double> (sampleTime) * 1.0e6 / device.sampleRate));
-        const auto bufferBeginAtOutput = hostTime + linkEngine->mOutputLatency.load();
+        const auto bufferBeginAtOutput = hostTime + linkDevice->latencyToOutput();   // the device's latency and the renderer's, as the real callback
 
         if (withLink)
         {

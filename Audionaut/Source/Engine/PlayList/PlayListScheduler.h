@@ -17,6 +17,7 @@
 #include "Engine/Export/ExportAudioConfig.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
+#include "Engine/Playback/RenderTransport.h"
 
 namespace audium {
 
@@ -51,7 +52,8 @@ public:
                       std::shared_ptr<VoiceSourceContainer> voiceSourceContainer_,
                       std::shared_ptr<audium::Playback> playback_,
                       std::shared_ptr<AudioBusInterface> audioBusInterface_,
-                      std::shared_ptr<TransportLoop> transportLoop_) :
+                      std::shared_ptr<TransportLoop> transportLoop_,
+                      std::shared_ptr<RenderTransport> renderTransport_) :
         audioTrackContainer(audioTrackContainer_),
         audioResourceContainer(audioResourceContainer_),
         tempoProvider(tempoProvider_),
@@ -60,7 +62,8 @@ public:
         voiceSourceContainer(voiceSourceContainer_),
         playback(playback_),
         audioBusInterface(audioBusInterface_),
-        transportLoop(transportLoop_)
+        transportLoop(transportLoop_),
+        renderTransport(renderTransport_)
     {        
         audioTrackContainer->addChangeListener(this);
     }
@@ -137,7 +140,10 @@ public:
                 data.transportPositionClocks = loopResult.positionResult;
             
             process(data.transportPositionClocks, numSamples, loopResult);
-            
+
+            // what the block's effects are told about the transport: a
+            // plugin asks for it from inside the render
+            publishRenderTransport(true, &loopResult);
         }
         else {
             // Stopped, nothing renders - but take the snapshots over anyway.
@@ -146,6 +152,11 @@ public:
             // snapshot without them. Left to the next play, a stopped
             // editing session kept every retired chain alive (#204).
             pullSnapshots();
+
+            // ... and the loop as it is now: processLoop() takes it over
+            // only while playing
+            transportLoop->takeOverLoopData();
+            publishRenderTransport(false, nullptr);
         }
         
         audioBusInterface->process(context);
@@ -166,9 +177,18 @@ public:
                       std::function<void ()> callback);
     
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
+
+    /// Message thread: tells the effects the tempo as it is now, without waiting for a render to
+    /// publish it (see RenderTransport::publishTempo). Called where a project's tempo is read.
+    void publishTempo() noexcept
+    {
+        if (renderTransport != nullptr)
+            renderTransport->publishTempo(tempoProvider->getTempo());
+    }
+
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<Playback> getPlayback() const { return playback; }
-    std::shared_ptr<AudioBusInterface> getAudioBusInterface() const { return audioBusInterface; }
+    const std::shared_ptr<AudioBusInterface>& getAudioBusInterface() const noexcept { return audioBusInterface; }   ///< by reference: read on the audio thread too
     std::shared_ptr<TransportLoop> getTransportLoop() const { return transportLoop; }
     std::shared_ptr<AudioTrackContainer> getAudioTrackContainer() const { return audioTrackContainer; } 
     
@@ -241,6 +261,11 @@ private:
         released at the next commit (see VoiceSourceContainer::commit). */
     void pullSnapshots() noexcept;
 
+    /// Render thread: publishes where the transport is for the block about
+    /// to be rendered (position, tempo, loop) to renderTransport. loopResult
+    /// is the playing block's, nullptr while the transport stands.
+    void publishRenderTransport(bool playing, const TransportLoop::LoopResult* loopResult) noexcept;
+
     // process sequencing
     void process(double absolutePosition,
                  int numSamples,
@@ -277,6 +302,7 @@ private:
     std::shared_ptr<Playback> playback;
     std::shared_ptr<AudioBusInterface> audioBusInterface;
     std::shared_ptr<TransportLoop> transportLoop;
+    std::shared_ptr<RenderTransport> renderTransport;
     
     double externalSampleRate = 0.0;
     

@@ -48,8 +48,25 @@ public:
         rebuild the project). Call from any thread but the audio thread.
     */
     void setBypass(bool isByPass);
+
+    /**
+        Restarts the render thread pool with the bus interface's current
+        worker count, for the device this callback runs with. A no-op while
+        no device has started. Message thread.
+    */
+    void restartRenderThreads();
     
     audium::LinkEngine* getLinkEngine() const { return linkEngine.get(); }
+
+    /**
+        How long after a callback its first sample is heard: the device's
+        output latency plus the renderer's latency compensation (what the
+        inserts of the running plan cost, see MixPlan::Latency). The
+        callback asks Link for the beat at that moment, so what plays is
+        the beat that is heard, in time with every peer. Read on the audio
+        thread; the test harness asks it for the same term.
+    */
+    std::chrono::microseconds latencyToOutput() const noexcept;
 
     /// Load measured across the whole audio callback; polled by the UI.
     DspLoadMeter& getDspLoadMeter() noexcept { return dspLoadMeter; }
@@ -62,6 +79,10 @@ private:
     std::uint64_t sample_time = 0;
     double sampleRate = 0.0;
     int bufferSize = 0;
+    juce::AudioWorkgroup workgroup;      // the started device's, for the render workers
+
+    void startRenderThreads();
+    void stopRenderThreads();
     std::atomic<bool> byPass { false };
     std::atomic<bool> inCallback { false };   // the render path is running
     DspLoadMeter dspLoadMeter;

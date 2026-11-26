@@ -14,6 +14,10 @@
 #include "Engine/Selection/SelectionManager.h"
 #include "Engine/Playback/Playback.h"
 #include "Engine/Playback/AudioBusRenderer.h"
+#include "Engine/Playback/RenderThreadPool.h"
+#include "Engine/Effects/EffectRegistry.h"
+#include "Engine/Effects/MixPlanContainer.h"
+#include "Engine/Effects/MixerPlanner.h"
 #include "Engine/Core/LockFreeCommander.h"
 #include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/PlayList/TransportLoop.h"
@@ -27,7 +31,9 @@
 
 namespace audium {
 
-std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter)
+std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<UserPrompter> userPrompter,
+                                                                std::shared_ptr<PluginHost> pluginHost,
+                                                                PluginHost::Mode pluginMode)
 {
     if (userPrompter == nullptr)
         userPrompter = std::make_shared<HeadlessUserPrompter>();
@@ -76,11 +82,34 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
     // takes go where the resource container puts imports
     auto recording                  = std::make_shared<audium::Recording>(audioResourceContainer);
 
-    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording);
+    // one pool per engine: the renderer runs its track jobs on it, the bus
+    // interface starts and stops it with the device
+    auto renderThreadPool           = std::make_shared<RenderThreadPool>();
 
-    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(256);
+    // the effects this engine can create, and the mix plan that tells the
+    // renderer which ones run where: built by the planner from the track
+    // container, which gets the planner right after its construction. The
+    // built-ins first, then the plugins the host knows, which it keeps
+    // registering as its list changes
+    // where the transport is for the block being rendered: the scheduler
+    // publishes it, the plugins the registry creates read it
+    auto renderTransport            = std::make_shared<RenderTransport>();
+    auto effectRegistry             = std::make_shared<EffectRegistry>(renderTransport);
+    effectRegistry->addBuiltInEffects();
+    if (pluginHost != nullptr)
+        pluginHost->attach(effectRegistry, pluginMode);
+    auto mixPlans                   = std::make_shared<MixPlanContainer>();
+    auto mixerPlanner               = std::make_shared<MixerPlanner>(effectRegistry, mixPlans);
+
+    auto audioBusRenderer           = std::make_shared<AudioBusRenderer<float>>(playback, recording, renderThreadPool, mixPlans);
+
+    // sized for the longest burst one edit posts while the device runs but
+    // does not drain (a project load under bypass): a clear per old bus
+    // channel, two commits per new one and the plan, far below this for
+    // MAX_AUDIO_CHANNELS; a full fifo drops, which postCommand asserts on
+    auto lockFreeCommander          = std::make_shared<LockFreeCommander>(4096);
     
-    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
+    auto audioBusInterface          = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer, renderThreadPool);
     
     auto transportLoop              = std::make_shared<TransportLoop>(undoManager,
                                                                       tempoProvider);
@@ -94,6 +123,7 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                             transportLoop,
                                                                             analysisProvider);
     
+    audioTrackContainer->setMixerPlanner(mixerPlanner);
     auto audioClipContainer         = std::make_shared<AudioClipContainer>(1024);
     
     auto playListScheduler          = std::make_shared<PlayListScheduler>(audioTrackContainer,
@@ -104,7 +134,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                           voiceSourceContainer,
                                                                           playback,
                                                                           audioBusInterface,
-                                                                          transportLoop);
+                                                                          transportLoop,
+                                                                          renderTransport);
     
     auto recordingActionHandler     = std::make_shared<RecordingActionHandler>(audioTrackContainer,
                                                                                audioResourceContainer,
@@ -142,7 +173,8 @@ std::shared_ptr<AudiumEngine> AudiumFactory::createAudiumEngine(std::shared_ptr<
                                                                      recordingActionHandler,
                                                                      projectFileStore,
                                                                      projectSerializer,
-                                                                     userPrompter);
+                                                                     userPrompter,
+                                                                     pluginHost);
 
     return audiumEngine;
 }

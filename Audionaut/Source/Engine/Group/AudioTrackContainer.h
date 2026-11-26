@@ -7,6 +7,8 @@
 
 #include <JuceHeader.h>
 #include "Engine/Streamable.h"
+#include "Engine/Effects/InsertChain.h"
+#include "Engine/Effects/AuxBusContainer.h"
 #include "Engine/TimeContext.h"
 #include "Engine/Region/AudioRegionData.h"
 #include "Engine/Group/AudioRegionAdapter.h"
@@ -26,6 +28,7 @@ class AudioResourceContainer;
 class AudioBusInterface;
 class TransportLoop;
 class AnalysisProvider;
+class MixerPlanner;
 
 /**
  * @class AudioTrackContainer
@@ -74,6 +77,30 @@ public:
     ~AudioTrackContainer() override;
 
     /**
+     * The planner that builds the mix plan from this container; wired by the
+     * factory right after construction (the constructor has enough
+     * collaborators). The chains of the tracks, channels and the master
+     * create their effects through it and ask it for a plan when they change.
+     */
+    void setMixerPlanner(std::shared_ptr<MixerPlanner> planner);
+    MixerPlanner* getMixerPlanner() const noexcept { return mixerPlanner.get(); }
+    /** The inserts on the main mix, before master gain (JSON key "master_inserts"). */
+    InsertChain& getMasterInserts() noexcept { return masterInserts; }
+
+    /** The aux buses the channels send into (JSON key "aux_buses"); two from the start, see AuxBusContainer. */
+    AuxBusContainer& getAuxBuses() noexcept { return auxBuses; }
+    const AuxBusContainer& getAuxBuses() const noexcept { return auxBuses; }
+
+    /** A new aux bus at the end of the strips, named "Aux <id>" without a name. */
+    std::shared_ptr<AuxBus> addAuxBus(const std::string& name = {});
+
+    /**
+     * Removes the aux bus and every channel's send into it, in one plan.
+     * False when there is no bus with the id.
+     */
+    bool removeAuxBus(int auxId);
+
+    /**
      * @brief Sets the master gain for the container.
      * @param newGain The new master gain value.
      */
@@ -84,6 +111,14 @@ public:
      * @return The master gain value.
      */
     const float getMasterGain() const noexcept;
+
+    /// The master balance, -1 (left) .. 1 (right), the aux returns' law; a mono main mix ignores it.
+    void setMasterPan (float newPan);
+    float getMasterPan() const noexcept { return masterPan; }
+
+    /// The master mute: the main mix goes silent, the direct outs stay.
+    void setMasterMute (bool mute);
+    bool getMasterMute() const noexcept { return masterMute; }
 
     /**
      * @brief Creates a new audio track.
@@ -297,6 +332,11 @@ private:
     std::shared_ptr<AnalysisProvider> analysisProvider; ///< Shared analysis provider (owns the analysis cache).
 
     float masterGain = 1.f; ///< Master gain value.
+    float masterPan = 0.f; ///< Master balance, -1..1.
+    bool masterMute = false; ///< Master mute.
+    std::shared_ptr<MixerPlanner> mixerPlanner; ///< Builds and publishes the mix plan; see setMixerPlanner().
+    InsertChain masterInserts; ///< The main mix's insert effects.
+    AuxBusContainer auxBuses; ///< The aux buses, in strip order.
     std::atomic<int> publishedNumAudioTrackChannels { 0 }; ///< Channel count as the audio thread reads it.
     bool lastReadRebuiltStructure = false; ///< Set by readFromJson(): tracks or channels were replaced.
 

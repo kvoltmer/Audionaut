@@ -32,10 +32,11 @@ public:
     }
 
     /** Exports the item. Without the file chooser the export runs to
-        completion here and the result says whether the file was written;
-        with it the user is asked where to save (through the engine's
-        UserPrompter), the export runs asynchronously once they have chosen,
-        and this returns false right away. */
+        completion here, on the calling thread and without a progress
+        window, and the result says whether the file was written; with it
+        the user is asked where to save (through the engine's UserPrompter),
+        the export runs asynchronously once they have chosen, and this
+        returns false right away. */
     bool exportItem();
 
 private:

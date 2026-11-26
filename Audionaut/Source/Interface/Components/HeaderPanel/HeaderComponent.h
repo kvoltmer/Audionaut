@@ -9,6 +9,7 @@
 
 #include "Interface/Controls/LevelMeter.h"
 #include "Interface/Controls/LoadMeter.h"
+#include "Interface/Controls/PanelToggleButton.h"
 
 #include "Engine/AudiumEngine.h"
 
@@ -19,6 +20,8 @@ public:
     HeaderComponent (std::shared_ptr<audium::AudiumEngine> audiumEngine);
     ~HeaderComponent() override;
 
+    static constexpr int preferredHeight = 40;
+
 
     void timerCallback() override;
 
@@ -28,7 +31,10 @@ public:
     void updateUI();
     
     std::function<void()> onRightPanelButtonClick;
-    
+
+    /// The panel toggle shows whether the right panel is open (the mixer's toggle sits on the mixer's header bar).
+    void setPanelStates (bool rightPanelShown);
+
 private:
         
     std::shared_ptr<audium::AudiumEngine> audiumEngine;
@@ -48,11 +54,10 @@ private:
     std::unique_ptr<juce::DrawableButton> recordButton;
     
     std::unique_ptr<juce::DrawableButton> loopButton;
-    std::unique_ptr<juce::ShapeButton> rightPanelButton;
-    
+    std::unique_ptr<PanelToggleButton> rightPanelButton;
+
     std::unique_ptr<StereoMeter> stereoMeter;
     std::unique_ptr<LoadMeter> loadMeter;
-    std::unique_ptr<juce::Slider> volumeSlider;
     
     
     /// A bars/beats/clicks slider: dragging it moves the play position by
@@ -63,7 +68,6 @@ private:
                                                       double (*unitsToClocks) (double),
                                                       std::function<juce::String (double)> textFromValue);
 
-    juce::Path getRightPanelButtonPath();
     juce::Path getLoopButtonPath();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderComponent)

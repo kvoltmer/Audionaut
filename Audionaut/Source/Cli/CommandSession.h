@@ -70,6 +70,12 @@ public:
      */
     bool commit (std::string& error);
 
+    /** Waits for the plugins that load asynchronously (a verb that reports, renders or saves them calls
+        it); the live engine of a hosted read is not waited for.
+        @return False when a plugin is still on its way after the wait: the verb fails rather than report,
+                render or save the project without it. */
+    bool settlePlugins() const;
+
     /** @brief Whether the work is being applied to a project someone else owns. */
     bool isHosted() const noexcept;
 
@@ -84,7 +90,7 @@ private:
 
     friend ProjectSession openProjectSession (const juce::File&, CommandAccess, CliContext&, int&,
                                               const std::function<void (AudiumEngine&)>&);
-    friend ProjectSession openEngineSession();
+    friend ProjectSession openEngineSession (CliContext&);
 };
 
 /**
@@ -105,9 +111,10 @@ ProjectSession openProjectSession (const juce::File& projectFile,
 
 /**
  * @brief A session with an engine but no project, for a verb that can also
- *        work on a bare audio file (`analyze`). `commit()` is refused.
+ *        work on a bare audio file (`analyze`) or asks the engine itself
+ *        (`list-effects`). `commit()` is refused.
  */
-ProjectSession openEngineSession();
+ProjectSession openEngineSession (CliContext& context);
 
 /**
  * @class HostedSessionScope
@@ -128,10 +135,18 @@ public:
      *        scratch engine seeded from this rather than on the live one, so a
      *        verb that fails leaves the user's document untouched and the whole
      *        change arrives as a single undoable step.
+     * @param refusal Why the verb may not go on right now, as an error code
+     *        and a message - both empty when it may. The host looked before
+     *        it started the verb; a verb that waits for a plugin keeps the
+     *        message thread serving meanwhile, so the user may have started
+     *        a take or the transport since, and a render asks again when the
+     *        wait is over.
      */
+    using Refusal = std::function<std::pair<std::string, std::string>()>;
     HostedSessionScope (std::shared_ptr<AudiumEngine> liveEngine,
                         juce::File projectFile,
-                        nlohmann::json liveState);
+                        nlohmann::json liveState,
+                        Refusal refusal = {});
     ~HostedSessionScope();
 
     HostedSessionScope (const HostedSessionScope&) = delete;

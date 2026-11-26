@@ -19,6 +19,7 @@
 #include "Engine/PlayList/PlayListContainer.h"
 #include "Engine/PlayList/PlayListItem.h"
 #include "Engine/PlayList/PlayListScheduler.h"
+#include "Engine/Playback/AudioBusInterface.h"
 #include "Engine/Project/ProjectSerializer.h"
 #include "Engine/Resource/AudioResourceContainer.h"
 
@@ -150,8 +151,10 @@ struct LoadStats
     float peak = 0.0f;    ///< output level, to show the tracks were heard
 };
 
-LoadStats measure (AudiumEngine& engine, int blockSize)
+LoadStats measure (AudiumEngine& engine, int blockSize, int numWorkers)
 {
+    // the driver's about-to-start starts the pool with this count
+    engine.getAudioBusInterface()->setNumRenderThreads (numWorkers);
     FakeAudioIODevice device (kSampleRate, blockSize, 2, 2);
     LiveBlockDriver driver (engine, device);
     driver.play (kStartSeconds);
@@ -189,14 +192,15 @@ LoadStats measure (AudiumEngine& engine, int blockSize)
     return stats;
 }
 
-void runTable (bool stretch, const std::vector<int>& trackCounts)
+void runTable (bool stretch, const std::vector<int>& trackCounts, int numWorkers)
 {
     const std::vector<int> blockSizes { 64, 128, 256, 512 };
 
     std::ostringstream report;
     report << std::fixed << std::setprecision (1)
            << "\n" << (stretch ? "time-stretched clips (Rubber Band R3, x0.9)" : "plain clips (gain + fades)")
-           << ", 48 kHz, load in % of the callback budget: mean / p99 / max (steady overruns + prime overruns)\n"
+           << ", 48 kHz, " << numWorkers << " render worker" << (numWorkers == 1 ? "" : "s")
+           << " + the audio thread, load in % of the callback budget: mean / p99 / max (steady overruns + prime overruns)\n"
            << "tracks";
     for (auto b : blockSizes)
         report << std::setw (36) << (juce::String (b) + " samples").toStdString();
@@ -209,7 +213,7 @@ void runTable (bool stretch, const std::vector<int>& trackCounts)
         report << std::setw (6) << numTracks;
         for (auto blockSize : blockSizes)
         {
-            const auto s = measure (*session.engine, blockSize);
+            const auto s = measure (*session.engine, blockSize, numWorkers);
             CHECK (s.peak > 0.01f);
             std::ostringstream cell;
             cell << std::fixed << std::setprecision (1)
@@ -235,8 +239,12 @@ SCENARIO ("playback cost per track count", "[.][playback][bench]")
               << kRenderSeconds << " s per cell" << std::endl;
 
     // 64 stereo tracks fill MAX_AUDIO_CHANNELS (128), the most a project can hold
-    runTable (false, { 8, 16, 32, 64 });
-    runTable (true, { 4, 8, 16, 32 });
+    for (auto workers : { 0, 7 })
+        runTable (false, { 8, 16, 32, 64 }, workers);
+
+    // the stretched tracks are the case the render workers exist for
+    for (auto workers : { 0, 1, 3, 7 })
+        runTable (true, { 4, 8, 16 }, workers);
 
     juce::DeletedAtShutdown::deleteAll();
     juce::MessageManager::deleteInstance();

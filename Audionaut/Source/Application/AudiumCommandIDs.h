@@ -23,6 +23,8 @@ namespace CommandIDs
 
         showAboutWindow         = 0x300024,
         checkForNewVersion      = 0x300025,
+        openManual              = 0x300026,
+        openSponsorPage         = 0x300027,
         
     
         showSettingsWindow      = 0x300030,
@@ -50,8 +52,15 @@ namespace CommandIDs
         toggleFullScreen        = 0x300077,
         pageLeft                = 0x300078,
         pageRight               = 0x300079,
+        showProcessingLoad      = 0x30007a,
+        showLoadSimulator       = 0x30007b,   // debug builds only
+        showMixer               = 0x30007c,
+        showAuxBuses            = 0x30007d,
+        showRightPanel          = 0x30007e,
+        showPluginManager       = 0x30007f,
         
         createAudioTrack     = 0x300085,
+        createAuxBus         = 0x300086,
 
         lastCommandIDEntry
     };

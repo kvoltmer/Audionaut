@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    Entitlements of audionaut-scan-helper, the child process the sandboxed
+    app scans plugins in. Exactly these two and nothing else: a child with
+    any further sandbox entitlement sets out to enter a sandbox of its own
+    and is ended by the system ("forbidden-sandbox-reinit"). With these it
+    lives in the sandbox of the app that started it.
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.inherit</key>
+	<true/>
+</dict>
+</plist>

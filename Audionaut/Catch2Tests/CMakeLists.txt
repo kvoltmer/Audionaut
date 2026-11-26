@@ -136,6 +136,11 @@ file(GLOB_RECURSE SRC_AUDIUM CONFIGURE_DEPENDS
         ${SRC_PATH}/Interface/*.cpp
         ${SRC_PATH}/Cli/*.cpp)
 list(FILTER SRC_AUDIUM EXCLUDE REGEX "/Engine/Separation/Demucs/")
+if(APPLE)
+    # the macOS halves of interface classes (FloatingPanel_mac.mm), whose .cpp halves the glob above takes
+    file(GLOB_RECURSE SRC_AUDIUM_MAC CONFIGURE_DEPENDS ${SRC_PATH}/Interface/*.mm)
+    list(APPEND SRC_AUDIUM ${SRC_AUDIUM_MAC})
+endif()
 file(GLOB SRC_UTIL CONFIGURE_DEPENDS ${SRC_PATH}/Util/*.cpp)
 list(APPEND SRC_AUDIUM
         ${SRC_UTIL}
@@ -207,6 +212,11 @@ function(audionaut_configure_common target)
             AUDIONAUT_HEADLESS=1 # no GUI app: no preferences, no live audio device, no message boxes
             JUCE_WEB_BROWSER=0  # removing either needs NEEDS_WEB_BROWSER / NEEDS_CURL on juce_add_console_app
             JUCE_USE_CURL=0
+            # plugin hosting, the same three as the .jucer: the formats a process
+            # hosts are chosen at runtime (PluginHost::addPlatformFormats)
+            JUCE_PLUGINHOST_AU=1
+            JUCE_PLUGINHOST_VST3=1
+            JUCE_PLUGINHOST_LV2=1
             DEMUCS_ENABLED=$<BOOL:${AUDIONAUT_ENABLE_DEMUCS}>)
 
     target_link_libraries(${target}
@@ -329,13 +339,39 @@ if(AUDIONAUT_ENABLE_COVERAGE)
     endif()
 endif()
 
+# ---------------------------------------------------------------------------
+# Thread Sanitizer
+#
+#   cmake -B build-tsan -S Audionaut/Catch2Tests \
+#         -DCMAKE_BUILD_TYPE=Debug -DAUDIONAUT_ENABLE_TSAN=ON
+#   cmake --build build-tsan -j8 --target AudionautTests
+#   ./build-tsan/AudionautTests_artefacts/Debug/AudionautTests "[threads]"
+#
+# Scoped to the test target like the coverage flags: our own sources are
+# instrumented, JUCE and the vendored libraries are not. A race between two
+# of our threads is reported; several times slower, so CI runs a tag subset
+# (see .github/workflows/thread-sanitizer.yml).
+# ---------------------------------------------------------------------------
+option(AUDIONAUT_ENABLE_TSAN "Instrument the test target with Thread Sanitizer" OFF)
+if(AUDIONAUT_ENABLE_TSAN)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR
+            "AUDIONAUT_ENABLE_TSAN requires GCC or Clang (got ${CMAKE_CXX_COMPILER_ID}).")
+    endif()
+    target_compile_options(${APP_NAME} PRIVATE -fsanitize=thread -g -fno-omit-frame-pointer)
+    target_link_options(${APP_NAME} PRIVATE -fsanitize=thread)
+endif()
+
 # Catch2 provides main() for the test binary (the CLI has its own).
 target_link_libraries(${APP_NAME}
     PRIVATE
         Catch2::Catch2WithMain)
 
+# --durations: every section ends with a line naming it. ctest shows the
+# output only when the run fails, and when a test hangs and ctest kills the
+# run at its timeout, the last such line says where the suite stopped.
 add_test(NAME ${APP_NAME}
-         COMMAND ${APP_NAME})
+         COMMAND ${APP_NAME} --durations yes)
 
 # ---------------------------------------------------------------------------
 # audionaut-cli target
@@ -366,4 +402,42 @@ if(AUDIONAUT_BUILD_CLI)
     add_test(NAME CliSmoke
              COMMAND ${CLI_NAME} info ${CMAKE_CURRENT_SOURCE_DIR}/TestFiles/Sessions/simple-sine.audium --json)
     set_tests_properties(CliSmoke PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
+
+    # The plugin scan worker end to end on a real plugin: Apple's AUDelay,
+    # which every Mac has. This is the worker's one-file form, the scanner's
+    # fallback where its pipe to a serving worker does not work.
+    if(APPLE)
+        add_test(NAME CliScanAU
+                 COMMAND ${CLI_NAME} scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")
+        set_tests_properties(CliScanAU PROPERTIES ENVIRONMENT "AUDIONAUT_DISABLE_ANALYTICS=1")
+    endif()
+endif()
+
+# ---------------------------------------------------------------------------
+# audionaut-scan-helper
+#
+# The scan worker the sandboxed macOS app starts in its own place
+# (../ScanHelper, built into the app bundle by the Xcode project's post-build
+# step). Built here too, so that CI compiles it, and run on Apple's AUDelay
+# the way the scanner's fallback runs it.
+# ---------------------------------------------------------------------------
+if(APPLE)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../ScanHelper scan-helper-bin)
+    add_test(NAME ScanHelperAU
+             COMMAND AudionautScanHelper scan-plugin --json --format AudioUnit "AudioUnit:Effects/aufx,dely,appl")
+endif()
+
+# ---------------------------------------------------------------------------
+# Test Audio Units
+#
+# An Audio Unit that crashes when it is scanned and one with nothing in it,
+# with the worker process that scans them (TestAudioUnits/CMakeLists.txt).
+# PluginHostTests runs the scanner on that worker.
+# ---------------------------------------------------------------------------
+if(APPLE)
+    add_subdirectory(TestAudioUnits test-audio-units-bin)
+    add_dependencies(${APP_NAME} AudionautTestScanWorker)
+    target_compile_definitions(${APP_NAME}
+            PRIVATE
+            AUDIONAUT_TEST_SCAN_WORKER="$<TARGET_FILE:AudionautTestScanWorker>")
 endif()

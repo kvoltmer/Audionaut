@@ -26,6 +26,9 @@ namespace cli {
 
 class ProjectSession;
 
+/** The track with the id the verbs take (`--track N`), nullptr when there is none. */
+std::shared_ptr<AudioTrack> findTrackById (const AudioTrackContainer& tracks, int trackId);
+
 /**
  * The CLI's verb set. Each command runs to completion inside its own
  * HeadlessEngineSession and returns one of the exit codes in CliContext.h.
@@ -89,6 +92,31 @@ int runRemoveChannel (const juce::ArgumentList& args, CliContext& context);
 
 /** `track-pan <project> --track N --pan P [--channel C]` - pan a track's channel strips. */
 int runTrackPan (const juce::ArgumentList& args, CliContext& context);
+/** `add-insert <project> (--track N [--channel C | --all-channels] | --master) --type T [--at I]` - insert an effect. */
+int runAddInsert (const juce::ArgumentList& args, CliContext& context);
+/** `remove-insert <project> (--track N [--channel C] | --master) --index I` - remove an insert. */
+int runRemoveInsert (const juce::ArgumentList& args, CliContext& context);
+/** `set-insert <project> (--track N [--channel C] | --master) --index I [--param ID --value V] [--enabled on|off]` */
+int runSetInsert (const juce::ArgumentList& args, CliContext& context);
+/** `list-effects [--type ID]` - the effect types; with --type one type's parameters. */
+int runListEffects (const juce::ArgumentList& args, CliContext& context);
+
+/** `scan-plugins [--format F]` - scan this machine's plugins into the list the app uses. */
+int runScanPlugins (const juce::ArgumentList& args, CliContext& context);
+/** `scan-plugin --format F <file or identifier>` | `scan-plugin --serve <pipe>` - the scan worker: one file, or
+    file after file for the scanner at the other end of the pipe, in this process. */
+int runScanPlugin (const juce::ArgumentList& args, CliContext& context);
+
+/** `add-aux <project> [--name N]` - a new aux bus. */
+int runAddAux (const juce::ArgumentList& args, CliContext& context);
+/** `remove-aux <project> --aux ID` - remove an aux bus and the sends into it. */
+int runRemoveAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-aux <project> --aux ID [--name N] [--gain G] [--pan P] [--mute on|off] [--solo on|off]` */
+int runSetAux (const juce::ArgumentList& args, CliContext& context);
+/** `set-send <project> --track N [--channel C] --aux ID [--level L] [--pre-fader on|off] [--mute on|off]` */
+int runSetSend (const juce::ArgumentList& args, CliContext& context);
+/** `remove-send <project> --track N [--channel C] --aux ID` - remove a channel's send. */
+int runRemoveSend (const juce::ArgumentList& args, CliContext& context);
 
 /** `clip-speed <project> (--at P | --region N) (--ratio R | --semitones N | --length L)` - re-pitch a clip. */
 int runClipSpeed (const juce::ArgumentList& args, CliContext& context);
@@ -127,6 +155,12 @@ bool musicalDurationToClocks (const juce::String& value,
                               const TempoProvider& tempoProvider,
                               double& outClocks,
                               std::string& error);
+
+/// An id, index, position or channel number as typed: digits only, so a typo never acts on 0.
+bool isIndexValue (const juce::String& value);
+
+/// An on/off option: empty (not given), "on" or "off"; anything else is a usage error.
+bool isSwitchValue (const juce::String& value);
 
 /**
  * Validates a plain numeric option value (seconds, measures, counts - the

@@ -4,6 +4,7 @@
 //    Audionaut uses a GPL/commercial licence - see LICENCE.md for details.
 
 #include "LevelMeter.h"
+#include "Interface/LookAndFeel/AudiumLookAndFeel.h"
 
 
 void LevelComponent::paint(Graphics& g)
@@ -18,6 +19,11 @@ void LevelComponent::paint(Graphics& g)
     
     const int h = roundToInt(static_cast<float>(getHeight()) * level);
     const int w = roundToInt(static_cast<float>(getWidth()) * level);
+    
+    // the unlit part: the colour zones shine through faintly
+    g.setOpacity (0.16f);
+    g.drawImageAt (mImage, 0, 0);
+    g.setOpacity (1.0f);
     
     // get clipped image area, also see: drawLevels
     Rectangle<int> area = mImage.getBounds();
@@ -83,6 +89,8 @@ void LevelComponent::resized()
 
 void LevelComponent::redrawLevels()
 {
+    if (getWidth() <= 0 || getHeight() <= 0)   // not laid out yet
+        return;
     mImage = Image(Image::ARGB, getWidth(), getHeight(), true);
     Graphics g(mImage);
     drawLevels(g);
@@ -190,8 +198,8 @@ void LevelComponent::drawLevels(Graphics& g)
 LevelMeter::LevelMeter(bool bVertical, bool bInverted) :
     m_bVertical(bVertical),
     m_bInverted(bInverted),
-    m_fMindB(-65.f),
-    m_fMaxdB(6.f),
+    m_fMindB(-80.f),
+    m_fMaxdB(3.f),
     m_fLeveldB(m_fMindB),
     m_fPeakLeveldB(m_fMindB),
     m_fDecrementdB(1.f),
@@ -216,20 +224,91 @@ const float LevelMeter::getDecibelScaled(const float db)
 
 void LevelMeter::resized()
 {
-    mRect.setBounds(m_iSpace, m_iSpace, getWidth() - (2 * m_iSpace), std::max(getHeight() - (2 * m_iSpace), 1));
+    m_barArea = getLocalBounds();
+    if (m_bScale && m_bVertical) {
+        m_barArea.removeFromLeft (scaleWidth);
+        m_barArea.reduce (0, scaleEndInset);   // room for the top and bottom figures
+    }
+    mRect = m_barArea.reduced (m_iSpace).withSize (std::max (m_barArea.getWidth() - 2 * m_iSpace, 1),
+                                                   std::max (m_barArea.getHeight() - 2 * m_iSpace, 1));
     m_pLevelComponent->setBounds(mRect);
 }
 
 void LevelMeter::paint(Graphics& g)
 {
-    Path indent;
-    indent.addRoundedRectangle (0, 0, getWidth(), getHeight(), 1.f);
-    g.setColour(Colour (0xff5e6569).withAlpha(0.4f));
-    g.fillPath (indent);
+    // a recessed slot, as the fader's: dark, with a faint light edge around it
+    const auto bar = m_barArea.toFloat();
+    g.setColour (Colours::black.withAlpha (0.55f));
+    g.fillRoundedRectangle (bar, 2.0f);
+    g.setColour (Colours::white.withAlpha (0.08f));
+    g.drawRoundedRectangle (bar.expanded (0.5f), 2.5f, 1.0f);
     
-    // draw border
-    g.setColour (juce::Colours::black.withAlpha(0.50f));
-    g.drawRoundedRectangle (getLocalBounds().toFloat(), 3.0f, 2.0f);
+    if (m_bScale && m_bVertical)
+        drawScale (g);
+}
+
+void LevelMeter::paintOverChildren (Graphics& g)
+{
+    // the inner shadow that makes the slot look deep: along the top (or the left, lying down)
+    // and down the left edge, over lit and unlit parts alike
+    const auto inner = mRect.toFloat();
+    if (inner.isEmpty())
+        return;
+    
+    const auto shadow = Colours::black.withAlpha (0.35f);
+    const auto clear = Colours::transparentBlack;
+    const auto depth = jmin (6.0f, (m_bVertical ? inner.getHeight() : inner.getWidth()) * 0.5f);
+    
+    if (m_bVertical) {
+        g.setGradientFill (ColourGradient (shadow, inner.getX(), inner.getY(), clear, inner.getX(), inner.getY() + depth, false));
+        g.fillRect (inner.withHeight (depth));
+        g.setGradientFill (ColourGradient (shadow.withMultipliedAlpha (0.7f), inner.getX(), inner.getY(), clear, inner.getX() + 3.0f, inner.getY(), false));
+        g.fillRect (inner.withWidth (3.0f));
+    }
+    else {
+        g.setGradientFill (ColourGradient (shadow, inner.getX(), inner.getY(), clear, inner.getX() + depth, inner.getY(), false));
+        g.fillRect (inner.withWidth (depth));
+        g.setGradientFill (ColourGradient (shadow.withMultipliedAlpha (0.7f), inner.getX(), inner.getY(), clear, inner.getX(), inner.getY() + 3.0f, false));
+        g.fillRect (inner.withHeight (3.0f));
+    }
+}
+
+void LevelMeter::drawScale (Graphics& g)
+{
+    // a tick and the dB figure (without sign, as on a console) at the usual marks; a figure is
+    // drawn only where it does not run into the one above
+    const auto textColour = findColour (audium::defaultTextColourId);
+    g.setFont (AudiumLookAndFeel::withTabularFigures (juce::FontOptions (7.5f)));
+    const auto tickRight = static_cast<float> (m_barArea.getX()) - 1.0f;
+    const auto figureWidth = tickRight - 4.0f;
+    const auto top = static_cast<float> (mRect.getY());
+    const auto height = static_cast<float> (mRect.getHeight());
+    auto lastFigureY = -100.0f;
+    for (const auto mark : { 0.f, -6.f, -12.f, -20.f, -30.f, -40.f, -60.f }) {
+        if (mark > m_fMaxdB || mark < m_fMindB)
+            continue;
+        const auto position = getDecibelScaled (mark);
+        const auto tickY = m_bInverted ? top + position * height : top + (1.0f - position) * height;
+        const auto unity = mark == 0.f;
+        g.setColour (textColour.withAlpha (unity ? 0.7f : 0.35f));
+        g.fillRect (tickRight - 3.0f, tickY - 0.5f, 3.0f, 1.0f);
+        if (tickY - lastFigureY >= 9.0f) {
+            g.drawText (String (static_cast<int> (std::abs (mark))),
+                        Rectangle<float> (0.0f, tickY - 5.0f, figureWidth, 10.0f),
+                        Justification::centredRight, false);
+            lastFigureY = tickY;
+        }
+    }
+}
+
+void LevelMeter::setScaleShown (bool shown)
+{
+    if (m_bScale == shown)
+        return;
+    m_bScale = shown;
+    if (! getLocalBounds().isEmpty())
+        resized();
+    repaint();
 }
 
 float LevelMeter::getDisplayLevel()

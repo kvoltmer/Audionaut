@@ -62,6 +62,26 @@ monitoring. Each take becomes a region and a single undo step.
   ([Audio routing](manual/04-main-window.md#audio-routing))
 - Mute, solo, gain, pan and level meters per channel, plus master volume and
   meter.
+- **A mixer** along the bottom of the window: a strip per channel grouped
+  by track, with input and output, inserts, sends, pan, the record, monitor,
+  solo and mute keys, fader and meter, each section shown or hidden as you
+  like; the aux buses and the main bus as return strips at the right.
+  ([The mixer, effects and plugins](manual/14-mixer-and-effects.md))
+- **Insert effects** on every track (all its channels at once), on the aux
+  buses and on the main bus: the built-in Trim, three-band EQ with high-pass,
+  compressor and feedback delay, and your **plugins** - Audio Units on
+  macOS, VST3 on Windows, VST3 and LV2 on Linux - each in its own editor
+  window, with click-free bypass. Latency is compensated at every summing
+  point, so a latent effect never shifts its channel against the others,
+  exports stay on the grid, Link peers stay in time and recorded takes land
+  where they were played. Playback and export run them alike; agents add
+  and set them through the MCP tools. A project saved with a plugin in one
+  format opens with the same plugin in another; a plugin you lack stays in
+  the project until you have it.
+- **Aux buses and sends**: every project has two stereo aux buses (more can
+  be added), each with its own insert chain and a return into the main mix
+  with gain, pan, mute and solo. Every channel strip can send into each
+  bus, post- or pre-fader, following the strip's pan.
 - **Ableton Link:** syncs tempo and transport with other Link software on
   the network.
 - A **DSP load meter** in the header.
@@ -84,10 +104,12 @@ monitoring. Each take becomes a region and a single undo step.
 ([The command line and AI agents](manual/11-cli-and-agents.md))
 
 - **MCP server** (`audionaut-mcp` on npm, also in the official MCP
-  registry) with 22 tools: create a project, import, analyse, auto edit,
+  registry) with 32 tools: create a project, import, analyse, auto edit,
   assemble, split, create, retrim and clean up regions, place, move and
-  remove clips, clip gain, fades, speed and stretch, stem separation, remove tracks and channels, export, project
-  info, and `request_feature` / `report_bug`, which file GitHub issues.
+  remove clips, clip gain, fades, speed and stretch, stem separation,
+  remove tracks and channels, track pan, insert effects, aux buses and
+  sends, export, project info, and `request_feature` / `report_bug`, which
+  file GitHub issues.
   Setup for Claude Code, with the app and Node.js 18+ installed:
   `claude mcp add audionaut -- npx -y audionaut-mcp`
 - **Edits land in the open document.** If the project is open in the app,
@@ -113,13 +135,13 @@ Privacy: anonymous usage statistics are opt-in only
 
 Planned or under consideration, not available today:
 
-- Plugin hosting (VST3 / AU / LV2), effects and automation envelopes
-- MIDI
+- Automation envelopes, instrument plugins and MIDI
 - Timeline markers and labels, import and export of label or region lists,
   and OSC cues
 - Automatic crossfades when clips are dragged over each other
 - Speech-specific tools (silence or filler-word removal)
 - Flatpak, and a code-signed Windows installer
 
-Ideas and requests are welcome in
+The [roadmap](../ROADMAP.md) says what is being worked on and what comes
+next. Ideas and requests are welcome in
 [GitHub Discussions](https://github.com/kvoltmer/Audionaut/discussions).

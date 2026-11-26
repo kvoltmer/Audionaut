@@ -10,9 +10,10 @@ SCENARIO("audiobus interface scenario", "[engine][audiobus]")
 {
     GIVEN("the audio bus interface")
     {
-        auto audioBusRenderer   = std::make_shared<AudioBusRenderer<float>>(nullptr, nullptr);
+        auto renderThreadPool   = std::make_shared<RenderThreadPool>();
+        auto audioBusRenderer   = std::make_shared<AudioBusRenderer<float>>(nullptr, nullptr, renderThreadPool);
         auto lockFreeCommander  = std::make_shared<LockFreeCommander>(256);
-        auto audioBusInterface  = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer);
+        auto audioBusInterface  = std::make_shared<AudioBusInterface>(lockFreeCommander, audioBusRenderer, renderThreadPool);
         audioBusRenderer->setNumAudioBusChannels(4);
         
         WHEN("setting mute and solo for channel 0")
