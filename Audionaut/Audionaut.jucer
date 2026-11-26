@@ -976,7 +976,7 @@
                        customXcodeFlags="INSTALL_PATH=/Applications"
                        macOSDeploymentTarget="13.0"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Audionaut" headerPath="$(SRCROOT)/../../Source"
-                       customXcodeFlags="INSTALL_PATH=/Applications, GCC_GENERATE_DEBUGGING_SYMBOLS=YES, DEBUG_INFORMATION_FORMAT=dwarf-with-dsym"
+                       customXcodeFlags="INSTALL_PATH=/Applications, GCC_GENERATE_DEBUGGING_SYMBOLS=YES, DEBUG_INFORMATION_FORMAT=dwarf-with-dsym, DWARF_DSYM_FOLDER_PATH=$(SYMROOT)/$(CONFIGURATION)"
                        macOSDeploymentTarget="13.0"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
