@@ -7,9 +7,11 @@
 #include <catch2/catch_approx.hpp>
 
 #include <cmath>
+#include <cstring>
 
 #include "Engine/Effects/EffectRegistry.h"
 #include "Engine/Effects/EffectSlot.h"
+#include "Engine/Effects/Hosting/ForeignPluginState.h"
 #include "Engine/Effects/Hosting/HostedEffect.h"
 #include "Engine/Effects/Hosting/PluginTypeId.h"
 #include "Engine/Effects/InsertChain.h"
@@ -850,6 +852,99 @@ SCENARIO ("a hosted effect tells the plugin when the renders to come are a bounc
             THEN ("the plugin is told at once")
             {
                 REQUIRE (plugin->isNonRealtime());
+            }
+        }
+    }
+}
+
+SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out of the unit's state", "[engine][effects][hosting][substitute]")
+{
+    // the session was saved on a Mac with the plugin as an Audio Unit: its state is a binary property list
+    const auto session = juce::File (juce::String (CURRENT_SOURCE_DIR) + "/TestFiles/Sessions/total-recall-test.audium/Project.json");
+    const auto project = json::parse (session.loadFileAsString().toStdString());
+    const auto saved = project["audium"]["master_inserts"][0]["state"];
+
+    juce::MemoryBlock unitState;
+    REQUIRE (unitState.fromBase64Encoding (saved["blob"].get<std::string>()));
+
+    GIVEN ("the Audio Unit's state")
+    {
+        THEN ("it is told from other states")
+        {
+            REQUIRE (ForeignPluginState::isAudioUnitState (unitState));
+            REQUIRE_FALSE (ForeignPluginState::isAudioUnitState (juce::MemoryBlock ("1.5|0|0", 7)));
+            REQUIRE_FALSE (ForeignPluginState::isAudioUnitState (juce::MemoryBlock ("bplist00", 8)));
+        }
+
+        THEN ("the plugin's chunk is found in it, and wrapped as the state a VST3 host reads")
+        {
+            const auto chunk = ForeignPluginState::chunkOfAudioUnitState (unitState);
+            REQUIRE (chunk.has_value());
+            REQUIRE (chunk->getSize() == 3696);
+            REQUIRE (std::memcmp (chunk->getData(), "7$iN", 4) == 0);
+
+            const auto forVst3 = ForeignPluginState::audioUnitStateForVst3 (unitState);
+            REQUIRE (forVst3.has_value());
+            const auto xml = juce::AudioProcessor::getXmlFromBinary (forVst3->getData(), static_cast<int> (forVst3->getSize()));
+            REQUIRE (xml != nullptr);
+            REQUIRE (xml->hasTagName ("VST3PluginState"));
+
+            juce::MemoryBlock component;
+            REQUIRE (component.fromBase64Encoding (xml->getChildByName ("IComponent")->getAllSubText()));
+            REQUIRE (component == *chunk);
+        }
+
+        THEN ("a list cut short or made of noise yields nothing, and reads nothing out of bounds")
+        {
+            for (size_t length = 0; length < unitState.getSize(); length += 7)
+            {
+                juce::MemoryBlock cut (unitState.getData(), length);
+                ForeignPluginState::chunkOfAudioUnitState (cut);   // must not crash; the sanitizers watch the reads
+            }
+
+            juce::MemoryBlock noise (unitState);
+            juce::Random random (7);
+            for (size_t i = 8; i < noise.getSize(); ++i)
+                noise[i] = static_cast<char> (random.nextInt (256));
+            REQUIRE_FALSE (ForeignPluginState::chunkOfAudioUnitState (noise).has_value());
+        }
+    }
+
+    GIVEN ("the plugin as a VST3")
+    {
+        TestPluginInstance::Options options;
+        options.format = "VST3";
+        Hosted hosted (options);
+        auto& effect = *hosted.effect;
+
+        WHEN ("it is given the Audio Unit's state")
+        {
+            effect.setState (saved);
+
+            THEN ("the plugin is handed a state, and what the effect saves from here on is the plugin's own")
+            {
+                REQUIRE (hosted.plugin->setStateCount == 1);
+                REQUIRE (effect.getState() != saved);
+
+                juce::MemoryBlock own;
+                hosted.plugin->getStateInformation (own);
+                REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
+            }
+        }
+    }
+
+    GIVEN ("the plugin in a format that reads the state as it is")
+    {
+        Hosted hosted;
+
+        WHEN ("it is given the same state")
+        {
+            hosted.effect->setState (saved);
+
+            THEN ("the state goes to the plugin untouched")
+            {
+                REQUIRE (hosted.plugin->setStateCount == 1);
+                REQUIRE (hosted.effect->getState() == saved);
             }
         }
     }

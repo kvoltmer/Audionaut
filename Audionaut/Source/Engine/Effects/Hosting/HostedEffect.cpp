@@ -15,6 +15,7 @@
 
 #include <cmath>
 
+#include "ForeignPluginState.h"
 #include "PluginTypeId.h"
 #include "Engine/Core/MessageThreadAssert.h"
 
@@ -433,6 +434,20 @@ void HostedEffect::setState (const json& state)
     juce::MemoryBlock chunk;
     if (! chunk.fromBase64Encoding (blob))
         return;
+
+    // a substitute for the plugin of another format (PluginHost::findSubstitute) is handed that format's
+    // state: a VST3 ignores an Audio Unit's property list, so it gets the plugin's chunk out of it
+    if (description.pluginFormatName == "VST3" && ForeignPluginState::isAudioUnitState (chunk))
+    {
+        if (const auto translated = ForeignPluginState::audioUnitStateForVst3 (chunk))
+        {
+            instance->setStateInformation (translated->getData(), static_cast<int> (translated->getSize()));
+            cachedBlob.clear();
+            stateDirty.store (true, std::memory_order_release);   // the state to save is the plugin's own from here on
+            ++hostEdits;
+        }
+        return;   // without a chunk there is nothing this plugin can read, and the blob is not its state
+    }
 
     instance->setStateInformation (chunk.getData(), static_cast<int> (chunk.getSize()));
     cachedBlob = blob;
