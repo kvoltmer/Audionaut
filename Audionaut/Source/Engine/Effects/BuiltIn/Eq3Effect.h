@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "Biquad.h"
 #include "Engine/Effects/Effect.h"
 
 namespace audium
@@ -51,8 +52,7 @@ public:
     void reset() noexcept override
     {
         for (auto& band : bands)
-            for (auto& state : band.states)
-                state = {};
+            band.clearState();
     }
 
     void process (juce::dsp::AudioBlock<float>& block) noexcept override
@@ -73,44 +73,13 @@ public:
                 auto* samples = block.getChannelPointer (c);
                 auto& s = band.states[c];
                 for (size_t i = 0; i < numSamples; ++i)
-                {
-                    // transposed direct form II
-                    const auto x = samples[i];
-                    const auto y = band.b0 * x + s.z1;
-                    s.z1 = band.b1 * x - band.a1 * y + s.z2;
-                    s.z2 = band.b2 * x - band.a2 * y;
-                    samples[i] = y;
-                }
+                    samples[i] = band.process (s, samples[i]);
             }
         }
     }
 
 private:
-    struct State { float z1 = 0.0f, z2 = 0.0f; };
-
-    struct Band
-    {
-        bool active = false;
-        float b0 = 1.0f, b1 = 0.0f, b2 = 0.0f, a1 = 0.0f, a2 = 0.0f;
-        std::vector<State> states;   // one per channel, sized by prepare()
-
-        void set (const std::array<float, 6>& unnormalised) noexcept
-        {
-            const auto a0 = unnormalised[3];
-            b0 = unnormalised[0] / a0;
-            b1 = unnormalised[1] / a0;
-            b2 = unnormalised[2] / a0;
-            a1 = unnormalised[4] / a0;
-            a2 = unnormalised[5] / a0;
-            active = true;
-        }
-
-        void clearState() noexcept
-        {
-            for (auto& state : states)
-                state = {};
-        }
-    };
+    using Band = Biquad<float>;
 
     void computeCoefficients() noexcept
     {

@@ -575,6 +575,7 @@
 		9C0222C44693315A9F66945C /* IOKit.framework */ /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		9C45B22D912F9D0C6562881B /* ChildProcessScanner.h */ /* ChildProcessScanner.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChildProcessScanner.h; path = ../../Source/Engine/Effects/Hosting/ChildProcessScanner.h; sourceTree = SOURCE_ROOT; };
 		9C523ECC051D5C512F4C9161 /* AudioTrackContainer.h */ /* AudioTrackContainer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioTrackContainer.h; path = ../../Source/Engine/Group/AudioTrackContainer.h; sourceTree = SOURCE_ROOT; };
+		9D62E012FFE456D85919A81B /* Biquad.h */ /* Biquad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Biquad.h; path = ../../Source/Engine/Effects/BuiltIn/Biquad.h; sourceTree = SOURCE_ROOT; };
 		9E406A48C4ADFC2A218F5FFE /* audium_AudioThumbnail.cpp */ /* audium_AudioThumbnail.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = audium_AudioThumbnail.cpp; path = ../../Source/Engine/Resource/audium_AudioThumbnail.cpp; sourceTree = SOURCE_ROOT; };
 		9E73B749E8327F615AEA55E1 /* ChannelGroupHeaderComponent.h */ /* ChannelGroupHeaderComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ChannelGroupHeaderComponent.h; path = ../../Source/Interface/Components/MiddlePanel/ChannelView/ChannelGroupHeaderComponent.h; sourceTree = SOURCE_ROOT; };
 		9EB1079AF95DA79E5F159630 /* Playback.cpp */ /* Playback.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Playback.cpp; path = ../../Source/Engine/Playback/Playback.cpp; sourceTree = SOURCE_ROOT; };
@@ -1200,6 +1201,7 @@
 		45DBF8DEE98AAEA1FE7AB6C2 /* BuiltIn */ = {
 			isa = PBXGroup;
 			children = (
+				9D62E012FFE456D85919A81B,
 				5BDAC6E3EC21C309DB6CF8E2,
 				70FA224A7BC7746A3EF607EC,
 				81EC3A5347CC3EB686784014,

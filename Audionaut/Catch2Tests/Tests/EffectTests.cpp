@@ -7,6 +7,7 @@
 #include <catch2/catch_approx.hpp>
 
 #include <cmath>
+#include <limits>
 
 #include "Engine/Effects/EffectRegistry.h"
 #include "Engine/Effects/InsertChain.h"
@@ -492,6 +493,198 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
         }
     }
 
+    GIVEN ("a compressor at -20 dB threshold, ratio 4, with a 64 ms release")
+    {
+        CompressorEffect compressor;
+        compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+        compressor.setParameter (CompressorEffect::ratio, 4.0f);
+        compressor.setParameter (CompressorEffect::attackMs, 1.0f);
+        compressor.setParameter (CompressorEffect::releaseMs, 64.0f);   // 12 blocks at 48 kHz
+        compressor.setParameter (CompressorEffect::rms, 0.0f);          // the level drops at once, so the release is all that is seen
+        compressor.prepare (kSampleRate, kBlockSize, 1);
+
+        THEN ("the release is the gain's time constant: 63 % of the reduction is gone after it, however deep it was")
+        {
+            for (const auto loudDb : { 0.0f, -12.0f })
+            {
+                compressor.reset();
+                auto loud = makeSine (1, 32, 1000.0, juce::Decibels::decibelsToGain (loudDb));
+                run (compressor, loud);
+                compressor.takeGainReductionDb();
+                auto last = makeSine (1, 1, 1000.0, juce::Decibels::decibelsToGain (loudDb));
+                run (compressor, last);
+                const auto held = compressor.takeGainReductionDb();
+                REQUIRE (held > 3.0f);
+
+                auto quiet = makeSine (1, 12, 1000.0, juce::Decibels::decibelsToGain (-40.0f));
+                run (compressor, quiet);
+                compressor.takeGainReductionDb();
+                auto next = makeSine (1, 1, 1000.0, juce::Decibels::decibelsToGain (-40.0f));
+                run (compressor, next);
+                REQUIRE (compressor.takeGainReductionDb() / held == Approx (std::exp (-1.0f)).margin (0.03f));
+            }
+        }
+    }
+
+    GIVEN ("a compressor at ratio 4 and a tone right at its threshold of -20 dB")
+    {
+        CompressorEffect compressor;
+        compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+        compressor.setParameter (CompressorEffect::ratio, 4.0f);
+        const auto reductionAtKnee = [&] (float kneeDb)
+        {
+            compressor.setParameter (CompressorEffect::kneeDb, kneeDb);
+            compressor.prepare (kSampleRate, kBlockSize, 1);
+            auto tone = makeSine (1, 64, 1000.0, juce::Decibels::decibelsToGain (-20.0f));
+            run (compressor, tone);
+            compressor.takeGainReductionDb();
+            auto last = makeSine (1, 1, 1000.0, juce::Decibels::decibelsToGain (-20.0f));
+            run (compressor, last);
+            return compressor.takeGainReductionDb();
+        };
+
+        THEN ("a hard knee leaves it alone, a 6 dB knee is already turning it down, and under the knee nothing happens")
+        {
+            REQUIRE (reductionAtKnee (0.0f) < 0.05f);
+            // halfway through the knee: (1 - 1/4) * 3 * 3 / 12 dB
+            REQUIRE (reductionAtKnee (6.0f) == Approx (0.5625f).margin (0.1f));
+
+            compressor.reset();
+            auto under = makeSine (1, 8, 1000.0, juce::Decibels::decibelsToGain (-24.0f));
+            const auto reference = under;
+            run (compressor, under);
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+            auto maxDiff = 0.0f;
+            for (auto i = 0; i < under.getNumSamples(); ++i)
+                maxDiff = std::max (maxDiff, std::abs (under.getSample (0, i) - reference.getSample (0, i)));
+            REQUIRE (maxDiff == 0.0f);
+        }
+    }
+
+    GIVEN ("a compressor at -20 dB threshold, ratio 4, and a 0 dBFS bass note of 50 Hz")
+    {
+        CompressorEffect compressor;
+        compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+        compressor.setParameter (CompressorEffect::ratio, 4.0f);
+        compressor.prepare (kSampleRate, kBlockSize, 1);
+
+        THEN ("it is turned down, and its gain does not ride the single waves: the harmonics stay under 1 %")
+        {
+            auto bass = makeSine (1, 375, 50.0, 1.0f);   // 2 s
+            run (compressor, bass);
+            REQUIRE (juce::Decibels::gainToDecibels (settledPeak (bass)) < -12.0f);
+
+            // the last second, whole periods: the fundamental against harmonics 2 to 10
+            const auto magnitudeAt = [&] (double hz)
+            {
+                auto re = 0.0, im = 0.0;
+                const auto n = static_cast<int> (kSampleRate), start = bass.getNumSamples() - n;
+                for (auto i = 0; i < n; ++i)
+                {
+                    const auto phase = 2.0 * juce::MathConstants<double>::pi * hz * i / kSampleRate;
+                    re += bass.getSample (0, start + i) * std::cos (phase);
+                    im += bass.getSample (0, start + i) * std::sin (phase);
+                }
+                return std::sqrt (re * re + im * im);
+            };
+            auto harmonics = 0.0;
+            for (auto k = 2; k <= 10; ++k)
+                harmonics += std::pow (magnitudeAt (50.0 * k), 2.0);
+            REQUIRE (std::sqrt (harmonics) / magnitudeAt (50.0) < 0.01);
+        }
+
+        THEN ("the side-chain high-pass is out until it is switched on, wherever its frequency stands")
+        {
+            compressor.setParameter (CompressorEffect::sidechainHz, 400.0f);
+            auto bass = makeSine (1, 375, 50.0, 1.0f);
+            run (compressor, bass);
+            REQUIRE (juce::Decibels::gainToDecibels (settledPeak (bass)) < -12.0f);
+        }
+
+        THEN ("a side-chain high-pass at 400 Hz keeps it from being heard: the note passes untouched, and unfiltered")
+        {
+            compressor.setParameter (CompressorEffect::sidechainOn, 1.0f);
+            compressor.setParameter (CompressorEffect::sidechainHz, 400.0f);
+            auto bass = makeSine (1, 64, 50.0, 1.0f);
+            run (compressor, bass);
+            // the first samples aside, where the filter's onset reads over the threshold
+            compressor.takeGainReductionDb();
+            auto more = makeSine (1, 75, 50.0, 1.0f);   // whole periods
+            const auto reference = more;
+            run (compressor, more);
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+            REQUIRE (settledPeak (more) == Approx (settledPeak (reference)).margin (0.0001f));
+
+            // a tone over the filter's corner is compressed as before
+            auto high = makeSine (1, 64, 2000.0, 1.0f);
+            run (compressor, high);
+            REQUIRE (juce::Decibels::gainToDecibels (settledPeak (high)) == Approx (-15.0f).margin (1.5f));
+        }
+    }
+
+    GIVEN ("a compressor with a hard knee at -20 dB and a tone 1 dB under it, a quarter period apart on the two channels")
+    {
+        CompressorEffect compressor;
+        compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+        compressor.setParameter (CompressorEffect::ratio, 4.0f);
+        compressor.setParameter (CompressorEffect::kneeDb, 0.0f);
+        compressor.prepare (kSampleRate, kBlockSize, 2);
+
+        THEN ("each channel is read on its own: neither is over the threshold, so nothing is turned down")
+        {
+            const auto amplitude = juce::Decibels::decibelsToGain (-21.0f);
+            auto wide = makeSine (2, 64, 1000.0, amplitude);
+            for (auto i = 0; i < wide.getNumSamples(); ++i)
+                wide.setSample (1, i, amplitude * static_cast<float> (std::cos (2.0 * juce::MathConstants<double>::pi * 1000.0 * i / kSampleRate)));
+            const auto reference = wide;
+            run (compressor, wide);
+            REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+            REQUIRE (settledPeak (wide, 0) == settledPeak (reference, 0));
+            REQUIRE (settledPeak (wide, 1) == settledPeak (reference, 1));
+        }
+    }
+
+    GIVEN ("a compressor at -20 dB threshold, ratio 4, that is handed samples that are no numbers")
+    {
+        THEN ("it compresses as before once they have passed, with the side-chain filter in or out")
+        {
+            for (const auto filtered : { false, true })
+            {
+                CAPTURE (filtered);
+                CompressorEffect compressor;
+                compressor.setParameter (CompressorEffect::thresholdDb, -20.0f);
+                compressor.setParameter (CompressorEffect::ratio, 4.0f);
+                compressor.setParameter (CompressorEffect::releaseMs, 50.0f);
+                compressor.setParameter (CompressorEffect::sidechainOn, filtered ? 1.0f : 0.0f);
+                compressor.prepare (kSampleRate, kBlockSize, 1);
+
+                juce::AudioBuffer<float> broken (1, kBlockSize);
+                broken.clear();
+                broken.setSample (0, 10, std::numeric_limits<float>::infinity());
+                broken.setSample (0, 20, std::numeric_limits<float>::quiet_NaN());
+                broken.setSample (0, 30, std::numeric_limits<float>::max());
+                run (compressor, broken);
+
+                // each read as the detector's ceiling, 24 dB over full scale: a loud sample, and gone like one
+                auto loud = makeSine (1, 128, 1000.0, 1.0f);
+                run (compressor, loud);
+                REQUIRE (juce::Decibels::gainToDecibels (settledPeak (loud)) == Approx (-15.0f).margin (1.5f));
+                compressor.takeGainReductionDb();
+                auto more = makeSine (1, 1, 1000.0, 1.0f);
+                run (compressor, more);
+                REQUIRE (compressor.takeGainReductionDb() == Approx (15.0f).margin (1.5f));
+
+                // and under the threshold the reduction is let go altogether
+                auto quiet = makeSine (1, 320, 1000.0, juce::Decibels::decibelsToGain (-30.0f));
+                run (compressor, quiet);
+                compressor.takeGainReductionDb();
+                auto last = makeSine (1, 1, 1000.0, juce::Decibels::decibelsToGain (-30.0f));
+                run (compressor, last);
+                REQUIRE (compressor.takeGainReductionDb() == 0.0f);
+            }
+        }
+    }
+
     GIVEN ("a compressor at -20 dB threshold, ratio 4, a 5 ms attack and 10 ms of look-ahead")
     {
         CompressorEffect compressor;
@@ -499,6 +692,7 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
         compressor.setParameter (CompressorEffect::ratio, 4.0f);
         compressor.setParameter (CompressorEffect::attackMs, 5.0f);
         compressor.setParameter (CompressorEffect::releaseMs, 50.0f);
+        compressor.setParameter (CompressorEffect::rms, 0.0f);   // the peak reading answers the burst's first sample
         compressor.setParameter (CompressorEffect::lookaheadMs, 10.0f);
         REQUIRE (compressor.getLatencySamples() == 0);   // no rate yet
         compressor.prepare (kSampleRate, kBlockSize, 1);

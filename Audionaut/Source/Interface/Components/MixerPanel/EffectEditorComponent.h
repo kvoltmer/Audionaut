@@ -50,9 +50,10 @@ public:
     static constexpr int groupHeight = 20;
     static constexpr int cellWidth = 64;
     static constexpr int nameHeight = 15;
+    static constexpr int nameGap = 5;        ///< air between a name and its dial
     static constexpr int dialHeight = 38;
     static constexpr int valueHeight = 16;
-    static constexpr int cellHeight = nameHeight + dialHeight + valueHeight;
+    static constexpr int cellHeight = nameHeight + nameGap + dialHeight + valueHeight;
     static constexpr int margin = 10;
     static constexpr int minimumWidth = 200;
     static constexpr int maximumColumns = 6;   ///< more parameters than that go on two rows

@@ -318,6 +318,8 @@
         </GROUP>
         <GROUP id="{3E7F1A52-9C04-4B8D-A6E1-2F5D7C9B0E41}" name="Effects">
           <GROUP id="{5B9D2C73-1E86-4F0A-B7C2-8A3E6D1F4C92}" name="BuiltIn">
+            <FILE id="EfBBiq" name="Biquad.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/BuiltIn/Biquad.h"/>
             <FILE id="EfBCmp" name="CompressorEffect.h" compile="0" resource="0"
                   file="Source/Engine/Effects/BuiltIn/CompressorEffect.h"/>
             <FILE id="EfBDly" name="DelayEffect.h" compile="0" resource="0"

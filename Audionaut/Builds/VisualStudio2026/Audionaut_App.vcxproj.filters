@@ -5100,6 +5100,9 @@
     <ClInclude Include="..\..\Source\Engine\Selection\ClipOverlayTarget.h">
       <Filter>Audionaut\Source\Engine\Selection</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\Biquad.h">
+      <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\BuiltIn\CompressorEffect.h">
       <Filter>Audionaut\Source\Engine\Effects\BuiltIn</Filter>
     </ClInclude>
