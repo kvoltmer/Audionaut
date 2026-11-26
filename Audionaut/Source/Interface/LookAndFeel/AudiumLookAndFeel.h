@@ -67,7 +67,7 @@ public:
     
     // PopupMenu
     juce::Font getPopupMenuFont() override;
-    // the menus that open under the main window's menu bar are larger on Linux (mainMenuFontSize)
+    // the menus that open under the main window's menu bar are larger on Windows and Linux (mainMenuFontSize)
     void getIdealPopupMenuItemSizeWithOptions (const juce::String& text, bool isSeparator, int standardMenuItemHeight,
                                                int& idealWidth, int& idealHeight, const juce::PopupMenu::Options&) override;
     void drawPopupMenuItemWithOptions (juce::Graphics&, const juce::Rectangle<int>& area, bool isHighlighted,
@@ -243,7 +243,7 @@ public:
     static const int tableHeaderHeight = standardItemHeight;
     static const int dividerHeight = 24;   ///< the bands in dividerColourId: the mixer's and the region list's header bars
     static const float defaultFontSize;
-    static const float mainMenuFontSize;   // the entries of the menu bar's menus, on Linux
+    static const float mainMenuFontSize;   // the entries of the menu bar's menus, on Windows and Linux
 
 private:
     bool inMainMenu = false;   // the item being measured or drawn belongs to a menu of the menu bar
