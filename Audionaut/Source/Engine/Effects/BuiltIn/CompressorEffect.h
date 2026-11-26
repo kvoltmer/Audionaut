@@ -40,14 +40,15 @@ namespace audium
  * parameter) is in the detector's path only, never in the audio: it keeps a
  * kick or a bass from turning the whole signal down.
  *
- * A sample that is not a number, or beyond any level a signal has, reads as
- * the detector's ceiling: it turns the gain down like any loud sample and
- * leaves nothing behind in the detector's state.
+ * A sample that is not a number, or over the detector's ceiling of 24 dB
+ * above full scale, reads as that ceiling: it turns the gain down like a
+ * loud sample, no more, and leaves nothing behind in the detector's state.
+ * The sample itself goes on as it came; only the detector is kept from it.
  *
  * The channels are linked: each has its own level, the loudest of them goes
- * through the curve and every channel gets that gain, so a hit on one side turns both down and the
- * stereo image stays put. The reduction reported is the compressor's alone,
- * before the make-up gain.
+ * through the curve and every channel gets that gain, so a hit on one side
+ * turns both down and the stereo image stays put. The reduction reported is
+ * the compressor's alone, before the make-up gain.
  *
  * The look-ahead delays the signal, not the detector: the gain worked out
  * from a sample is applied to the sample that went in the look-ahead
@@ -143,7 +144,7 @@ public:
             for (size_t channel = 0; channel < numChannels; ++channel)
             {
                 // written so that a sample that is not a number fails the test too
-                auto sample = static_cast<double> (block.getSample (static_cast<int> (channel), i));
+                auto sample = static_cast<double> (block.getChannelPointer (channel)[i]);
                 if (! (std::abs (sample) <= detectorCeiling))
                     sample = detectorCeiling;
                 if (sidechain.active)
@@ -206,7 +207,7 @@ public:
 
 private:
     static constexpr float meanSquareMs = 10.0f;                  ///< the time constant of the RMS reading
-    static constexpr double detectorCeiling = 1.0e4;              ///< 80 dB over full scale: what the detector reads at most
+    static constexpr double detectorCeiling = 16.0;               ///< 24 dB over full scale: what the detector reads at most
     static constexpr float decibelsToLog = -0.11512925464970229f;   ///< -ln (10) / 20: exp (dB * this) is the gain of a reduction
 
     int lookaheadSamplesFor (float ms) const noexcept
@@ -236,8 +237,7 @@ private:
         sidechain.active = false;
         if (getParameter (sidechainOn) >= 0.5f)
         {
-            const auto hz = std::min (static_cast<double> (getParameter (sidechainHz)), 0.45 * sampleRate);
-            sidechain.set (juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass (sampleRate, hz));
+            sidechain.set (juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass (sampleRate, static_cast<double> (getParameter (sidechainHz))));
             if (! wasFiltered)
                 sidechain.clearState();
         }

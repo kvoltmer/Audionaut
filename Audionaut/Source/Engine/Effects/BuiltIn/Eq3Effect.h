@@ -52,8 +52,7 @@ public:
     void reset() noexcept override
     {
         for (auto& band : bands)
-            for (auto& state : band.states)
-                state = {};
+            band.clearState();
     }
 
     void process (juce::dsp::AudioBlock<float>& block) noexcept override

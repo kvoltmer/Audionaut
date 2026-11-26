@@ -665,7 +665,7 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
                 broken.setSample (0, 30, std::numeric_limits<float>::max());
                 run (compressor, broken);
 
-                // the reading of the broken samples, 80 dB over full scale, has to release first
+                // each read as the detector's ceiling, 24 dB over full scale: a loud sample, and gone like one
                 auto loud = makeSine (1, 128, 1000.0, 1.0f);
                 run (compressor, loud);
                 REQUIRE (juce::Decibels::gainToDecibels (settledPeak (loud)) == Approx (-15.0f).margin (1.5f));
