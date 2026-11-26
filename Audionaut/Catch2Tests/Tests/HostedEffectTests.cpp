@@ -930,6 +930,51 @@ SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out 
                 hosted.plugin->getStateInformation (own);
                 REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
             }
+
+            THEN ("the same state again is nothing new, until the plugin has moved")
+            {
+                effect.setState (saved);
+                REQUIRE (hosted.plugin->setStateCount == 1);
+
+                // saved in between, as a project is: still the state it was given
+                effect.getState();
+                effect.setState (saved);
+                REQUIRE (hosted.plugin->setStateCount == 1);
+
+                effect.setParameter (0, 0.25f);
+                effect.setState (saved);
+                REQUIRE (hosted.plugin->setStateCount == 2);
+            }
+        }
+
+        WHEN ("it is given a unit's state that holds no chunk of the plugin's")
+        {
+            // the unit's list with the key the chunk is found under made one the reader does not know
+            juce::MemoryBlock noChunk (unitState);
+            auto* bytes = static_cast<char*> (noChunk.getData());
+            auto renamed = false;
+            for (size_t i = 0; i + 7 <= noChunk.getSize() && ! renamed; ++i)
+                if (std::memcmp (bytes + i, "vstdata", 7) == 0)
+                {
+                    bytes[i] = 'x';
+                    renamed = true;
+                }
+            REQUIRE (renamed);
+            REQUIRE_FALSE (ForeignPluginState::chunkOfAudioUnitState (noChunk).has_value());
+            const json unreadable { { "blob", noChunk.toBase64Encoding().toStdString() } };
+
+            const auto before = effect.getState();
+            effect.setState (unreadable);
+
+            THEN ("the plugin is left as it is, and the state is kept for the next save until the plugin is changed")
+            {
+                REQUIRE (hosted.plugin->setStateCount == 0);
+                REQUIRE (effect.getState() == unreadable);
+
+                effect.setParameter (0, 0.25f);
+                REQUIRE (effect.getState() != unreadable);
+                REQUIRE (effect.getState() != before);
+            }
         }
     }
 
@@ -1010,6 +1055,59 @@ SCENARIO ("an Audio Unit standing in for a VST3 is given the plugin's chunk in a
             REQUIRE (holds ("-NI-"));
         }
 
+        THEN ("a code with a byte beyond ASCII, one character in the identifier, is read as that byte")
+        {
+            const auto accented = juce::String ("AudioUnit:Effects/aufx,Ab") + juce::String::charToString (0xe9) + "d,-NI-";
+            const auto forUnit = ForeignPluginState::vst3StateForAudioUnit (vst3State, accented);
+            REQUIRE (forUnit.has_value());
+
+            const char subtype[] = { 0x12, 'A', 'b', static_cast<char> (0xe9), 'd' };
+            const auto* bytes = static_cast<const char*> (forUnit->getData());
+            auto found = false;
+            for (size_t i = 0; i + sizeof (subtype) <= forUnit->getSize() && ! found; ++i)
+                found = std::memcmp (bytes + i, subtype, sizeof (subtype)) == 0;
+            REQUIRE (found);
+
+            const auto beyond = juce::String ("AudioUnit:Effects/aufx,Ab") + juce::String::charToString (0x20ac) + "d,-NI-";
+            REQUIRE_FALSE (ForeignPluginState::vst3StateForAudioUnit (vst3State, beyond).has_value());
+        }
+
+        THEN ("what a JUCE-built VST3 appends to its plugin's state is taken off before the unit gets it")
+        {
+            // the plugin's own state, then eight zero bytes, the wrapper's private data, its size and the magic words
+            const std::string own = "the plugin's own state";
+            const std::string privateData = "bypass";
+            juce::MemoryOutputStream component;
+            component.write (own.data(), own.size());
+            component.writeInt64 (0);
+            component.write (privateData.data(), privateData.size());
+            component.writeInt64 (static_cast<juce::int64> (privateData.size()));
+            component << "JUCEPrivateData";
+            const juce::MemoryBlock withAppendix (component.getData(), component.getDataSize());
+
+            REQUIRE (ForeignPluginState::withoutJucePrivateData (withAppendix) == juce::MemoryBlock (own.data(), own.size()));
+            REQUIRE (ForeignPluginState::withoutJucePrivateData (vst3State) == vst3State);   // no appendix: as it is
+
+            // a size that reaches before the state's start is not the appendix
+            juce::MemoryOutputStream odd;
+            odd.writeInt64 (0);
+            odd.writeInt64 (1000);
+            odd << "JUCEPrivateData";
+            const juce::MemoryBlock oddBlock (odd.getData(), odd.getDataSize());
+            REQUIRE (ForeignPluginState::withoutJucePrivateData (oddBlock) == oddBlock);
+
+            juce::XmlElement xml ("VST3PluginState");
+            xml.createNewChildElement ("IComponent")->addTextElement (withAppendix.toBase64Encoding());
+            juce::MemoryBlock juceBuilt;
+            juce::AudioProcessor::copyXmlToBinary (xml, juceBuilt);
+
+            const auto forUnit = ForeignPluginState::vst3StateForAudioUnit (juceBuilt, unit);
+            REQUIRE (forUnit.has_value());
+            REQUIRE (ForeignPluginState::chunkOfAudioUnitState (*forUnit) == juce::MemoryBlock (own.data(), own.size()));
+            // once in the list, not twice
+            REQUIRE (forUnit->getSize() < 2 * own.size() + 200);
+        }
+
         THEN ("without the unit's codes, or without a component's state, there is nothing to hand over")
         {
             REQUIRE_FALSE (ForeignPluginState::vst3StateForAudioUnit (vst3State, "/Library/Audio/Plug-Ins/Some.component").has_value());
@@ -1044,6 +1142,28 @@ SCENARIO ("an Audio Unit standing in for a VST3 is given the plugin's chunk in a
                 juce::MemoryBlock own;
                 plugin->getStateInformation (own);
                 REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
+            }
+        }
+    }
+
+    GIVEN ("the plugin as an Audio Unit whose identifier names no unit")
+    {
+        TestPluginInstance::Options options;
+        options.format = "AudioUnit";
+        auto description = TestPluginInstance::describe (options);
+        description.fileOrIdentifier = "/Library/Audio/Plug-Ins/Components/Some.component";
+        auto instance = std::make_unique<TestPluginInstance> (options);
+        auto* plugin = instance.get();
+        HostedEffect effect (PluginTypeId::typeInfo (description), description, std::move (instance));
+
+        WHEN ("it is given the VST3's state, which cannot be written for it")
+        {
+            effect.setState (saved);
+
+            THEN ("the plugin is left as it is and the VST3's state is what the effect saves, so the VST3 still finds it")
+            {
+                REQUIRE (plugin->setStateCount == 0);
+                REQUIRE (effect.getState() == saved);
             }
         }
     }

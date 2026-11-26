@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -28,9 +29,42 @@ namespace audium
  * component takes as its state. The other way, the component's state goes
  * into a list of the unit's shape. Nothing here needs the system's property
  * list code, so it reads and writes the same on every platform.
+ *
+ * What does not cross: a VST3's edit controller state has no place in a
+ * unit's list, and a unit has none to give, so the VST3 gets its component's
+ * state alone and derives the controller's from it, as the format asks of
+ * it. A unit that keeps its state in another form has no chunk to hand over.
  */
 struct ForeignPluginState
 {
+    /// What a plugin is to be given for a state a project saved.
+    struct Translation
+    {
+        enum class Kind
+        {
+            own,          ///< not another format's state: the plugin reads it as it is
+            translated,   ///< another format's: `state` is the same in the wrapping this plugin reads
+            unreadable    ///< another format's, with nothing in it this plugin could be given
+        };
+
+        Kind kind = Kind::own;
+        juce::MemoryBlock state;
+    };
+
+    /// A saved state for the plugin of the given format ("VST3", "AudioUnit") and identifier; reads the state once.
+    static Translation forPlugin (const juce::MemoryBlock& state, const juce::String& formatName, const juce::String& identifier)
+    {
+        if (formatName == "VST3" && isAudioUnitState (state))
+            return translationOf (audioUnitStateForVst3 (state));
+
+        if (formatName == "AudioUnit")
+            if (const auto xml = xmlOfVst3State (state))
+                return translationOf (vst3StateForAudioUnit (*xml, identifier));
+
+        return {};
+    }
+
+    //==============================================================================
     /// Whether the bytes are a binary property list, which is how juce's Audio Unit host saves a state.
     static bool isAudioUnitState (const juce::MemoryBlock& state)
     {
@@ -80,20 +114,43 @@ struct ForeignPluginState
     static std::optional<juce::MemoryBlock> chunkOfVst3State (const juce::MemoryBlock& state)
     {
         const auto xml = xmlOfVst3State (state);
-        if (xml == nullptr)
-            return std::nullopt;
+        return xml != nullptr ? chunkOfVst3State (*xml) : std::nullopt;
+    }
 
-        juce::MemoryBlock chunk;
-        if (const auto* component = xml->getChildByName ("IComponent"))
-            if (chunk.fromBase64Encoding (component->getAllSubText()) && ! chunk.isEmpty())
-                return chunk;
-        return std::nullopt;
+    /**
+     * A component's state without what a JUCE-built VST3 appends to its
+     * plugin's own: eight zero bytes, the wrapper's private data, that data's
+     * size and the words "JUCEPrivateData". The same plugin as a unit is
+     * handed its state whole, so the appendix has to go first. A state that
+     * does not end on it comes back as it is.
+     */
+    static juce::MemoryBlock withoutJucePrivateData (const juce::MemoryBlock& chunk)
+    {
+        constexpr std::string_view magic = "JUCEPrivateData";
+        constexpr size_t sizeField = 8;
+        const auto size = chunk.getSize();
+        const auto* bytes = static_cast<const uint8_t*> (chunk.getData());
+        if (size < magic.size() + 2 * sizeField
+            || std::string_view (static_cast<const char*> (chunk.getData()) + (size - magic.size()), magic.size()) != magic)
+            return chunk;
+
+        // the size is little-endian, and is the private data's alone
+        uint64_t privateSize = 0;
+        for (size_t i = 0; i < sizeField; ++i)
+            privateSize |= static_cast<uint64_t> (bytes[size - magic.size() - sizeField + i]) << (8 * i);
+
+        const auto appendix = magic.size() + 2 * sizeField;
+        if (privateSize > size - appendix)
+            return chunk;   // not what it looked like
+        return juce::MemoryBlock (chunk.getData(), size - appendix - static_cast<size_t> (privateSize));
     }
 
     /**
      * A VST3 state as the state juce's Audio Unit host reads: the property
      * list a unit saves (its class info), the chunk under "vstdata" and under
      * "jucePluginState" - a unit reads the one it knows and ignores the other.
+     * A chunk that ends on a JUCE wrapper's private data is a JUCE-built
+     * plugin's: it goes under "jucePluginState" only, without that appendix.
      *
      * A unit takes a state only when it names the unit, so the list carries
      * the type, subtype and manufacturer out of the unit's identifier
@@ -103,26 +160,53 @@ struct ForeignPluginState
     static std::optional<juce::MemoryBlock> vst3StateForAudioUnit (const juce::MemoryBlock& state,
                                                                    const juce::String& audioUnitIdentifier)
     {
-        const auto chunk = chunkOfVst3State (state);
+        const auto xml = xmlOfVst3State (state);
+        return xml != nullptr ? vst3StateForAudioUnit (*xml, audioUnitIdentifier) : std::nullopt;
+    }
+
+private:
+    static constexpr size_t trailerSize = 32;
+    static constexpr size_t maxChunkSize = 0x3fffffff;   ///< twice this still fits the list's four-byte offsets
+
+    static Translation translationOf (std::optional<juce::MemoryBlock> translated)
+    {
+        if (! translated.has_value())
+            return { Translation::Kind::unreadable, {} };
+        return { Translation::Kind::translated, std::move (*translated) };
+    }
+
+    static std::optional<juce::MemoryBlock> chunkOfVst3State (const juce::XmlElement& xml)
+    {
+        juce::MemoryBlock chunk;
+        if (const auto* component = xml.getChildByName ("IComponent"))
+            if (chunk.fromBase64Encoding (component->getAllSubText()) && ! chunk.isEmpty())
+                return chunk;
+        return std::nullopt;
+    }
+
+    static std::optional<juce::MemoryBlock> vst3StateForAudioUnit (const juce::XmlElement& xml, const juce::String& audioUnitIdentifier)
+    {
+        const auto chunk = chunkOfVst3State (xml);
         const auto codes = codesOfAudioUnit (audioUnitIdentifier);
-        if (! chunk.has_value() || ! codes.has_value() || chunk->getSize() > 0x7fffffff)
+        if (! chunk.has_value() || ! codes.has_value() || chunk->getSize() > maxChunkSize)
             return std::nullopt;
+
+        const auto pluginsOwn = withoutJucePrivateData (*chunk);
+        const auto juceBuilt = pluginsOwn.getSize() != chunk->getSize();
 
         // the keys and their order are the ones a unit's own class info has
         PropertyListWriter list;
         list.addInteger ("manufacturer", codes->manufacturer);
         list.addData ("data", {});
-        list.addData ("vstdata", *chunk);
-        list.addData ("jucePluginState", *chunk);
+        if (! juceBuilt)
+            list.addData ("vstdata", *chunk);
+        list.addData ("jucePluginState", pluginsOwn);
         list.addInteger ("subtype", codes->subtype);
         list.addInteger ("version", 0);
         list.addInteger ("type", codes->type);
         list.addString ("name", "Untitled");
         return list.write();
     }
-
-private:
-    static constexpr size_t trailerSize = 32;
 
     static std::unique_ptr<juce::XmlElement> xmlOfVst3State (const juce::MemoryBlock& state)
     {
@@ -139,26 +223,30 @@ private:
         uint32_t type = 0, subtype = 0, manufacturer = 0;
     };
 
-    /// The three four-character codes an identifier ends on: "...type,subt,manu".
+    /// The three four-character codes an identifier ends on: "...type,subt,manu". juce writes each of a
+    /// code's bytes as one character, so the codes are read by characters: a byte over 127 is two in UTF-8.
     static std::optional<AudioUnitCodes> codesOfAudioUnit (const juce::String& identifier)
     {
-        constexpr size_t length = 14;
-        const auto text = identifier.toStdString();   // a code is four bytes: a character beyond ASCII makes the length wrong
-        if (text.size() < length)
+        constexpr int length = 14;
+        if (identifier.length() < length)
             return std::nullopt;
 
-        const auto* codes = text.data() + (text.size() - length);
+        const auto codes = identifier.getLastCharacters (length);
         if (codes[4] != ',' || codes[9] != ',')
             return std::nullopt;
 
-        const auto code = [codes] (size_t at)
+        std::array<uint32_t, 3> values {};
+        for (size_t field = 0; field < values.size(); ++field)
         {
-            uint32_t value = 0;
-            for (size_t i = 0; i < 4; ++i)
-                value = (value << 8) | static_cast<uint8_t> (codes[at + i]);
-            return value;
-        };
-        return AudioUnitCodes { code (0), code (5), code (10) };
+            for (auto i = 0; i < 4; ++i)
+            {
+                const auto character = static_cast<uint32_t> (codes[static_cast<int> (5 * field) + i]);
+                if (character > 0xff)
+                    return std::nullopt;   // not a byte: no code of a unit
+                values[field] = (values[field] << 8) | character;
+            }
+        }
+        return AudioUnitCodes { values[0], values[1], values[2] };
     }
 
     /// Writes the one shape of binary property list a unit's state has: a dictionary of integers,

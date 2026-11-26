@@ -129,6 +129,7 @@ void HostedEffect::adopt (std::unique_ptr<juce::AudioPluginInstance> created, ju
     takeInstance (std::move (created));
     error.clear();
     stateDirty.store (true, std::memory_order_relaxed);   // nothing read from this plugin yet
+    translatedFrom.clear();
     if (! keptBlob.empty())
         setState (json { { "blob", std::exchange (keptBlob, {}) } });   // what the project saved, into the plugin
 
@@ -228,7 +229,7 @@ void HostedEffect::setParameter (int index, float value) noexcept
     // the host's call: the plugin's wrapper hands the value to the processor
     // and its own window; the state changed with it
     parameter->setValue (clampParameter (index, value));
-    stateDirty.store (true, std::memory_order_relaxed);
+    noteStateChanged();
     ++hostEdits;
 }
 
@@ -430,6 +431,8 @@ void HostedEffect::setState (const json& state)
 
     if (! stateDirty.load (std::memory_order_acquire) && blob == cachedBlob)
         return;   // what the plugin already has: an undo replay or a no-op read
+    if (blob == translatedFrom && ! changedSinceTranslation.load (std::memory_order_acquire))
+        return;   // the same for another format's state: the plugin was given it, translated, and has not moved since
 
     juce::MemoryBlock chunk;
     if (! chunk.fromBase64Encoding (blob))
@@ -438,19 +441,28 @@ void HostedEffect::setState (const json& state)
     // a substitute for the plugin of another format (PluginHost::findSubstitute) is handed that format's
     // state: a VST3 ignores an Audio Unit's property list and a unit a VST3's xml, so each gets the
     // plugin's chunk out of the other's state, in the wrapping it reads
-    const auto forVst3 = description.pluginFormatName == "VST3" && ForeignPluginState::isAudioUnitState (chunk);
-    const auto forAudioUnit = description.pluginFormatName == "AudioUnit" && ForeignPluginState::isVst3State (chunk);
-    if (forVst3 || forAudioUnit)
+    using Kind = ForeignPluginState::Translation::Kind;
+    const auto translation = ForeignPluginState::forPlugin (chunk, description.pluginFormatName, description.fileOrIdentifier);
+    if (translation.kind == Kind::translated)
     {
-        if (const auto translated = forVst3 ? ForeignPluginState::audioUnitStateForVst3 (chunk)
-                                            : ForeignPluginState::vst3StateForAudioUnit (chunk, description.fileOrIdentifier))
-        {
-            instance->setStateInformation (translated->getData(), static_cast<int> (translated->getSize()));
-            cachedBlob.clear();
-            stateDirty.store (true, std::memory_order_release);   // the state to save is the plugin's own from here on
-            ++hostEdits;
-        }
-        return;   // without a chunk there is nothing this plugin can read, and the blob is not its state
+        instance->setStateInformation (translation.state.getData(), static_cast<int> (translation.state.getSize()));
+        cachedBlob.clear();
+        stateDirty.store (true, std::memory_order_release);   // the state to save is the plugin's own from here on
+        translatedFrom = blob;
+        changedSinceTranslation.store (false, std::memory_order_release);
+        ++hostEdits;
+        return;
+    }
+
+    translatedFrom.clear();
+    if (translation.kind == Kind::unreadable)
+    {
+        // nothing in it this plugin can be given, so the plugin stays as it is. The blob is kept as the
+        // state to save until the plugin is changed: saved untouched, the project still opens with these
+        // settings where the plugin is in the format that wrote them
+        cachedBlob = blob;
+        stateDirty.store (false, std::memory_order_release);
+        return;
     }
 
     instance->setStateInformation (chunk.getData(), static_cast<int> (chunk.getSize()));
@@ -467,7 +479,7 @@ json HostedEffect::getPluginInfo() const
 //==============================================================================
 void HostedEffect::audioProcessorParameterChanged (juce::AudioProcessor*, int, float)
 {
-    stateDirty.store (true, std::memory_order_relaxed);
+    noteStateChanged();
     pluginChanges.fetch_add (1, std::memory_order_relaxed);
 }
 
@@ -484,7 +496,7 @@ void HostedEffect::audioProcessorParameterChangeGestureEnd (juce::AudioProcessor
 
 void HostedEffect::audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details)
 {
-    stateDirty.store (true, std::memory_order_relaxed);
+    noteStateChanged();
     if (details.parameterInfoChanged || details.programChanged || details.nonParameterStateChanged)
         pluginChanges.fetch_add (1, std::memory_order_relaxed);
 
