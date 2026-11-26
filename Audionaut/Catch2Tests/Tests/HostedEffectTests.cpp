@@ -921,11 +921,12 @@ SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out 
         {
             effect.setState (saved);
 
-            THEN ("the plugin is handed a state, and what the effect saves from here on is the plugin's own")
+            THEN ("the plugin is handed a state, and the unit's stays the state to save until the plugin is changed")
             {
                 REQUIRE (hosted.plugin->setStateCount == 1);
-                REQUIRE (effect.getState() != saved);
+                REQUIRE (effect.getState() == saved);
 
+                effect.setParameter (0, 0.25f);
                 juce::MemoryBlock own;
                 hosted.plugin->getStateInformation (own);
                 REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
@@ -944,6 +945,7 @@ SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out 
                 effect.setParameter (0, 0.25f);
                 effect.setState (saved);
                 REQUIRE (hosted.plugin->setStateCount == 2);
+                REQUIRE (effect.getState() == saved);
             }
         }
 
@@ -963,17 +965,31 @@ SCENARIO ("a VST3 standing in for an Audio Unit is given the plugin's chunk out 
             REQUIRE_FALSE (ForeignPluginState::chunkOfAudioUnitState (noChunk).has_value());
             const json unreadable { { "blob", noChunk.toBase64Encoding().toStdString() } };
 
-            const auto before = effect.getState();
-            effect.setState (unreadable);
-
             THEN ("the plugin is left as it is, and the state is kept for the next save until the plugin is changed")
             {
+                effect.setState (unreadable);
                 REQUIRE (hosted.plugin->setStateCount == 0);
                 REQUIRE (effect.getState() == unreadable);
 
+                // the same again, and another that cannot be read either: still nothing of the plugin's own to lose
+                effect.setState (unreadable);
+                REQUIRE (effect.getState() == unreadable);
+
                 effect.setParameter (0, 0.25f);
-                REQUIRE (effect.getState() != unreadable);
-                REQUIRE (effect.getState() != before);
+                juce::MemoryBlock own;
+                hosted.plugin->getStateInformation (own);
+                REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());
+            }
+
+            THEN ("once the plugin's own state has been read, that is what is heard and stays what is saved")
+            {
+                effect.setParameter (0, 0.25f);
+                const auto own = effect.getState();
+
+                // an undo back to the state that could not be read: the plugin cannot follow, and the effect does not claim it did
+                effect.setState (unreadable);
+                REQUIRE (hosted.plugin->setStateCount == 0);
+                REQUIRE (effect.getState() == own);
             }
         }
     }
@@ -1134,11 +1150,12 @@ SCENARIO ("an Audio Unit standing in for a VST3 is given the plugin's chunk in a
         {
             effect.setState (saved);
 
-            THEN ("the plugin is handed a state, and what the effect saves from here on is the plugin's own")
+            THEN ("the plugin is handed a state, and the VST3's stays the state to save until the plugin is changed")
             {
                 REQUIRE (plugin->setStateCount == 1);
-                REQUIRE (effect.getState() != saved);
+                REQUIRE (effect.getState() == saved);
 
+                effect.setParameter (0, 0.25f);
                 juce::MemoryBlock own;
                 plugin->getStateInformation (own);
                 REQUIRE (effect.getState()["blob"].get<std::string>() == own.toBase64Encoding().toStdString());

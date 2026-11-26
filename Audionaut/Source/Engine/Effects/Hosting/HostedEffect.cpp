@@ -129,7 +129,6 @@ void HostedEffect::adopt (std::unique_ptr<juce::AudioPluginInstance> created, ju
     takeInstance (std::move (created));
     error.clear();
     stateDirty.store (true, std::memory_order_relaxed);   // nothing read from this plugin yet
-    translatedFrom.clear();
     if (! keptBlob.empty())
         setState (json { { "blob", std::exchange (keptBlob, {}) } });   // what the project saved, into the plugin
 
@@ -229,7 +228,7 @@ void HostedEffect::setParameter (int index, float value) noexcept
     // the host's call: the plugin's wrapper hands the value to the processor
     // and its own window; the state changed with it
     parameter->setValue (clampParameter (index, value));
-    noteStateChanged();
+    stateDirty.store (true, std::memory_order_relaxed);
     ++hostEdits;
 }
 
@@ -408,6 +407,7 @@ json HostedEffect::getState() const
         juce::MemoryBlock chunk;
         instance->getStateInformation (chunk);
         cachedBlob = chunk.toBase64Encoding().toStdString();
+        cachedUnread = false;
     }
     return { { "blob", cachedBlob } };
 }
@@ -431,8 +431,6 @@ void HostedEffect::setState (const json& state)
 
     if (! stateDirty.load (std::memory_order_acquire) && blob == cachedBlob)
         return;   // what the plugin already has: an undo replay or a no-op read
-    if (blob == translatedFrom && ! changedSinceTranslation.load (std::memory_order_acquire))
-        return;   // the same for another format's state: the plugin was given it, translated, and has not moved since
 
     juce::MemoryBlock chunk;
     if (! chunk.fromBase64Encoding (blob))
@@ -443,30 +441,28 @@ void HostedEffect::setState (const json& state)
     // plugin's chunk out of the other's state, in the wrapping it reads
     using Kind = ForeignPluginState::Translation::Kind;
     const auto translation = ForeignPluginState::forPlugin (chunk, description.pluginFormatName, description.fileOrIdentifier);
-    if (translation.kind == Kind::translated)
-    {
-        instance->setStateInformation (translation.state.getData(), static_cast<int> (translation.state.getSize()));
-        cachedBlob.clear();
-        stateDirty.store (true, std::memory_order_release);   // the state to save is the plugin's own from here on
-        translatedFrom = blob;
-        changedSinceTranslation.store (false, std::memory_order_release);
-        ++hostEdits;
-        return;
-    }
-
-    translatedFrom.clear();
     if (translation.kind == Kind::unreadable)
     {
-        // nothing in it this plugin can be given, so the plugin stays as it is. The blob is kept as the
-        // state to save until the plugin is changed: saved untouched, the project still opens with these
-        // settings where the plugin is in the format that wrote them
-        cachedBlob = blob;
-        stateDirty.store (false, std::memory_order_release);
+        // Nothing in it this plugin can be given, so the plugin stays as it is. While the plugin holds
+        // nothing but its defaults the blob is kept as the state to save: saved untouched, the project
+        // still opens with these settings where the plugin is in the format that wrote them. Once the
+        // plugin's own state has been read, that state is what is heard and stays what is saved.
+        if (cachedBlob.empty() || (cachedUnread && ! stateDirty.load (std::memory_order_acquire)))
+        {
+            cachedBlob = blob;
+            cachedUnread = true;
+            stateDirty.store (false, std::memory_order_release);
+        }
         return;
     }
 
-    instance->setStateInformation (chunk.getData(), static_cast<int> (chunk.getSize()));
+    // A translated state is the saved one to the project all the same: the blob stays the state to save
+    // until the plugin changes, as with a state of the plugin's own format. Whether the plugin took what
+    // it was handed cannot be asked, so a project opened and saved untouched keeps what it held.
+    const auto& given = translation.kind == Kind::translated ? translation.state : chunk;
+    instance->setStateInformation (given.getData(), static_cast<int> (given.getSize()));
     cachedBlob = blob;
+    cachedUnread = false;
     stateDirty.store (false, std::memory_order_release);
     ++hostEdits;
 }
@@ -479,7 +475,7 @@ json HostedEffect::getPluginInfo() const
 //==============================================================================
 void HostedEffect::audioProcessorParameterChanged (juce::AudioProcessor*, int, float)
 {
-    noteStateChanged();
+    stateDirty.store (true, std::memory_order_relaxed);
     pluginChanges.fetch_add (1, std::memory_order_relaxed);
 }
 
@@ -496,7 +492,7 @@ void HostedEffect::audioProcessorParameterChangeGestureEnd (juce::AudioProcessor
 
 void HostedEffect::audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& details)
 {
-    noteStateChanged();
+    stateDirty.store (true, std::memory_order_relaxed);
     if (details.parameterInfoChanged || details.programChanged || details.nonParameterStateChanged)
         pluginChanges.fetch_add (1, std::memory_order_relaxed);
 

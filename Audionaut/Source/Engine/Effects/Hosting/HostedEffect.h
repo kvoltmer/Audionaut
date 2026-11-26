@@ -197,17 +197,9 @@ private:
     mutable std::atomic<bool> stateDirty { true };
     std::string keptBlob;   // a placeholder keeps what it was given
 
-    // another format's state the plugin was last given translated (ForeignPluginState), and whether the
-    // plugin changed since: the same blob set again is then nothing new
-    std::string translatedFrom;
-    std::atomic<bool> changedSinceTranslation { false };
-
-    /// Any thread: the plugin's state is no longer what was last read or set.
-    void noteStateChanged() noexcept
-    {
-        stateDirty.store (true, std::memory_order_relaxed);
-        changedSinceTranslation.store (true, std::memory_order_relaxed);
-    }
+    // whether cachedBlob is another format's state that could not be given to the plugin (ForeignPluginState):
+    // kept to be saved again, while the plugin itself is at its defaults
+    mutable bool cachedUnread = false;
 
     // who changed the plugin: itself (its window, its own reports) or the host
     std::atomic<juce::uint32> pluginChanges { 0 };

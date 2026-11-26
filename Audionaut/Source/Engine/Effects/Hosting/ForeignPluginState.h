@@ -34,6 +34,10 @@ namespace audium
  * unit's list, and a unit has none to give, so the VST3 gets its component's
  * state alone and derives the controller's from it, as the format asks of
  * it. A unit that keeps its state in another form has no chunk to hand over.
+ *
+ * That the chunk is the same in both formats is taken on trust: it holds for
+ * plugins built from one code base for both, and nothing in the bytes says
+ * so. A plugin handed a chunk that is not its own is expected to refuse it.
  */
 struct ForeignPluginState
 {
@@ -43,7 +47,7 @@ struct ForeignPluginState
         enum class Kind
         {
             own,          ///< not another format's state: the plugin reads it as it is
-            translated,   ///< another format's: `state` is the same in the wrapping this plugin reads
+            translated,   ///< another format's: `state` is its chunk in the wrapping this plugin reads
             unreadable    ///< another format's, with nothing in it this plugin could be given
         };
 
@@ -170,7 +174,8 @@ private:
 
     static Translation translationOf (std::optional<juce::MemoryBlock> translated)
     {
-        if (! translated.has_value())
+        // a plugin takes a state's size as an int
+        if (! translated.has_value() || translated->getSize() > 0x7fffffff)
             return { Translation::Kind::unreadable, {} };
         return { Translation::Kind::translated, std::move (*translated) };
     }
