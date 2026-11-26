@@ -8,11 +8,21 @@ name: Linux Release
 #
 # Can also be run manually from the Actions tab to exercise the build and the
 # packaging paths - a manual run skips the tag check and publishes nothing.
+# A manual run given a `release_tag` re-delivers the Flatpak bundle instead:
+# it builds the bundle from that tag's source with this checkout's manifest
+# and attaches it to that (existing) Release - for when the tag's own
+# Flatpak job failed and the manifest has been fixed since. The AppImage and
+# the .deb are not published by a manual run.
 
 on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Attach the Flatpak bundle to this existing Release (e.g. v1.8.0); the checked-out commit must carry that version and the tag''s submodule pins. Empty = dry run.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -124,15 +134,20 @@ jobs:
     # (the whole build happens inside the SDK), so the newer runner is safe.
     runs-on: ubuntu-24.04
 
+    env:
+      # the Release to publish to: the pushed tag, or the manual run's input;
+      # empty for a dry run
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag }}
+
     steps:
     - uses: actions/checkout@v4
 
     - name: Check tag matches .jucer version
       # Same check as the package job; jobs are independent so each guards
       # its own upload.
-      if: startsWith(github.ref, 'refs/tags/')
+      if: env.RELEASE_TAG != ''
       run: |
-        TAG_VERSION="${GITHUB_REF_NAME#v}"
+        TAG_VERSION="${RELEASE_TAG#v}"
         JUCER_VERSION=$(grep -o 'version="[0-9]\+\.[0-9]\+\.[0-9]\+"' Audionaut/Audionaut.jucer | head -1 | cut -d'"' -f2)
         echo "tag: $TAG_VERSION  .jucer: $JUCER_VERSION"
         if [ "$TAG_VERSION" != "$JUCER_VERSION" ]; then
@@ -156,10 +171,26 @@ jobs:
       run: |
         git submodule update --init Submodules/link Submodules/demucs.cpp
         REF_TYPE=branch
+        REF_NAME="$GITHUB_REF_NAME"
+        REF_COMMIT="$GITHUB_SHA"
         [ "$GITHUB_REF_TYPE" = "tag" ] && REF_TYPE=tag
+        if [ "$GITHUB_REF_TYPE" != "tag" ] && [ -n "$RELEASE_TAG" ]; then
+          # a manual run for an existing Release: the app source is the tag's,
+          # the manifest and the submodule pins are this checkout's
+          REF_TYPE=tag
+          REF_NAME="$RELEASE_TAG"
+          REF_COMMIT=$(git ls-remote origin "refs/tags/$RELEASE_TAG^{}" "refs/tags/$RELEASE_TAG" | sort -k2 -r | head -1 | cut -f1)
+          [ -n "$REF_COMMIT" ] || { echo "::error::No tag $RELEASE_TAG on origin."; exit 1; }
+          # the pins below are read from this checkout: they must be the tag's
+          git fetch --depth 1 origin "$REF_COMMIT"
+          if [ "$(git ls-tree "$REF_COMMIT" Submodules/)" != "$(git ls-tree HEAD Submodules/)" ]; then
+            echo "::error::This checkout's submodule pins differ from $RELEASE_TAG's."
+            exit 1
+          fi
+        fi
         python3 Audionaut/Builds/Flatpak/sync-pins.py \
           --url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" \
-          --ref "$GITHUB_REF_NAME" --ref-type "$REF_TYPE" --commit "$GITHUB_SHA"
+          --ref "$REF_NAME" --ref-type "$REF_TYPE" --commit "$REF_COMMIT"
 
     - name: Restore flatpak-builder cache
       # Source downloads (git mirrors, tarballs) plus ccache; cuts a full
@@ -184,17 +215,17 @@ jobs:
         ls -l *.flatpak
 
     - name: Upload to GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
+      if: env.RELEASE_TAG != ''
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         # The package job usually creates the release well before this job
         # finishes; create it here too in case this one wins the race.
-        if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-          gh release upload "$GITHUB_REF_NAME" Audionaut-*.flatpak --clobber
+        if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+          gh release upload "$RELEASE_TAG" Audionaut-*.flatpak --clobber
         else
-          gh release create "$GITHUB_REF_NAME" Audionaut-*.flatpak \
-            --title "Audionaut $GITHUB_REF_NAME" --generate-notes
+          gh release create "$RELEASE_TAG" Audionaut-*.flatpak \
+            --title "Audionaut $RELEASE_TAG" --generate-notes
         fi
 
   flatpark:

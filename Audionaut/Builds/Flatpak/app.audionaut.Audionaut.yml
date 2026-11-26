@@ -87,8 +87,10 @@ modules:
         commit: 0943a1fe7f0915866fc725ad011a71ea17583da2
         disable-submodules: true
 
+      # JUCE comes from the fork .gitmodules names: the pinned commit carries
+      # Audionaut's patches and does not exist upstream.
       - type: git
-        url: https://github.com/juce-framework/JUCE.git
+        url: https://github.com/kvoltmer/JUCE.git
         commit: 72782788ce18c2d4d760b28e0921d6ffc6431102
         dest: Submodules/JUCE
         disable-submodules: true
