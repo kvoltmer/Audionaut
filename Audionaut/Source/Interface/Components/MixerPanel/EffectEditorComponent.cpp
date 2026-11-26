@@ -314,6 +314,7 @@ void EffectEditorComponent::resized()
         auto area = juce::Rectangle<int> (grid.getX() + cell.column * cellWidth, grid.getY() + cell.row * cellHeight,
                                           cellWidth, cellHeight);
         cell.nameArea = area.removeFromTop (nameHeight);
+        area.removeFromTop (nameGap);
         auto valueArea = area.removeFromBottom (valueHeight);
         if (cell.dial != nullptr)
             cell.dial->setBounds (area);
