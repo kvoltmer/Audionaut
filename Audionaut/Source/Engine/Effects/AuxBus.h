@@ -50,7 +50,7 @@ public:
         id (id_),
         name (std::move (name_)),
         state (std::make_shared<AuxState>()),
-        inserts (planner)
+        inserts (planner, InsertChain::Place::auxBus)
     {
     }
 

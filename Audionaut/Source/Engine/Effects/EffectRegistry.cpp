@@ -48,7 +48,8 @@ void EffectRegistry::addBuiltInEffects()
     add (TrimEffect::typeInfo(), [] { return std::make_unique<TrimEffect>(); });
     add (Eq3Effect::typeInfo(), [] { return std::make_unique<Eq3Effect>(); });
     add (CompressorEffect::typeInfo(), [] { return std::make_unique<CompressorEffect>(); });
-    add (DelayEffect::typeInfo(), [] { return std::make_unique<DelayEffect>(); });
+    // the delay's note values run at the tempo of this registry's engine
+    add (DelayEffect::typeInfo(), [transport = renderTransport] { return std::make_unique<DelayEffect> (transport); });
 }
 
 std::unique_ptr<Effect> EffectRegistry::create (const std::string& typeId) const

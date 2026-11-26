@@ -34,6 +34,9 @@ struct EffectParameterInfo
     const char* group = nullptr;   ///< the section an editor shows it in ("Mid"); consecutive parameters share one
     const char* label = nullptr;   ///< its name within that section ("Freq"); the name when unset
     bool movesLatency = false;     ///< a change moves getLatencySamples(), which rebuilds the plan: an editor writes it at a drag's end only
+    bool stepped = false;          ///< whole numbers only (a mode, a note value): a dial turns in steps, the effect says what each is called
+    bool movesOthers = false;      ///< a change moves other parameters with it: an undo step for it is the effect's whole state
+    bool wetShare = false;         ///< how much of the output is the processed signal, the rest being the input: all of it (max) for an effect added to an aux bus
 };
 
 /// What an effect type is called: the id is what projects store ("builtin:eq3"), the name what menus show,
@@ -130,6 +133,14 @@ public:
         return -1;
     }
 
+    /// Message thread: whether an editor shows the parameter as the effect stands. An effect with two readings of
+    /// one dial (a time in milliseconds or in note values) shows the one its mode goes by.
+    virtual bool isParameterShown (int index) const noexcept
+    {
+        juce::ignoreUnused (index);
+        return true;
+    }
+
     /// Message thread: the value as the effect itself reads it ("-6.00 dB", "Nuke"), for editors and agents;
     /// empty when the plain number with the parameter's unit says it.
     virtual juce::String getParameterText (int index, float value) const
@@ -151,15 +162,16 @@ public:
         return isValidIndex (index) ? values[static_cast<size_t> (index)].load (std::memory_order_relaxed) : 0.0f;
     }
 
-    /// The value as setParameter() would store it: within the parameter's range, a boolean at 0 or 1.
+    /// The value as setParameter() would store it: within the parameter's range, a boolean at 0 or 1, a stepped one on a whole number.
     virtual float clampParameter (int index, float value) const noexcept
     {
         if (! isValidIndex (index))
             return 0.0f;
 
         const auto& info = parameters[static_cast<size_t> (index)];
-        return info.boolean ? (value >= 0.5f ? 1.0f : 0.0f)
-                            : juce::jlimit (info.min, info.max, value);
+        if (info.boolean)
+            return value >= 0.5f ? 1.0f : 0.0f;
+        return juce::jlimit (info.min, info.max, info.stepped ? std::round (value) : value);
     }
 
     /// Clamps to the parameter's range (a boolean to 0 or 1) and stores; the next block picks it up.

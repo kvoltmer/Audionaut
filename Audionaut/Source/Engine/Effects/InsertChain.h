@@ -43,11 +43,19 @@ class MixerPlanner;
  * A hosted plugin can move its own latency (a look-ahead switched on in its
  * own window): the chain hears of it through Effect::onLatencyChanged and
  * asks for a plan, as setParameter() does for a built-in.
+ *
+ * An aux bus's chain adds its effects fully wet: the bus is fed by sends
+ * and returns beside the channels it is fed from, so the input an effect
+ * passes on would be heard twice. add() sets a new effect's wet share
+ * (EffectParameterInfo::wetShare) to its top there; the dial stays the
+ * user's, and a chain read from JSON has the values it was written with.
  */
 class InsertChain
 {
 public:
-    explicit InsertChain (MixerPlanner* planner_ = nullptr) : planner (planner_) {}
+    enum class Place { insert, auxBus };
+
+    explicit InsertChain (MixerPlanner* planner_ = nullptr, Place place_ = Place::insert) : planner (planner_), place (place_) {}
     ~InsertChain();
 
     /// An element read from JSON that no slot could be made for, kept for the file.
@@ -72,7 +80,7 @@ public:
     /// The slot at the index, nullptr out of range.
     std::shared_ptr<EffectSlot> getSlot (int index) const noexcept;
 
-    /// Adds an effect of the type at the index (-1 = the end); nullptr for an unknown type or without a planner.
+    /// Adds an effect of the type at the index (-1 = the end), fully wet on an aux bus; nullptr for an unknown type or without a planner.
     std::shared_ptr<EffectSlot> add (const std::string& typeId, int at = -1);
 
     bool remove (int index);
@@ -114,6 +122,7 @@ private:
     void release (EffectSlot& slot);   // ... until it leaves
 
     MixerPlanner* planner = nullptr;
+    const Place place;
     std::vector<std::shared_ptr<EffectSlot>> slots;
     std::vector<Unresolved> unresolved;
 

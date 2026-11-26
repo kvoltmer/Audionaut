@@ -85,7 +85,7 @@ SCENARIO ("the effect registry creates every built-in for one and two channels",
 
                     // at the defaults every built-in is transparent to a signal
                     // below the compressor's threshold; the delay passes half
-                    // of it dry, and its first echo (350 ms) lies past these
+                    // of it dry, and its first echo (a dotted eighth, 375 ms at 120) lies past these
                     // eight blocks
                     const auto expected = type.id == "builtin:delay" ? 0.01f : 0.02f;
                     auto buffer = makeSine (numChannels, 8, 1000.0, 0.02f);
@@ -357,6 +357,7 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
     GIVEN ("a delay of 100 ms, feedback 0.5, fully wet")
     {
         DelayEffect delay;
+        delay.setParameter (DelayEffect::mode, DelayEffect::milliseconds);
         delay.setParameter (DelayEffect::timeMs, 100.0f);
         delay.setParameter (DelayEffect::feedback, 0.5f);
         delay.setParameter (DelayEffect::mix, 1.0f);
@@ -423,6 +424,138 @@ SCENARIO ("the built-ins do what their parameters say", "[engine][effects]")
             silence.clear();
             run (delay, silence);
             REQUIRE (silence.getMagnitude (0, 0, silence.getNumSamples()) == Approx (0.0f));
+        }
+    }
+
+    GIVEN ("a delay on a transport at 120, fully wet without feedback")
+    {
+        auto transport = std::make_shared<RenderTransport>();
+        const auto setTempo = [&transport] (double tempo)
+        {
+            RenderTransport::Block block;
+            block.tempo = tempo;
+            transport->publish (block);
+        };
+        setTempo (120.0);
+
+        DelayEffect delay (transport);
+        delay.setParameter (DelayEffect::feedback, 0.0f);
+        delay.setParameter (DelayEffect::mix, 1.0f);
+
+        /// Where an impulse at sample 0 comes back, in samples.
+        const auto echoAt = [&delay]
+        {
+            juce::AudioBuffer<float> buffer (1, 160 * kBlockSize);   // 40960 samples
+            buffer.clear();
+            buffer.setSample (0, 0, 1.0f);
+            run (delay, buffer);
+            auto loudest = 0;
+            for (auto i = 1; i < buffer.getNumSamples(); ++i)
+                if (std::abs (buffer.getSample (0, i)) > std::abs (buffer.getSample (0, loudest)))
+                    loudest = i;
+            REQUIRE (buffer.getSample (0, loudest) == Approx (1.0f).margin (1.0e-4f));
+            return loudest;
+        };
+
+        THEN ("it starts out as a dotted eighth, showing the note value and not the milliseconds")
+        {
+            REQUIRE (delay.getParameter (DelayEffect::mode) == static_cast<float> (DelayEffect::dotted));
+            REQUIRE (delay.getParameterText (DelayEffect::mode, delay.getParameter (DelayEffect::mode)) == "Dotted");
+            REQUIRE (delay.getParameterText (DelayEffect::division, delay.getParameter (DelayEffect::division)) == "1/8.");
+            REQUIRE (delay.isParameterShown (DelayEffect::division));
+            REQUIRE_FALSE (delay.isParameterShown (DelayEffect::timeMs));
+            REQUIRE (delay.getDelaySeconds() == Approx (0.375));
+        }
+
+        THEN ("switching the mode takes the time to the nearest note value, and back into milliseconds as it is")
+        {
+            delay.setParameter (DelayEffect::mode, DelayEffect::milliseconds);
+            REQUIRE (delay.getParameter (DelayEffect::timeMs) == Approx (375.0f));   // the dotted eighth it was
+            REQUIRE (delay.isParameterShown (DelayEffect::timeMs));
+            delay.setParameter (DelayEffect::timeMs, 500.0f);
+
+            delay.setParameter (DelayEffect::mode, DelayEffect::straight);
+            REQUIRE (delay.getParameterText (DelayEffect::division, delay.getParameter (DelayEffect::division)) == "1/4");
+            REQUIRE (delay.getDelaySeconds() == Approx (0.5));
+            REQUIRE (delay.isParameterShown (DelayEffect::division));
+            REQUIRE_FALSE (delay.isParameterShown (DelayEffect::timeMs));
+
+            delay.setParameter (DelayEffect::mode, DelayEffect::dotted);   // 375 ms is nearer to 500 than 750 is
+            REQUIRE (delay.getParameterText (DelayEffect::division, delay.getParameter (DelayEffect::division)) == "1/8.");
+            REQUIRE (delay.getDelaySeconds() == Approx (0.375));
+
+            delay.setParameter (DelayEffect::mode, DelayEffect::triplets);
+            REQUIRE (delay.getParameterText (DelayEffect::division, delay.getParameter (DelayEffect::division)) == "1/4T");
+            REQUIRE (delay.getDelaySeconds() == Approx (1.0 / 3.0));
+
+            delay.setParameter (DelayEffect::mode, DelayEffect::milliseconds);
+            REQUIRE (delay.getParameter (DelayEffect::timeMs) == Approx (333.333f).margin (0.01f));
+            REQUIRE (delay.getDelaySeconds() == Approx (1.0 / 3.0));
+        }
+
+        THEN ("a time between two note values goes to the nearer one by ratio")
+        {
+            delay.setParameter (DelayEffect::mode, DelayEffect::milliseconds);
+            delay.setParameter (DelayEffect::timeMs, 350.0f);   // 250 is 1.4 away, 500 is 1.43
+            delay.setParameter (DelayEffect::mode, DelayEffect::straight);
+            REQUIRE (delay.getDelaySeconds() == Approx (0.25));
+        }
+
+        THEN ("a state read back is stored as it is: the mode in it does not move the time")
+        {
+            delay.setParameter (DelayEffect::timeMs, 123.0f);   // not the reading in use, kept all the same
+            delay.setParameter (DelayEffect::division, 5.0f);
+            const auto inNotes = delay.getState();
+            REQUIRE (inNotes["time_ms"].get<float>() == Approx (123.0f));
+
+            delay.setParameter (DelayEffect::mode, DelayEffect::milliseconds);   // the dotted whole note's 3 s, held at the dial's end
+            REQUIRE (delay.getParameter (DelayEffect::timeMs) == Approx (2000.0f));
+
+            delay.setState (inNotes);
+            REQUIRE (delay.getState() == inNotes);
+        }
+
+        THEN ("a note value is a whole step, and typed text is read as the note")
+        {
+            delay.setParameter (DelayEffect::mode, DelayEffect::straight);
+            delay.setParameter (DelayEffect::division, 1.6f);
+            REQUIRE (delay.getParameter (DelayEffect::division) == 2.0f);
+
+            auto value = -1.0f;
+            REQUIRE (delay.parseParameterText (DelayEffect::division, "1/16", value));
+            REQUIRE (value == 1.0f);
+            REQUIRE (delay.parseParameterText (DelayEffect::division, "1/2T", value));
+            REQUIRE (value == 4.0f);
+            REQUIRE (delay.parseParameterText (DelayEffect::division, "1/8.", value));
+            REQUIRE (value == 2.0f);
+            REQUIRE_FALSE (delay.parseParameterText (DelayEffect::division, "1/3", value));
+            REQUIRE (delay.parseParameterText (DelayEffect::mode, "trip", value));
+            REQUIRE (value == static_cast<float> (DelayEffect::triplets));
+        }
+
+        THEN ("an eighth note comes back after 250 ms at 120 and after 500 ms at 60")
+        {
+            delay.setParameter (DelayEffect::mode, DelayEffect::straight);
+            delay.setParameter (DelayEffect::division, 2.0f);
+            delay.prepare (kSampleRate, kBlockSize, 1);
+            REQUIRE (echoAt() == 12000);
+
+            setTempo (60.0);
+            REQUIRE (delay.getTailSeconds() == Approx (0.5));
+            juce::AudioBuffer<float> glide (1, 16 * kBlockSize);   // past the 50 ms the time takes to get there
+            glide.clear();
+            run (delay, glide);
+            delay.reset();
+            REQUIRE (echoAt() == 24000);
+        }
+
+        THEN ("a note value longer than the buffer is halved until it fits")
+        {
+            delay.setParameter (DelayEffect::mode, DelayEffect::dotted);
+            delay.setParameter (DelayEffect::division, 5.0f);
+            REQUIRE (delay.getDelaySeconds() == Approx (3.0));   // a dotted whole note at 120
+            setTempo (30.0);
+            REQUIRE (delay.getDelaySeconds() == Approx (3.0));   // 12 seconds, halved twice
         }
     }
 

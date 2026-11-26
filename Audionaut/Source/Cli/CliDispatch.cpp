@@ -292,8 +292,9 @@ const std::vector<CliCommandSpec>& getCliCommands()
           "Inserts an effect of type T (an id from list-effects, e.g. builtin:eq3) at the end of a "
           "chain, or at position I with --at. --track N is the track's chain (it processes all the "
           "track's channels together, before their faders), --aux A an aux bus's chain, --master "
-          "the main mix's chain before master gain. Parameters start at their defaults: set them "
-          "with set-insert. Playback and export both run the inserts.",
+          "the main mix's chain before master gain. Parameters start at their defaults - on an aux "
+          "bus a dry/wet mix (the delay's) at fully wet instead, the return carrying no dry signal: "
+          "set them with set-insert. Playback and export both run the inserts.",
           runAddInsert },
 
         { "remove-insert",

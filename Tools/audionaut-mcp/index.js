@@ -897,7 +897,10 @@ server.registerTool(
     description:
       "The effect types add_insert can create: the built-ins (builtin:trim, builtin:eq3, " +
       "builtin:compressor, builtin:delay; category Utility, EQ, Dynamics, Delay) with their parameters " +
-      "(id, name, unit, range, default, default_text, values in their units), and the plugins installed " +
+      "(id, name, unit, range, default, default_text, values in their units; a stepped parameter takes " +
+      "whole numbers and lists what each is called in steps, lowest first - builtin:delay's mode is " +
+      "0 Dotted, 1 Straight, 2 Triplets, 3 ms, and its time is time_division (0 = 1/32 to 5 = 1/1, at the " +
+      "project's tempo) in the first three and time_ms in the last), and the plugins installed " +
       "on this machine (type ids au:, vst3:, lv2:; category = manufacturer) with format, manufacturer " +
       "and file but no parameters, since listing them would load every plugin. Pass type to get one " +
       "type with its parameters; a plugin's are normalised 0 to 1 and come with the plugin's own " +
@@ -917,7 +920,8 @@ server.registerTool(
       "Inserts an effect (a type id from list_effects: a built-in like builtin:eq3, or a plugin like " +
       "au:1a2b3c4d) into a chain: a track's (track; it processes all the track's channels together), an aux " +
       "bus's (aux) or the master's (master). Appends by default, or at position at. Parameters start at " +
-      "their defaults: set them with set_insert. Playback and export_audio both run the inserts; " +
+      "their defaults - on an aux bus a dry/wet mix (builtin:delay's mix) at fully wet instead, as the return " +
+      "carries no dry signal: set them with set_insert. Playback and export_audio both run the inserts; " +
       "get_project_info lists them (a plugin with its plugin block and loaded state, no parameter values).",
     inputSchema: {
       project: projectParam,

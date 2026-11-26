@@ -1770,6 +1770,16 @@ SCENARIO ("cli insert effects", "[cli][effects][inserts]")
         REQUIRE (effects[0]["category"] == "Utility");
         REQUIRE (effects[0]["parameters"][0]["id"] == "gain_db");
         REQUIRE (effects[0]["parameters"][0]["min"].get<double>() == Catch::Approx (-24.0));
+        REQUIRE (effects[0]["parameters"][0]["stepped"] == false);
+
+        // a stepped parameter says what its values are called
+        REQUIRE (effects[3]["type"] == "builtin:delay");
+        const auto mode = effects[3]["parameters"][2];
+        REQUIRE (mode["id"] == "mode");
+        REQUIRE (mode["stepped"] == true);
+        REQUIRE (mode["steps"] == nlohmann::json::array ({ "Dotted", "Straight", "Triplets", "ms" }));
+        REQUIRE (mode["default_text"] == "Dotted");
+        REQUIRE (effects[3]["parameters"][1]["default_text"] == "1/8.");
     }
 
     GIVEN ("a project whose track 1 is a mono stem holding a 0 dB sine")

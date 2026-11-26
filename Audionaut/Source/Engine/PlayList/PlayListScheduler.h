@@ -177,6 +177,15 @@ public:
                       std::function<void ()> callback);
     
     std::shared_ptr<audium::LinkEngine> getLinkEngine() const { return linkEngine; }
+
+    /// Message thread: tells the effects the tempo as it is now, without waiting for a render to
+    /// publish it (see RenderTransport::publishTempo). Called where a project's tempo is read.
+    void publishTempo() noexcept
+    {
+        if (renderTransport != nullptr)
+            renderTransport->publishTempo(tempoProvider->getTempo());
+    }
+
     std::shared_ptr<TempoProvider> getTempoProvider() const { return tempoProvider; }
     std::shared_ptr<Playback> getPlayback() const { return playback; }
     const std::shared_ptr<AudioBusInterface>& getAudioBusInterface() const noexcept { return audioBusInterface; }   ///< by reference: read on the audio thread too

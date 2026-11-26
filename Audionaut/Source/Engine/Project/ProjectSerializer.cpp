@@ -78,6 +78,7 @@ bool ProjectSerializer::readFromJson (json& input, bool rebuild)
 
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
+    playListScheduler->publishTempo();   // the effects go by it before the first block is rendered
 
     // Bypass the audio callback for the duration of the destructive rebuild,
     // and never leave it bypassed when the read throws.
@@ -120,6 +121,7 @@ bool ProjectSerializer::applyProjectJson (json& input, bool preserveUiState)
 
     if (!linkAudioDevice->getLinkEngine()->isEnabled()) // don't interfere with running sessions
         playListScheduler->getTempoProvider()->setTempo(tempo);
+    playListScheduler->publishTempo();   // the effects go by it before the first block is rendered
 
     // Non-destructive read; AudioTrackContainer falls back to a full rebuild
     // when the structure differs. Bypass the audio callback for the duration -
