@@ -90,10 +90,32 @@ played. The whole chain is heard the same in playback and export.
 - **Trim**: gain in dB.
 - **EQ**: low and high shelves, a mid band, and a high-pass filter that can
   be switched in.
-- **Compressor**: threshold, ratio, attack, release, look-ahead and make-up
-  gain, with a gain-reduction meter in its editor. On a stereo track both
-  channels are reduced alike.
-- **Delay**: a feedback delay with time, feedback and mix.
+- **Compressor**: threshold, ratio, knee, attack, release, look-ahead and
+  make-up gain, with a gain-reduction meter in its editor. On a stereo
+  track both channels are reduced alike.
+    - **Knee** rounds the corner at the threshold over up to 12 dB; at 0 the
+      ratio sets in at once.
+    - **RMS**, on to begin with, reads the level as an average over 10 ms,
+      which suits most material. Switch it off for a peak reading, which is
+      what a very short attack and the look-ahead need to catch a transient.
+    - **SC high-pass** takes the lows out of what the compressor listens to
+      (not out of the sound) below **SC freq**, 20 to 500 Hz, so a bass drum
+      or a bass note does not pump the whole track.
+    - Attack and release are time constants: after the release time about
+      two thirds of the reduction is gone, however deep it was.
+- **Delay**: a feedback delay with time, feedback and mix. **Mode** chooses
+  how the time is set:
+    - **ms**: a time from 1 to 2000 milliseconds.
+    - **Straight**, **Dotted** and **Triplets**: a note value from 1/32 to
+      1/1 at the project's tempo - the note's length, half as long again, or
+      two thirds of it. The delay follows the tempo when it changes. A note
+      value that would be longer than four seconds at a slow tempo is halved
+      until it fits, so the echoes stay in time.
+
+    Switching the mode keeps the time as near as the new mode allows. A
+    delay added to an aux bus starts with **Mix** at fully wet: the bus
+    returns beside the channels that feed it, so the dry signal is in the
+    mix already. On a track or the Main bus it starts half and half.
 
 ### Effect editors
 
@@ -190,10 +212,18 @@ be checked. Such a plugin is offered as an insert like any other. The
 first time you use one that runs inside Audionaut, it is checked in a
 separate process just before it loads: the slot passes the signal through
 for that moment, and a plugin that crashes or does not load there is
-marked **Skipped** instead of taking Audionaut down. On Windows and Linux the list is empty
-until you scan.
+marked **Skipped** instead of taking Audionaut down. On Windows and Linux
+the list holds what the scans found.
 
-Nothing is scanned unless you click **Scan** under the list. A scan looks
+On Windows and Linux Audionaut scans once by itself, at its first launch: a
+dialog over the main window shows the progress and the plugin at hand, and
+the window waits until the scan is over or you click **Cancel**. That scan
+is not repeated, whether it finished or not, and it does not run while
+plugins are turned off or when an earlier version of Audionaut has scanned
+already. What it skipped is not announced; the list shows it.
+
+After that, and on macOS always, nothing is scanned unless you click
+**Scan** under the list. A scan looks
 through the platform's plugin folders and loads every plugin once; click it
 again after installing a plugin. While it runs, a progress bar under the
 list shows how far it is and which plugin is being examined, and **Cancel**
