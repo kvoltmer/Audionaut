@@ -1,0 +1,95 @@
+{
+  "audium": {
+    "audio_tracks": [
+      {
+        "channels": [
+          {
+            "gain": 1.0,
+            "height": 100,
+            "input_channel": -1,
+            "monitor": false,
+            "mute": false,
+            "output_channel": -1,
+            "pan": 0.0,
+            "record": false,
+            "solo": false
+          },
+          {
+            "gain": 1.0,
+            "height": 100,
+            "input_channel": -1,
+            "monitor": false,
+            "mute": false,
+            "output_channel": -1,
+            "pan": 0.0,
+            "record": false,
+            "solo": false
+          }
+        ],
+        "colour": "ff70d6ff",
+        "name": "Track 1",
+        "visible_analysis": []
+      }
+    ],
+    "aux_buses": [
+      {
+        "gain": 1.0,
+        "id": 1,
+        "mute": false,
+        "name": "Aux 1",
+        "pan": 0.0,
+        "solo": false
+      },
+      {
+        "gain": 1.0,
+        "id": 2,
+        "mute": false,
+        "name": "Aux 2",
+        "pan": 0.0,
+        "solo": false
+      }
+    ],
+    "aux_buses_next_id": 3,
+    "file_version": 1,
+    "loop_data": {
+      "loopActive": false,
+      "loopEndPositionClocks": 864.0,
+      "loopStartPositionClocks": 96.0
+    },
+    "master_gain": 1.0,
+    "master_inserts": [
+      {
+        "editor": {
+          "open": true
+        },
+        "enabled": true,
+        "plugin": {
+          "file": "C:\\Program Files\\Common Files\\VST3\\Solid Dynamics.vst3",
+          "format": "VST3",
+          "manufacturer": "Native Instruments",
+          "name": "Solid Dynamics",
+          "version": "1.4.11 (R34)"
+        },
+        "state": {
+          "blob": "5038.VMjLgT5D...O+fWarAhckI2bo8la8HRLt.iHfTlai8FYo41Y8HRUTYTK3HxO9.BOVMEUy.Ea0cVZtMEcgQWY9vSRC8Vav8lak4Fc9LiM1XiKx.kTZ4TQt3hKtXlKt3hKtPmYt3hKt3hKt3BTt3hKt3haMckVzUjKt3hKt3hKt3hK4MCUIgWUtY1RUUUb0LVQwT2UIYlaYkjKt3hKt3hKt3BQMUkTNk0Qt3hKP4hKt3hKHEjKt3hKt3hKt3RTSslZSAWPt3hKD4hKt3hKF4hKt3hKt3hKt.kdTkDMT4hKt3hKA4hKt3BQt3hKt.kKt3hKtDjKt3hKD4hKt3hKt3hKt3hKt3hKt3hKt3hKPMDZUY0YA4hKt3xLtHFTt3hKt3hKtDjKt3hKD4hKt3hKt3hKt3hKt3hKt3hKt3hK14hKt3hK14hKL4hKC4hKt3hKt3hKt3hKt3hKt3hKt3hKt3BQt3hKt.kKt3hKt3hKt3hKPoGUIQCUY4hKt3hXi4hKt3hKt3hKP4hKt3hKt0zUZQWQt3hKt3hKt3hKtPlTqrxMScCNJMVMlQGRtk0U4ElYqwlQt3hKt3hKt3hKD0TUR4TUF4hKt.kKt3hKtnmKt3hKt3hKt3hKQM0ZpMEbA4hKtPjKt3hKtXjKt3hKt3hKt3BT5QURzPkKt3hKtDjKt3hKD4hKt3BTt3hKt3hPt3hKtPjKt3hKt3hTt3hKtPjKt3hKtHjKt3hK24hYK4BTC4Bct.EStPzPtPmKtvjKD4hKt3hct3hKt3hKt3hKt.kdTkDMDElKt3hKDYjKt3hKt3hKt.kKt3hKt3VSWoEcE4hKt3hKt3hKt3BSrQlVNICZPYzcRc1avsBZ4HUbyDUTU4hKt3hKt3hKtPTSUIkS2YjKt3BTt3hKt3BVt3hKt3hKt3hKtD0Tqo1TA4hKt3BQt3hKt.kKt3hKtDjKt3hKH4hKt3BTt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKtrxJqrxJqrxJqrxSt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3BQt3hKt3hKt3hKt3hKt3hKt3hKt3hcA4hKt3xQt3hKtXWQt3RP1gkK2XjKxEjcg4BRG4RPt3hKt3xPtDkKt3hK1UjKtDjKY4BUF4RLAAkVtvjQtrVPtLlKpcjK1EDTY4BVF4hbAAEVtHlQtjWPP4hKt3hK14hcB4hKt3hXA4BTtvzQtTWPPMlKyXjKpEjKi4hZG4hcAAUVtPjKt3hKtvjKh4hKt3hKW4hKD4hdAAUVtnmQtXWP1ElKD4hKt3hKL4BVt3hKt3xUt3BQtDSPPkkKHcjKxEjYA4hKt3xctX1RtH1PtPmKPwjKPMjKF4hKt3hcE4hKAY1XtPkQtfWPPElKX4hKt3BTL4xLB4hLtX1RtPzPtnmK1EjKt3hKhEjKP4BVG4xaAYmXtnlQtfVPP4hKt3hK14BTt3hKt3hKt3hKtfjKt3hKtD0Tqo1TzDjKt3BVw3hKt3hKt3hKtDjKt3hKlEiXuQiUt3hKt3hKt3hKtfjKC8VQgIkZBoWMqHjXM4lVqrVaxQWSC4hKt3hKt3hKPoGUIQCUj4hKt3RPt3hKtXVPt3hKt3hKt3hKD0TUR4TQt3hKt.kKt3hKtDjKt3hKD4hKt3BTt3hKt3xPt3hKtPjKt3hKtHjKt3hKJ4hKt3BSD4RcAAUXt3xQtfWPPkkKLcjK4Ejcg4BRG4RPt3hKtnlKt3hK1IkKyXjKqEDTY4hKB4BUAAEYt3xQtrVPt3hKt3hKt3hKlshKt3hKt.kKt3hKtDjKt3hKp4hKt3hKU4hYF4BdAAUVtvzQt3VP1ElK1YjKpEjKt3hKt3hKt3hYqPjKt3hKl4hKt3hKA4hKt3BUt3hKtXFUtPjQtnWPPokK2XjKt3hKt3hKt3hK4jlKt3hKtLjKt3hKD4hKt3hKB4hKt3RPA4xXtHmQtXlKPMkK2XjKpEDTY4hKt3hKt3hKt3xLOMjKt3hKP4hKt3BTt3hKt3xQt3hKtfTQtrVPtDlKTYjKmEjch4BUF4hKt3hKt3hKt3RNCEjKt3hKE4hKt3BQt3hKt3hPt3hKtHUPPkkK1YjKz4BTS4xMF4hZAAUVt3hKt3hKt3hKtLySE4hKt3BVt3hKt.kKt3hKtXjKt3hK2PjKvDjKi4hKG4BLA4xXt3hKt3hKt3hKtLySF4hKt3hXt3hKt.kKt3hKtLjKt3hKPQjK3EDTj4hKt3hKt3hKt3xLOcjKt3hKl4hKt3BTt3hKt3BRt3hKtnmKt3hK1EkKDYjK5EDTY4xMB4RQA4BYt3xQtbVPlElKPYjKqEjYh4BQt3hKt3hPt3hKtvTPPokKyXjKwEjKH4hcD4RctXFUt3hKt3hKt3hKtLySH4hKt3BQt3hKt.kKt3hKtTjKt3hKHQjK0Ejcg4BSG4hdA4hKt3hKt3hKtX1Jp4hKt3hYt3hKt3RPt3hKtPjKt3hKPsjKt3hKt3hKt3hKy7jRt3hKtvjKt3hKP4hKt3hKD4hKt3hdD4RcA4RVtPkQt3hKt3hKt3hKtjSdB4hKt3BQt3hKtPjKt3hKPIjKt3hKTEjKZ4BRG4xZAYmXtXlQtTWPtDlKPYjKt3hKt3hKt3hK4LzPt3hKtTjKt3hKD4hKt3BTA4hKt3hTAAEVtLiQtzVPPkkKt3hKt3hKt3hKy7TSt3hKtfkKt3hKP4hKt3hKH4hKt3BQD4hdAYmVt3hPtzTP1ElKPYjKqEjKt3hKt3hKt3hYqLiKt3hK1EjKt3hKA4hKt3hXt3hKtXFUtPkQtHWPPkkKDYjK4EDTY4hKt3hKt3hKt3xLO8jKt3hKl4hKt3BTt3hKt3hPt3hKt3lKt3hK1QkKpYjKpEDTY4hdB4xPA4hVtPjQt7VPlElKD4hKt3hcA4hKt3xTAYGTt3hPtzTP1ElKPYjKqEjKt3hKt3hKt3hYq3RPt3hKP4hKt3hKA4hKt3hXt3hKtXGUtvDQtXlK1EkKDYjKuEjYg4hKt3hKt3hKt3xLOEkKt3hKH4hKt3BTt3hKt3hKt3hKtPjKt3hKtD0Tqo1T5EjKt3BUg4hKt3hKt3hKtDjKt3hKlEiXuQiUt3hKt3hKt3hKtfjclAGZGcUQJoWRUYzTRcmKWYEYpM0YA4hKt3hKt3hKPoGUIQCQi4hKt3RPt3hKtXmUt3hKt3hKt3hKD0TUR4TSG4hKt.kKt3hKtfkKt3hKt3hKt3hKQM0ZpMUPt3hKtPjKt3hKP4hKt3hKA4hKt3BQlMSPt3hK4QjKt3BRlMSPt3BVt3BTtXFU14haMckVzEjdA4RPtPTcx.SVDMiKIIDL281RzjUVQM2L2TDZAAEUtHjKCAkdTkDMDAUZtjSPC4BQt3xbA4xbAIjPtLCRPIlKB4hKY4xLCwTQDMGdrsDTCYmVK8FbqUWcpY2ZqPVVOUSQPYlKB4hKkMDTN4RNE0VP5gjKXEDTD4hPtXlVl4hKt.UQlwjKtHjK34hPLQjK24hTA4Rct3RdtHkPtTmKtfmKRIjK04hK54hTBEjKy7jK4HUPw3hYrwlLs8jKzAkKv3hKP4hK14hYP4hKWEDdQUDVC4BaYwVUq3BUC4BTDgTStPlKg4hKSYldt.UPAgkRtnFQH0jKyXkKsIjKz3hUnIjXD4hLtHERtXzQtbTP3QjP2bDSHEjUhIjXD4xLtHUQt3BRXcUP1EkYxklK14hKtX1RPMjYvrDVg4hcTYlbtX1JF4RPt3BUC4BSDgzaAYWTlolKlMlK5QiKhMDV2EjdP4hYCgUZtXVUlcCZtHTPtPkYHIDRtHGTCgVUVcVPt3hKt3hKt3hKP4hKt3hKtPjKt3hKt3hKt3hKC4hKt3hKt3hKt3hKD4hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKtPDTB4hKt3xRAAkVtvjQtDWPtfjKhQjKmEjKi4BUF4RTA4hKtvDQtTiKtbkKtTjK3Ejcg4hXF4BdAAEVtnmQtXlKlEkKpYjKxEDTY4BSG4hXAYGTtbiQtLWPPElK2XjKzEjKH4BVD4xaA4RXtPkQtjWPtbkKyPjKmEjKi4hZF4RLAAUVt3hPtjTPlElKLcjK5EjYh4BUG4xbAAUVtLiQtnWP1IlK1UjKSEjcg4hcF4xaA4RVt3hPtPTPPQlKyXjKmEDTg4hZF4RZAYmXt3hPtXTPtXkK1UjKKEDTZ4BSF4RbA4BRtHFQtbVPtLlKTYjKz4hYg4hZF4BaA4BYtLSR3rRdOcmLwo2aCUCZlw1XMUWPVAmKt3hKtDjKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3xMqrxJqrxJqrxJq3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKt3hKP4hKt3hKt3hKt3hKt3hKt3hKt3hKtbjKt3hKh4hKt3hKW4hKD4RZAYWXtXmQtTWPlIlKD4hKt3hKL4BQA4hKt3xUt3BQtnVPPkkKXcjKuEjcX4BUF4hdAAEYt3xQtrVPlkkK1YjKmEjcY4BSG4RPt3hKt3xPtrjKt3hK1UjKtDjch4xMF4BLAYVXt.kQtnWPPQlKtbjKqEDTt3hKt3hctXWPt3hKtHVPt.kKPcjKqEDTg4hKG4RcAAkKt3hKtXmKlEjKt3hKhEjKP4BVG4xZAYlXtXmQtXjKt3hKDMjKz4hcM4xLB4xct3RStfkKt3hKtbkKtPjKwDDTY4BRG4xbAYVPt3hKtbmKlsjKhMjKz4BTL4BTC4xQt3hKtXWQt3RPlMlKpYjK4EDTZ4BRF4RPt3hKt3xPt3hat3hKt.kPt3hKtrTPPokKLYjKwEjKH4hXD4xYA4xXtPkQtvyKIMzasA2atUlaz4COIUDYoQ2Pu4Fcx8FarUlb9.iK77RREQVZzMzatQmbuwFakImO77hUSQ0LPwVcmklaSQWXzUlO.."
+        },
+        "type": "vst3:1a99042f"
+      }
+    ],
+    "master_mute": false,
+    "master_pan": 0.0,
+    "scheduler": {
+      "followTransport": true,
+      "startPositionClocks": 1090.6420118040517,
+      "transportPositionClocks": 10415.566464
+    },
+    "tempo": 132.0,
+    "ui_state": {
+      "arrangement": {
+        "scroll_x": 0.0,
+        "scroll_y": 0.0,
+        "zoom_factor": 1.0
+      }
+    }
+  }
+}
