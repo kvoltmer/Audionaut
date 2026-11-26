@@ -9,6 +9,7 @@
 #include <cmath>
 #include <vector>
 
+#include "Biquad.h"
 #include "Engine/Effects/Effect.h"
 
 namespace audium
@@ -28,18 +29,23 @@ namespace audium
  * reduction is gone, however deep it was, and it fades out rather than
  * stopping where a level crosses the threshold.
  *
- * The level is the signal's mean square over some 10 ms, scaled so that a
+ * The level is each channel's mean square over some 10 ms, scaled so that a
  * sine reads its peak, or with RMS off the sample's own magnitude. The mean
  * square keeps the gain from riding the single waves of a low note, which is
- * heard as distortion; the peak reading answers a transient at once, which
- * is what a look-ahead wants.
+ * heard as distortion; it also takes those 10 ms to rise, so an attack
+ * shorter than that is not heard as one. The peak reading answers a
+ * transient at once, which is what a short attack and a look-ahead want.
  *
- * The side chain's high-pass (12 dB per octave) is in the detector's path
- * only, never in the audio: it keeps a kick or a bass from turning the whole
- * signal down. At the bottom of its range it is off.
+ * The side chain's high-pass (12 dB per octave, switched on by its own
+ * parameter) is in the detector's path only, never in the audio: it keeps a
+ * kick or a bass from turning the whole signal down.
  *
- * The channels are linked: one detector follows the loudest channel and
- * every channel gets its gain, so a hit on one side turns both down and the
+ * A sample that is not a number, or beyond any level a signal has, reads as
+ * the detector's ceiling: it turns the gain down like any loud sample and
+ * leaves nothing behind in the detector's state.
+ *
+ * The channels are linked: each has its own level, the loudest of them goes
+ * through the curve and every channel gets that gain, so a hit on one side turns both down and the
  * stereo image stays put. The reduction reported is the compressor's alone,
  * before the make-up gain.
  *
@@ -56,16 +62,17 @@ namespace audium
 class CompressorEffect final : public Effect
 {
 public:
-    enum Parameter { thresholdDb = 0, ratio, kneeDb, attackMs, releaseMs, rms, sidechainHz, lookaheadMs, makeupDb };
+    enum Parameter { thresholdDb = 0, ratio, kneeDb, attackMs, releaseMs, rms, sidechainOn, sidechainHz, lookaheadMs, makeupDb };
 
-    static constexpr std::array<EffectParameterInfo, 9> parameterInfos {{
+    static constexpr std::array<EffectParameterInfo, 10> parameterInfos {{
         { "threshold_db", "Threshold",  "dB", -60.0f,    0.0f,  -18.0f },
         { "ratio",        "Ratio",      ":1",   1.0f,   20.0f,    4.0f },
         { "knee_db",      "Knee",       "dB",   0.0f,   12.0f,    6.0f },
         { "attack_ms",    "Attack",     "ms",   0.1f,  200.0f,   10.0f },
         { "release_ms",   "Release",    "ms",   5.0f, 2000.0f,  100.0f },
         { "rms",          "RMS",        "",     0.0f,    1.0f,    1.0f, true },
-        { "sidechain_hz", "SC high-pass", "Hz", 20.0f,  500.0f,   20.0f },   // off at 20 Hz
+        { "sidechain_on", "SC high-pass", "",   0.0f,    1.0f,    0.0f, true },
+        { "sidechain_hz", "SC freq",    "Hz",  20.0f,  500.0f,  100.0f },
         { "lookahead_ms", "Look-ahead", "ms",   0.0f,   20.0f,    0.0f, false, nullptr, nullptr, true },   // moves the latency
         { "makeup_db",    "Make-up",    "dB",   0.0f,   24.0f,    0.0f },
     }};
@@ -81,7 +88,8 @@ public:
         makeup.setRampDurationSeconds (0.01);
         makeup.prepare (spec);
         meanSquareCoefficient = coefficientFor (meanSquareMs);
-        sidechainStates.assign (static_cast<size_t> (numChannels), {});
+        sidechain.states.assign (static_cast<size_t> (numChannels), {});
+        meanSquares.assign (static_cast<size_t> (numChannels), 0.0f);
 
         // one line per channel, a power of two long enough for the longest look-ahead
         maxLookaheadSamples = lookaheadSamplesFor (parameterInfos[lookaheadMs].max);
@@ -99,7 +107,8 @@ public:
     void release() override
     {
         lines.clear();
-        sidechainStates.clear();
+        sidechain.states.clear();
+        meanSquares.clear();
         mask = 0;
         maxLookaheadSamples = 0;
     }
@@ -107,8 +116,8 @@ public:
     void reset() noexcept override
     {
         reductionDb = 0.0f;
-        meanSquare = 0.0f;
-        std::fill (sidechainStates.begin(), sidechainStates.end(), SidechainState {});
+        std::fill (meanSquares.begin(), meanSquares.end(), 0.0f);
+        sidechain.clearState();
         makeup.reset();
         for (auto& line : lines)
             std::fill (line.begin(), line.end(), 0.0f);
@@ -130,20 +139,22 @@ public:
         for (auto i = 0; i < numSamples; ++i)
         {
             // linked: the loudest channel, as the side chain hears it, drives the one gain all of them get
-            auto loudest = 0.0f;
+            auto power = 0.0f;
             for (size_t channel = 0; channel < numChannels; ++channel)
             {
-                auto sample = block.getSample (static_cast<int> (channel), i);
-                if (sidechainFiltered)
-                    sample = highPass (sidechainStates[channel], sample);
-                loudest = std::max (loudest, std::abs (sample));
-            }
+                // written so that a sample that is not a number fails the test too
+                auto sample = static_cast<double> (block.getSample (static_cast<int> (channel), i));
+                if (! (std::abs (sample) <= detectorCeiling))
+                    sample = detectorCeiling;
+                if (sidechain.active)
+                    sample = sidechain.process (sidechain.states[channel], sample);
 
-            // the level as a power: the sample's own, or twice the mean square, where a sine reads its peak
-            auto power = loudest * loudest;
-            meanSquare = power + meanSquareCoefficient * (meanSquare - power);
-            if (rmsDetection)
-                power = 2.0f * meanSquare;
+                // the channel's level as a power: the sample's own, or twice the mean square, where a sine reads its peak
+                const auto own = static_cast<float> (sample * sample);
+                auto& meanSquare = meanSquares[channel];
+                meanSquare = own + meanSquareCoefficient * (meanSquare - own);
+                power = std::max (power, rmsDetection ? 2.0f * meanSquare : own);
+            }
 
             // the static curve: what reduction this level asks for
             auto wantedDb = 0.0f;
@@ -195,18 +206,8 @@ public:
 
 private:
     static constexpr float meanSquareMs = 10.0f;                  ///< the time constant of the RMS reading
+    static constexpr double detectorCeiling = 1.0e4;              ///< 80 dB over full scale: what the detector reads at most
     static constexpr float decibelsToLog = -0.11512925464970229f;   ///< -ln (10) / 20: exp (dB * this) is the gain of a reduction
-
-    /// The side chain's high-pass, per channel: a biquad in transposed direct form II.
-    struct SidechainState { float z1 = 0.0f, z2 = 0.0f; };
-
-    float highPass (SidechainState& state, float in) const noexcept
-    {
-        const auto out = b0 * in + state.z1;
-        state.z1 = b1 * in - a1 * out + state.z2;
-        state.z2 = b0 * in - a2 * out;   // a high-pass: b2 == b0
-        return out;
-    }
 
     int lookaheadSamplesFor (float ms) const noexcept
     {
@@ -230,22 +231,15 @@ private:
         rmsDetection = getParameter (rms) >= 0.5f;
         makeup.setGainDecibels (getParameter (makeupDb));
 
-        // at the bottom of its range the high-pass is out of the side chain
-        const auto hz = getParameter (sidechainHz);
-        const auto filtered = hz > parameterInfos[sidechainHz].min;
-        if (filtered && ! sidechainFiltered)
-            std::fill (sidechainStates.begin(), sidechainStates.end(), SidechainState {});   // back in: from rest
-        sidechainFiltered = filtered;
-        if (filtered)
+        // the high-pass comes back into the side chain from rest, not with the state it was switched off with
+        const auto wasFiltered = sidechain.active;
+        sidechain.active = false;
+        if (getParameter (sidechainOn) >= 0.5f)
         {
-            const auto w0 = juce::MathConstants<double>::twoPi * std::min (static_cast<double> (hz), 0.45 * sampleRate) / sampleRate;
-            const auto cosine = std::cos (w0);
-            const auto alpha = std::sin (w0) / juce::MathConstants<double>::sqrt2;   // Q of 0.7071
-            const auto a0 = 1.0 + alpha;
-            b0 = static_cast<float> (0.5 * (1.0 + cosine) / a0);
-            b1 = static_cast<float> (-(1.0 + cosine) / a0);
-            a1 = static_cast<float> (-2.0 * cosine / a0);
-            a2 = static_cast<float> ((1.0 - alpha) / a0);
+            const auto hz = std::min (static_cast<double> (getParameter (sidechainHz)), 0.45 * sampleRate);
+            sidechain.set (juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass (sampleRate, hz));
+            if (! wasFiltered)
+                sidechain.clearState();
         }
     }
 
@@ -258,13 +252,11 @@ private:
     float slope = 0.0f;             ///< dB of reduction per dB over the threshold
     float attackCoefficient = 0.0f, releaseCoefficient = 0.0f, meanSquareCoefficient = 0.0f;
     bool rmsDetection = true;
-    bool sidechainFiltered = false;
-    float b0 = 1.0f, b1 = 0.0f, a1 = 0.0f, a2 = 0.0f;
 
     // render thread, the detector's state
     float reductionDb = 0.0f;       ///< the smoothed reduction, >= 0
-    float meanSquare = 0.0f;
-    std::vector<SidechainState> sidechainStates;
+    std::vector<float> meanSquares;   ///< one per channel
+    Biquad<double> sidechain;         ///< the side chain's high-pass: in double, its corner is far under the sample rate
 
     int lookaheadSamples = 0;                                               // from prepare(): the latency the plan compensates
     int maxLookaheadSamples = 0;
