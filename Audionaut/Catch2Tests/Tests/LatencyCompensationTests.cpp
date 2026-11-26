@@ -806,6 +806,7 @@ SCENARIO ("a project bounce runs on for the chains' ring-out", "[engine][effects
         Session session;
         auto slot = session.tracks().getMasterInserts().add (DelayEffect::typeInfo().id);
         REQUIRE (slot != nullptr);
+        slot->getEffect().setParameter (DelayEffect::mode, DelayEffect::milliseconds);
         slot->getEffect().setParameter (DelayEffect::timeMs, 100.0f);
         slot->getEffect().setParameter (DelayEffect::feedback, 0.0f);
         slot->getEffect().setParameter (DelayEffect::mix, 1.0f);

@@ -34,7 +34,12 @@
  * step from the value before the drag to the value after; a typed or
  * double-clicked value is one step by itself. A parameter that moves the
  * effect's latency (the compressor's look-ahead) is written at the drag's
- * end only, as every value would rebuild the plan around the slot. The
+ * end only, as every value would rebuild the plan around the slot. One
+ * that moves other parameters with it (the delay's mode) records the
+ * effect's whole state as its step. A stepped parameter's dial turns in
+ * whole steps, and a parameter the effect does not show as it stands (the
+ * delay's time in milliseconds while it runs in note values) has no dial:
+ * the grid is laid out again when that changes. The
  * dials follow the effect on a timer, so a change from elsewhere (an
  * agent, undo) shows up.
  *
@@ -86,6 +91,8 @@ private:
         bool dragging = false;
         bool heldWhileDragging = false;   ///< written at the drag's end only: the value moves the latency
         float valueAtDragStart = 0.0f;
+        nlohmann::json stateAtDragStart;  ///< the effect's state then, where the parameter moves others with it
+        bool shown = true;                ///< as the effect stands (Effect::isParameterShown); a hidden cell has no place in the grid
     };
 
     void timerCallback() override;
@@ -93,7 +100,8 @@ private:
     void refreshMeter();
     void paintMeter (juce::Graphics& g) const;
     int slotIndex() const;
-    void commit (int parameter, float oldValue, float newValue);
+    void commit (int parameter, float oldValue, float newValue, const nlohmann::json* stateBefore = nullptr);
+    bool updateShown();   ///< takes over which parameters the effect shows; true when that changed
     void showValue (Cell& cell);
     void arrange();
     juce::Rectangle<int> gridArea() const;

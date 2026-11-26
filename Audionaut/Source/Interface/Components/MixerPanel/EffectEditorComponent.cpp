@@ -52,7 +52,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         }
 
         auto dial = std::make_unique<juce::Slider> (juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox);
-        juce::NormalisableRange<double> range (info.min, info.max);
+        juce::NormalisableRange<double> range (info.min, info.max, info.stepped ? 1.0 : 0.0);
         const auto unit = juce::String (info.unit);
         if (unit == "Hz" && info.min > 0.0f)
             range.setSkewForCentre (std::sqrt (static_cast<double> (info.min) * static_cast<double> (info.max)));   // an octave is an octave
@@ -62,7 +62,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         dial->setDoubleClickReturnValue (true, info.def);
         // the wheel moves a dial in a burst of one-step drags: each a plan rebuild where the parameter moves the latency
         dial->setScrollWheelEnabled (! info.movesLatency);
-        dial->setNumDecimalPlacesToDisplay (unit == "Hz" ? 0 : unit == "dB" ? 1 : 2);
+        dial->setNumDecimalPlacesToDisplay (unit == "Hz" || info.stepped ? 0 : unit == "dB" ? 1 : 2);
         if (unit.isNotEmpty())
             dial->setTextValueSuffix (" " + unit);
         dial->getProperties().set (AudiumLookAndFeel::dialArcFromProperty, info.min < 0.0f && info.max > 0.0f ? range.convertTo0to1 (0.0) : 0.0);
@@ -87,11 +87,13 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         }
         addAndMakeVisible (dial.get());
 
-        dial->onDragStart = [this, cellPtr]
+        dial->onDragStart = [this, cellPtr, movesOthers = info.movesOthers]
         {
             if (auto slot = slotRef.lock()) {
                 cellPtr->dragging = true;
                 cellPtr->valueAtDragStart = slot->getEffect().getParameter (cellPtr->parameter);
+                if (movesOthers)
+                    cellPtr->stateAtDragStart = slot->getEffect().getState();   // what the step goes back to
             }
         };
         dial->onValueChange = [this, cellPtr]
@@ -114,7 +116,8 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
                 return;
             cellPtr->dragging = false;
             if (slotRef.lock() != nullptr)
-                commit (cellPtr->parameter, cellPtr->valueAtDragStart, static_cast<float> (cellPtr->dial->getValue()));   // what the dial shows: the effect's value live, the held one otherwise
+                commit (cellPtr->parameter, cellPtr->valueAtDragStart, static_cast<float> (cellPtr->dial->getValue()),   // what the dial shows: the effect's value live, the held one otherwise
+                        &cellPtr->stateAtDragStart);
         };
         cell->dial = std::move (dial);
 
@@ -135,6 +138,7 @@ EffectEditorComponent::EffectEditorComponent (MixerContext context_, InsertChain
         cells.push_back (std::move (cell));
     }
 
+    updateShown();
     arrange();
     setSize (getPreferredWidth(), getPreferredHeight());
     refresh();
@@ -149,16 +153,21 @@ EffectEditorComponent::~EffectEditorComponent()
 void EffectEditorComponent::arrange()
 {
     const auto parameters = slotRef.lock()->getEffect().getParameters();
-    const auto count = static_cast<int> (cells.size());
+    const auto count = static_cast<int> (std::count_if (cells.begin(), cells.end(), [] (const auto& cell) { return cell->shown; }));
     const auto grouped = std::any_of (parameters.begin(), parameters.end(), [] (const auto& info) { return info.group != nullptr; });
 
     if (! grouped)
     {
         columns = count <= maximumColumns ? juce::jmax (1, count) : (count + 1) / 2;
         rows = juce::jmax (1, (count + columns - 1) / columns);
-        for (int i = 0; i < count; ++i) {
-            cells[static_cast<size_t> (i)]->column = i % columns;
-            cells[static_cast<size_t> (i)]->row = i / columns;
+        auto place = 0;
+        for (auto& cell : cells)
+        {
+            if (! cell->shown)
+                continue;
+            cell->column = place % columns;
+            cell->row = place / columns;
+            ++place;
         }
         return;
     }
@@ -170,6 +179,8 @@ void EffectEditorComponent::arrange()
     int row = 0;
     for (auto& cell : cells)
     {
+        if (! cell->shown)
+            continue;
         const auto* group = parameters[static_cast<size_t> (cell->parameter)].group;
         if (groups.empty() || group == nullptr || previous == nullptr || std::string_view (group) != previous) {
             groups.push_back (group != nullptr ? juce::String (group) : juce::String());
@@ -219,7 +230,26 @@ int EffectEditorComponent::slotIndex() const
     return -1;
 }
 
-void EffectEditorComponent::commit (int parameter, float oldValue, float newValue)
+bool EffectEditorComponent::updateShown()
+{
+    auto slot = slotRef.lock();
+    if (slot == nullptr)
+        return false;
+
+    auto changed = false;
+    for (auto& cell : cells)
+    {
+        const auto shown = slot->getEffect().isParameterShown (cell->parameter);
+        changed = changed || shown != cell->shown;
+        cell->shown = shown;
+        for (auto* component : std::initializer_list<juce::Component*> { cell->dial.get(), cell->value.get(), cell->key.get() })
+            if (component != nullptr)
+                component->setVisible (shown);
+    }
+    return changed;
+}
+
+void EffectEditorComponent::commit (int parameter, float oldValue, float newValue, const nlohmann::json* stateBefore)
 {
     auto slot = slotRef.lock();
     const auto index = slotIndex();
@@ -239,6 +269,20 @@ void EffectEditorComponent::commit (int parameter, float oldValue, float newValu
 
     const auto& info = effect.getParameters()[static_cast<size_t> (parameter)];
     context.undoManager().beginNewTransaction();
+
+    if (info.movesOthers)
+    {
+        // the value takes other parameters with it: the step is the effect's whole state, before and after.
+        // After a drag the effect holds the new value already and the store changes nothing.
+        const auto before = stateBefore != nullptr ? *stateBefore : effect.getState();
+        if (auto* chain = context.chain (address))
+            chain->setParameter (index, parameter, applied);
+        context.undoManager().perform (new UndoableEffectStateAction (context.container(), address, index, before, effect.getState()),
+                                       "Set " + juce::String (effectName) + " " + juce::String (info.name));
+        refresh();
+        return;
+    }
+
     context.undoManager().perform (new UndoableEffectParameterAction (context.container(), address, index, parameter, oldValue, applied),
                                    "Set " + juce::String (effectName) + " " + juce::String (info.name));
 }
@@ -257,6 +301,13 @@ void EffectEditorComponent::refresh()
 
     auto& effect = slot->getEffect();
     const auto bypassed = ! slot->isEnabled();
+
+    // an effect's mode can change which reading of a dial is shown: the dials take their places again
+    if (updateShown()) {
+        arrange();
+        resized();
+        repaint();
+    }
 
     for (auto& cell : cells)
     {
@@ -311,6 +362,8 @@ void EffectEditorComponent::resized()
     for (auto& cellPtr : cells)
     {
         auto& cell = *cellPtr;
+        if (! cell.shown)
+            continue;
         auto area = juce::Rectangle<int> (grid.getX() + cell.column * cellWidth, grid.getY() + cell.row * cellHeight,
                                           cellWidth, cellHeight);
         cell.nameArea = area.removeFromTop (nameHeight);
@@ -347,13 +400,14 @@ void EffectEditorComponent::paint (juce::Graphics& g)
     g.setColour (findColour (audium::defaultTextColourId).withAlpha (0.75f));
     g.setFont (juce::FontOptions (10.0f));
     for (const auto& cell : cells)
-        g.drawText (cell->name, cell->nameArea, juce::Justification::centredBottom, true);
+        if (cell->shown)
+            g.drawText (cell->name, cell->nameArea, juce::Justification::centredBottom, true);
 
     if (meterShown)
         paintMeter (g);
 
     for (const auto& cell : cells)
-        if (cell->key != nullptr)
+        if (cell->key != nullptr && cell->shown)
             AudiumLookAndFeel::drawConsoleButtonShadows (g, { cell->key.get() });
 }
 

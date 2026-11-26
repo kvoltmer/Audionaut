@@ -806,6 +806,10 @@ bool PlayListScheduler::bounceProject(juce::AudioFormatWriter* writer,
         length = config->lengthSeconds;
     auto totalSamples   = static_cast<int64>(length * externalSampleRate);
 
+    // the tempo as it is now, before the first block publishes it: an effect
+    // that keeps time by it (a delay in note values) is asked for its tail next
+    publishRenderTransport(false, nullptr);
+
     // the chains ring out after the last clip (a delay's echoes): a bounce
     // to the project's end runs on for that, an explicit length is kept
     if (toProjectEnd && config->includeEffectTails)

@@ -398,9 +398,13 @@ SCENARIO ("a send feeds its aux bus and the return joins the main mix", "[engine
             {
                 auto slot = session.auxes().get (1)->getInserts().add (DelayEffect::typeInfo().id);
                 REQUIRE (slot != nullptr);
+                slot->getEffect().setParameter (DelayEffect::mode, DelayEffect::milliseconds);
                 slot->getEffect().setParameter (DelayEffect::timeMs, 100.0f);
                 slot->getEffect().setParameter (DelayEffect::feedback, 0.0f);
-                slot->getEffect().setParameter (DelayEffect::mix, 1.0f);
+                // no mix set: an effect added to an aux bus is fully wet, on a track it has its default
+                REQUIRE (slot->getEffect().getParameter (DelayEffect::mix) == 1.0f);
+                REQUIRE (session.track (0)->getTrackInserts().add (DelayEffect::typeInfo().id)->getEffect().getParameter (DelayEffect::mix) == 0.5f);
+                REQUIRE (session.track (0)->getTrackInserts().remove (0));
                 const auto period = static_cast<int> (0.1 * kSampleRate);   // 4410 samples
 
                 THEN ("output 0 is the dry channel plus half of it 100 ms later, output 1 stays silent, the bounce agrees")

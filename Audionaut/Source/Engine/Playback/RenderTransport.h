@@ -57,6 +57,13 @@ public:
         loopEndBeats.store (block.loopEndBeats, std::memory_order_release);
     }
 
+    /// The tempo alone, from the thread that sets it: what an effect that keeps time by it goes by
+    /// before a render has published a block (a project just opened, with no device running).
+    void publishTempo (double beatsPerMinute) noexcept
+    {
+        tempo.store (beatsPerMinute, std::memory_order_relaxed);
+    }
+
     Block read() const noexcept
     {
         Block block;

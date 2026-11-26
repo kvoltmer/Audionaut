@@ -270,14 +270,26 @@ int runSetInsert (const juce::ArgumentList& args, CliContext& context)
             if (! parseNumericOption ("--value", valueValue, std::numeric_limits<double>::lowest(), false, value, error))
                 return context.fail (exitUsage, "usage", "--value must be a number");
 
-            // the value as the effect will hold it: clamped to the range
-            const auto oldValue = effect.getParameter (parameter);
-            effect.setParameter (parameter, static_cast<float> (value));
-            const auto newValue = effect.getParameter (parameter);
-            effect.setParameter (parameter, oldValue);
+            if (effect.getParameters()[static_cast<size_t> (parameter)].movesOthers)
+            {
+                // the value takes other parameters with it (the delay's mode its time): the step is the
+                // effect's whole state, before and after
+                const auto before = effect.getState();
+                target.chain->setParameter (index, parameter, static_cast<float> (value));
+                undoManager->perform (new UndoableEffectStateAction (container, target.address, index, before, effect.getState()),
+                                      "Set " + effect.getType().name + " " + paramValue.toStdString());
+            }
+            else
+            {
+                // the value as the effect will hold it: clamped to the range
+                const auto oldValue = effect.getParameter (parameter);
+                effect.setParameter (parameter, static_cast<float> (value));
+                const auto newValue = effect.getParameter (parameter);
+                effect.setParameter (parameter, oldValue);
 
-            undoManager->perform (new UndoableEffectParameterAction (container, target.address, index, parameter, oldValue, newValue),
-                                  "Set " + effect.getType().name + " " + paramValue.toStdString());
+                undoManager->perform (new UndoableEffectParameterAction (container, target.address, index, parameter, oldValue, newValue),
+                                      "Set " + effect.getType().name + " " + paramValue.toStdString());
+            }
         }
 
         if (enabledValue.isNotEmpty())
@@ -309,6 +321,12 @@ namespace
         for (const auto& info : effect.getParameters())
         {
             const auto index = static_cast<int> (&info - effect.getParameters().data());
+            // what a stepped parameter's values are called ("Dotted", "1/4"), from its lowest to its highest
+            auto steps = nlohmann::json::array();
+            if (info.stepped && info.max - info.min <= 64.0f)
+                for (auto value = info.min; value <= info.max; value += 1.0f)
+                    steps.push_back (effect.getParameterText (index, value).toStdString());
+
             parameters.push_back ({ { "id", info.id },
                                     { "name", info.name },
                                     { "unit", info.unit },
@@ -316,6 +334,8 @@ namespace
                                     { "max", info.max },
                                     { "default", info.def },
                                     { "boolean", info.boolean },
+                                    { "stepped", info.stepped },
+                                    { "steps", steps },
                                     // the effect's own reading of the default, where it has one ("0.00 dB")
                                     { "default_text", effect.getParameterText (index, info.def).toStdString() } });
         }

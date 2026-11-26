@@ -32,6 +32,16 @@ std::shared_ptr<EffectSlot> InsertChain::add (const std::string& typeId, int at)
     if (slot == nullptr)
         return nullptr;
 
+    if (place == Place::auxBus)
+    {
+        // a return carries no dry signal: the channels the sends come from are in the mix already
+        auto& effect = slot->getEffect();
+        const auto parameters = effect.getParameters();
+        for (size_t i = 0; i < parameters.size(); ++i)
+            if (parameters[i].wetShare)
+                effect.setParameter (static_cast<int> (i), parameters[i].max);
+    }
+
     const auto index = at < 0 || at > size() ? size() : at;
     slots.insert (slots.begin() + index, slot);
     adopt (*slot);
