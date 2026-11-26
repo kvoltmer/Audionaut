@@ -265,16 +265,11 @@ Font AudiumLookAndFeel::getPopupMenuFont()
 namespace
 {
     /// Whether the menu is one of the menu bar's (its submenus too: they are shown with its options).
-    /// On Linux only: there the bar's menus stand in for a desktop's own, whose entries are larger
-    /// than the rest of this interface.
+    /// On Windows and Linux: there the bar's menus stand in for the system's own, whose entries are
+    /// larger than the rest of this interface. macOS has the native menu bar and no MenuBarComponent.
     bool belongsToMenuBar (const PopupMenu::Options& options)
     {
-       #if JUCE_LINUX || JUCE_BSD
         return dynamic_cast<MenuBarComponent*> (options.getTopLevelTargetComponent()) != nullptr;
-       #else
-        ignoreUnused (options);
-        return false;
-       #endif
     }
 }
 
