@@ -197,6 +197,10 @@ private:
     mutable std::atomic<bool> stateDirty { true };
     std::string keptBlob;   // a placeholder keeps what it was given
 
+    // whether cachedBlob is another format's state that could not be given to the plugin (ForeignPluginState):
+    // kept to be saved again, while the plugin itself is at its defaults
+    mutable bool cachedUnread = false;
+
     // who changed the plugin: itself (its window, its own reports) or the host
     std::atomic<juce::uint32> pluginChanges { 0 };
     std::atomic<int> openGestures { 0 };

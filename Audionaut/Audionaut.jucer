@@ -365,6 +365,8 @@
                   file="Source/Engine/Effects/Hosting/ScanWorker.cpp"/>
             <FILE id="EfHoWH" name="ScanWorker.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/ScanWorker.h"/>
+            <FILE id="EfHoFS" name="ForeignPluginState.h" compile="0" resource="0"
+                  file="Source/Engine/Effects/Hosting/ForeignPluginState.h"/>
             <FILE id="EfHoTI" name="PluginTypeId.h" compile="0" resource="0"
                   file="Source/Engine/Effects/Hosting/PluginTypeId.h"/>
           </GROUP>

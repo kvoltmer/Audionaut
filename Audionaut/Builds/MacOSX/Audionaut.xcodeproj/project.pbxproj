@@ -425,6 +425,7 @@
 		5A4C35EB8D4AF8B2375EB101 /* PlayListItemExport.cpp */ /* PlayListItemExport.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PlayListItemExport.cpp; path = ../../Source/Engine/Export/PlayListItemExport.cpp; sourceTree = SOURCE_ROOT; };
 		5A705C10792CD2D64F7FD321 /* TrackListBoxModels.h */ /* TrackListBoxModels.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TrackListBoxModels.h; path = ../../Source/Interface/Models/TrackListBoxModels.h; sourceTree = SOURCE_ROOT; };
 		5A8EE50C773ABC7A824A8218 /* MixerSectionBar.h */ /* MixerSectionBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = MixerSectionBar.h; path = ../../Source/Interface/Components/MixerPanel/MixerSectionBar.h; sourceTree = SOURCE_ROOT; };
+		5A917451236BCB02A7F067C1 /* ForeignPluginState.h */ /* ForeignPluginState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ForeignPluginState.h; path = ../../Source/Engine/Effects/Hosting/ForeignPluginState.h; sourceTree = SOURCE_ROOT; };
 		5BB5B602ECA038389B436BF7 /* PrivacySettingsComponent.h */ /* PrivacySettingsComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PrivacySettingsComponent.h; path = ../../Source/Interface/Dialogs/PrivacySettingsComponent.h; sourceTree = SOURCE_ROOT; };
 		5BCE3ADCCCB7E1FBD5769DE8 /* AudioTrackComponent.cpp */ /* AudioTrackComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioTrackComponent.cpp; path = ../../Source/Interface/Components/MiddlePanel/ArrangementView/AudioTrackComponent.cpp; sourceTree = SOURCE_ROOT; };
 		5BDAC6E3EC21C309DB6CF8E2 /* CompressorEffect.h */ /* CompressorEffect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CompressorEffect.h; path = ../../Source/Engine/Effects/BuiltIn/CompressorEffect.h; sourceTree = SOURCE_ROOT; };
@@ -1354,6 +1355,7 @@
 				0018D6728C662B7CB2B4F497,
 				7EF505C6D84A11BB592BB167,
 				77D55ADB8F2B5AA2A578F04C,
+				5A917451236BCB02A7F067C1,
 				4CEEFBC60BD7A91482180D7B,
 			);
 			name = Hosting;

@@ -3572,6 +3572,7 @@
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginHost.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginListScan.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.h"/>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ForeignPluginState.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginTypeId.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\EffectRegistry.h"/>
     <ClInclude Include="..\..\Source\Engine\Effects\EffectSlot.h"/>

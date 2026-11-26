@@ -5145,6 +5145,9 @@
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ScanWorker.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Source\Engine\Effects\Hosting\ForeignPluginState.h">
+      <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Engine\Effects\Hosting\PluginTypeId.h">
       <Filter>Audionaut\Source\Engine\Effects\Hosting</Filter>
     </ClInclude>

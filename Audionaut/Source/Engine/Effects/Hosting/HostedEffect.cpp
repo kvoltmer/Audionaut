@@ -15,6 +15,7 @@
 
 #include <cmath>
 
+#include "ForeignPluginState.h"
 #include "PluginTypeId.h"
 #include "Engine/Core/MessageThreadAssert.h"
 
@@ -406,6 +407,7 @@ json HostedEffect::getState() const
         juce::MemoryBlock chunk;
         instance->getStateInformation (chunk);
         cachedBlob = chunk.toBase64Encoding().toStdString();
+        cachedUnread = false;
     }
     return { { "blob", cachedBlob } };
 }
@@ -434,8 +436,33 @@ void HostedEffect::setState (const json& state)
     if (! chunk.fromBase64Encoding (blob))
         return;
 
-    instance->setStateInformation (chunk.getData(), static_cast<int> (chunk.getSize()));
+    // a substitute for the plugin of another format (PluginHost::findSubstitute) is handed that format's
+    // state: a VST3 ignores an Audio Unit's property list and a unit a VST3's xml, so each gets the
+    // plugin's chunk out of the other's state, in the wrapping it reads
+    using Kind = ForeignPluginState::Translation::Kind;
+    const auto translation = ForeignPluginState::forPlugin (chunk, description.pluginFormatName, description.fileOrIdentifier);
+    if (translation.kind == Kind::unreadable)
+    {
+        // Nothing in it this plugin can be given, so the plugin stays as it is. While the plugin holds
+        // nothing but its defaults the blob is kept as the state to save: saved untouched, the project
+        // still opens with these settings where the plugin is in the format that wrote them. Once the
+        // plugin's own state has been read, that state is what is heard and stays what is saved.
+        if (cachedBlob.empty() || (cachedUnread && ! stateDirty.load (std::memory_order_acquire)))
+        {
+            cachedBlob = blob;
+            cachedUnread = true;
+            stateDirty.store (false, std::memory_order_release);
+        }
+        return;
+    }
+
+    // A translated state is the saved one to the project all the same: the blob stays the state to save
+    // until the plugin changes, as with a state of the plugin's own format. Whether the plugin took what
+    // it was handed cannot be asked, so a project opened and saved untouched keeps what it held.
+    const auto& given = translation.kind == Kind::translated ? translation.state : chunk;
+    instance->setStateInformation (given.getData(), static_cast<int> (given.getSize()));
     cachedBlob = blob;
+    cachedUnread = false;
     stateDirty.store (false, std::memory_order_release);
     ++hostEdits;
 }

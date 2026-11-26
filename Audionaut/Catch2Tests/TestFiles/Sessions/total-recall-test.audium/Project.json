@@ -1,0 +1,95 @@
+{
+  "audium": {
+    "audio_tracks": [
+      {
+        "channels": [
+          {
+            "gain": 1.0,
+            "height": 100,
+            "input_channel": -1,
+            "monitor": false,
+            "mute": false,
+            "output_channel": -1,
+            "pan": 0.0,
+            "record": false,
+            "solo": false
+          },
+          {
+            "gain": 1.0,
+            "height": 100,
+            "input_channel": -1,
+            "monitor": false,
+            "mute": false,
+            "output_channel": -1,
+            "pan": 0.0,
+            "record": false,
+            "solo": false
+          }
+        ],
+        "colour": "ff70d6ff",
+        "name": "Track 1",
+        "visible_analysis": []
+      }
+    ],
+    "aux_buses": [
+      {
+        "gain": 1.0,
+        "id": 1,
+        "mute": false,
+        "name": "Aux 1",
+        "pan": 0.0,
+        "solo": false
+      },
+      {
+        "gain": 1.0,
+        "id": 2,
+        "mute": false,
+        "name": "Aux 2",
+        "pan": 0.0,
+        "solo": false
+      }
+    ],
+    "aux_buses_next_id": 3,
+    "file_version": 1,
+    "loop_data": {
+      "loopActive": false,
+      "loopEndPositionClocks": 864.0,
+      "loopStartPositionClocks": 96.0
+    },
+    "master_gain": 1.0,
+    "master_inserts": [
+      {
+        "editor": {
+          "open": true
+        },
+        "enabled": true,
+        "plugin": {
+          "file": "AudioUnit:Effects/aufx,Ni$7,-NI-",
+          "format": "AudioUnit",
+          "manufacturer": "Native Instruments",
+          "name": "Solid Dynamics",
+          "version": "1.4.11"
+        },
+        "state": {
+          "blob": "3870.hAGaoMGcv.y0AHv.DTfAGfPBJr.CM3.WsEla0YVXiQWcxUlbTQVXzE1U1MGcjEFcgc0b0IFc4AWYWYWYxMWZu4FUzkGbkQkag0VYRzhSI0BPOEgCvcCIo4T.....B.....CB........A....f1bo4V..........LiSkHWgBtTUsp2UX+dk.hlk.........PzTI4jc....A....fD.........DMURNoF...P.....X..........QSkjSA....D....P.....A....D....P.....................MHVYEF....fCvAA......D....P.....................C.....C.v..L......................P.....A..........QSkjSkA...30A........A....f1bo4V..........3I8+yOw2qzoC5hflcMuAVZZ.........PzTI4TY....A....PC.........DMURNoF...P.....X..........QSkjSA....D....P.....A....H....P......HA...P.....H....DC.t..M.3B.w.PL.3B.v.P.....C..........QSkjSrA...PX.........A....f1bo4V..........vX5o4bKBYDKElp9K5KshGEUA........PzTI4Da....A....fA.........DMURNE....P.....A....D....f.....A....................................7++++++++++..........................P.....................G....b.....W..D.iAva.vF.uAfb.D.....L.DA....W..D.jAPY.XG.oAvX.TF.zAPd..G.kAfY.vF.gAvY.LG.A.....C.K....vE..Avb.7F.0Afa.PF.zAPd..G.kAP.....v.vA....bA.P.PG.kAPa..G.uAP.....v.fA....bA.P.XG.kAfb.vF.F....DC.t.vM.3B.w..M.X.....W..D.1APY.HG.sAfA....w.fK.bC.t.PL.PC.G....vE..Afc.jF.yAPZ.HF.A.....C.A.........f.....DMURNkG...fYC........D.....ZyklaA.........f.LjVrIQJPq+Kv0fp8Wdx51L.........QSkjS4A...D.....F.........PzTI4T.....A....D....P.....A....L....P.....H....n....vP.7F.sA.b.HG.kAvb.LG.uAfb.D....PB....KAfa.TF.kA.H.PE.4A.b.TF..........9C.....A....D....PB....TA.Z.HG.kAvb.fF.uA.a.PF..........9S.....B....D....PA....RAPX.PG.oAva..........3OB....L....P.....H....DD.zAvZ..B.MAva.PF.kA.........f+L.....A....A....b....fT.TF.rAPY.DF.yAPY..........3OD....T....P.....H....HE.kA.a.3B.MAva.PF.kA.........f+T....fA....A....X....vS.TG.zA.b.TG.zA.........f+X....vA....A....L.....Q.HG.4A.........f+b.....B....A....f....PC....GAPX.PG.kAvK.TD.3A.b.DF.tA.Y.TF.xAP.....H....vD.oAfa.rF.f..S.7B.RA.........f+f....P.....A....T....fP.7F.uAvb.PG..........9SB....B....D....P.....s..........f+n....v.....A....P....PS.7F.jAPY..........3OK....P....P.....I....PE.nAfb.TF.yA.Z.7F.rA.Y..........3OL....T....P.....E....HE.gAfa.bF.kA.........f+z....fA....A....f....PP.PG.qA.H.zD.uA.Y.TF..........9iC....G....D....vA....RAPY.vF.kAPX.LG.kA.........f+7.....B....A....H....fB....SAPZ.PF.kAPK.LD.nAPX.jF.tAP.....G....LE.CA.H.zD.uA.Y.TF..........9CD....A....D....vA....SAvP..B.GAPX.jF.tA.........f+DA...f.....A.........P.....DMURNQG...vsA........D.....ZyklaA.........f.CpJdbUnPmTYLIECbY4QNGF.........QSkjSzA...D....faA........PzTI4zb....A....fA.........DMURNE....P.....A....D....P.UG...TS...f.UG..fA..A.RACf1bo4FPG.D.P7dWmQfCjHTGmtjmkE0hyWHF.QAH.L.QSkjS.MB3GL.P..zF.zFHH.Pf.wAH..jAfOvTPzJat.M.qsjpV99RBW96k8XT.ABH..7M.4.3WbFPi.PB.Q.H..pAB...T.x..H.HCHvP.DCHED.f+.3BBLC...N.KHfL...3.rf.z...fCvBEXC.F34F9.3KBTC...xEDL....vUfbDA1.vdT3DXM..Qfz.A0.viB2DXM..Sfz.fAATJ.jDHM.zVA....0.Po.PNfkn.GAvMfLAfUBvQfLg....PfU4.GA.N..D..0B.GAxN..CPL.N.M.Tu...XWAvTfr.P+J...P.HC.vTfjM.IAxKf..Xc.z4.bC3.TCfQsPChUVgA.........P......D..........C...........D........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................DfC....VAva.LF.gA.a..B.PAPX.HG.gA.a.vF.kA.a.TE...vK.vD.oAfX.HG.gAfb.jG.u.PP..G.vA.a.jF.iAPX.PG.oAva.3F.f.vT.TG.vA.b.7F.xA.c.7B.NAPX.PG.oAfc.TF.f.PR.3F.yA.c.HG.0APa.TF.tA.c.LG.u.vT.7F.rAPZ.PF.f..Q.jG.tAPX.zF.oAvX.LG.f.fQ.fE.u.fU.7F.iAPX.vF.f..T.DF.xAPX.vF.rAPY.vF.t.fa.jF.lA.d.3I8+yOw2qzoC5hflcMuAVp.....A....................................7++++++++++..........................P.....................G....b.....W..D.iAva.vF.uAfb.D.....L.DA....W..D.jAPY.XG.oAvX.TF.zAPd..G.kAfY.vF.gAvY.LG.A.....C.K....vE..Avb.7F.0Afa.PF.zAPd..G.kAP.....v.vA....bA.P.PG.kAPa..G.uAP.....v.fA....bA.P.XG.kAfb.vF.F....DC.t.vM.3B.w..M.X.....W..D.1APY.HG.sAfA....w.fK.bC.t.PL.PC.G....vE..Afc.jF.yAPZ.HF.A.....C..f....fC....VAva.LF.gA.a..B.PAPX.HG.gA.a.vF.kA.a.HgSoQxMP.fDgUmY34kUuMVXrABTgIWXrwVYrA.B.bA.j.PJ.DC.4.PP.XD.KA.T.DkCE6fxNvrCQC.......HP..........7...................3.3"
+        },
+        "type": "au:02520b62"
+      }
+    ],
+    "master_mute": false,
+    "master_pan": 0.0,
+    "scheduler": {
+      "followTransport": true,
+      "startPositionClocks": 1090.6420118040517,
+      "transportPositionClocks": 10415.566464
+    },
+    "tempo": 132.0,
+    "ui_state": {
+      "arrangement": {
+        "scroll_x": 0.0,
+        "scroll_y": 0.0,
+        "zoom_factor": 1.0
+      }
+    }
+  }
+}
