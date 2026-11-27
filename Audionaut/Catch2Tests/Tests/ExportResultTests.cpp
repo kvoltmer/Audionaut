@@ -472,7 +472,9 @@ SCENARIO("a second bounce renders like the first", "[engine][export][rebounce]")
 // here, as only macOS hands MP3 to CoreAudio.
 SCENARIO("a headerless VBR MP3 bounces the same every time", "[engine][export][mp3][rebounce]")
 {
-    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-mp3-rebounce-tests");
+    // under the run's own directory: nothing shared with a second test
+    // process, and removed with it even when a REQUIRE ends the scenario early
+    auto workDir = testOutputDirectory().getChildFile("mp3-rebounce");
     workDir.deleteRecursively();
     REQUIRE(workDir.createDirectory());
 

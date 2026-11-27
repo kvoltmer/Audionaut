@@ -9,10 +9,9 @@
 
 namespace audium {
 
-std::shared_ptr<VoiceSource> VoiceSourceContainer::createAndAddVoiceSource(AudioResource& audioResource,
-                                                                           std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
+std::shared_ptr<VoiceSource> VoiceSourceContainer::createAndAddVoiceSource(AudioResource& audioResource)
 {
-    auto voiceSource = std::make_shared<VoiceSource>(audioResource, std::move(audioFormatReaderSource));
+    auto voiceSource = std::make_shared<VoiceSource>(audioResource);
     // append only: a freed slot is never reused, so an index means the same
     // voice in every snapshot generation that contains it
     voiceSources.push_back(voiceSource);

@@ -262,14 +262,15 @@ std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatR
             return reader;
         }
 
-        return openStreamingReader(url);
+        return openStreamingReader(*formatManager, url);
     }
     return nullptr;
 }
 
-std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::openStreamingReader(const juce::URL& url) const
+std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::openStreamingReader(const juce::AudioFormatManager& formatManager,
+                                                                                     const juce::URL& url)
 {
-    if (auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
+    if (auto audioFormat = formatManager.findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
         if (auto stream = rawToUniquePtr (juce::URLInputSource(url).createInputStream())) {
             return std::shared_ptr<juce::AudioFormatReader>(audioFormat->createReaderFor(stream.release(), true));
         }
@@ -313,12 +314,9 @@ std::shared_ptr<AudioResource> AudioResourceContainer::addAudioResource (juce::U
 
 std::shared_ptr<VoiceSource> AudioResourceContainer::createTransportSourceForAudioResource(std::shared_ptr<AudioResource> audioResource)
 {
-    if (audioResource->audioFormatReader != nullptr) {
-        auto source = std::make_shared<AudioFormatReaderSource>(audioResource->audioFormatReader.get(), false);
-        if (source != nullptr && source->getAudioFormatReader() != nullptr) {
-            return audioResource->createNewTransportSource(source);
-        }
-    }
+    if (audioResource->audioFormatReader != nullptr)
+        return audioResource->createNewTransportSource();
+
     return nullptr;
 }
 

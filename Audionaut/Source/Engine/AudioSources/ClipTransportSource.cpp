@@ -168,6 +168,13 @@ void ClipTransportSource::setStandbySource (juce::PositionableAudioSource* newSt
         // then finds its input ready instead of deferring
         standbySource = standbyBuffering
             = new juce::BufferingAudioSource (standbyInput, *readAheadThread, false, readAheadSize, maxNumChannels);
+
+        // The read-ahead fills from wherever it stands as soon as it is
+        // prepared. Parked at the end of the file that fill reads nothing,
+        // so an input that opens its decoder on first use stays closed until
+        // the first prime; and as no prime targets the end, that prime
+        // always finds the buffer empty rather than holding the parked fill
+        standbyBuffering->setNextReadPosition (standbyInput->getTotalLength());
         standbyResampler = new ClipResamplingSource (standbySource, false, maxNumChannels);
 
         // its bounds go in before it is prepared, like the live lane's

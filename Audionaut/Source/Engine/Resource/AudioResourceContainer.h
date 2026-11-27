@@ -177,11 +177,15 @@ public:
      * A compressed file's decoder keeps a position, and some decode
      * differently after a seek than when they read straight through. Every
      * cursor that plays such a file therefore takes a decoder of its own
-     * (see VoiceSource) instead of taking turns on the resource's.
+     * (see VoiceSource) instead of taking turns on the resource's. Static,
+     * as a voice opens its standby decoder on the read-ahead thread and may
+     * by then have outlived the container.
+     * @param formatManager The formats to pick the decoder from.
      * @param url The URL of the audio file.
      * @return The reader, or nullptr when the file cannot be opened.
      */
-    std::shared_ptr<juce::AudioFormatReader> openStreamingReader(const juce::URL& url) const;
+    static std::shared_ptr<juce::AudioFormatReader> openStreamingReader(const juce::AudioFormatManager& formatManager,
+                                                                        const juce::URL& url);
 
     /**
      * @brief Adds a new audio resource.
