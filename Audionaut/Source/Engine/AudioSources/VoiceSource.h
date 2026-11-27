@@ -199,7 +199,8 @@ private:
     void renderChannel (const juce::AudioSourceChannelInfo& info);
 
     AudioResource& audioResource; ///< Reference to the associated audio resource.
-    std::shared_ptr<juce::AudioFormatReader> audioFormatReader; ///< Co-owns the resource's reader: a retired voice's read-ahead may still be reading it on the background thread after the resource is gone.
+    std::shared_ptr<juce::AudioFormatReader> audioFormatReader; ///< The reader the voice plays from: the resource's memory-mapped one, co-owned as a retired voice may still read it after the resource is gone, or for a compressed file a decoder of the voice's own.
+    std::shared_ptr<juce::AudioFormatReader> standbyFormatReader; ///< The standby cursor's own decoder (compressed files only).
     std::shared_ptr<juce::TimeSliceThread> readAheadThread; ///< Co-owns that thread too (buffered readers only): the read-ahead buffers unregister from it when the transport below goes, and a retired voice can outlive the resource container that started it.
     std::atomic<int> scheduledStartSample   = 0; ///< The sample position for a scheduled position change.
     std::atomic<double> scheduledPosition   = 0.0; ///< The scheduled playback position in seconds.
@@ -210,7 +211,7 @@ private:
     DspClipData scheduledClipData; ///< What scheduleClip last applied (audio thread).
     double pendingRestartAt = -1.0; ///< Timeline seconds of a deferred restart, < 0 when none (audio thread).
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
-    std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor on the same reader for the transport's standby lane.
+    std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor for the transport's standby lane: on the same memory-mapped reader, or on standbyFormatReader.
     std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
     juce::AudioBuffer<float> renderBuffer; ///< The transport's output, all file channels; sized in prepareToPlay.
 

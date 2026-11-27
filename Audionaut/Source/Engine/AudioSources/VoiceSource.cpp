@@ -19,14 +19,30 @@ audioFormatReader(audioResource_.audioFormatReader),
 audioFormatReaderSource(std::move(audioFormatReaderSource_)),
 clipTransportSource(std::make_shared<ClipTransportSource>())
 {
-    const auto* reader = audioFormatReaderSource->getAudioFormatReader();
-
     // memory-mapped readers need neither buffering nor a read-ahead thread
     auto readAheadBufferSize = 48000;
-    if (dynamic_cast<const MemoryMappedAudioFormatReader*>(reader) != nullptr)
+    if (dynamic_cast<const MemoryMappedAudioFormatReader*>(audioFormatReader.get()) != nullptr) {
         readAheadBufferSize = 0;
-    else
-        readAheadThread = audioResource.getContainer().getReadAheadThread();
+    }
+    else {
+        auto& container = audioResource.getContainer();
+        readAheadThread = container.getReadAheadThread();
+
+        // A decoder keeps a position, and the voices of a file would take
+        // turns on the resource's, each read seeking away from the last. Some
+        // decoders do not land exactly after a seek (CoreAudio on a VBR MP3
+        // without a VBR header), which made the render depend on how the
+        // read-aheads happened to interleave. With a decoder per cursor each
+        // one reads straight through
+        if (auto ownReader = container.openStreamingReader(audioResource.getUrl())) {
+            audioFormatReader = std::move(ownReader);
+            audioFormatReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReader.get(), false);
+        }
+
+        standbyFormatReader = container.openStreamingReader(audioResource.getUrl());
+    }
+
+    const auto* reader = audioFormatReaderSource->getAudioFormatReader();
 
     clipTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
@@ -38,8 +54,11 @@ clipTransportSource(std::make_shared<ClipTransportSource>())
     // takes a known jump - the loop wrap, a clip start - ahead of time: on a
     // memory-mapped reader (stateless per read, so the cursor costs nothing)
     // it primes the stretcher; on a buffered reader it fills a second
-    // read-ahead. Both cursors read on the read-ahead thread only
-    standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
+    // read-ahead from a decoder of its own (the main cursor's, should that
+    // not open). Both cursors read on the read-ahead thread only
+    auto* standbyReader = standbyFormatReader != nullptr ? standbyFormatReader.get()
+                                                         : audioFormatReaderSource->getAudioFormatReader();
+    standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(standbyReader, false);
     clipTransportSource->setStandbySource(standbyReaderSource.get());
 }
 

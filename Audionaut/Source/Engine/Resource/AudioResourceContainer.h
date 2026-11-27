@@ -172,6 +172,18 @@ public:
     std::shared_ptr<juce::AudioFormatReader> getAudioFormatReaderForUrl(juce::URL &url);
 
     /**
+     * @brief Opens a further decoder on a file that cannot be memory-mapped.
+     *
+     * A compressed file's decoder keeps a position, and some decode
+     * differently after a seek than when they read straight through. Every
+     * cursor that plays such a file therefore takes a decoder of its own
+     * (see VoiceSource) instead of taking turns on the resource's.
+     * @param url The URL of the audio file.
+     * @return The reader, or nullptr when the file cannot be opened.
+     */
+    std::shared_ptr<juce::AudioFormatReader> openStreamingReader(const juce::URL& url) const;
+
+    /**
      * @brief Adds a new audio resource.
      * @param url The URL of the audio file.
      * @param audioFormatReader A shared pointer to the `AudioFormatReader`.

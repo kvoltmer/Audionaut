@@ -261,10 +261,17 @@ std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::getAudioFormatR
             }
             return reader;
         }
-        else if (auto inputSource = std::make_unique<juce::URLInputSource>(url)) {
-            if (auto stream = rawToUniquePtr (inputSource->createInputStream())) {
-                return std::shared_ptr<juce::AudioFormatReader>(audioFormat->createReaderFor(stream.release(), false));
-            }
+
+        return openStreamingReader(url);
+    }
+    return nullptr;
+}
+
+std::shared_ptr<juce::AudioFormatReader> AudioResourceContainer::openStreamingReader(const juce::URL& url) const
+{
+    if (auto audioFormat = formatManager->findFormatForFileExtension(url.getLocalFile().getFileExtension())) {
+        if (auto stream = rawToUniquePtr (juce::URLInputSource(url).createInputStream())) {
+            return std::shared_ptr<juce::AudioFormatReader>(audioFormat->createReaderFor(stream.release(), true));
         }
     }
     return nullptr;

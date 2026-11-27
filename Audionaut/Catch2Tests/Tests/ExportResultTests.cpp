@@ -463,6 +463,71 @@ SCENARIO("a second bounce renders like the first", "[engine][export][rebounce]")
         inputFile.deleteFile();
 }
 
+#if JUCE_MAC
+// A compressed file has no memory-mapped reader: its voices decode it through
+// read-ahead buffers. CoreAudio decodes a VBR MP3 without a VBR header
+// differently after a seek than when it reads straight through, so voices
+// taking turns on one decoder - the left and the right channel of a stereo
+// file - made every bounce of such a file come out differently (#182). Only
+// here, as only macOS hands MP3 to CoreAudio.
+SCENARIO("a headerless VBR MP3 bounces the same every time", "[engine][export][mp3][rebounce]")
+{
+    auto workDir = File::getSpecialLocation(File::tempDirectory).getChildFile("audionaut-mp3-rebounce-tests");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    auto inputFile = workDir.getChildFile("vbr-headerless.mp3");
+    REQUIRE(File(CURRENT_SOURCE_DIR).getChildFile("TestFiles/vbr-headerless.mp3").copyFileTo(inputFile));
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto bounce = [&](const String& fileName) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->sampleRate = 48000.0;
+        config->numChannels = 2;
+        config->bitDepth = 24;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        REQUIRE(AudioExporter(*engine, config).bounce());
+        return audioFileToAudioBuffer(config->fileName);
+    };
+
+    GIVEN("the project bounced three times")
+    {
+        const auto first = bounce("first.wav");
+
+        THEN("the file is not silent and every bounce holds the same samples")
+        {
+            REQUIRE(first.getNumChannels() == 2);
+            REQUIRE(first.getMagnitude(0, first.getNumSamples()) > 0.1f);
+
+            for (const auto* name : { "second.wav", "third.wav" }) {
+                const auto next = bounce(name);
+                REQUIRE(next.getNumSamples() == first.getNumSamples());
+
+                auto differing = 0;
+                auto firstDiffering = -1;
+                for (auto channel = 0; channel < 2; channel++) {
+                    for (auto s = 0; s < first.getNumSamples(); s++) {
+                        if (first.getSample(channel, s) != next.getSample(channel, s)) {
+                            differing++;
+                            if (firstDiffering < 0)
+                                firstDiffering = s;
+                        }
+                    }
+                }
+                INFO(name << ": " << differing << " differing samples, the first at " << firstDiffering);
+                REQUIRE(differing == 0);
+            }
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+#endif
+
 // MP3 is written by LAME (ThirdParty/lame) and read back here with JUCE's
 // own MP3 decoder. Lossy and delayed by the encoder, so the checks are on
 // level and length rather than on single samples.
