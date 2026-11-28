@@ -14,8 +14,8 @@
 #
 # Reads Xcode's build settings from the environment: CONFIGURATION, ARCHS,
 # MACOSX_DEPLOYMENT_TARGET, PROJECT_TEMP_DIR, TARGET_BUILD_DIR,
-# CONTENTS_FOLDER_PATH, PRODUCT_BUNDLE_IDENTIFIER, EXPANDED_CODE_SIGN_IDENTITY
-# / CODE_SIGN_IDENTITY, ENABLE_HARDENED_RUNTIME.
+# CONTENTS_FOLDER_PATH, DWARF_DSYM_FOLDER_PATH, PRODUCT_BUNDLE_IDENTIFIER,
+# EXPANDED_CODE_SIGN_IDENTITY / CODE_SIGN_IDENTITY, ENABLE_HARDENED_RUNTIME.
 #
 # Requires: CMake 3.15 or newer (brew install cmake).
 
@@ -45,8 +45,11 @@ ARCHITECTURES=$(echo "${ARCHS:-$(uname -m)}" | tr ' ' ';')
 # are passed on explicitly; nothing else should steer the compiler.
 unset SDKROOT CC CXX LD CFLAGS CXXFLAGS LDFLAGS
 
+# Debug information in every configuration: the release build's goes into a
+# dSYM below, and the helper in the bundle is stripped of it.
 cmake -S "$HERE" -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+    -DCMAKE_C_FLAGS=-g -DCMAKE_CXX_FLAGS=-g -DCMAKE_OBJC_FLAGS=-g -DCMAKE_OBJCXX_FLAGS=-g \
     -DCMAKE_OSX_ARCHITECTURES="$ARCHITECTURES" \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-13.0}" \
     > "$BUILD_DIR.configure.log" 2>&1 || { cat "$BUILD_DIR.configure.log" >&2; exit 1; }
@@ -56,6 +59,14 @@ HELPER="$BUILD_DIR/AudionautScanHelper_artefacts/$BUILD_TYPE/audionaut-scan-help
 DESTINATION="$TARGET_BUILD_DIR/${CONTENTS_FOLDER_PATH:?}/Helpers"
 mkdir -p "$DESTINATION"
 cp -f "$HELPER" "$DESTINATION/audionaut-scan-helper"
+
+# The helper's dSYM goes next to the app's, where an archive collects it -
+# the App Store asks for the symbols of every executable in the bundle.
+if [ "$BUILD_TYPE" = "Release" ] && [ -n "${DWARF_DSYM_FOLDER_PATH:-}" ]; then
+    mkdir -p "$DWARF_DSYM_FOLDER_PATH"
+    dsymutil "$HELPER" -o "$DWARF_DSYM_FOLDER_PATH/audionaut-scan-helper.dSYM"
+    strip -S "$DESTINATION/audionaut-scan-helper"
+fi
 
 IDENTITY="${EXPANDED_CODE_SIGN_IDENTITY:-${CODE_SIGN_IDENTITY:--}}"
 [ -n "$IDENTITY" ] || IDENTITY=-
