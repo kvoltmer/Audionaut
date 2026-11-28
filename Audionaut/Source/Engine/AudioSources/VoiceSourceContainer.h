@@ -48,8 +48,7 @@ public:
     /** Stops and retires every voice source. */
     void cleanup();
 
-    std::shared_ptr<VoiceSource> createAndAddVoiceSource(AudioResource& audioResource,
-                                                         std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+    std::shared_ptr<VoiceSource> createAndAddVoiceSource(AudioResource& audioResource);
 
     /** Stops the voice, frees its index and retires it. Returns false if unknown. */
     bool removeVoiceSource(std::shared_ptr<VoiceSource> voiceSource);

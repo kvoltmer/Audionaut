@@ -43,9 +43,9 @@ AudioResource::~AudioResource()
 {
 }
 
-std::shared_ptr<VoiceSource> AudioResource::createNewTransportSource(std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource)
+std::shared_ptr<VoiceSource> AudioResource::createNewTransportSource()
 {
-    auto voiceSource = audioTrack->getVoiceSourceContainer()->createAndAddVoiceSource(*this, audioFormatReaderSource);
+    auto voiceSource = audioTrack->getVoiceSourceContainer()->createAndAddVoiceSource(*this);
     
     auto sampleRate = 44100.0;
     auto numSamples = 512;

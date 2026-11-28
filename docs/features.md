@@ -125,7 +125,7 @@ monitoring. Each take becomes a region and a single undo step.
   app is sandboxed, so projects and audio for agents live in `~/Music`.
 - **Windows (x64):** an installer. It is not code-signed yet, so SmartScreen
   warns on first run.
-- **Linux (x86_64):** AppImage and .deb.
+- **Linux (x86_64):** AppImage, .deb and a Flatpak bundle.
 
 Downloads: [audionaut.app/download](https://audionaut.app/download).
 Privacy: anonymous usage statistics are opt-in only
@@ -140,7 +140,7 @@ Planned or under consideration, not available today:
   and OSC cues
 - Automatic crossfades when clips are dragged over each other
 - Speech-specific tools (silence or filler-word removal)
-- Flatpak, and a code-signed Windows installer
+- A code-signed Windows installer
 
 The [roadmap](../ROADMAP.md) says what is being worked on and what comes
 next. Ideas and requests are welcome in
