@@ -12,34 +12,138 @@
 
 namespace audium {
 
-VoiceSource::VoiceSource(AudioResource& audioResource_,
-                                             std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource_) :
+namespace {
+
+/**
+ * The standby cursor of a file that is not memory-mapped: a decoder of its
+ * own, opened by the first read that asks for audio. That read comes from the
+ * read-ahead thread once the lane is primed for a jump, so a clip costs one
+ * open on the message thread instead of two, and a clip that never plays
+ * never opens the second. Until then the transport keeps the lane parked at
+ * the end of the file, where a read needs no decoder.
+ *
+ * Read by one thread at a time: the read-ahead thread once the lane's buffer
+ * is running, whoever sets the chain up before that.
+ */
+class LazyReaderSource final : public juce::PositionableAudioSource
+{
+public:
+    LazyReaderSource (std::shared_ptr<juce::AudioFormatManager> formatManager_, juce::URL url_,
+                      std::shared_ptr<juce::AudioFormatReader> fallbackReader_) :
+        formatManager (std::move (formatManager_)),
+        url (std::move (url_)),
+        fallbackReader (std::move (fallbackReader_)),
+        totalLength (fallbackReader->lengthInSamples)
+    {
+    }
+
+    void prepareToPlay (int, double) override {}
+    void releaseResources() override {}
+
+    void getNextAudioBlock (const juce::AudioSourceChannelInfo& info) override
+    {
+        const auto start = nextReadPosition.load();
+        nextReadPosition.store (start + info.numSamples);
+
+        if (start >= totalLength)
+        {
+            info.clearActiveBufferRegion();
+            return;
+        }
+
+        if (readerSource == nullptr)
+            open();
+
+        if (readerSource->getNextReadPosition() != start)
+            readerSource->setNextReadPosition (start);
+
+        readerSource->getNextAudioBlock (info);
+    }
+
+    void setNextReadPosition (juce::int64 newPosition) override   { nextReadPosition.store (newPosition); }
+    juce::int64 getNextReadPosition() const override              { return nextReadPosition.load(); }
+    juce::int64 getTotalLength() const override                   { return totalLength; }
+    bool isLooping() const override                               { return false; }
+
+private:
+    void open()
+    {
+        reader = AudioResourceContainer::openStreamingReader (*formatManager, url);
+
+        if (reader == nullptr)
+        {
+            // audible only as what the own decoder is there to prevent: two
+            // cursors seeking on one decoder around this voice's jumps
+            juce::Logger::writeToLog ("VoiceSource: no standby decoder for " + url.toString (false)
+                                      + ", the standby cursor shares the voice's");
+            reader = fallbackReader;
+        }
+
+        readerSource = std::make_unique<juce::AudioFormatReaderSource> (reader.get(), false);
+    }
+
+    const std::shared_ptr<juce::AudioFormatManager> formatManager;
+    const juce::URL url;
+    const std::shared_ptr<juce::AudioFormatReader> fallbackReader;
+    const juce::int64 totalLength;
+    std::atomic<juce::int64> nextReadPosition { 0 };
+    std::shared_ptr<juce::AudioFormatReader> reader;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
+};
+
+} // namespace
+
+VoiceSource::VoiceSource(AudioResource& audioResource_) :
 audioResource(audioResource_),
 audioFormatReader(audioResource_.audioFormatReader),
-audioFormatReaderSource(std::move(audioFormatReaderSource_)),
 clipTransportSource(std::make_shared<ClipTransportSource>())
 {
-    const auto* reader = audioFormatReaderSource->getAudioFormatReader();
+    jassert(audioFormatReader != nullptr);
 
     // memory-mapped readers need neither buffering nor a read-ahead thread
     auto readAheadBufferSize = 48000;
-    if (dynamic_cast<const MemoryMappedAudioFormatReader*>(reader) != nullptr)
+    const auto memoryMapped = dynamic_cast<const MemoryMappedAudioFormatReader*>(audioFormatReader.get()) != nullptr;
+
+    if (memoryMapped) {
         readAheadBufferSize = 0;
-    else
-        readAheadThread = audioResource.getContainer().getReadAheadThread();
+    }
+    else {
+        auto& container = audioResource.getContainer();
+        readAheadThread = container.getReadAheadThread();
+
+        // A decoder keeps a position, and the voices of a file would take
+        // turns on the resource's, each read seeking away from the last. Some
+        // decoders do not land exactly after a seek (CoreAudio on a VBR MP3
+        // without a VBR header), which made the render depend on how the
+        // read-aheads happened to interleave. With a decoder per cursor each
+        // one reads straight through
+        if (auto ownReader = AudioResourceContainer::openStreamingReader(*container.getAudioFormatManager(), audioResource.getUrl()))
+            audioFormatReader = std::move(ownReader);
+        else
+            juce::Logger::writeToLog("VoiceSource: no decoder of its own for " + audioResource.getUrl().toString(false)
+                                     + ", the voice shares the file's");
+    }
+
+    audioFormatReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReader.get(), false);
 
     clipTransportSource->setSource (audioFormatReaderSource.get(),
                                      readAheadBufferSize,
                                      readAheadThread.get(),
-                                     reader->sampleRate,
-                                     static_cast<int>(reader->numChannels));
+                                     audioFormatReader->sampleRate,
+                                     static_cast<int>(audioFormatReader->numChannels));
 
-    // a second cursor on the reader for the transport's standby lane, which
-    // takes a known jump - the loop wrap, a clip start - ahead of time: on a
-    // memory-mapped reader (stateless per read, so the cursor costs nothing)
-    // it primes the stretcher; on a buffered reader it fills a second
-    // read-ahead. Both cursors read on the read-ahead thread only
-    standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReaderSource->getAudioFormatReader(), false);
+    // a second cursor for the transport's standby lane, which takes a known
+    // jump - the loop wrap, a clip start - ahead of time: on a memory-mapped
+    // reader (stateless per read, so the cursor costs nothing) it primes the
+    // stretcher; on a buffered reader it fills a second read-ahead, from a
+    // decoder of its own that the first prime opens. Both cursors read on
+    // the read-ahead thread only
+    if (memoryMapped)
+        standbyReaderSource = std::make_shared<juce::AudioFormatReaderSource>(audioFormatReader.get(), false);
+    else
+        standbyReaderSource = std::make_shared<LazyReaderSource>(audioResource.getContainer().getAudioFormatManager(),
+                                                                 audioResource.getUrl(), audioFormatReader);
+
     clipTransportSource->setStandbySource(standbyReaderSource.get());
 }
 

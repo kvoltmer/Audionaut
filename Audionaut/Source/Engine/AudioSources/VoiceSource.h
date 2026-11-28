@@ -28,11 +28,12 @@ class VoiceSource : public juce::AudioSource
 public:
     /**
      * @brief Constructs a VoiceSource instance.
-     * @param audioResource Reference to the associated audio resource.
-     * @param audioFormatReaderSource Shared pointer to the audio format reader source.
+     * @param audioResource Reference to the associated audio resource, which
+     *                      must have a reader. The voice builds its cursors
+     *                      on it, or on decoders of its own for a file that
+     *                      is not memory-mapped.
      */
-    VoiceSource(AudioResource& audioResource,
-                          std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource);
+    explicit VoiceSource(AudioResource& audioResource);
     
     /**
      * @brief Destructor for VoiceSource.
@@ -199,7 +200,7 @@ private:
     void renderChannel (const juce::AudioSourceChannelInfo& info);
 
     AudioResource& audioResource; ///< Reference to the associated audio resource.
-    std::shared_ptr<juce::AudioFormatReader> audioFormatReader; ///< Co-owns the resource's reader: a retired voice's read-ahead may still be reading it on the background thread after the resource is gone.
+    std::shared_ptr<juce::AudioFormatReader> audioFormatReader; ///< The reader the voice plays from: the resource's memory-mapped one, co-owned as a retired voice may still read it after the resource is gone, or for a compressed file a decoder of the voice's own.
     std::shared_ptr<juce::TimeSliceThread> readAheadThread; ///< Co-owns that thread too (buffered readers only): the read-ahead buffers unregister from it when the transport below goes, and a retired voice can outlive the resource container that started it.
     std::atomic<int> scheduledStartSample   = 0; ///< The sample position for a scheduled position change.
     std::atomic<double> scheduledPosition   = 0.0; ///< The scheduled playback position in seconds.
@@ -210,7 +211,7 @@ private:
     DspClipData scheduledClipData; ///< What scheduleClip last applied (audio thread).
     double pendingRestartAt = -1.0; ///< Timeline seconds of a deferred restart, < 0 when none (audio thread).
     std::shared_ptr<juce::AudioFormatReaderSource> audioFormatReaderSource; ///< Audio format reader source.
-    std::shared_ptr<juce::AudioFormatReaderSource> standbyReaderSource; ///< Second cursor on the same reader for the transport's standby lane.
+    std::shared_ptr<juce::PositionableAudioSource> standbyReaderSource; ///< Second cursor for the transport's standby lane: on the same memory-mapped reader, or for a compressed file on a decoder of its own that it opens on first use.
     std::shared_ptr<audium::ClipTransportSource> clipTransportSource; ///< Underlying clip voice source.
     juce::AudioBuffer<float> renderBuffer; ///< The transport's output, all file channels; sized in prepareToPlay.
 
