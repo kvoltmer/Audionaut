@@ -530,6 +530,71 @@ SCENARIO("a headerless VBR MP3 bounces the same every time", "[engine][export][m
 }
 #endif
 
+// The same turn-taking on one decoder, with a worse outcome: JUCE's FLAC reader
+// can come back from a seek with nothing in hand, and the read is then silence.
+// On a file with 1152-sample blocks and no seek table that happened on every
+// few seeks, so a stereo clip bounced with whole read-ahead chunks missing. A
+// voice that reads straight through never seeks, and FLAC being lossless the
+// bounce can be held against the file itself.
+SCENARIO("a FLAC with small blocks bounces as the file reads", "[engine][export][flac][rebounce]")
+{
+    auto workDir = testOutputDirectory().getChildFile("flac-rebounce");
+    workDir.deleteRecursively();
+    REQUIRE(workDir.createDirectory());
+
+    auto inputFile = workDir.getChildFile("blocks-1152.flac");
+    REQUIRE(File(CURRENT_SOURCE_DIR).getChildFile("TestFiles/blocks-1152.flac").copyFileTo(inputFile));
+
+    // read in one go, straight through: no seek, so this is the file
+    const auto source = audioFileToAudioBuffer(inputFile);
+    REQUIRE(source.getNumChannels() == 2);
+    REQUIRE(source.getMagnitude(0, source.getNumSamples()) > 0.1f);
+
+    TestEngine engine;
+    engine->getProjectFileStore()->open(inputFile, nullptr);
+    engine->getPlayListScheduler()->commitPlayListData();
+
+    auto bounce = [&](const String& fileName) {
+        auto config = std::make_shared<ExportAudioConfig>();
+        config->fileName = workDir.getChildFile(fileName);
+        config->sampleRate = 44100.0; // the file's own rate: nothing resampled
+        config->numChannels = 2;
+        config->bitDepth = 24;
+        config->lengthSeconds = engine->getPlayListScheduler()->getTotalLength(audium::seconds);
+        REQUIRE(AudioExporter(*engine, config).bounce());
+        return audioFileToAudioBuffer(config->fileName);
+    };
+
+    GIVEN("the project bounced twice")
+    {
+        THEN("each bounce holds the file's samples")
+        {
+            for (const auto* name : { "first.wav", "second.wav" }) {
+                const auto bounced = bounce(name);
+                const auto numSamples = jmin(bounced.getNumSamples(), source.getNumSamples());
+                REQUIRE(numSamples > source.getNumSamples() - 64);
+
+                auto differing = 0;
+                auto firstDiffering = -1;
+                for (auto channel = 0; channel < 2; channel++) {
+                    for (auto s = 0; s < numSamples; s++) {
+                        // 16 bit in the file, 24 in the bounce: one step of the coarser
+                        if (std::abs(bounced.getSample(channel, s) - source.getSample(channel, s)) > 1.0f / 32768.0f) {
+                            differing++;
+                            if (firstDiffering < 0)
+                                firstDiffering = s;
+                        }
+                    }
+                }
+                INFO(name << ": " << differing << " samples differ from the file, the first at " << firstDiffering);
+                REQUIRE(differing == 0);
+            }
+        }
+    }
+
+    workDir.deleteRecursively();
+}
+
 // MP3 is written by LAME (ThirdParty/lame) and read back here with JUCE's
 // own MP3 decoder. Lossy and delayed by the encoder, so the checks are on
 // level and length rather than on single samples.
